@@ -20,3 +20,15 @@ Route::get('/', function () {
 Route::get('/admin/dashboard', function () {
     return view('admin.dashboard');
 })->name('admin.dashboard');
+
+Route::get('/auth/login', function () {
+    return view('auth.login');
+})->name('auth.login');
+
+Route::get('/auth/register', function () {
+    return view('auth.register');
+})->name('auth.register');
+
+Route::get('/penjual/dashboard', function () {
+    return view('penjual.dashboard');
+})->name('penjual.dashboard');
