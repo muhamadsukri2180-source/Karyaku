@@ -451,24 +451,7 @@
         </div>
     </section>
 
-    <!-- SECTION 5: KARYA PILIHAN & RATING -->
-    <section id="karya-pilihan" class="relative overflow-hidden py-16 sm:py-20 bg-white">
-        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
-            <div class="reveal flex flex-col md:flex-row items-center justify-between mb-16 gap-6 bg-gradient-to-r from-skyDeep to-sky text-white p-6 sm:p-8 rounded-2xl shadow-lg">
-                <div>
-                    <h2 class="font-display text-2xl sm:text-3xl font-bold mb-2">Dipercaya Ribuan Pembeli</h2>
-                    <p class="text-sky-100 text-sm">Karya dari kreator yang sudah teruji lewat transaksi dan ulasan nyata.</p>
-                </div>
-                <div class="flex items-center gap-4 bg-white/10 px-6 py-4 rounded-xl border border-white/20">
-                    <div class="font-display text-3xl sm:text-4xl font-extrabold" id="ratingNumber" data-target="4.9">0.0</div>
-                    <div>
-                        <div class="text-amber-300 text-xs sm:text-sm space-x-1">
-                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                        </div>
-                        <span class="text-xs text-sky-100">3.100+ ulasan pembeli</span>
-                    </div>
-                </div>
-            </div>
+  
 
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 <div class="reveal group rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-skyPale">
