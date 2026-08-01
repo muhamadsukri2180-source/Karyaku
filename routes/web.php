@@ -32,3 +32,12 @@ Route::get('/auth/register', function () {
 Route::get('/penjual/dashboard', function () {
     return view('penjual.dashboard');
 })->name('penjual.dashboard');
+
+Route::get('/pembeli/dashboard', function () {
+    return view('pembeli.dashboard');
+})->name('pembeli.dashboard');
+
+Route::get('/verifikator/dashboard', function () {
+    return view('verifikator.dashboard');
+})->name('verifikator.dashboard');
+
