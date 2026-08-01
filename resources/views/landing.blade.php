@@ -211,20 +211,13 @@
         </div>
     </header>
 
-    <!-- SECTION 1: HERO -->
-    <section id="hero" class="relative overflow-hidden min-h-[85vh] sm:min-h-[92vh] flex items-center py-16 hero-bg">
+   <!-- SECTION 1: HERO -->
+    <section id="hero" class="relative overflow-hidden min-h-[85vh] sm:min-h-[92vh] menjadi min-h-[70vh] sm:min-h-[75vh] flex items-center py-16 hero-bg">
         <div class="absolute inset-0 dynamic-wash"></div>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 w-full">
             <div class="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-12 items-center">
                 <div class="max-w-2xl">
-                    <span class="inline-flex items-center gap-2 bg-white text-skyDeep px-3 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-bold tracking-wider uppercase shadow-lg mb-6 reveal">
-                        <span class="relative flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-coral opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-coral"></span>
-                        </span>
-                        Ruang Karya Kreator Indonesia
-                    </span>
 
                     <h1 class="font-display text-3xl sm:text-5xl md:text-6xl font-bold mb-6 leading-[1.1] text-white reveal">
                         Karyaku: Beli & Jual
@@ -242,15 +235,6 @@
                         <a href="#kreator" class="btn inline-flex items-center justify-center gap-2 bg-white text-skyDeep px-6 sm:px-8 py-3.5 rounded-xl text-sm sm:text-base font-bold shadow-lg hover:bg-skyPale transition">
                             <i class="fa-solid fa-store"></i> Buka Etalase Jasa
                         </a>
-                    </div>
-
-                    <div class="flex flex-wrap gap-3 reveal">
-                        <span class="inline-flex items-center gap-2 bg-white/15 border border-white/40 backdrop-blur-sm px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold text-white">
-                            <i class="fa-solid fa-shield-halved text-coral"></i> Pembayaran Aman (Escrow)
-                        </span>
-                        <span class="inline-flex items-center gap-2 bg-white/15 border border-white/40 backdrop-blur-sm px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold text-white">
-                            <i class="fa-solid fa-rotate text-mint"></i> Revisi Sesuai Kesepakatan
-                        </span>
                     </div>
                 </div>
 
@@ -282,77 +266,6 @@
         </div>
     </section>
 
-    <!-- STRIP: KARYA TERJUAL -->
-    <section class="bg-skyDeeper py-3.5 overflow-hidden" aria-label="Karya yang baru saja terjual">
-        <div class="marquee-track gap-10 whitespace-nowrap text-white/60 text-xs font-mono pl-10">
-            <span class="inline-flex items-center gap-2"><i class="fa-solid fa-circle-check text-mint"></i> Poster Event Musik — Rp95rb — Terjual</span>
-            <span class="inline-flex items-center gap-2"><i class="fa-solid fa-cube text-coral"></i> Model 3D Karakter Game — Rp480rb — Terjual</span>
-            <span class="inline-flex items-center gap-2"><i class="fa-solid fa-circle-check text-mint"></i> Logo Kedai Kopi — Rp150rb — Terjual</span>
-            <span class="inline-flex items-center gap-2"><i class="fa-solid fa-circle-check text-mint"></i> Feed Instagram 9 Slide — Rp180rb — Terjual</span>
-            <span class="inline-flex items-center gap-2"><i class="fa-solid fa-cube text-coral"></i> Animasi Produk Blender — Rp650rb — Terjual</span>
-            <span class="inline-flex items-center gap-2"><i class="fa-solid fa-circle-check text-mint"></i> Poster Wisuda Custom — Rp65rb — Terjual</span>
-            <span class="inline-flex items-center gap-2" aria-hidden="true"><i class="fa-solid fa-circle-check text-mint"></i> Poster Event Musik — Rp95rb — Terjual</span>
-            <span class="inline-flex items-center gap-2" aria-hidden="true"><i class="fa-solid fa-cube text-coral"></i> Model 3D Karakter Game — Rp480rb — Terjual</span>
-            <span class="inline-flex items-center gap-2" aria-hidden="true"><i class="fa-solid fa-circle-check text-mint"></i> Logo Kedai Kopi — Rp150rb — Terjual</span>
-            <span class="inline-flex items-center gap-2" aria-hidden="true"><i class="fa-solid fa-circle-check text-mint"></i> Feed Instagram 9 Slide — Rp180rb — Terjual</span>
-            <span class="inline-flex items-center gap-2" aria-hidden="true"><i class="fa-solid fa-cube text-coral"></i> Animasi Produk Blender — Rp650rb — Terjual</span>
-            <span class="inline-flex items-center gap-2" aria-hidden="true"><i class="fa-solid fa-circle-check text-mint"></i> Poster Wisuda Custom — Rp65rb — Terjual</span>
-        </div>
-    </section>
-
-    <!-- SECTION 2: TENTANG KARYAKU -->
-    <section id="tentang" class="relative overflow-hidden py-16 sm:py-20 bg-white">
-        <div class="pointer-events-none absolute -top-24 -left-24 w-72 h-72 bg-coral/15 rounded-full blur-3xl"></div>
-        <div class="pointer-events-none absolute -bottom-28 -right-16 w-80 h-80 bg-sky/15 rounded-full blur-3xl"></div>
-        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                <div class="relative reveal" data-tilt>
-                    <div class="absolute -inset-2 bg-gradient-to-br from-coral/20 to-sky/20 rounded-3xl transform -rotate-2"></div>
-                    <img src="https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=900&q=80"
-                         alt="Kreator digital sedang mendesain karya"
-                         class="relative rounded-2xl shadow-xl w-full h-[320px] sm:h-[400px] object-cover">
-                    <div class="absolute -bottom-5 -right-5 bg-skyDeep text-white rounded-xl px-4 py-3 shadow-xl hidden sm:flex items-center gap-2 text-xs font-semibold">
-                        <i class="fa-solid fa-user-check text-mint"></i> 2.400+ Kreator Aktif
-                    </div>
-                </div>
-
-                <div class="reveal">
-                    <h3 class="text-sky font-bold text-sm tracking-wider uppercase mb-2">Tentang Karyaku</h3>
-                    <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-900 mb-6">Etalase Karya Digital dari Kreator ke Pembeli, Langsung Tanpa Ribet</h2>
-                    <p class="text-slate-600 text-sm sm:text-base mb-4 leading-relaxed">
-                        <strong>Karyaku</strong> adalah marketplace jasa digital yang mempertemukan kreator dan pembeli untuk transaksi karya siap pakai — mulai dari desain poster Canva, model &amp; animasi 3D Blender, logo, hingga konten media sosial.
-                    </p>
-                    <p class="text-slate-600 text-sm sm:text-base mb-6 leading-relaxed">
-                        Setiap transaksi diamankan lewat sistem pembayaran tertahan (<em>escrow</em>) — dana baru diteruskan ke kreator setelah pembeli menerima dan menyetujui hasil karyanya.
-                    </p>
-                    <div class="reveal grid grid-cols-2 gap-6 pt-2">
-                        <div class="flex items-center gap-3">
-                            <svg viewBox="0 0 100 100" class="w-14 h-14 sm:w-16 sm:h-16 -rotate-90 shrink-0">
-                                <circle cx="50" cy="50" r="42" fill="none" stroke="#E1EFFB" stroke-width="10"/>
-                                <circle cx="50" cy="50" r="42" fill="none" stroke="#FF7A59" stroke-width="10" stroke-linecap="round"
-                                        stroke-dasharray="263.9" stroke-dashoffset="263.9" style="--offset:0" class="ring-fill"/>
-                            </svg>
-                            <div>
-                                <span class="font-display text-xl sm:text-2xl font-bold text-skyDeep block">98%</span>
-                                <p class="text-xs text-slate-500">Transaksi Berjalan Aman</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <svg viewBox="0 0 100 100" class="w-14 h-14 sm:w-16 sm:h-16 -rotate-90 shrink-0">
-                                <circle cx="50" cy="50" r="42" fill="none" stroke="#E1EFFB" stroke-width="10"/>
-                                <circle cx="50" cy="50" r="42" fill="none" stroke="#14B8A6" stroke-width="10" stroke-linecap="round"
-                                        stroke-dasharray="263.9" stroke-dashoffset="263.9" style="--offset:40" class="ring-fill"/>
-                            </svg>
-                            <div>
-                                <span class="font-display text-xl sm:text-2xl font-bold text-skyDeep block">&lt; 2 Jam</span>
-                                <p class="text-xs text-slate-500">Rata-rata Respons Kreator</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <!-- SECTION 3: KATEGORI JASA (galeri karya asli penjual) -->
     <section id="kategori" class="relative overflow-hidden py-16 sm:py-20 bg-skyDeep text-white">
@@ -360,9 +273,9 @@
         <div class="pointer-events-none absolute -bottom-24 -left-16 w-72 h-72 bg-coral/15 rounded-full blur-3xl"></div>
         <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
             <div class="text-center max-w-2xl mx-auto mb-14 reveal">
-                <span class="inline-flex items-center gap-2 bg-mint/15 text-mint px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase border border-mint/30 mb-4">
+                {{-- <span class="inline-flex items-center gap-2 bg-mint/15 text-mint px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase border border-mint/30 mb-4">
                     <i class="fa-solid fa-shapes"></i> Jelajahi Berdasarkan Kategori
-                </span>
+                </span> --}}
                 <h2 class="font-display text-2xl sm:text-3xl font-bold mb-4">Semua Jasa Digital, Satu Etalase</h2>
                 <p class="text-sky-100 text-sm md:text-base leading-relaxed">
                     Dari poster promosi sampai aset 3D untuk game, temukan kreator yang cocok dengan kebutuhanmu.
