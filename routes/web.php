@@ -1,43 +1,48 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
+// Landing page
 Route::get('/', function () {
     return view('landing');
+})->name('landing');
+
+// Auth routes (hanya bisa diakses kalau BELUM login)
+Route::prefix('auth')->middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login');
+    Route::post('/login', [AuthController::class, 'login'])->name('auth.login.submit');
+
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('auth.register');
+    Route::post('/register', [AuthController::class, 'register'])->name('auth.register.submit');
 });
 
-Route::get('/admin/dashboard', function () {
-    return view('admin.dashboard');
-})->name('admin.dashboard');
+// Logout (harus sudah login)
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
 
-Route::get('/auth/login', function () {
-    return view('auth.login');
-})->name('auth.login');
+// Dashboard per role (harus login + role sesuai)
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/admin/dashboard', function () {
+        return view('admin.dashboard');
+    })->name('admin.dashboard');
+});
 
-Route::get('/auth/register', function () {
-    return view('auth.register');
-})->name('auth.register');
+Route::middleware(['auth', 'role:verifikator'])->group(function () {
+    Route::get('/verifikator/dashboard', function () {
+        return view('verifikator.dashboard');
+    })->name('verifikator.dashboard');
+});
 
-Route::get('/penjual/dashboard', function () {
-    return view('penjual.dashboard');
-})->name('penjual.dashboard');
+Route::middleware(['auth', 'role:penjual'])->group(function () {
+    Route::get('/penjual/dashboard', function () {
+        return view('penjual.dashboard');
+    })->name('penjual.dashboard');
+});
 
-Route::get('/pembeli/dashboard', function () {
-    return view('pembeli.dashboard');
-})->name('pembeli.dashboard');
-
-Route::get('/verifikator/dashboard', function () {
-    return view('verifikator.dashboard');
-})->name('verifikator.dashboard');
-
+Route::middleware(['auth', 'role:pembeli'])->group(function () {
+    Route::get('/pembeli/dashboard', function () {
+        return view('pembeli.dashboard');
+    })->name('pembeli.dashboard');
+});

@@ -96,7 +96,6 @@
     <div class="w-full max-w-[380px] bg-white/95 backdrop-blur-xl p-5 sm:p-6 rounded-[1.5rem] shadow-card border border-white/40 relative z-10 opacity-0 animate-fade-in-up">
 
         <div class="text-center mb-5">
-            <!-- Tempat Logo -->
             <div class="w-10 h-10 mx-auto bg-gradient-to-br from-skyDeep to-sky rounded-xl flex items-center justify-center mb-3 shadow-md shadow-skyDeep/20 transform transition hover:scale-105 duration-300">
                 <i class="fa-solid fa-layer-group text-white text-lg"></i>
             </div>
@@ -105,7 +104,25 @@
             <p class="text-slate-500 text-[12px] mt-1 font-medium">Bergabung dengan Karyaku, jual atau beli karya digital</p>
         </div>
 
-        <form action="#" method="POST" class="space-y-3">
+        {{-- Tampilkan pesan error validasi --}}
+        @if ($errors->any())
+            <div class="mb-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium p-3">
+                <ul class="list-disc list-inside space-y-0.5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        {{-- Tampilkan pesan sukses (kalau ada) --}}
+        @if (session('success'))
+            <div class="mb-3 rounded-xl bg-green-50 border border-green-200 text-green-600 text-xs font-medium p-3">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        <form action="{{ route('auth.register.submit') }}" method="POST" class="space-y-3">
             @csrf
 
             <!-- 1. Username -->
@@ -115,7 +132,7 @@
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="fa-solid fa-user text-slate-400 text-xs group-focus-within:text-sky transition-colors"></i>
                     </div>
-                    <input type="text" id="username" name="username" placeholder="Pilih username" required
+                    <input type="text" id="username" name="username" value="{{ old('username') }}" placeholder="Pilih username" required
                         class="w-full pl-9 pr-3 py-2 rounded-xl bg-skyPale border border-slate-200 text-xs font-medium focus:bg-white focus:outline-none focus:border-sky focus:ring-2 focus:ring-sky/20 transition-all duration-300">
                 </div>
             </div>
@@ -127,7 +144,7 @@
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="fa-solid fa-envelope text-slate-400 text-xs group-focus-within:text-sky transition-colors"></i>
                     </div>
-                    <input type="email" id="email" name="email" placeholder="nama@email.com" required
+                    <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="nama@email.com" required
                         class="w-full pl-9 pr-3 py-2 rounded-xl bg-skyPale border border-slate-200 text-xs font-medium focus:bg-white focus:outline-none focus:border-sky focus:ring-2 focus:ring-sky/20 transition-all duration-300">
                 </div>
             </div>
@@ -137,11 +154,11 @@
                 <label class="block text-[11px] font-bold text-slate-700 mb-1 ml-1">Daftar Sebagai</label>
                 <div class="grid grid-cols-2 gap-2">
                     <label class="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-slate-200 bg-skyPale text-[11px] font-bold text-slate-600 cursor-pointer transition-all has-[:checked]:bg-sky has-[:checked]:text-white has-[:checked]:border-sky">
-                        <input type="radio" name="role" value="pembeli" class="hidden" checked>
+                        <input type="radio" name="role" value="pembeli" class="hidden" {{ old('role', 'pembeli') === 'pembeli' ? 'checked' : '' }}>
                         <i class="fa-solid fa-bag-shopping text-[11px]"></i> Pembeli
                     </label>
                     <label class="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-slate-200 bg-skyPale text-[11px] font-bold text-slate-600 cursor-pointer transition-all has-[:checked]:bg-sky has-[:checked]:text-white has-[:checked]:border-sky">
-                        <input type="radio" name="role" value="kreator" class="hidden">
+                        <input type="radio" name="role" value="kreator" class="hidden" {{ old('role') === 'kreator' ? 'checked' : '' }}>
                         <i class="fa-solid fa-store text-[11px]"></i> Kreator
                     </label>
                 </div>
@@ -201,7 +218,7 @@
 
         <div class="mt-5 pt-4 border-t border-slate-100 text-center">
             <p class="text-[11px] text-slate-500 font-medium">
-                Sudah punya akun? <a href="#" class="font-bold text-sky hover:text-skyDeep transition-colors">Masuk di sini</a>
+                Sudah punya akun? <a href="{{ route('auth.login') }}" class="font-bold text-sky hover:text-skyDeep transition-colors">Masuk di sini</a>
             </p>
         </div>
     </div>
