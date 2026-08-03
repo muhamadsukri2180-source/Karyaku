@@ -157,7 +157,7 @@
 
             <div class="flex items-center gap-3">
                 <!-- Tombol MASUK yang diubah menjadi solid/full seperti tombol utama -->
-                <a href="#kategori" class="btn btn-primary hidden sm:inline-flex items-center gap-2 text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-coral/30 hover:shadow-coral/50 transition-all duration-300">
+                <a href="auth/login" class="btn btn-primary hidden sm:inline-flex items-center gap-2 text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-coral/30 hover:shadow-coral/50 transition-all duration-300">
                     <i class="fa-solid fa-right-to-bracket text-sm"></i> MASUK
                 </a>
                 <button id="menuToggle" aria-label="Buka menu" aria-expanded="false" class="md:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
@@ -173,7 +173,7 @@
                 <a href="#kategori" class="hover:text-coral transition py-1">Kategori Jasa</a>
                 <a href="#cara-kerja" class="hover:text-coral transition py-1">Cara Kerja</a>
                 <a href="#karya-pilihan" class="hover:text-coral transition py-1">Karya Pilihan</a>
-                <a href="#kategori" class="btn btn-primary inline-flex items-center justify-center gap-2 text-white px-5 py-2.5 rounded-xl text-sm font-bold mt-2">
+                <a href="auth/login" class="btn btn-primary inline-flex items-center justify-center gap-2 text-white px-5 py-2.5 rounded-xl text-sm font-bold mt-2">
                     <i class="fa-solid fa-right-to-bracket"></i> Masuk
                 </a>
             </nav>
