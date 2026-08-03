@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\PembeliController;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,8 +94,27 @@ Route::middleware(['auth', 'role:penjual'])->prefix('penjual')->group(function (
 // ==========================================
 // 6. PEMBELI ROUTES
 // ==========================================
-Route::middleware(['auth', 'role:pembeli'])->prefix('pembeli')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('pembeli.dashboard');
-    })->name('pembeli.dashboard');
+Route::middleware(['auth', 'role:pembeli'])->prefix('pembeli')->name('pembeli.')->group(function () {
+    Route::get('/dashboard', [PembeliController::class, 'dashboard'])->name('dashboard');
+
+    Route::get('/marketplace', [PembeliController::class, 'marketplace'])->name('marketplace');
+    Route::get('/produk/{id}', [PembeliController::class, 'produkDetail'])->name('produk.detail');
+
+    Route::get('/keranjang', [PembeliController::class, 'keranjangIndex'])->name('keranjang');
+    Route::post('/keranjang', [PembeliController::class, 'keranjangStore'])->name('keranjang.store');
+    Route::put('/keranjang/{id}', [PembeliController::class, 'keranjangUpdate'])->name('keranjang.update');
+    Route::delete('/keranjang/{id}', [PembeliController::class, 'keranjangDestroy'])->name('keranjang.destroy');
+
+    Route::post('/checkout', [PembeliController::class, 'checkout'])->name('checkout');
+
+    Route::post('/wishlist/{productId}', [PembeliController::class, 'wishlistToggle'])->name('wishlist.toggle');
+    Route::get('/wishlist', [PembeliController::class, 'wishlistIndex'])->name('wishlist');
+
+    Route::get('/pesanan', [PembeliController::class, 'pesananIndex'])->name('pesanan');
+    Route::get('/pesanan/{id}', [PembeliController::class, 'pesananDetail'])->name('pesanan.detail');
+
+    Route::get('/download', [PembeliController::class, 'downloadIndex'])->name('download');
+
+    Route::get('/profile', [PembeliController::class, 'profile'])->name('profile');
+    Route::put('/profile', [PembeliController::class, 'updateProfile'])->name('profile.update');
 });

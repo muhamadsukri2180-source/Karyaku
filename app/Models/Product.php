@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -28,5 +29,25 @@ class Product extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class, 'product_id', 'id_product');
+    }
+
+    public function carts(): HasMany
+    {
+        return $this->hasMany(Cart::class, 'product_id', 'id_product');
+    }
+
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(Wishlist::class, 'product_id', 'id_product');
+    }
+
+    public function verifications(): HasMany
+    {
+        return $this->hasMany(Verification::class, 'product_id', 'id_product');
+    }
+
+    public function reports(): HasMany
+    {
+        return $this->hasMany(Report::class, 'product_id', 'id_product');
     }
 }
