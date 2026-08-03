@@ -11,6 +11,8 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Alpine.js untuk interaksi pilih role -> paket -> pembayaran -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -24,7 +26,10 @@
                         skyPale: '#EFF8FF',
                         coral: '#FF7A59',
                         mint: '#14B8A6',
-                        ink: '#0F2A44'
+                        ink: '#0F2A44',
+                        bronze: '#B45309',
+                        silverc: '#64748B',
+                        diamond: '#0891B2'
                     },
                     fontFamily: {
                         display: ['"Sora"', 'sans-serif'],
@@ -81,6 +86,13 @@
         .btn-premium:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -6px rgba(14,165,233,0.7); }
         .btn-premium:active { transform: translateY(0) scale(0.98); }
         .btn-premium > * { position: relative; z-index: 2; }
+        .btn-premium:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+        .btn-premium:disabled::before { display: none; }
+
+        [x-cloak] { display: none !important; }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-skyDeeper text-ink antialiased min-h-screen w-full flex items-center justify-center relative p-4 overflow-hidden">
@@ -92,8 +104,24 @@
         <div class="absolute bottom-10 left-10 w-80 h-80 bg-sky/25 rounded-full blur-[80px] animate-blob animation-delay-4000"></div>
     </div>
 
-    <!-- Register Card (Kecil & Compact) -->
-    <div class="w-full max-w-[380px] bg-white/95 backdrop-blur-xl p-5 sm:p-6 rounded-[1.5rem] shadow-card border border-white/40 relative z-10 opacity-0 animate-fade-in-up">
+    <!-- Register Card -->
+    <div
+        x-data="{
+            role: '{{ old('role', 'pembeli') }}',
+            paket: '{{ old('paket_toko', '') }}',
+            pembayaran: '{{ old('metode_pembayaran', '') }}',
+            sudahBayar: false,
+            hargaPaket: { bronze: 30000, silver: 50000, diamond: 100000 },
+            rupiah(n){ return 'Rp ' + n.toLocaleString('id-ID'); },
+            bisaSubmit(){
+                if (this.role === 'pembeli') return true;
+                if (this.role === 'kreator') return this.paket !== '' && this.pembayaran !== '' && this.sudahBayar;
+                return false;
+            }
+        }"
+        x-init="$watch('paket', () => sudahBayar = false); $watch('pembayaran', () => sudahBayar = false)"
+        class="w-full max-w-[420px] bg-white/95 backdrop-blur-xl p-5 sm:p-6 rounded-[1.5rem] shadow-card border border-white/40 relative z-10 opacity-0 animate-fade-in-up max-h-[95vh] overflow-y-auto no-scrollbar"
+    >
 
         <div class="text-center mb-5">
             <div class="w-10 h-10 mx-auto bg-gradient-to-br from-skyDeep to-sky rounded-xl flex items-center justify-center mb-3 shadow-md shadow-skyDeep/20 transform transition hover:scale-105 duration-300">
@@ -122,7 +150,7 @@
             </div>
         @endif
 
-        <form action="{{ route('auth.register.submit') }}" method="POST" class="space-y-3">
+        <form action="{{ route('auth.register.submit') }}" method="POST" class="space-y-3" @submit="if(!bisaSubmit()){ $event.preventDefault(); alert('Lengkapi dulu paket toko & pembayaran sebelum daftar ya, bre.'); }">
             @csrf
 
             <!-- 1. Username -->
@@ -154,14 +182,115 @@
                 <label class="block text-[11px] font-bold text-slate-700 mb-1 ml-1">Daftar Sebagai</label>
                 <div class="grid grid-cols-2 gap-2">
                     <label class="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-slate-200 bg-skyPale text-[11px] font-bold text-slate-600 cursor-pointer transition-all has-[:checked]:bg-sky has-[:checked]:text-white has-[:checked]:border-sky">
-                        <input type="radio" name="role" value="pembeli" class="hidden" {{ old('role', 'pembeli') === 'pembeli' ? 'checked' : '' }}>
+                        <input type="radio" name="role" value="pembeli" x-model="role" class="hidden">
                         <i class="fa-solid fa-bag-shopping text-[11px]"></i> Pembeli
                     </label>
                     <label class="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-slate-200 bg-skyPale text-[11px] font-bold text-slate-600 cursor-pointer transition-all has-[:checked]:bg-sky has-[:checked]:text-white has-[:checked]:border-sky">
-                        <input type="radio" name="role" value="kreator" class="hidden" {{ old('role') === 'kreator' ? 'checked' : '' }}>
+                        <input type="radio" name="role" value="kreator" x-model="role" class="hidden">
                         <i class="fa-solid fa-store text-[11px]"></i> Kreator
                     </label>
                 </div>
+            </div>
+
+            <!-- 3B. PAKET TOKO (khusus Kreator) -->
+            <div x-show="role === 'kreator'" x-cloak x-transition class="group rounded-2xl bg-gradient-to-br from-skyPale to-white border border-sky-200 p-3 space-y-2">
+                <label class="block text-[11px] font-bold text-slate-700 ml-1">Pilih Paket Toko Kreator</label>
+
+                <!-- Bronze -->
+                <label class="flex items-start gap-3 p-3 rounded-xl border-2 border-slate-200 bg-white cursor-pointer transition-all has-[:checked]:border-bronze has-[:checked]:bg-orange-50/70 has-[:checked]:shadow-sm">
+                    <input type="radio" name="paket_toko" value="bronze" x-model="paket" class="hidden">
+                    <div class="w-9 h-9 shrink-0 rounded-lg bg-orange-100 text-bronze flex items-center justify-center">
+                        <i class="fa-solid fa-medal text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs font-extrabold text-slate-800">Bronze</p>
+                            <p class="text-xs font-extrabold text-bronze">Rp 30.000</p>
+                        </div>
+                        <p class="text-[10.5px] text-slate-500 leading-snug mt-0.5">Cocok buat pemula. Bisa menambahkan <span class="font-bold">maksimal 5 produk</span> di toko kamu.</p>
+                    </div>
+                </label>
+
+                <!-- Silver -->
+                <label class="flex items-start gap-3 p-3 rounded-xl border-2 border-slate-200 bg-white cursor-pointer transition-all has-[:checked]:border-silverc has-[:checked]:bg-slate-50 has-[:checked]:shadow-sm">
+                    <input type="radio" name="paket_toko" value="silver" x-model="paket" class="hidden">
+                    <div class="w-9 h-9 shrink-0 rounded-lg bg-slate-200 text-silverc flex items-center justify-center">
+                        <i class="fa-solid fa-award text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs font-extrabold text-slate-800">Silver</p>
+                            <p class="text-xs font-extrabold text-silverc">Rp 50.000</p>
+                        </div>
+                        <p class="text-[10.5px] text-slate-500 leading-snug mt-0.5">Buat yang serius jualan. Bisa menambahkan <span class="font-bold">lebih banyak produk (hingga 20 produk)</span>.</p>
+                    </div>
+                </label>
+
+                <!-- Diamond -->
+                <label class="flex items-start gap-3 p-3 rounded-xl border-2 border-slate-200 bg-white cursor-pointer transition-all has-[:checked]:border-sky has-[:checked]:bg-sky-50 has-[:checked]:shadow-sm relative overflow-hidden">
+                    <span class="absolute top-0 right-0 bg-sky text-white text-[8px] font-bold px-2 py-0.5 rounded-bl-lg">PALING LARIS</span>
+                    <input type="radio" name="paket_toko" value="diamond" x-model="paket" class="hidden">
+                    <div class="w-9 h-9 shrink-0 rounded-lg bg-sky-100 text-sky flex items-center justify-center">
+                        <i class="fa-solid fa-gem text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs font-extrabold text-slate-800">Diamond</p>
+                            <p class="text-xs font-extrabold text-sky">Rp 100.000</p>
+                        </div>
+                        <p class="text-[10.5px] text-slate-500 leading-snug mt-0.5">Paling maksimal. Bisa menambahkan <span class="font-bold">produk tanpa batas</span> + <span class="font-bold">pasang iklan promosi</span> di halaman utama Karyaku.</p>
+                    </div>
+                </label>
+            </div>
+
+            <!-- 3C. METODE PEMBAYARAN (muncul setelah paket dipilih) -->
+            <div x-show="role === 'kreator' && paket !== ''" x-cloak x-transition class="rounded-2xl bg-white border border-sky-200 p-3 space-y-3">
+                <div class="flex items-center justify-between">
+                    <label class="block text-[11px] font-bold text-slate-700 ml-1">Metode Pembayaran</label>
+                    <p class="text-[11px] font-extrabold text-sky" x-text="paket ? rupiah(hargaPaket[paket]) : ''"></p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-200 bg-skyPale text-[11px] font-bold text-slate-600 cursor-pointer transition-all has-[:checked]:bg-slate-900 has-[:checked]:text-white has-[:checked]:border-slate-900">
+                        <input type="radio" name="metode_pembayaran" value="qris" x-model="pembayaran" class="hidden">
+                        <i class="fa-solid fa-qrcode text-xs"></i> QRIS
+                    </label>
+                    <label class="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-200 bg-skyPale text-[11px] font-bold text-slate-600 cursor-pointer transition-all has-[:checked]:bg-blue-600 has-[:checked]:text-white has-[:checked]:border-blue-600">
+                        <input type="radio" name="metode_pembayaran" value="dana" x-model="pembayaran" class="hidden">
+                        <i class="fa-solid fa-wallet text-xs"></i> DANA
+                    </label>
+                </div>
+
+                <!-- Panel QRIS -->
+                <div x-show="pembayaran === 'qris'" x-cloak x-transition class="flex flex-col items-center gap-2 bg-slate-50 border border-dashed border-slate-300 rounded-xl p-3">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=KARYAKU-QRIS-PAYMENT"
+                         alt="QRIS Karyaku" class="w-32 h-32 rounded-lg border border-slate-200 bg-white p-1">
+                    <p class="text-[10.5px] text-slate-500 text-center leading-snug">Scan QRIS di atas pakai aplikasi e-wallet / m-banking apapun untuk membayar <span class="font-bold" x-text="paket ? rupiah(hargaPaket[paket]) : ''"></span>.</p>
+                </div>
+
+                <!-- Panel DANA -->
+                <div x-show="pembayaran === 'dana'" x-cloak x-transition class="bg-blue-50 border border-dashed border-blue-200 rounded-xl p-3 space-y-1.5">
+                    <p class="text-[10.5px] text-slate-600">Transfer ke nomor DANA berikut:</p>
+                    <div class="flex items-center justify-between bg-white rounded-lg border border-blue-200 px-3 py-2">
+                        <span class="text-xs font-extrabold text-blue-700 tracking-wide">0812-3456-7890</span>
+                        <button type="button" onclick="navigator.clipboard.writeText('081234567890'); this.innerText='Tersalin!'; setTimeout(()=>this.innerText='Salin', 1500)"
+                            class="text-[10px] font-bold text-blue-600 hover:underline">Salin</button>
+                    </div>
+                    <p class="text-[10px] text-slate-500">a.n. Karyaku Digital Store — nominal <span class="font-bold" x-text="paket ? rupiah(hargaPaket[paket]) : ''"></span></p>
+                </div>
+
+                <!-- Konfirmasi Sudah Bayar -->
+                <div x-show="pembayaran !== ''" x-cloak>
+                    <button type="button" @click="sudahBayar = !sudahBayar"
+                        :class="sudahBayar ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-300 text-slate-600'"
+                        class="w-full flex items-center justify-center gap-2 py-2 rounded-xl border-2 text-[11px] font-bold transition-all">
+                        <i :class="sudahBayar ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'" class="text-sm"></i>
+                        <span x-text="sudahBayar ? 'Pembayaran Dikonfirmasi' : 'Saya Sudah Membayar'"></span>
+                    </button>
+                </div>
+
+                <!-- Hidden fields dikirim ke backend -->
+                <input type="hidden" name="status_pembayaran" :value="sudahBayar ? 'menunggu_verifikasi' : 'belum_bayar'">
             </div>
 
             <!-- Bagian Grid untuk 2 Password -->
@@ -210,8 +339,8 @@
                 </label>
             </div>
 
-            <button type="submit" class="btn-premium group w-full flex items-center justify-center gap-2 bg-gradient-to-r from-sky to-skyDeep text-white py-2.5 rounded-xl text-[13px] font-bold shadow-glowSky mt-2">
-                <span>Daftar Sekarang</span>
+            <button type="submit" :disabled="!bisaSubmit()" class="btn-premium group w-full flex items-center justify-center gap-2 bg-gradient-to-r from-sky to-skyDeep text-white py-2.5 rounded-xl text-[13px] font-bold shadow-glowSky mt-2">
+                <span x-text="role === 'kreator' ? 'Bayar & Daftar Sekarang' : 'Daftar Sekarang'"></span>
                 <i class="fa-solid fa-arrow-right text-[11px] opacity-80 group-hover:translate-x-1 group-hover:opacity-100 transition-all duration-300"></i>
             </button>
         </form>

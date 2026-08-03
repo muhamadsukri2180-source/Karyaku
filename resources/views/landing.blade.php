@@ -184,16 +184,22 @@
                 <a href="#kontak" class="relative py-1 hover:text-coral transition group">Kontak
                     <span class="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-0 bg-coral transition-all duration-300 group-hover:w-full"></span>
                 </a>
+
+             <a href="#kategori" class="relative py-1 hover:text-coral transition group">Jelajahi Katalog
+                    <span class="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-0 bg-coral transition-all duration-300 group-hover:w-full"></span>
+                </a>
             </nav>
 
-            <div class="flex items-center gap-3">
-                <a href="#kategori" class="btn btn-primary pulse-ring hidden sm:inline-flex items-center gap-2 text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold">
+
+                <div class="flex items-center gap-3">
+                <a href="{{ route('auth.login') }}" class="btn btn-primary pulse-ring hidden sm:inline-flex items-center gap-2 text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold">
                     <i class="fa-solid fa-bag-shopping"></i>
-                    Jelajahi Katalog
+                    Masuk
                 </a>
                 <button id="menuToggle" aria-label="Buka menu" aria-expanded="false" class="md:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition">
                     <i class="fa-solid fa-bars text-lg" id="menuIcon"></i>
                 </button>
+
             </div>
         </div>
 
@@ -206,13 +212,15 @@
                 <a href="#karya-pilihan" class="hover:text-coral transition py-1">Karya Pilihan</a>
                 <a href="#kreator" class="hover:text-coral transition py-1">Untuk Kreator</a>
                 <a href="#kontak" class="hover:text-coral transition py-1">Kontak</a>
-                <a href="#kategori" class="btn btn-primary inline-flex items-center justify-center gap-2 text-white px-5 py-2.5 rounded-xl text-sm font-bold mt-2">Jelajahi Katalog</a>
+                <a href="{{ route('auth.login') }}" class="btn btn-primary inline-flex items-center justify-center gap-2 text-white px-5 py-2.5 rounded-xl text-sm font-bold mt-2">
+                    <i class="fa-solid fa-bag-shopping"></i> Masuk
+                </a>
             </nav>
         </div>
     </header>
 
    <!-- SECTION 1: HERO -->
-    <section id="hero" class="relative overflow-hidden min-h-[85vh] sm:min-h-[92vh] menjadi min-h-[70vh] sm:min-h-[75vh] flex items-center py-16 hero-bg">
+    <section id="hero" class="relative overflow-hidden min-h-[70vh] sm:min-h-[75vh] flex items-center py-16 hero-bg">
         <div class="absolute inset-0 dynamic-wash"></div>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 w-full">
@@ -273,9 +281,6 @@
         <div class="pointer-events-none absolute -bottom-24 -left-16 w-72 h-72 bg-coral/15 rounded-full blur-3xl"></div>
         <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
             <div class="text-center max-w-2xl mx-auto mb-14 reveal">
-                {{-- <span class="inline-flex items-center gap-2 bg-mint/15 text-mint px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase border border-mint/30 mb-4">
-                    <i class="fa-solid fa-shapes"></i> Jelajahi Berdasarkan Kategori
-                </span> --}}
                 <h2 class="font-display text-2xl sm:text-3xl font-bold mb-4">Semua Jasa Digital, Satu Etalase</h2>
                 <p class="text-sky-100 text-sm md:text-base leading-relaxed">
                     Dari poster promosi sampai aset 3D untuk game, temukan kreator yang cocok dengan kebutuhanmu.
@@ -364,7 +369,13 @@
         </div>
     </section>
 
-  
+    <!-- SECTION 5: KARYA PILIHAN -->
+    <section id="karya-pilihan" class="relative overflow-hidden py-16 sm:py-20 bg-white">
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="text-center max-w-2xl mx-auto mb-14 reveal">
+                <h3 class="text-sky font-bold text-sm tracking-wider uppercase mb-2">Karya Pilihan</h3>
+                <h2 class="font-display text-2xl sm:text-3xl font-bold text-slate-900">Paling Diminati Minggu Ini</h2>
+            </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 <div class="reveal group rounded-xl overflow-hidden shadow-sm border border-slate-100 bg-skyPale">
@@ -419,7 +430,7 @@
                     <p class="text-slate-600 text-sm sm:text-base mb-6 leading-relaxed">
                         Buka etalase gratis, unggah portofolio, tentukan harga, dan terima pesanan tanpa perlu platform terpisah untuk desain poster, model 3D, atau jasa kreatif lainnya.
                     </p>
-                    <a href="#kontak" class="btn btn-primary inline-flex items-center gap-2 text-white px-6 py-3 rounded-xl text-sm font-bold">
+                    <a href="{{ route('auth.register') }}" class="btn btn-primary inline-flex items-center gap-2 text-white px-6 py-3 rounded-xl text-sm font-bold">
                         <i class="fa-solid fa-rocket"></i> Buka Etalase Sekarang
                     </a>
                 </div>
@@ -535,23 +546,26 @@
         }, { threshold: 0.15 });
         revealEls.forEach(el => revealObserver.observe(el));
 
+        // Rating counter (dijalankan hanya kalau elemennya memang ada di halaman)
         const ratingEl = document.getElementById('ratingNumber');
-        const ratingObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const target = parseFloat(ratingEl.dataset.target);
-                    let current = 0;
-                    const step = target / 40;
-                    const timer = setInterval(() => {
-                        current += step;
-                        if (current >= target) { current = target; clearInterval(timer); }
-                        ratingEl.textContent = current.toFixed(1);
-                    }, 25);
-                    ratingObserver.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.4 });
-        ratingObserver.observe(ratingEl);
+        if (ratingEl) {
+            const ratingObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const target = parseFloat(ratingEl.dataset.target);
+                        let current = 0;
+                        const step = target / 40;
+                        const timer = setInterval(() => {
+                            current += step;
+                            if (current >= target) { current = target; clearInterval(timer); }
+                            ratingEl.textContent = current.toFixed(1);
+                        }, 25);
+                        ratingObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.4 });
+            ratingObserver.observe(ratingEl);
+        }
     </script>
 </body>
 </html>

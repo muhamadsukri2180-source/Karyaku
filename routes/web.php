@@ -8,8 +8,8 @@ Route::get('/', function () {
     return view('landing');
 })->name('landing');
 
-// Auth routes (hanya bisa diakses kalau BELUM login)
-Route::prefix('auth')->middleware('guest')->group(function () {
+// Auth routes (bisa diakses kapan saja, tidak dibatasi middleware guest)
+Route::prefix('auth')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login');
     Route::post('/login', [AuthController::class, 'login'])->name('auth.login.submit');
 

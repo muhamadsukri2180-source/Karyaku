@@ -142,7 +142,7 @@
 
         <div class="mt-6 pt-5 border-t border-slate-100 text-center">
             <p class="text-[12px] text-slate-500 font-medium">
-                Belum punya akun? <a href="#" class="font-bold text-sky hover:text-skyDeep transition-colors">Daftar di sini</a>
+                Belum punya akun? <a href="register" class="font-bold text-sky hover:text-skyDeep transition-colors">Daftar di sini</a>
             </p>
         </div>
     </div>

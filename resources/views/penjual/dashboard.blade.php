@@ -30,7 +30,10 @@
                         coral: '#FF7A59',
                         coralHover: '#F0623F',
                         mint: '#14B8A6',
-                        ink: '#0F2A44'
+                        ink: '#0F2A44',
+                        bronze: '#B45309',
+                        silverc: '#64748B',
+                        diamond: '#0891B2'
                     }
                 }
             }
@@ -70,6 +73,30 @@
 </head>
 <body class="bg-skyPale text-ink font-sans antialiased overflow-x-hidden">
 
+    {{--
+        =========================================================================
+        DATA PAKET TOKO (contoh/demo)
+        Di aplikasi nyata, ganti @php block ini dengan data dari controller, misal:
+        return view('penjual.dashboard', [
+            'paket'        => auth()->user()->paket_toko,      // 'bronze' | 'silver' | 'diamond'
+            'jumlahProduk' => auth()->user()->produk()->count(),
+        ]);
+        =========================================================================
+    --}}
+    @php
+        $paket        = $paket ?? 'silver';          // demo default, sesuaikan dgn data asli
+        $jumlahProduk = $jumlahProduk ?? 12;          // demo default
+
+        $infoPaket = [
+            'bronze'  => ['label' => 'Bronze',  'batas' => 5,    'warna' => 'bronze',  'bg' => 'bg-orange-50',  'border' => 'border-orange-200', 'icon' => 'fa-medal',  'iklan' => false],
+            'silver'  => ['label' => 'Silver',  'batas' => 20,   'warna' => 'silverc', 'bg' => 'bg-slate-50',   'border' => 'border-slate-200',  'icon' => 'fa-award',  'iklan' => false],
+            'diamond' => ['label' => 'Diamond', 'batas' => null, 'warna' => 'sky',     'bg' => 'bg-sky-50',    'border' => 'border-sky-200',    'icon' => 'fa-gem',    'iklan' => true],
+        ];
+        $p = $infoPaket[$paket] ?? $infoPaket['bronze'];
+        $batasTercapai = $p['batas'] !== null && $jumlahProduk >= $p['batas'];
+        $persenKuota = $p['batas'] !== null ? min(100, round(($jumlahProduk / $p['batas']) * 100)) : 100;
+    @endphp
+
     <div class="flex min-h-screen relative">
 
         <!-- OVERLAY DESIGNS FOR MOBILE SIDEBAR -->
@@ -94,15 +121,21 @@
                 </button>
             </div>
 
-            <!-- Profile Widget -->
+            <!-- Profile Widget + Badge Paket -->
             <div class="p-4 mx-4 my-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
                 <div class="w-9 h-9 rounded-full bg-sky flex items-center justify-center font-bold text-sm text-white border border-white/20 shrink-0">
                     RF
                 </div>
-                <div class="overflow-hidden">
+                <div class="overflow-hidden flex-1">
                     <p class="text-xs font-bold text-white truncate">Rafa Fauzan</p>
                     <p class="text-[10px] text-sky-300 truncate">Kreator Digital</p>
                 </div>
+                <span class="flex items-center gap-1 text-[9px] font-extrabold px-2 py-1 rounded-full
+                    @if($paket === 'bronze') bg-orange-400/20 text-orange-300
+                    @elseif($paket === 'silver') bg-slate-300/20 text-slate-200
+                    @else bg-sky-400/20 text-sky-300 @endif">
+                    <i class="fa-solid {{ $p['icon'] }}"></i> {{ $p['label'] }}
+                </span>
             </div>
 
             <!-- Navigation Links -->
@@ -125,9 +158,17 @@
                         <a href="#" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-all text-[11px]">
                             <i class="fa-solid fa-list text-[10px] w-4 text-center"></i> Daftar Produk
                         </a>
-                        <a href="#" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-all text-[11px]">
-                            <i class="fa-solid fa-plus text-[10px] w-4 text-center"></i> Tambah Karya
-                        </a>
+                        {{-- Tambah Karya: dikunci kalau kuota paket sudah habis --}}
+                        @if($batasTercapai)
+                            <span title="Batas produk paket {{ $p['label'] }} sudah tercapai. Upgrade paket untuk nambah lagi."
+                                class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-[11px] text-slate-500 cursor-not-allowed">
+                                <i class="fa-solid fa-lock text-[10px] w-4 text-center"></i> Tambah Karya
+                            </span>
+                        @else
+                            <a href="#" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-all text-[11px]">
+                                <i class="fa-solid fa-plus text-[10px] w-4 text-center"></i> Tambah Karya
+                            </a>
+                        @endif
                     </div>
                 </div>
 
@@ -155,7 +196,23 @@
                     </div>
                 </div>
 
-                <!-- 5. Pengaturan Toko -->
+                <!-- 5. Pasang Iklan (KHUSUS DIAMOND) -->
+                @if($p['iklan'])
+                    <a href="#" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-white/5 hover:text-white transition-all group">
+                        <i class="fa-solid fa-bullhorn text-sm w-4 text-center group-hover:text-sky transition-colors"></i>
+                        <span>Pasang Iklan</span>
+                        <span class="ml-auto bg-sky-400/20 text-sky-300 text-[8px] px-2 py-0.5 rounded-full font-bold">DIAMOND</span>
+                    </a>
+                @else
+                    <span title="Fitur pasang iklan cuma tersedia buat paket Diamond"
+                        class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-slate-500 cursor-not-allowed">
+                        <i class="fa-solid fa-lock text-sm w-4 text-center"></i>
+                        <span>Pasang Iklan</span>
+                        <span class="ml-auto bg-white/5 text-slate-400 text-[8px] px-2 py-0.5 rounded-full font-bold">DIAMOND</span>
+                    </span>
+                @endif
+
+                <!-- 6. Pengaturan Toko -->
                 <a href="#" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-white/5 hover:text-white transition-all group">
                     <i class="fa-solid fa-sliders text-sm w-4 text-center group-hover:text-sky transition-colors"></i>
                     <span>Pengaturan Toko</span>
@@ -197,6 +254,41 @@
             <!-- MAIN CONTAINER CONTENT -->
             <div class="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 overflow-y-auto no-scrollbar">
 
+                <!-- 0. WIDGET PAKET SAYA -->
+                <div class="{{ $p['bg'] }} border {{ $p['border'] }} rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 shadow-sm">
+                    <div class="flex items-center gap-3 flex-1">
+                        <div class="w-11 h-11 rounded-xl bg-white flex items-center justify-center text-{{ $p['warna'] }} shadow-sm shrink-0">
+                            <i class="fa-solid {{ $p['icon'] }} text-lg"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <p class="text-sm font-extrabold text-slate-900">Paket {{ $p['label'] }}</p>
+                                @if($p['iklan'])
+                                    <span class="text-[9px] bg-sky text-white font-bold px-2 py-0.5 rounded-full">Iklan Aktif</span>
+                                @endif
+                            </div>
+
+                            @if($p['batas'] !== null)
+                                <div class="mt-1.5 w-full max-w-xs bg-white/70 rounded-full h-2 overflow-hidden">
+                                    <div class="h-full rounded-full {{ $batasTercapai ? 'bg-red-400' : 'bg-'.$p['warna'] }}" style="width: {{ $persenKuota }}%"></div>
+                                </div>
+                                <p class="text-[10.5px] {{ $batasTercapai ? 'text-red-500 font-bold' : 'text-slate-500' }} mt-1">
+                                    {{ $jumlahProduk }} / {{ $p['batas'] }} produk terpakai
+                                    @if($batasTercapai) — batas tercapai, upgrade buat nambah lagi @endif
+                                </p>
+                            @else
+                                <p class="text-[10.5px] text-slate-500 mt-1">{{ $jumlahProduk }} produk terpasang · Kuota produk tanpa batas</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    @if($paket !== 'diamond')
+                        <a href="#" class="shrink-0 text-center text-[11px] font-bold bg-white border border-{{ $p['warna'] }}/40 text-{{ $p['warna'] }} px-4 py-2 rounded-xl hover:shadow-md transition">
+                            <i class="fa-solid fa-arrow-up-right-dots mr-1"></i> Upgrade Paket
+                        </a>
+                    @endif
+                </div>
+
                 <!-- 1. TOP METRICS CARDS (RESPONSIVE GRID) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
                     <!-- Metric Card 1 -->
@@ -227,7 +319,7 @@
                         </p>
                     </div>
 
-                    <!-- Metric Card 3 -->
+                    <!-- Metric Card 3 (Total Karya, sesuai batas paket) -->
                     <div class="bg-orange-50/70 border border-orange-200/80 p-5 rounded-2xl shadow-sm hover:shadow-md transition">
                         <div class="flex justify-between items-center mb-3">
                             <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Karya</span>
@@ -235,9 +327,12 @@
                                 <i class="fa-solid fa-cubes text-lg"></i>
                             </div>
                         </div>
-                        <div class="text-2xl sm:text-3xl font-black text-slate-900">18 <span class="text-sm font-normal text-slate-400">Item</span></div>
-                        <p class="text-xs text-coral font-bold mt-2 flex items-center gap-1">
-                            <i class="fa-solid fa-clock"></i> 1 Dalam Moderasi
+                        <div class="text-2xl sm:text-3xl font-black text-slate-900">
+                            {{ $jumlahProduk }} <span class="text-sm font-normal text-slate-400">/ {{ $p['batas'] ?? '∞' }} Item</span>
+                        </div>
+                        <p class="text-xs {{ $batasTercapai ? 'text-red-500' : 'text-coral' }} font-bold mt-2 flex items-center gap-1">
+                            <i class="fa-solid {{ $batasTercapai ? 'fa-triangle-exclamation' : 'fa-clock' }}"></i>
+                            {{ $batasTercapai ? 'Batas paket tercapai' : '1 Dalam Moderasi' }}
                         </p>
                     </div>
 
@@ -255,6 +350,24 @@
                         </p>
                     </div>
                 </div>
+
+                <!-- 1B. BANNER IKLAN (khusus Diamond) -->
+                @if($p['iklan'])
+                    <div class="bg-gradient-to-r from-skyDeep to-sky text-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
+                                <i class="fa-solid fa-bullhorn"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-extrabold">Fitur Iklan Diamond kamu aktif</p>
+                                <p class="text-[11px] text-sky-100">Promosikan karya kamu biar tampil di halaman utama Karyaku.</p>
+                            </div>
+                        </div>
+                        <a href="#" class="shrink-0 text-center text-[11px] font-bold bg-white text-skyDeep px-4 py-2 rounded-xl hover:shadow-md transition">
+                            Kelola Iklan
+                        </a>
+                    </div>
+                @endif
 
                 <!-- 2. ANALYTICS CHART SECTION -->
                 <div class="bg-white/80 border border-sky-200/70 p-4 sm:p-6 rounded-2xl shadow-sm">
@@ -280,7 +393,7 @@
                         <h3 class="font-extrabold text-slate-900 text-base">Transaksi Terbaru</h3>
                         <a href="#" class="text-xs text-sky hover:text-skyHover font-bold">Lihat Semua</a>
                     </div>
-                    
+
                     <div class="overflow-x-auto no-scrollbar">
                         <table class="w-full text-left text-xs text-slate-600 min-w-[600px]">
                             <thead class="bg-skyPale text-slate-700 font-bold uppercase text-[10px] border-b border-sky-200">
@@ -385,13 +498,13 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { 
-                            grid: { color: 'rgba(226, 232, 240, 0.8)' }, 
-                            ticks: { font: { size: 10 } } 
+                        y: {
+                            grid: { color: 'rgba(226, 232, 240, 0.8)' },
+                            ticks: { font: { size: 10 } }
                         },
-                        x: { 
-                            grid: { display: false }, 
-                            ticks: { font: { size: 10 } } 
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
                         }
                     }
                 }
