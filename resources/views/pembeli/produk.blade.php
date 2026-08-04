@@ -168,7 +168,7 @@
         <button type="submit"><i class="bi bi-search"></i></button>
     </form>
     <a href="#" class="icon-btn-light" title="Wishlist"><i class="bi bi-heart"></i><span class="dot">5</span></a>
-    <a href="keranjang.html" class="icon-btn-light" title="Keranjang"><i class="bi bi-cart3"></i><span class="dot">3</span></a>
+    <a href="keranjang" class="icon-btn-light" title="Keranjang"><i class="bi bi-cart3"></i><span class="dot">3</span></a>
 </div>
 
 <div class="breadcrumb-wrap">
@@ -228,7 +228,7 @@
                 <div class="action-row">
                     <button class="wish-round" id="wishDetail" onclick="toggleWishDetail()"><i class="bi bi-heart"></i></button>
                     <button class="btn-detail-cart" onclick="addToCartFeedback(this)"><i class="bi bi-cart-plus"></i> Tambah Keranjang</button>
-                    <a href="keranjang.html" class="btn-detail-buy"><i class="bi bi-lightning-charge-fill"></i> Beli Sekarang</a>
+                    <a href="keranjang" class="btn-detail-buy"><i class="bi bi-lightning-charge-fill"></i> Beli Sekarang</a>
                 </div>
             </div>
         </div>

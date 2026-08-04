@@ -338,7 +338,7 @@
             <a href="#" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
             <a href="#" class="nav-link active"><i class="bi bi-shop"></i> Marketplace</a>
             <a href="#" class="nav-link"><i class="bi bi-heart-fill"></i> Wishlist <span class="badge-count">5</span></a>
-            <a href="keranjang.html" class="nav-link"><i class="bi bi-cart-fill"></i> Keranjang <span class="badge-count">3</span></a>
+            <a href="Keranjang" class="nav-link"><i class="bi bi-cart-fill"></i> Keranjang <span class="badge-count">3</span></a>
             <a href="#" class="nav-link"><i class="bi bi-receipt"></i> Pesanan</a>
             <a href="#" class="nav-link"><i class="bi bi-cloud-arrow-down-fill"></i> Download</a>
         </nav>
@@ -376,7 +376,7 @@
         <a href="#" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
         <a href="#" class="nav-link active"><i class="bi bi-shop"></i> Marketplace</a>
         <a href="#" class="nav-link"><i class="bi bi-heart-fill"></i> Wishlist <span class="badge-count">5</span></a>
-        <a href="keranjang.html" class="nav-link"><i class="bi bi-cart-fill"></i> Keranjang <span class="badge-count">3</span></a>
+        <a href="keranjang" class="nav-link"><i class="bi bi-cart-fill"></i> Keranjang <span class="badge-count">3</span></a>
         <a href="#" class="nav-link"><i class="bi bi-receipt"></i> Pesanan Saya</a>
         <a href="#" class="nav-link"><i class="bi bi-cloud-arrow-down-fill"></i> Download Saya</a>
         <a href="#" class="nav-link"><i class="bi bi-person-fill"></i> Profile</a>

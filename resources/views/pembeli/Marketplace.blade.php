@@ -339,7 +339,7 @@
                     <a href="#" class="icon-btn-light" title="Wishlist">
                         <i class="bi bi-heart"></i><span class="dot">5</span>
                     </a>
-                    <a href="keranjang.html" class="icon-btn-light" title="Keranjang">
+                    <a href="keranjang" class="icon-btn-light" title="Keranjang">
                         <i class="bi bi-cart3"></i><span class="dot">3</span>
                     </a>
                     <button class="icon-btn-light" title="Notifikasi">
