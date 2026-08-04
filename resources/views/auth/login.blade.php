@@ -115,7 +115,26 @@
             <p class="text-slate-500 text-[13px] mt-1 font-medium">Masuk ke akun Karyaku kamu</p>
         </div>
 
-        <form action="#" method="POST" class="space-y-4">
+        {{-- Pesan sukses setelah registrasi --}}
+        @if (session('success'))
+            <div class="mb-4 rounded-xl bg-green-50 border border-green-200 text-green-600 text-[11px] font-medium p-2.5 flex items-center gap-2">
+                <i class="fa-solid fa-circle-check text-green-500"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+        @endif
+
+        {{-- Pesan error validasi (login gagal, dll) --}}
+        @if ($errors->any())
+            <div class="mb-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-[11px] font-medium p-2.5">
+                <ul class="list-disc list-inside space-y-0.5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form action="{{ route('auth.login.submit') }}" method="POST" class="space-y-4">
             @csrf
             <div class="group">
                 <label for="username" class="block text-[11px] font-bold text-slate-700 mb-1 ml-1 transition-colors group-focus-within:text-sky">Username</label>
@@ -123,7 +142,9 @@
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                         <i class="fa-solid fa-at text-slate-400 text-sm group-focus-within:text-sky transition-colors"></i>
                     </div>
-                    <input type="text" id="username" name="username" placeholder="Masukkan username" autocomplete="off" required
+                    <input type="text" id="username" name="username"
+                        value="{{ old('username', session('registered_username')) }}"
+                        placeholder="Masukkan username" autocomplete="off" required
                         class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-skyPale border border-slate-200 text-xs font-medium focus:bg-white focus:outline-none focus:border-sky focus:ring-2 focus:ring-sky/20 transition-all duration-300">
                 </div>
             </div>
@@ -156,7 +177,7 @@
 
         <div class="mt-6 pt-5 border-t border-slate-100 text-center">
             <p class="text-[12px] text-slate-500 font-medium">
-                Belum punya akun? <a href="register" class="font-bold text-sky hover:text-skyDeep transition-colors">Daftar di sini</a>
+                Belum punya akun? <a href="{{ route('auth.register') }}" class="font-bold text-sky hover:text-skyDeep transition-colors">Daftar di sini</a>
             </p>
         </div>
     </div>

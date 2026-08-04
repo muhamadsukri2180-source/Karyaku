@@ -27,18 +27,16 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'username' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,name',
             'email'    => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
-            'role'     => 'required|in:pembeli,kreator',
+            'password' => 'required|string|min:6|confirmed',
             'terms'    => 'required',
         ]);
 
-        // mapping pilihan form ke nama role di database
-        $roleName = $validated['role'] === 'kreator' ? 'penjual' : 'pembeli';
-        $role = Role::where('role_name', $roleName)->firstOrFail();
+        // Semua user yang daftar lewat form ini otomatis jadi "pembeli"
+        $role = Role::where('role_name', 'pembeli')->firstOrFail();
 
-        $user = User::create([
+        User::create([
             'id_role'  => $role->id_role,
             'name'     => $validated['username'],
             'email'    => $validated['email'],
@@ -46,23 +44,25 @@ class AuthController extends Controller
             'status'   => 'active',
         ]);
 
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        return $this->redirectByRole($user);
+        // Tidak auto-login. Arahkan ke halaman login,
+        // sambil bawa email agar bisa langsung diisi otomatis di form login.
+        return redirect()
+            ->route('auth.login')
+            ->with('success', 'Registrasi berhasil! Silakan masuk dengan akun kamu.')
+            ->with('registered_username', $validated['username']);
     }
 
-    // Proses login
+    // Proses login (pakai username, bukan email)
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'username' => 'required|string', // dipakai sbg email
+            'username' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        if (! Auth::attempt(['email' => $credentials['username'], 'password' => $credentials['password']])) {
+        if (! Auth::attempt(['name' => $credentials['username'], 'password' => $credentials['password']])) {
             throw ValidationException::withMessages([
-                'username' => 'Email atau password salah.',
+                'username' => 'Username atau password salah.',
             ]);
         }
 
