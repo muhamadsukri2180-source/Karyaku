@@ -89,6 +89,140 @@
         .group:hover .blob-live {
             animation-play-state: paused;
         }
+
+        /* Custom Uiverse Dropdown Styles */
+        .dropdown {
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            transition: all 300ms;
+            display: flex;
+            flex-direction: column;
+            min-height: 42px;
+            background-color: white;
+            overflow: visible;
+            position: relative;
+            width: 160px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .dropdown input:where(:checked) ~ .list {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            transition: all 400ms ease;
+            margin-top: 6px;
+            padding-top: 4px;
+            margin-bottom: 4px;
+            height: auto;
+            max-height: 16rem;
+            pointer-events: auto;
+        }
+        .dropdown input:where(:not(:checked)) ~ .list {
+            opacity: 0;
+            transform: translateY(1rem);
+            margin-top: -100%;
+            user-select: none;
+            height: 0px;
+            max-height: 0px;
+            min-height: 0px;
+            pointer-events: none;
+            transition: all 300ms ease-out;
+        }
+        .trigger {
+            cursor: pointer;
+            list-style: none;
+            user-select: none;
+            font-weight: 600;
+            color: #334155;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.875rem;
+            height: 42px;
+            position: relative;
+            z-index: 99;
+            border-radius: inherit;
+            background-color: white;
+            font-size: 13px;
+        }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        .trigger::after {
+            content: "\f078";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            font-size: 10px;
+            color: #64748b;
+            transition: transform 350ms ease;
+            margin-left: 8px;
+        }
+        .dropdown input:where(:checked) + .trigger::after {
+            transform: rotate(180deg);
+        }
+        .list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            max-height: 16rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            gap: 0.375rem;
+            padding: 0.5rem;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            z-index: 100;
+            list-style: none;
+        }
+        .listitem {
+            list-style: none;
+            width: 100%;
+        }
+        .article {
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            display: block;
+            background-color: #f8fafc;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .article:hover {
+            background-color: #e0f2fe;
+            color: #0284c7;
+            border-color: #bae6fd;
+        }
+
+        .webkit-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+            border-radius: 9999px;
+        }
+        .webkit-scrollbar::-webkit-scrollbar-track {
+            background: #0000;
+        }
+        .webkit-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        .webkit-scrollbar:hover::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-100 via-sky-100/50 to-blue-200/60 text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-sky/20 selection:text-skyDeep min-h-screen">
@@ -242,23 +376,23 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     
                    <div class="bg-gradient-to-br from-sky-100 via-sky-200 to-blue-300/70 border-l-4 border-sky-500 border border-sky-300 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-md">
-    <div class="blob-live absolute top-0 right-0 -mr-4 -mt-4 w-28 h-28 rounded-full bg-sky-400 group-hover:scale-[1.8] group-hover:opacity-40 transition-all duration-700"></div>
-    <div class="flex justify-between items-start mb-4 relative z-10">
-        <div>
-            <span class="text-[11px] font-bold text-sky-900 uppercase tracking-wider group-hover:text-sky-600 transition-colors">Total Pesanan</span>
-            <div class="text-3xl font-black text-slate-900 mt-1">2,840</div>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold shadow-md shadow-sky-500/40">
-            <i class="fa-solid fa-bag-shopping text-lg group-hover:scale-110 transition-transform duration-300"></i>
-        </div>
-    </div>
-    <div class="flex items-center gap-2 relative z-10">
-        <span class="bg-emerald-100 text-emerald-900 text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
-            <i class="fa-solid fa-arrow-trend-up"></i> +18%
-        </span>
-        <span class="text-[10px] text-slate-600 font-medium">Bulan ini</span>
-    </div>
-</div>
+                        <div class="blob-live absolute top-0 right-0 -mr-4 -mt-4 w-28 h-28 rounded-full bg-sky-400 group-hover:scale-[1.8] group-hover:opacity-40 transition-all duration-700"></div>
+                        <div class="flex justify-between items-start mb-4 relative z-10">
+                            <div>
+                                <span class="text-[11px] font-bold text-sky-900 uppercase tracking-wider group-hover:text-sky-600 transition-colors">Total Pesanan</span>
+                                <div class="text-3xl font-black text-slate-900 mt-1">2,840</div>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold shadow-md shadow-sky-500/40">
+                                <i class="fa-solid fa-bag-shopping text-lg group-hover:scale-110 transition-transform duration-300"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 relative z-10">
+                            <span class="bg-emerald-100 text-emerald-900 text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
+                                <i class="fa-solid fa-arrow-trend-up"></i> +18%
+                            </span>
+                            <span class="text-[10px] text-slate-600 font-medium">Bulan ini</span>
+                        </div>
+                    </div>
 
                     <!-- Card 2: Pendapatan -->
                     <div class="bg-gradient-to-br from-emerald-50 via-emerald-100/60 to-teal-200/50 border-l-4 border-emerald-500 border border-emerald-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-md">
@@ -327,12 +461,19 @@
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                             <div>
                                 <h3 class="font-extrabold text-slate-900 text-lg font-display">Statistik Pemesanan Jasa</h3>
-                                <p class="text-[11px] text-slate-600 mt-1">Pertumbuhan transaksi berdasarkan data order (Tahun 2026)</p>
+                                <p id="chartSubtitle" class="text-[11px] text-slate-600 mt-1">Pertumbuhan transaksi berdasarkan data order (Tahun 2026)</p>
                             </div>
-                            <select class="bg-white border border-sky-300 text-slate-700 text-xs font-semibold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky/20 shadow-sm">
-                                <option>Tahun 2026</option>
-                                <option>Tahun 2025</option>
-                            </select>
+
+                            <!-- Custom Real-time Dynamic Year Dropdown -->
+                            <div class="dropdown">
+                                <input type="checkbox" id="yearDropdownToggle" class="sr-only">
+                                <label for="yearDropdownToggle" class="trigger">
+                                    <span id="selectedYearText">Tahun</span>
+                                </label>
+                                <ul id="yearList" class="list webkit-scrollbar">
+                                    <!-- Populated dynamically via JS from 2026 up to current real-time year -->
+                                </ul>
+                            </div>
                         </div>
 
                         <div class="h-64 w-full">
@@ -423,7 +564,6 @@
                                         <p class="text-[11px] text-slate-600 mt-0.5">Terdapat 3 pengajuan KTP/Identitas baru</p>
                                     </div>
                                 </div>
-                                <!-- Button Tinjau (Subtle Animation) -->
                                 <button class="relative group border-none bg-transparent p-0 outline-none cursor-pointer">
                                     <span class="absolute top-0 left-0 w-full h-full bg-black bg-opacity-15 rounded-lg transform translate-y-0.5 transition duration-300 group-hover:translate-y-1"></span>
                                     <span class="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-slate-200 via-slate-300 to-slate-200"></span>
@@ -443,7 +583,6 @@
                                         <p class="text-[11px] text-slate-600 mt-0.5">5 Produk menunggu ditinjau kelayakannya</p>
                                     </div>
                                 </div>
-                                <!-- Button Proses (5) (Subtle Animation) -->
                                 <button class="relative group border-none bg-transparent p-0 outline-none cursor-pointer">
                                     <span class="absolute top-0 left-0 w-full h-full bg-black bg-opacity-15 rounded-lg transform translate-y-0.5 transition duration-300 group-hover:translate-y-1"></span>
                                     <span class="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-slate-200 via-slate-300 to-slate-200"></span>
@@ -463,7 +602,6 @@
                                         <p class="text-[11px] text-slate-600 mt-0.5">Ada 2 laporan terkait hak cipta/spam</p>
                                     </div>
                                 </div>
-                                <!-- Button Periksa (Subtle Animation) -->
                                 <button class="relative group border-none bg-transparent p-0 outline-none cursor-pointer">
                                     <span class="absolute top-0 left-0 w-full h-full bg-black bg-opacity-15 rounded-lg transform translate-y-0.5 transition duration-300 group-hover:translate-y-1"></span>
                                     <span class="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-slate-200 via-slate-300 to-slate-200"></span>
@@ -480,7 +618,6 @@
                             <h3 class="font-extrabold text-slate-900 text-lg font-display flex items-center gap-2">
                                 <i class="fa-solid fa-bolt text-emerald-600"></i> Aktivitas Terkini
                             </h3>
-                            <!-- Button Log Penuh (Subtle Animation) -->
                             <button class="relative group border-none bg-transparent p-0 outline-none cursor-pointer">
                                 <span class="absolute top-0 left-0 w-full h-full bg-black bg-opacity-15 rounded-md transform translate-y-0.5 transition duration-300 group-hover:translate-y-1"></span>
                                 <span class="absolute top-0 left-0 w-full h-full rounded-md bg-gradient-to-l from-slate-200 via-slate-300 to-slate-200"></span>
@@ -552,14 +689,45 @@
             });
         });
 
+        let yearlyChartInstance;
+
         document.addEventListener('DOMContentLoaded', function () {
+            // Real-time Year Dropdown Generation (Starting from 2026 up to current real-time year)
+            const startYear = 2026;
+            const currentRealYear = new Date().getFullYear();
+            const maxYear = Math.max(startYear, currentRealYear);
+            
+            const yearListEl = document.getElementById('yearList');
+            const selectedTextEl = document.getElementById('selectedYearText');
+            const checkboxEl = document.getElementById('yearDropdownToggle');
+            const subtitleEl = document.getElementById('chartSubtitle');
+
+            // Initial trigger text set strictly to "Tahun"
+            selectedTextEl.textContent = "Tahun";
+
+            // Populate years descending (newest/current year at the top)
+            for (let y = maxYear; y >= startYear; y--) {
+                const li = document.createElement('li');
+                li.className = 'listitem';
+                li.innerHTML = `<div class="article" data-year="${y}">Tahun ${y}</div>`;
+                
+                li.querySelector('.article').addEventListener('click', () => {
+                    selectedTextEl.textContent = `Tahun ${y}`;
+                    subtitleEl.textContent = `Pertumbuhan transaksi berdasarkan data order (Tahun ${y})`;
+                    checkboxEl.checked = false; // Close dropdown
+                    updateChartData(y);
+                });
+                yearListEl.appendChild(li);
+            }
+
+            // Chart Initialization (Default to 2026 data initially)
             const ctx = document.getElementById('yearlyChart').getContext('2d');
             
             let gradient = ctx.createLinearGradient(0, 0, 0, 400);
             gradient.addColorStop(0, 'rgba(14, 165, 233, 0.45)');    
             gradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)');
 
-            new Chart(ctx, {
+            yearlyChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
@@ -612,6 +780,21 @@
                 }
             });
         });
+
+        // Function to update chart data dynamically when selecting different years
+        function updateChartData(year) {
+            let baseData = [120, 190, 150, 280, 220, 310, 390, 420, 380, 450, 410, 500];
+            
+            if (year === 2027) {
+                baseData = [160, 220, 190, 310, 260, 350, 420, 460, 420, 490, 460, 540];
+            } else if (year > 2027) {
+                let multiplier = 1 + ((year - 2026) * 0.15);
+                baseData = baseData.map(val => Math.round(val * multiplier));
+            }
+
+            yearlyChartInstance.data.datasets[0].data = baseData;
+            yearlyChartInstance.update();
+        }
     </script>
 </body>
 </html>
