@@ -18,12 +18,8 @@
                 extend: {
                     colors: {
                         sky: '#0EA5E9',
-                        skyHover: '#0284C7',
                         skyDeep: '#0B3D62',
-                        skyDeeper: '#082C48',
                         skyPale: '#EFF8FF',
-                        coral: '#FF7A59',
-                        mint: '#14B8A6',
                         ink: '#0F2A44'
                     },
                     fontFamily: {
@@ -31,8 +27,7 @@
                         body: ['"Plus Jakarta Sans"', 'sans-serif']
                     },
                     boxShadow: {
-                        card: '0 10px 40px -10px rgba(11,61,98,0.35)',
-                        glowSky: '0 8px 30px -6px rgba(14,165,233,0.5)'
+                        card: '0 10px 40px -10px rgba(11,61,98,0.35)'
                     },
                     animation: {
                         'blob': 'blob 7s infinite',
@@ -59,6 +54,12 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .font-display { font-family: 'Sora', sans-serif; }
 
+        /* Sembunyikan icon mata bawaan browser Edge */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none;
+        }
+
         .grain-overlay {
             position: absolute; inset: 0; z-index: 0; pointer-events: none;
             opacity: 0.05; mix-blend-mode: overlay;
@@ -67,31 +68,43 @@
 
         .animation-delay-2000 { animation-delay: 2s; }
 
+        /* Custom Button & Animation */
         .btn-premium {
-            position: relative; overflow: hidden; isolation: isolate;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            color: #fff;
+            background-image: linear-gradient(30deg, #0400ff, #4ce3f7);
+            border-radius: 12px;
+            background-size: 100% auto;
+            font-family: inherit;
+            font-size: 14px;
+            padding: 0.75em 1.5em;
+            transition: all 0.3s ease;
         }
-        .btn-premium::before {
-            content: ""; position: absolute; inset: 0;
-            background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,0.4) 50%, transparent 80%);
-            transform: translateX(-150%) skewX(-15deg); transition: transform 0.7s ease; z-index: 1; pointer-events: none;
+
+        .btn-premium:hover {
+            background-position: right center;
+            background-size: 200% auto;
+            -webkit-animation: pulse 2s infinite;
+            animation: pulse512 1.5s infinite;
         }
-        .btn-premium:hover::before { transform: translateX(150%) skewX(-15deg); }
-        .btn-premium:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -6px rgba(14,165,233,0.7); }
-        .btn-premium:active { transform: translateY(0) scale(0.98); }
-        .btn-premium > * { position: relative; z-index: 2; }
+
+        @keyframes pulse512 {
+            0% { box-shadow: 0 0 0 0 #05bada66; }
+            70% { box-shadow: 0 0 0 10px rgb(218 103 68 / 0%); }
+            100% { box-shadow: 0 0 0 0 rgb(218 103 68 / 0%); }
+        }
     </style>
 </head>
-<body class="bg-skyDeeper text-ink antialiased min-h-screen w-full flex items-center justify-center relative p-4 overflow-hidden">
+<body class="bg-gradient-to-br from-blue-600 via-blue-500 to-yellow-400 text-ink antialiased min-h-screen w-full flex items-center justify-center relative p-4 overflow-hidden">
 
-    <!-- Background Animasi Premium -->
+    <!-- Background Animasi -->
     <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none flex items-center justify-center">
         <div class="grain-overlay"></div>
-        <div class="absolute -top-20 -left-20 w-80 h-80 bg-sky/30 rounded-full blur-[80px] animate-blob"></div>
-        <div class="absolute bottom-10 right-10 w-80 h-80 bg-coral/20 rounded-full blur-[80px] animate-blob animation-delay-2000"></div>
+        <div class="absolute -top-20 -left-20 w-80 h-80 bg-blue-300/40 rounded-full blur-[80px] animate-blob"></div>
+        <div class="absolute bottom-10 right-10 w-80 h-80 bg-yellow-300/40 rounded-full blur-[80px] animate-blob animation-delay-2000"></div>
     </div>
 
-    <!-- Login Card (Kecil & Compact) -->
+    <!-- Login Card -->
     <div class="w-full max-w-[360px] bg-white/95 backdrop-blur-xl p-6 sm:p-7 rounded-[1.5rem] shadow-card border border-white/40 relative z-10 opacity-0 animate-fade-in-up">
 
         <div class="text-center mb-6">
@@ -110,7 +123,7 @@
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                         <i class="fa-solid fa-at text-slate-400 text-sm group-focus-within:text-sky transition-colors"></i>
                     </div>
-                    <input type="text" id="username" name="username" placeholder="Masukkan username" required
+                    <input type="text" id="username" name="username" placeholder="Masukkan username" autocomplete="off" required
                         class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-skyPale border border-slate-200 text-xs font-medium focus:bg-white focus:outline-none focus:border-sky focus:ring-2 focus:ring-sky/20 transition-all duration-300">
                 </div>
             </div>
@@ -121,9 +134,10 @@
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                         <i class="fa-solid fa-lock text-slate-400 text-sm group-focus-within:text-sky transition-colors"></i>
                     </div>
-                    <input type="password" id="password" name="password" placeholder="••••••••" required
+                    <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="new-password" required
                         class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-skyPale border border-slate-200 text-xs font-medium focus:bg-white focus:outline-none focus:border-sky focus:ring-2 focus:ring-sky/20 transition-all duration-300">
 
+                    <!-- Hanya 1 Icon Mata di Kanan -->
                     <button type="button" onclick="togglePassword('password', 'eye-icon-login')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none">
                         <i class="fa-solid fa-eye text-sm" id="eye-icon-login"></i>
                     </button>
@@ -134,7 +148,7 @@
                 <a href="#" class="text-[11px] font-bold text-sky hover:text-skyDeep transition-colors">Lupa password?</a>
             </div>
 
-            <button type="submit" class="btn-premium group w-full flex items-center justify-center gap-2 bg-gradient-to-r from-sky to-skyDeep text-white py-3 rounded-xl font-bold shadow-glowSky mt-3 text-sm">
+            <button type="submit" class="btn-premium group w-full flex items-center justify-center gap-2 mt-3 font-bold shadow-md">
                 <span>Masuk Sekarang</span>
                 <i class="fa-solid fa-arrow-right text-xs opacity-80 group-hover:translate-x-1 group-hover:opacity-100 transition-all duration-300"></i>
             </button>
