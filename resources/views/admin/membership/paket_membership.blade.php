@@ -26,6 +26,7 @@
         .menu-chevron.rotated { transform: rotate(180deg); }
         .card-hover { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .card-hover:hover { transform: scale(1.015) translateY(-3px); box-shadow: 0 15px 30px -10px rgba(14, 165, 233, 0.25); border-color: rgba(14, 165, 233, 0.5); }
+        .modal-backdrop { background: rgba(15, 23, 42, 0.55); }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-100 via-sky-100/40 to-blue-200/50 text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-sky/20 selection:text-skyDeep min-h-screen">
@@ -47,17 +48,16 @@
 
             <nav class="flex-1 px-4 space-y-1.5 text-[13px] font-semibold text-sky-100 overflow-y-auto pt-4 pb-4">
                 <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2">Menu Utama</p>
-                <a href="#" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all duration-200">
+                <a href="{{ route('admin.dashboard') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all duration-200">
                     <i class="fa-solid fa-chart-pie w-4 text-center"></i><span>Dashboard</span>
                 </a>
-                
-                <!-- Menu Paket Membership Aktif -->
-                <a href="#" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl active-menu transition-all group mt-2">
+
+                <a href="{{ route('admin.memberships') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl active-menu transition-all group mt-2">
                     <i class="fa-solid fa-crown w-4 text-center text-amber-300"></i><span>Paket Membership</span>
                 </a>
 
                 <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-6">Sistem</p>
-                <a href="#" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
+                <a href="{{ route('admin.maintenance') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
                     <div class="flex items-center gap-3"><i class="fa-solid fa-server w-4 text-center group-hover:text-white transition-colors"></i><span>Maintenance & Backup</span></div>
                 </a>
             </nav>
@@ -75,11 +75,22 @@
             </header>
 
             <div class="p-6 sm:p-8 space-y-6 overflow-y-auto no-scrollbar">
-                
+
+                @if (session('success'))
+                    <div class="bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold px-4 py-3 rounded-xl">
+                        <i class="fa-solid fa-circle-check mr-1"></i> {{ session('success') }}
+                    </div>
+                @endif
+                @if (session('error'))
+                    <div class="bg-red-50 border border-red-300 text-red-800 text-xs font-semibold px-4 py-3 rounded-xl">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> {{ session('error') }}
+                    </div>
+                @endif
+
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                     <div class="bg-gradient-to-br from-amber-50 via-white to-amber-100/60 border-l-4 border-amber-500 border-y border-r border-amber-200 p-5 rounded-2xl card-hover shadow-sm">
                         <div class="flex justify-between items-start mb-2">
-                            <div><span class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Total Pelanggan Aktif</span><div class="text-3xl font-black text-slate-900 mt-1">420</div></div>
+                            <div><span class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Total Pelanggan Aktif</span><div class="text-3xl font-black text-slate-900 mt-1">{{ $totalPelangganAktif }}</div></div>
                             <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/30"><i class="fa-solid fa-crown text-lg"></i></div>
                         </div>
                     </div>
@@ -87,13 +98,8 @@
 
                 <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 backdrop-blur-sm">
-                        <div class="relative w-full sm:w-72">
-                            <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                            <input type="text" placeholder="Cari paket..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
-                        </div>
-                        
-                        <!-- Tombol Tambah Membership -->
-                        <button onclick="alert('Buka Modal Tambah Paket')" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/30 transition-all flex items-center justify-center gap-2 w-full sm:w-auto">
+                        <h3 class="font-extrabold text-slate-900 text-sm font-display">Daftar Paket ({{ $memberships->count() }})</h3>
+                        <button type="button" onclick="openMembershipModal()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/30 transition-all flex items-center justify-center gap-2 w-full sm:w-auto">
                             <i class="fa-solid fa-plus"></i> Tambah Paket Baru
                         </button>
                     </div>
@@ -105,36 +111,49 @@
                                     <th class="py-4 px-6">Nama Paket & Ikon</th>
                                     <th class="py-4 px-6">Harga / Siklus</th>
                                     <th class="py-4 px-6">Fitur Unggulan</th>
-                                    <th class="py-4 px-6">Status</th>
+                                    <th class="py-4 px-6">Pelanggan</th>
                                     <th class="py-4 px-6 text-center">Aksi (CRUD)</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-sky-100/70">
-                                
+                                @forelse ($memberships as $membership)
                                 <tr class="hover:bg-sky-50/50 transition-colors bg-white">
                                     <td class="py-3 px-6">
                                         <div class="flex items-center gap-3">
                                             <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-orange-500 text-white flex items-center justify-center text-lg border border-amber-200 shadow-sm"><i class="fa-solid fa-crown"></i></div>
                                             <div>
-                                                <p class="font-bold text-slate-800 text-xs">Pro Creator</p>
-                                                <p class="text-[10px] text-slate-500 font-medium">Paket Langganan Utama</p>
+                                                <p class="font-bold text-slate-800 text-xs">{{ $membership->name }}</p>
+                                                <p class="text-[10px] text-slate-500 font-medium">Durasi {{ $membership->duration_days }} hari</p>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="py-3 px-6">
-                                        <p class="text-xs font-bold text-sky-700">Rp 99.000 <span class="text-[10px] font-medium text-slate-500">/ Bulan</span></p>
+                                        <p class="text-xs font-bold text-sky-700">Rp {{ number_format($membership->price, 0, ',', '.') }}</p>
                                     </td>
-                                    <td class="py-3 px-6"><p class="text-[11px] text-slate-600 w-48 truncate">Potongan fee 5%, badge khusus, limit 50 produk.</p></td>
+                                    <td class="py-3 px-6"><p class="text-[11px] text-slate-600 w-48 truncate">{{ $membership->benefit }}</p></td>
                                     <td class="py-3 px-6">
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Aktif</span>
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">{{ $membership->users_count ?? 0 }} pengguna</span>
                                     </td>
                                     <td class="py-3 px-6">
                                         <div class="flex items-center justify-center gap-2">
-                                            <button onclick="alert('Edit Paket')" class="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all text-xs font-bold shadow-sm" title="Edit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-                                            <button onclick="alert('Hapus Paket')" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all text-xs font-bold shadow-sm" title="Hapus"><i class="fa-solid fa-trash"></i> Hapus</button>
+                                            <button type="button"
+                                                onclick='openMembershipModal(@json($membership))'
+                                                class="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all text-xs font-bold shadow-sm" title="Edit">
+                                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                                            </button>
+                                            <form action="{{ route('admin.memberships.delete', $membership->id_membership) }}" method="POST" onsubmit="return confirm('Hapus paket ini?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all text-xs font-bold shadow-sm" title="Hapus"><i class="fa-solid fa-trash"></i> Hapus</button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="py-8 px-6 text-center text-xs text-slate-500 font-semibold">Belum ada paket membership.</td>
+                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -144,6 +163,44 @@
         </main>
     </div>
 
+    <!-- MODAL TAMBAH/EDIT MEMBERSHIP -->
+    <div id="membershipModal" class="fixed inset-0 z-[60] hidden items-center justify-center modal-backdrop p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="p-5 border-b border-sky-100 flex items-center justify-between">
+                <h3 id="membershipModalTitle" class="font-extrabold text-slate-900 font-display">Tambah Paket Baru</h3>
+                <button type="button" onclick="closeMembershipModal()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="membershipForm" method="POST" class="p-5 space-y-4">
+                @csrf
+                <input type="hidden" name="_method" id="membershipMethod" value="POST">
+
+                <div>
+                    <label class="text-[11px] font-bold text-slate-600 uppercase">Nama Paket</label>
+                    <input type="text" name="name" id="membership_name" required class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-600 uppercase">Harga (Rp)</label>
+                        <input type="number" name="price" id="membership_price" required min="0" class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-600 uppercase">Durasi (Hari)</label>
+                        <input type="number" name="duration_days" id="membership_duration" required min="1" class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-600 uppercase">Maksimal Upload Produk</label>
+                    <input type="number" name="max_upload" id="membership_max_upload" required min="0" class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-600 uppercase">Fitur / Benefit</label>
+                    <textarea name="benefit" id="membership_benefit" required rows="3" class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30"></textarea>
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">Simpan Paket</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         const sidebar = document.getElementById('sidebar');
         const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
@@ -151,6 +208,40 @@
         const sidebarOverlay = document.getElementById('sidebarOverlay');
         function toggleSidebar() { sidebar.classList.toggle('open'); sidebar.classList.toggle('closed'); sidebarOverlay.classList.toggle('hidden'); }
         sidebarToggleBtn.addEventListener('click', toggleSidebar); sidebarCloseBtn.addEventListener('click', toggleSidebar); sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        const storeUrl = "{{ route('admin.memberships.store') }}";
+
+        function openMembershipModal(membership = null) {
+            const modal = document.getElementById('membershipModal');
+            const form = document.getElementById('membershipForm');
+            const title = document.getElementById('membershipModalTitle');
+            const method = document.getElementById('membershipMethod');
+
+            if (membership) {
+                title.textContent = 'Edit Paket Membership';
+                form.action = `{{ url('admin/memberships') }}/${membership.id_membership}`;
+                method.value = 'PUT';
+                document.getElementById('membership_name').value = membership.name ?? '';
+                document.getElementById('membership_price').value = membership.price ?? '';
+                document.getElementById('membership_duration').value = membership.duration_days ?? '';
+                document.getElementById('membership_max_upload').value = membership.max_upload ?? '';
+                document.getElementById('membership_benefit').value = membership.benefit ?? '';
+            } else {
+                title.textContent = 'Tambah Paket Baru';
+                form.action = storeUrl;
+                method.value = 'POST';
+                form.reset();
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeMembershipModal() {
+            const modal = document.getElementById('membershipModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
     </script>
 </body>
 </html>

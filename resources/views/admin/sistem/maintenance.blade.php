@@ -43,13 +43,12 @@
 
             <nav class="flex-1 px-4 space-y-1.5 text-[13px] font-semibold text-sky-100 overflow-y-auto pt-4 pb-4">
                 <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2">Menu Utama</p>
-                <a href="#" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all duration-200">
+                <a href="{{ route('admin.dashboard') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all duration-200">
                     <i class="fa-solid fa-chart-pie w-4 text-center"></i><span>Dashboard</span>
                 </a>
-                
+
                 <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-6">Sistem</p>
-                <!-- Menu Maintenance Aktif -->
-                <a href="#" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl active-menu transition-all group">
+                <a href="{{ route('admin.maintenance') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl active-menu transition-all group">
                     <div class="flex items-center gap-3"><i class="fa-solid fa-server w-4 text-center text-white transition-colors"></i><span>Maintenance & Backup</span></div>
                 </a>
             </nav>
@@ -67,21 +66,45 @@
             </header>
 
             <div class="p-6 sm:p-8 space-y-6 overflow-y-auto no-scrollbar">
-                
+
+                @if (session('success'))
+                    <div class="bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold px-4 py-3 rounded-xl">
+                        <i class="fa-solid fa-circle-check mr-1"></i> {{ session('success') }}
+                    </div>
+                @endif
+                @if (session('warning'))
+                    <div class="bg-amber-50 border border-amber-300 text-amber-800 text-xs font-semibold px-4 py-3 rounded-xl">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i> {{ session('warning') }}
+                    </div>
+                @endif
+                @if (session('error'))
+                    <div class="bg-red-50 border border-red-300 text-red-800 text-xs font-semibold px-4 py-3 rounded-xl">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> {{ session('error') }}
+                    </div>
+                @endif
+
                 <!-- Status Server Card -->
-                <div class="bg-gradient-to-br from-indigo-50 via-white to-blue-100/60 border-l-4 border-indigo-500 border-y border-r border-indigo-200 p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="bg-gradient-to-br from-indigo-50 via-white to-blue-100/60 border-l-4 {{ $isMaintenance ? 'border-red-500' : 'border-indigo-500' }} border-y border-r border-indigo-200 p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center border-4 border-white shadow-sm">
-                            <span class="w-4 h-4 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <div class="w-12 h-12 rounded-full {{ $isMaintenance ? 'bg-red-100' : 'bg-emerald-100' }} flex items-center justify-center border-4 border-white shadow-sm">
+                            <span class="w-4 h-4 rounded-full {{ $isMaintenance ? 'bg-red-500' : 'bg-emerald-500' }} animate-pulse"></span>
                         </div>
                         <div>
-                            <h3 class="font-extrabold text-slate-900 text-lg">Sistem Berjalan Normal (Online)</h3>
-                            <p class="text-[11px] text-slate-600 mt-0.5">Server aktif dan dapat diakses oleh semua pengguna.</p>
+                            <h3 class="font-extrabold text-slate-900 text-lg">
+                                {{ $isMaintenance ? 'Sistem Sedang Maintenance' : 'Sistem Berjalan Normal (Online)' }}
+                            </h3>
+                            <p class="text-[11px] text-slate-600 mt-0.5">
+                                {{ $isMaintenance ? 'Pengguna umum tidak dapat mengakses aplikasi saat ini.' : 'Server aktif dan dapat diakses oleh semua pengguna.' }}
+                            </p>
                         </div>
                     </div>
-                    <button class="px-5 py-2.5 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white border border-red-300 text-xs font-bold rounded-xl transition-all shadow-sm">
-                        <i class="fa-solid fa-power-off"></i> Aktifkan Mode Maintenance
-                    </button>
+                    <form action="{{ route('admin.toggleMaintenance') }}" method="POST" onsubmit="return confirm('{{ $isMaintenance ? 'Aktifkan kembali sistem?' : 'Aktifkan mode maintenance?' }}');">
+                        @csrf
+                        <button type="submit" class="px-5 py-2.5 {{ $isMaintenance ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-600 border-emerald-300' : 'bg-red-100 text-red-700 hover:bg-red-600 border-red-300' }} hover:text-white border text-xs font-bold rounded-xl transition-all shadow-sm">
+                            <i class="fa-solid fa-power-off"></i>
+                            {{ $isMaintenance ? 'Nonaktifkan Maintenance' : 'Aktifkan Mode Maintenance' }}
+                        </button>
+                    </form>
                 </div>
 
                 <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
@@ -89,11 +112,13 @@
                         <div>
                             <h3 class="font-extrabold text-slate-900 text-lg font-display">Riwayat Backup Database</h3>
                         </div>
-                        
-                        <!-- Tombol Tambah/Buat Backup Baru -->
-                        <button onclick="alert('Memulai proses Backup Database...')" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/30 transition-all flex items-center justify-center gap-2 w-full sm:w-auto">
-                            <i class="fa-solid fa-database"></i> Buat Backup Baru
-                        </button>
+
+                        <form action="{{ route('admin.backup.create') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/30 transition-all flex items-center justify-center gap-2 w-full sm:w-auto">
+                                <i class="fa-solid fa-database"></i> Buat Backup Baru
+                            </button>
+                        </form>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -108,24 +133,33 @@
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-sky-100/70">
-                                
+                                @forelse ($backups as $backup)
                                 <tr class="hover:bg-sky-50/50 transition-colors bg-white">
                                     <td class="py-3 px-6">
                                         <div class="flex items-center gap-3">
                                             <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center text-sm border border-sky-200"><i class="fa-solid fa-file-zipper"></i></div>
-                                            <p class="font-bold text-slate-800 text-xs">backup-2026-08-04.zip</p>
+                                            <p class="font-bold text-slate-800 text-xs">{{ $backup['name'] }}</p>
                                         </div>
                                     </td>
-                                    <td class="py-3 px-6"><p class="text-xs font-semibold text-slate-700">04 Ags 2026 - 02:00 WIB</p></td>
-                                    <td class="py-3 px-6 text-xs font-bold text-slate-600">45.2 MB</td>
-                                    <td class="py-3 px-6"><span class="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">Otomatis</span></td>
+                                    <td class="py-3 px-6"><p class="text-xs font-semibold text-slate-700">{{ $backup['created_at']->translatedFormat('d M Y - H:i') }} WIB</p></td>
+                                    <td class="py-3 px-6 text-xs font-bold text-slate-600">{{ $backup['size'] }}</td>
+                                    <td class="py-3 px-6"><span class="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">Manual</span></td>
                                     <td class="py-3 px-6">
                                         <div class="flex items-center justify-center gap-2">
-                                            <button onclick="alert('Download Backup')" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold shadow-sm" title="Download"><i class="fa-solid fa-download"></i></button>
-                                            <button onclick="alert('Hapus Backup')" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all text-xs font-bold shadow-sm" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                            <a href="{{ route('admin.backup.download', $backup['name']) }}" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold shadow-sm" title="Download"><i class="fa-solid fa-download"></i></a>
+                                            <form action="{{ route('admin.backup.delete', $backup['name']) }}" method="POST" onsubmit="return confirm('Hapus file backup ini?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all text-xs font-bold shadow-sm" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="py-8 px-6 text-center text-xs text-slate-500 font-semibold">Belum ada file backup. Klik "Buat Backup Baru" untuk membuat backup pertama.</td>
+                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>

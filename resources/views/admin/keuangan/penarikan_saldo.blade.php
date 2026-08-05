@@ -47,7 +47,7 @@
 
             <nav class="flex-1 px-4 space-y-1.5 text-[13px] font-semibold text-sky-100 overflow-y-auto pt-4 pb-4">
                 <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2">Menu Utama</p>
-                <a href="#" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all duration-200">
+                <a href="{{ route('admin.dashboard') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all duration-200">
                     <i class="fa-solid fa-chart-pie w-4 text-center"></i><span>Dashboard</span>
                 </a>
                 <div>
@@ -56,20 +56,19 @@
                         <i class="fa-solid fa-chevron-down text-[10px] ml-auto menu-chevron rotated" data-chevron="transaksi"></i>
                     </button>
                     <div class="submenu pl-4 mt-1 space-y-1 open" data-submenu="transaksi">
-                        <a href="#" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
+                        <a href="{{ route('admin.transactions') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
                             <i class="fa-solid fa-clock-rotate-left text-[10px] text-sky-200 w-3 text-center"></i> Riwayat Pesanan
                         </a>
-                        <!-- Menu Penarikan Saldo Aktif -->
-                        <a href="#" class="flex items-center gap-2 px-3.5 py-2 rounded-lg active-menu transition-all text-xs">
+                        <a href="{{ route('admin.withdrawals') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg active-menu transition-all text-xs">
                             <i class="fa-solid fa-wallet text-[10px] text-white w-3 text-center"></i> Penarikan Saldo
                         </a>
                     </div>
                 </div>
-                <a href="#" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
+                <a href="{{ route('admin.memberships') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
                     <i class="fa-solid fa-crown w-4 text-center group-hover:text-amber-300 transition-colors"></i><span>Paket Membership</span>
                 </a>
                 <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-6">Sistem</p>
-                <a href="#" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
+                <a href="{{ route('admin.maintenance') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
                     <div class="flex items-center gap-3"><i class="fa-solid fa-server w-4 text-center group-hover:text-white transition-colors"></i><span>Maintenance & Backup</span></div>
                 </a>
             </nav>
@@ -88,23 +87,34 @@
             </header>
 
             <div class="p-6 sm:p-8 space-y-6 overflow-y-auto no-scrollbar">
-                
+
+                @if (session('success'))
+                    <div class="bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold px-4 py-3 rounded-xl">
+                        <i class="fa-solid fa-circle-check mr-1"></i> {{ session('success') }}
+                    </div>
+                @endif
+                @if (session('error'))
+                    <div class="bg-red-50 border border-red-300 text-red-800 text-xs font-semibold px-4 py-3 rounded-xl">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> {{ session('error') }}
+                    </div>
+                @endif
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     <div class="bg-gradient-to-br from-amber-50 via-white to-amber-100/60 border-l-4 border-amber-500 border-y border-r border-amber-200 p-5 rounded-2xl card-hover shadow-sm">
                         <div class="flex justify-between items-start mb-2">
-                            <div><span class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Menunggu Diproses</span><div class="text-3xl font-black text-slate-900 mt-1">15</div></div>
+                            <div><span class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Menunggu Diproses</span><div class="text-3xl font-black text-slate-900 mt-1">{{ $menungguDiproses }}</div></div>
                             <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/30"><i class="fa-solid fa-clock-rotate-left text-lg"></i></div>
                         </div>
                     </div>
                     <div class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100/60 border-l-4 border-emerald-500 border-y border-r border-emerald-200 p-5 rounded-2xl card-hover shadow-sm">
                         <div class="flex justify-between items-start mb-2">
-                            <div><span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Selesai (Bulan Ini)</span><div class="text-3xl font-black text-slate-900 mt-1">Rp 45.2M</div></div>
+                            <div><span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Selesai (Bulan Ini)</span><div class="text-3xl font-black text-slate-900 mt-1">Rp {{ number_format($selesaiBulanIni, 0, ',', '.') }}</div></div>
                             <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/30"><i class="fa-solid fa-money-bill-transfer text-lg"></i></div>
                         </div>
                     </div>
                     <div class="bg-gradient-to-br from-red-50 via-white to-red-100/60 border-l-4 border-red-500 border-y border-r border-red-200 p-5 rounded-2xl card-hover shadow-sm">
                         <div class="flex justify-between items-start mb-2">
-                            <div><span class="text-[11px] font-bold text-red-900 uppercase tracking-wider">Gagal / Ditolak</span><div class="text-3xl font-black text-slate-900 mt-1">3</div></div>
+                            <div><span class="text-[11px] font-bold text-red-900 uppercase tracking-wider">Gagal / Ditolak</span><div class="text-3xl font-black text-slate-900 mt-1">{{ $gagalDitolak }}</div></div>
                             <div class="w-10 h-10 rounded-xl bg-red-500 text-white flex items-center justify-center font-bold shadow-md shadow-red-500/30"><i class="fa-solid fa-building-columns text-lg"></i></div>
                         </div>
                     </div>
@@ -112,10 +122,10 @@
 
                 <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 backdrop-blur-sm">
-                        <div class="relative w-full sm:w-72">
+                        <form action="{{ route('admin.withdrawals') }}" method="GET" class="relative w-full sm:w-72">
                             <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                            <input type="text" placeholder="Cari ID WD / Nama..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
-                        </div>
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari ID WD / Nama..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
+                        </form>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -130,29 +140,57 @@
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-sky-100/70">
+                                @forelse ($withdrawals as $withdrawal)
                                 <tr class="hover:bg-sky-50/50 transition-colors bg-white">
                                     <td class="py-3 px-6">
-                                        <p class="font-bold text-sky-700 text-xs">#WD-88912</p>
-                                        <p class="text-[10px] text-slate-500 font-medium mt-0.5">05 Ags 2026, 14:20</p>
+                                        <p class="font-bold text-sky-700 text-xs">#WD-{{ $withdrawal->id_withdrawal ?? $withdrawal->id }}</p>
+                                        <p class="text-[10px] text-slate-500 font-medium mt-0.5">{{ $withdrawal->created_at->translatedFormat('d M Y, H:i') }}</p>
                                     </td>
                                     <td class="py-3 px-6">
-                                        <p class="text-xs font-bold text-slate-800">Ahmad Fauzi</p>
-                                        <p class="text-[10px] font-semibold text-slate-500 mt-0.5"><i class="fa-solid fa-building-columns mr-1"></i> BCA - 1234567890</p>
+                                        <p class="text-xs font-bold text-slate-800">{{ $withdrawal->user->name ?? '-' }}</p>
+                                        <p class="text-[10px] font-semibold text-slate-500 mt-0.5"><i class="fa-solid fa-building-columns mr-1"></i> {{ $withdrawal->bank_name ?? '-' }} - {{ $withdrawal->account_number ?? '-' }}</p>
                                     </td>
-                                    <td class="py-3 px-6 text-xs font-bold text-emerald-600">Rp 2.500.000</td>
+                                    <td class="py-3 px-6 text-xs font-bold text-emerald-600">Rp {{ number_format($withdrawal->amount, 0, ',', '.') }}</td>
                                     <td class="py-3 px-6">
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Menunggu</span>
+                                        @if ($withdrawal->status === 'pending')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Menunggu</span>
+                                        @elseif ($withdrawal->status === 'processed')
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Selesai</span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-red-100 text-red-800 border border-red-200">Ditolak</span>
+                                        @endif
                                     </td>
                                     <td class="py-3 px-6">
+                                        @if ($withdrawal->status === 'pending')
                                         <div class="flex items-center justify-center gap-2">
-                                            <button onclick="alert('Setujui Penarikan')" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold shadow-sm"><i class="fa-solid fa-check"></i> Proses</button>
-                                            <button onclick="alert('Tolak Penarikan')" class="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all text-xs font-bold shadow-sm"><i class="fa-solid fa-xmark"></i> Tolak</button>
+                                            <form action="{{ route('admin.withdrawals.process', $withdrawal->id_withdrawal ?? $withdrawal->id) }}" method="POST" onsubmit="return confirm('Proses penarikan ini?');">
+                                                @csrf
+                                                <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold shadow-sm"><i class="fa-solid fa-check"></i> Proses</button>
+                                            </form>
+                                            <form action="{{ route('admin.withdrawals.reject', $withdrawal->id_withdrawal ?? $withdrawal->id) }}" method="POST" onsubmit="return confirm('Tolak penarikan ini?');">
+                                                @csrf
+                                                <button type="submit" class="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all text-xs font-bold shadow-sm"><i class="fa-solid fa-xmark"></i> Tolak</button>
+                                            </form>
                                         </div>
+                                        @else
+                                            <p class="text-center text-[10px] text-slate-400 font-semibold">Sudah diproses</p>
+                                        @endif
                                     </td>
                                 </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="py-8 px-6 text-center text-xs text-slate-500 font-semibold">Belum ada data penarikan saldo.</td>
+                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
+
+                    @if ($withdrawals->hasPages())
+                    <div class="p-5 border-t border-sky-100">
+                        {{ $withdrawals->links() }}
+                    </div>
+                    @endif
                 </div>
 
             </div>
