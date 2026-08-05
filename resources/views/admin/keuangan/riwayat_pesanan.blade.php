@@ -153,6 +153,11 @@
                         <i class="fa-solid fa-circle-check mr-1"></i> {{ session('success') }}
                     </div>
                 @endif
+                @if (session('error'))
+                    <div class="bg-red-50 border border-red-300 text-red-800 text-xs font-semibold px-4 py-3 rounded-xl">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> {{ session('error') }}
+                    </div>
+                @endif
 
                 <!-- SUMMARY CARDS -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
