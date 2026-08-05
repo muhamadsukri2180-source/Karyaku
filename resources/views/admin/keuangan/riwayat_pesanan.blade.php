@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karyaku - Riwayat Pesanan</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Sora', 'sans-serif'] },
+                    colors: { sky: '#0EA5E9', skyHover: '#0284C7', skyDeep: '#0B3D62', coral: '#FF7A59' }
+                }
+            }
+        }
+    </script>
+    <style>
+        .active-menu { background: rgba(255, 255, 255, 0.2); border-left: 4px solid #ffffff; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(14, 165, 233, 0.3); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(14, 165, 233, 0.5); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        @media (max-width: 1023px) { #sidebar.closed { transform: translateX(-100%); } #sidebar.open { transform: translateX(0); } }
+        .submenu { max-height: 0; overflow: hidden; transition: max-height .3s ease-in-out; }
+        .submenu.open { max-height: 400px; }
+        .menu-chevron { transition: transform .3s ease; }
+        .menu-chevron.rotated { transform: rotate(180deg); }
+        .card-hover { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .card-hover:hover { transform: scale(1.015) translateY(-3px); box-shadow: 0 15px 30px -10px rgba(14, 165, 233, 0.25); border-color: rgba(14, 165, 233, 0.5); }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-sky-100/40 to-blue-200/50 text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-sky/20 selection:text-skyDeep min-h-screen">
+
+    <div class="flex min-h-screen relative">
+        <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden hidden transition-opacity duration-300"></div>
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="w-[260px] bg-gradient-to-b from-skyDeep via-skyHover to-sky text-white flex flex-col shrink-0 border-r border-sky-400/20 shadow-2xl fixed lg:sticky top-0 h-screen z-50 closed lg:translate-x-0">
+            <div class="p-6 border-b border-white/15 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-white text-sky flex items-center justify-center text-lg font-bold shadow-lg shadow-skyDeep/20"><i class="fa-solid fa-layer-group"></i></div>
+                    <div>
+                        <h1 class="font-display font-extrabold text-[17px] leading-none tracking-wide text-white">Karyaku</h1>
+                        <span class="text-[9px] text-sky-200 font-bold uppercase tracking-[0.2em] mt-1 block">Admin Panel</span>
+                    </div>
+                </div>
+                <button id="sidebarCloseBtn" class="lg:hidden text-white/80 hover:text-white p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="p-4 mx-4 my-5 rounded-2xl bg-white/10 border border-white/20 flex items-center gap-3 backdrop-blur-md shadow-inner">
+                <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">RF</div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-bold text-white truncate">Rafa Fauzan</p>
+                    <div class="flex items-center gap-1.5 mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                        <p class="text-[10px] text-sky-100 truncate">Online</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-4 space-y-1.5 text-[13px] font-semibold text-sky-100 overflow-y-auto pb-4">
+                <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-4">Menu Utama</p>
+                <a href="#" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all duration-200">
+                    <i class="fa-solid fa-chart-pie w-4 text-center"></i><span>Dashboard</span>
+                </a>
+
+                <div>
+                    <button type="button" data-menu="pengguna" class="menu-toggle w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
+                        <i class="fa-solid fa-users w-4 text-center group-hover:text-white transition-colors"></i><span>Manajemen Pengguna</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] ml-auto menu-chevron" data-chevron="pengguna"></i>
+                    </button>
+                    <div class="submenu pl-4 mt-1 space-y-1" data-submenu="pengguna">
+                        <a href="#" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
+                            <i class="fa-solid fa-user text-[10px] text-sky-200 w-3 text-center"></i> Akun Pengguna
+                        </a>
+                        <a href="#" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
+                            <i class="fa-solid fa-id-card text-[10px] text-sky-200 w-3 text-center"></i> Akun Verifikator
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <button type="button" data-menu="katalog" class="menu-toggle w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
+                        <i class="fa-solid fa-box-open w-4 text-center group-hover:text-white transition-colors"></i><span>Katalog & Kategori</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] ml-auto menu-chevron" data-chevron="katalog"></i>
+                    </button>
+                    <div class="submenu pl-4 mt-1 space-y-1" data-submenu="katalog">
+                        <a href="#" class="flex items-center justify-between px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-list-check text-[10px] text-sky-200 w-3 text-center"></i> Daftar Jasa</div>
+                            <span class="bg-amber-400 text-slate-900 text-[9px] px-1.5 py-0.5 rounded font-extrabold">5 Baru</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
+                            <i class="fa-solid fa-tags text-[10px] text-sky-200 w-3 text-center"></i> Kategori Jasa
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <!-- Menu Keuangan Terbuka dan Aktif -->
+                    <button type="button" data-menu="transaksi" class="menu-toggle w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
+                        <i class="fa-solid fa-receipt w-4 text-center text-white transition-colors"></i><span class="text-white">Keuangan</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] ml-auto menu-chevron rotated" data-chevron="transaksi"></i>
+                    </button>
+                    <div class="submenu pl-4 mt-1 space-y-1 open" data-submenu="transaksi">
+                        <!-- MENU AKTIF -->
+                        <a href="#" class="flex items-center gap-2 px-3.5 py-2 rounded-lg active-menu transition-all text-xs">
+                            <i class="fa-solid fa-clock-rotate-left text-[10px] text-white w-3 text-center"></i> Riwayat Pesanan
+                        </a>
+                        <a href="#" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
+                            <i class="fa-solid fa-wallet text-[10px] text-sky-200 w-3 text-center"></i> Penarikan Saldo
+                        </a>
+                    </div>
+                </div>
+
+                <a href="#" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
+                    <i class="fa-solid fa-crown w-4 text-center group-hover:text-amber-300 transition-colors"></i><span>Paket Membership</span>
+                </a>
+                <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-6">Sistem</p>
+                <a href="#" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-server w-4 text-center group-hover:text-white transition-colors"></i><span>Maintenance & Backup</span></div>
+                </a>
+            </nav>
+            <div class="p-4 border-t border-white/15">
+                <a href="#" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-red-600/80 text-white hover:bg-red-700 text-xs font-bold transition-all duration-300 shadow-md">
+                    <i class="fa-solid fa-power-off"></i><span>Keluar Sistem</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col min-w-0 w-full">
+            <header class="bg-gradient-to-r from-white via-sky-50/50 to-blue-50/50 backdrop-blur-xl border-b border-sky-200 px-6 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+                <div class="flex items-center gap-4">
+                    <button id="sidebarToggleBtn" class="lg:hidden w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition border border-sky-200 shadow-sm"><i class="fa-solid fa-bars text-base"></i></button>
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900">Riwayat Pesanan</h2>
+                        <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Pantau seluruh siklus transaksi dan status pesanan jasa di platform.</p>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-6 sm:p-8 space-y-6 overflow-y-auto no-scrollbar">
+                
+                <!-- SUMMARY CARDS -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="bg-gradient-to-br from-blue-50 via-white to-blue-100/60 border-l-4 border-blue-500 border-y border-r border-blue-200 p-5 rounded-2xl card-hover shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div><span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Total Transaksi</span><div class="text-3xl font-black text-slate-900 mt-1">2,840</div></div>
+                            <div class="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/30"><i class="fa-solid fa-cart-shopping text-lg"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-amber-50 via-white to-amber-100/60 border-l-4 border-amber-500 border-y border-r border-amber-200 p-5 rounded-2xl card-hover shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div><span class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Sedang Diproses</span><div class="text-3xl font-black text-slate-900 mt-1">115</div></div>
+                            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/30"><i class="fa-solid fa-spinner text-lg"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100/60 border-l-4 border-emerald-500 border-y border-r border-emerald-200 p-5 rounded-2xl card-hover shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div><span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Order Selesai</span><div class="text-3xl font-black text-slate-900 mt-1">2,650</div></div>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/30"><i class="fa-solid fa-check-double text-lg"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-red-50 via-white to-red-100/60 border-l-4 border-red-500 border-y border-r border-red-200 p-5 rounded-2xl card-hover shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div><span class="text-[11px] font-bold text-red-900 uppercase tracking-wider">Dibatalkan</span><div class="text-3xl font-black text-slate-900 mt-1">75</div></div>
+                            <div class="w-10 h-10 rounded-xl bg-red-500 text-white flex items-center justify-center font-bold shadow-md shadow-red-500/30"><i class="fa-solid fa-ban text-lg"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MAIN TABLE AREA -->
+                <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 backdrop-blur-sm">
+                        <div class="relative w-full sm:w-72">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" placeholder="Cari ID Pesanan atau Nama..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
+                        </div>
+                        
+                        <!-- Tombol Export Laporan di Kanan Atas -->
+                        <button onclick="alert('Mulai Mengunduh Laporan Pesanan (.csv)')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-500/30 transition-all flex items-center justify-center gap-2 w-full sm:w-auto">
+                            <i class="fa-solid fa-file-excel"></i> Export CSV
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-sky-50/80 border-b border-sky-100 text-sky-900 text-[11px] uppercase tracking-wider font-bold">
+                                    <th class="py-4 px-6">ID Pesanan & Layanan</th>
+                                    <th class="py-4 px-6">Pelanggan & Kreator</th>
+                                    <th class="py-4 px-6">Total Nilai</th>
+                                    <th class="py-4 px-6">Status Order</th>
+                                    <th class="py-4 px-6 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-sky-100/70">
+                                
+                                <tr class="hover:bg-sky-50/50 transition-colors bg-white">
+                                    <td class="py-3 px-6">
+                                        <p class="font-bold text-sky-700 text-xs">#ORD-260805A1</p>
+                                        <p class="text-[11px] text-slate-600 font-medium mt-0.5 w-48 truncate">Desain UI/UX Mobile App Fintech</p>
+                                    </td>
+                                    <td class="py-3 px-6">
+                                        <p class="text-xs font-bold text-slate-800"><i class="fa-solid fa-user text-[10px] text-slate-400 mr-1"></i> Budi (Pembeli)</p>
+                                        <p class="text-[10px] font-semibold text-slate-500 mt-0.5"><i class="fa-solid fa-store text-[10px] text-slate-400 mr-1"></i> Studio Kreatif (Kreator)</p>
+                                    </td>
+                                    <td class="py-3 px-6 text-xs font-bold text-emerald-600">Rp 1.500.000</td>
+                                    <td class="py-3 px-6">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                            Proses Pengerjaan
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-6 text-center">
+                                        <button onclick="alert('Lihat Detail Pesanan')" class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all text-[10px] font-bold shadow-sm"><i class="fa-solid fa-eye"></i> Detail</button>
+                                    </td>
+                                </tr>
+
+                                <tr class="hover:bg-sky-50/50 transition-colors bg-white">
+                                    <td class="py-3 px-6">
+                                        <p class="font-bold text-sky-700 text-xs">#ORD-260802B4</p>
+                                        <p class="text-[11px] text-slate-600 font-medium mt-0.5 w-48 truncate">Video Animasi Explainer 1 Menit</p>
+                                    </td>
+                                    <td class="py-3 px-6">
+                                        <p class="text-xs font-bold text-slate-800"><i class="fa-solid fa-user text-[10px] text-slate-400 mr-1"></i> Citra (Pembeli)</p>
+                                        <p class="text-[10px] font-semibold text-slate-500 mt-0.5"><i class="fa-solid fa-store text-[10px] text-slate-400 mr-1"></i> AnimasiKu (Kreator)</p>
+                                    </td>
+                                    <td class="py-3 px-6 text-xs font-bold text-emerald-600">Rp 750.000</td>
+                                    <td class="py-3 px-6">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                            Selesai & Dibayar
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-6 text-center">
+                                        <button onclick="alert('Lihat Detail Pesanan')" class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all text-[10px] font-bold shadow-sm"><i class="fa-solid fa-eye"></i> Detail</button>
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+        const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() { sidebar.classList.toggle('open'); sidebar.classList.toggle('closed'); sidebarOverlay.classList.toggle('hidden'); }
+        sidebarToggleBtn.addEventListener('click', toggleSidebar); sidebarCloseBtn.addEventListener('click', toggleSidebar); sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        document.querySelectorAll('.menu-toggle').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const key = btn.getAttribute('data-menu');
+                const submenu = document.querySelector(`[data-submenu="${key}"]`);
+                const chevron = document.querySelector(`[data-chevron="${key}"]`);
+                submenu.classList.toggle('open');
+                chevron.classList.toggle('rotated');
+            });
+        });
+    </script>
+</body>
+</html>
