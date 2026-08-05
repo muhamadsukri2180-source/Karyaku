@@ -12,7 +12,14 @@ class Order extends Model
     protected $primaryKey = 'id_order';
 
     protected $fillable = [
-        'buyer_id', 'total_price', 'status', 'payment_status'
+        'buyer_id',
+        'total_price',
+        'status',         // pending, diproses, selesai, dibatalkan
+        'payment_status', // unpaid, paid, failed
+    ];
+
+    protected $casts = [
+        'total_price' => 'decimal:2',
     ];
 
     public function buyer(): BelongsTo
@@ -23,5 +30,10 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class, 'order_id', 'id_order');
+    }
+
+    public function getKodeOrderAttribute(): string
+    {
+        return 'ORD-' . str_pad($this->id_order, 6, '0', STR_PAD_LEFT);
     }
 }

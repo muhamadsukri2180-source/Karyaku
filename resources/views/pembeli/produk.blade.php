@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Detail Produk - Karyaku</title>
+<title>{{ $produk['judul'] ?? 'Detail Produk' }} - Karyaku</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -30,7 +30,6 @@
     *{ box-sizing: border-box; }
     body{ font-family: 'Poppins', sans-serif; background: var(--primary-light); color: var(--text-dark); }
 
-    /* ---------------- Topbar sederhana (konsisten dengan marketplace) ---------------- */
     .market-topbar{
         background: linear-gradient(120deg, var(--primary-darker), var(--primary-dark) 60%, var(--primary));
         padding: 16px 28px; position: sticky; top: 0; z-index: 1010;
@@ -56,12 +55,10 @@
         font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center;
     }
 
-    /* ---------------- Breadcrumb ---------------- */
     .breadcrumb-wrap{ padding: 18px 28px 0; font-size: 12.5px; color: var(--text-muted); }
     .breadcrumb-wrap a{ color: var(--text-muted); text-decoration: none; }
     .breadcrumb-wrap a:hover{ color: var(--primary); }
 
-    /* ---------------- Detail section ---------------- */
     .detail-wrap{ max-width: 1180px; margin: 0 auto; padding: 18px 28px 60px; }
     .detail-card{ background: #fff; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow); padding: 26px; }
 
@@ -125,7 +122,6 @@
     }
     .wish-round:hover, .wish-round.active{ color: var(--coral); border-color: var(--coral); }
 
-    /* Tabs deskripsi */
     .tab-nav{ display: flex; gap: 6px; border-bottom: 1px solid var(--border-color); margin: 30px 0 18px; }
     .tab-nav button{
         border: none; background: transparent; padding: 10px 18px; font-weight: 700; font-size: 13.5px;
@@ -141,11 +137,10 @@
     .review-item .rt{ color: #f59e0b; font-size: 12px; }
     .review-item p{ font-size: 12.5px; color: var(--text-muted); margin: 4px 0 0; }
 
-    /* Produk lain dari kreator */
     .other-title{ font-weight: 700; font-size: 16px; margin: 34px 0 14px; }
     .other-grid{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
     @media (max-width: 992px){ .other-grid{ grid-template-columns: repeat(2, 1fr); } }
-    .other-card{ background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); box-shadow: var(--shadow); transition: transform .2s ease; }
+    .other-card{ background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); box-shadow: var(--shadow); transition: transform .2s ease; text-decoration:none; color:inherit; display:block; }
     .other-card:hover{ transform: translateY(-4px); }
     .other-card img{ width: 100%; height: 110px; object-fit: cover; }
     .other-card .b{ padding: 10px; }
@@ -161,82 +156,110 @@
 </head>
 <body>
 
+@php
+    // Demo data. Idealnya ini dikirim dari ProdukController berdasarkan $id.
+    $produk = $produk ?? [
+        'id' => 1,
+        'kategori' => 'Poster Canva',
+        'judul' => 'Desain Poster Promosi Kafe & Resto',
+        'harga' => 75000,
+        'harga_lama' => 100000,
+        'rating' => 4.9,
+        'jumlah_ulasan' => 312,
+        'terjual' => 320,
+        'seller' => 'Dinda Studio',
+        'seller_kota' => 'Bandung',
+        'gambar' => 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=800&q=80',
+        'galeri' => [
+            'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=200&q=80',
+            'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=200&q=80',
+            'https://images.unsplash.com/photo-1611926653458-09294b3142bf?auto=format&fit=crop&w=200&q=80',
+            'https://images.unsplash.com/photo-1559028012-481c04fa702d?auto=format&fit=crop&w=200&q=80',
+        ],
+    ];
+    $diskon = $produk['harga_lama'] ? round((1 - $produk['harga'] / $produk['harga_lama']) * 100) : 0;
+@endphp
+
 <div class="market-topbar">
-    <a href="marketplace-pembeli.html" class="brand-mini"><span class="ic"><i class="bi bi-bag-check-fill"></i></span><span>Karyaku</span></a>
-    <form class="search-combo" onsubmit="return false;">
-        <input type="text" placeholder="Cari jasa, kreator, atau kata kunci...">
+    <a href="{{ route('pembeli.marketplace') }}" class="brand-mini"><span class="ic"><i class="bi bi-bag-check-fill"></i></span><span>Karyaku</span></a>
+    <form class="search-combo" action="{{ route('pembeli.marketplace') }}" method="GET">
+        <input type="text" name="q" placeholder="Cari jasa, kreator, atau kata kunci...">
         <button type="submit"><i class="bi bi-search"></i></button>
     </form>
     <a href="#" class="icon-btn-light" title="Wishlist"><i class="bi bi-heart"></i><span class="dot">5</span></a>
-    <a href="keranjang" class="icon-btn-light" title="Keranjang"><i class="bi bi-cart3"></i><span class="dot">3</span></a>
+    <a href="{{ route('pembeli.keranjang') }}" class="icon-btn-light" title="Keranjang"><i class="bi bi-cart3"></i><span class="dot">3</span></a>
 </div>
 
 <div class="breadcrumb-wrap">
-    <a href="marketplace-pembeli.html">Marketplace</a> / <a href="marketplace-pembeli.html">Poster Canva</a> / <span>Desain Poster Promosi Kafe & Resto</span>
+    <a href="{{ route('pembeli.marketplace') }}">Marketplace</a> / <a href="{{ route('pembeli.marketplace') }}">{{ $produk['kategori'] }}</a> / <span>{{ $produk['judul'] }}</span>
 </div>
 
 <div class="detail-wrap">
     <div class="detail-card">
         <div class="row g-4">
-            <!-- Gallery -->
             <div class="col-lg-6">
                 <div class="gallery-main">
-                    <img id="mainImg" src="https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=800&q=80" alt="Desain Poster Promosi Kafe">
+                    <img id="mainImg" src="{{ $produk['gambar'] }}" alt="{{ $produk['judul'] }}">
                 </div>
                 <div class="gallery-thumbs">
-                    <img class="active" src="https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=200&q=80" onclick="swapImg(this)">
-                    <img src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=200&q=80" onclick="swapImg(this)">
-                    <img src="https://images.unsplash.com/photo-1611926653458-09294b3142bf?auto=format&fit=crop&w=200&q=80" onclick="swapImg(this)">
-                    <img src="https://images.unsplash.com/photo-1559028012-481c04fa702d?auto=format&fit=crop&w=200&q=80" onclick="swapImg(this)">
+                    @foreach ($produk['galeri'] as $i => $g)
+                        <img class="{{ $i === 0 ? 'active' : '' }}" src="{{ $g }}" onclick="swapImg(this)">
+                    @endforeach
                 </div>
             </div>
 
-            <!-- Info -->
             <div class="col-lg-6">
-                <span class="cat-badge-detail">Poster Canva</span>
-                <h1 class="detail-title">Desain Poster Promosi Kafe & Resto</h1>
+                <span class="cat-badge-detail">{{ $produk['kategori'] }}</span>
+                <h1 class="detail-title">{{ $produk['judul'] }}</h1>
                 <div class="detail-meta">
-                    <span class="rating"><i class="bi bi-star-fill"></i> 4.9 (312 ulasan)</span>
-                    <span><i class="bi bi-bag-check"></i> Terjual 320</span>
+                    <span class="rating"><i class="bi bi-star-fill"></i> {{ $produk['rating'] }} ({{ $produk['jumlah_ulasan'] }} ulasan)</span>
+                    <span><i class="bi bi-bag-check"></i> Terjual {{ $produk['terjual'] }}</span>
                     <span><i class="bi bi-chat-dots"></i> Respon cepat</span>
                 </div>
 
                 <div class="price-block">
-                    <span class="price">Rp75.000</span>
-                    <small>Rp100.000</small>
-                    <span class="discount-tag">Hemat 25%</span>
+                    <span class="price">Rp{{ number_format($produk['harga'], 0, ',', '.') }}</span>
+                    @if($produk['harga_lama'])
+                        <small>Rp{{ number_format($produk['harga_lama'], 0, ',', '.') }}</small>
+                        <span class="discount-tag">Hemat {{ $diskon }}%</span>
+                    @endif
                 </div>
 
                 <div class="seller-card">
-                    <img src="https://ui-avatars.com/api/?name=Dinda+Studio&background=dbeafe&color=1e3a8a" alt="">
+                    <img src="https://ui-avatars.com/api/?name={{ urlencode($produk['seller']) }}&background=dbeafe&color=1e3a8a" alt="">
                     <div class="info">
-                        <div class="nm">Dinda Studio</div>
-                        <div class="st"><i class="bi bi-geo-alt"></i> Bandung &bull; Online 5 menit lalu</div>
+                        <div class="nm">{{ $produk['seller'] }}</div>
+                        <div class="st"><i class="bi bi-geo-alt"></i> {{ $produk['seller_kota'] }} &bull; Online 5 menit lalu</div>
                     </div>
                     <a href="#"><i class="bi bi-chat"></i> Chat</a>
                 </div>
 
-                <div class="qty-box">
-                    <span style="font-size:13px; font-weight:600;">Jumlah Paket</span>
-                    <div class="qty-control">
-                        <button onclick="changeQty(-1)">-</button>
-                        <input type="text" id="qtyInput" value="1" readonly>
-                        <button onclick="changeQty(1)">+</button>
-                    </div>
-                </div>
+                <form id="cartForm" action="{{ route('pembeli.keranjang.tambah') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="produk_id" value="{{ $produk['id'] }}">
+                    <input type="hidden" name="qty" id="qtyHidden" value="1">
 
-                <div class="action-row">
-                    <button class="wish-round" id="wishDetail" onclick="toggleWishDetail()"><i class="bi bi-heart"></i></button>
-                    <button class="btn-detail-cart" onclick="addToCartFeedback(this)"><i class="bi bi-cart-plus"></i> Tambah Keranjang</button>
-                    <a href="keranjang" class="btn-detail-buy"><i class="bi bi-lightning-charge-fill"></i> Beli Sekarang</a>
-                </div>
+                    <div class="qty-box">
+                        <span style="font-size:13px; font-weight:600;">Jumlah Paket</span>
+                        <div class="qty-control">
+                            <button type="button" onclick="changeQty(-1)">-</button>
+                            <input type="text" id="qtyInput" value="1" readonly>
+                            <button type="button" onclick="changeQty(1)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="action-row">
+                        <button type="button" class="wish-round" id="wishDetail" onclick="toggleWishDetail()"><i class="bi bi-heart"></i></button>
+                        <button type="submit" class="btn-detail-cart" id="btnAddCart"><i class="bi bi-cart-plus"></i> Tambah Keranjang</button>
+                        <button type="submit" name="beli_sekarang" value="1" class="btn-detail-buy"><i class="bi bi-lightning-charge-fill"></i> Beli Sekarang</button>
+                    </div>
+                </form>
             </div>
         </div>
 
-        <!-- Tabs -->
         <div class="tab-nav">
             <button class="active" onclick="switchTab(this,'deskripsi')">Deskripsi</button>
-            <button onclick="switchTab(this,'ulasan')">Ulasan (312)</button>
+            <button onclick="switchTab(this,'ulasan')">Ulasan ({{ $produk['jumlah_ulasan'] }})</button>
             <button onclick="switchTab(this,'faq')">FAQ</button>
         </div>
 
@@ -270,25 +293,24 @@
             <p><strong>Berapa lama waktu pengerjaan?</strong><br>Estimasi 1-2 hari kerja setelah brief lengkap diterima.</p>
         </div>
 
-        <!-- Produk lain -->
-        <div class="other-title">Produk Lain dari Dinda Studio</div>
+        <div class="other-title">Produk Lain dari {{ $produk['seller'] }}</div>
         <div class="other-grid">
-            <div class="other-card">
+            <a href="{{ route('pembeli.produk', 7) }}" class="other-card">
                 <img src="https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?auto=format&fit=crop&w=300&q=80" alt="">
                 <div class="b"><h6>Poster Event & Webinar</h6><span class="p">Rp65.000</span></div>
-            </div>
-            <div class="other-card">
+            </a>
+            <a href="{{ route('pembeli.produk', 4) }}" class="other-card">
                 <img src="https://images.unsplash.com/photo-1611926653458-09294b3142bf?auto=format&fit=crop&w=300&q=80" alt="">
                 <div class="b"><h6>Paket Feed Instagram</h6><span class="p">Rp120.000</span></div>
-            </div>
-            <div class="other-card">
+            </a>
+            <a href="#" class="other-card">
                 <img src="https://images.unsplash.com/photo-1559028012-481c04fa702d?auto=format&fit=crop&w=300&q=80" alt="">
                 <div class="b"><h6>Menu Digital Kafe</h6><span class="p">Rp55.000</span></div>
-            </div>
-            <div class="other-card">
+            </a>
+            <a href="{{ route('pembeli.produk', 3) }}" class="other-card">
                 <img src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=300&q=80" alt="">
                 <div class="b"><h6>Logo Sederhana</h6><span class="p">Rp90.000</span></div>
-            </div>
+            </a>
         </div>
     </div>
 </div>
@@ -304,6 +326,7 @@
     function changeQty(delta){
         qty = Math.max(1, qty + delta);
         document.getElementById('qtyInput').value = qty;
+        document.getElementById('qtyHidden').value = qty;
     }
 
     function toggleWishDetail(){
@@ -319,18 +342,6 @@
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('tab-' + id).classList.add('active');
-    }
-
-    function addToCartFeedback(btn){
-        const original = btn.innerHTML;
-        btn.innerHTML = '<i class="bi bi-check2"></i> Ditambahkan';
-        btn.style.background = 'var(--primary)';
-        btn.style.color = '#fff';
-        setTimeout(() => {
-            btn.innerHTML = original;
-            btn.style.background = '';
-            btn.style.color = '';
-        }, 1200);
     }
 </script>
 </body>

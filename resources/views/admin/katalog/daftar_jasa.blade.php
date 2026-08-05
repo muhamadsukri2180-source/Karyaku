@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Karyaku - Daftar Jasa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -26,6 +27,9 @@
         .menu-chevron.rotated { transform: rotate(180deg); }
         .card-hover { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .card-hover:hover { transform: scale(1.015) translateY(-3px); box-shadow: 0 15px 30px -10px rgba(14, 165, 233, 0.25); border-color: rgba(14, 165, 233, 0.5); }
+        .modal-overlay { transition: opacity .25s ease; }
+        .modal-box { transition: all .25s ease; }
+        .tab-btn.active-tab { background: #0EA5E9; color: #fff; box-shadow: 0 8px 15px -5px rgba(14,165,233,0.4); }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-100 via-sky-100/40 to-blue-200/50 text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-sky/20 selection:text-skyDeep min-h-screen">
@@ -46,9 +50,21 @@
                 <button id="sidebarCloseBtn" class="lg:hidden text-white/80 hover:text-white p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
-            <nav class="flex-1 px-4 space-y-1.5 text-[13px] font-semibold text-sky-100 overflow-y-auto pt-4 pb-4">
-                <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2">Menu Utama</p>
-                <a href="#" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all duration-200">
+            @php $admin = auth()->user(); $initials = collect(explode(' ', trim($admin->name ?? 'Admin')))->map(fn($w)=>mb_strtoupper(mb_substr($w,0,1)))->take(2)->implode(''); @endphp
+            <div class="p-4 mx-4 my-5 rounded-2xl bg-white/10 border border-white/20 flex items-center gap-3 backdrop-blur-md shadow-inner">
+                <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">{{ $initials ?: 'AD' }}</div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-bold text-white truncate">{{ $admin->name ?? 'Admin' }}</p>
+                    <div class="flex items-center gap-1.5 mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                        <p class="text-[10px] text-sky-100 truncate">Online</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-4 space-y-1.5 text-[13px] font-semibold text-sky-100 overflow-y-auto pb-4">
+                <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-4">Menu Utama</p>
+                <a href="{{ route('admin.dashboard') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all duration-200">
                     <i class="fa-solid fa-chart-pie w-4 text-center"></i><span>Dashboard</span>
                 </a>
 
@@ -58,38 +74,63 @@
                         <i class="fa-solid fa-chevron-down text-[10px] ml-auto menu-chevron" data-chevron="pengguna"></i>
                     </button>
                     <div class="submenu pl-4 mt-1 space-y-1" data-submenu="pengguna">
-                        <a href="#" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
+                        <a href="{{ route('admin.users') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
                             <i class="fa-solid fa-user text-[10px] text-sky-200 w-3 text-center"></i> Akun Pengguna
                         </a>
-                        <a href="#" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-id-card text-[10px] text-sky-200 w-3 text-center"></i> Verifikasi Identitas
+                        <a href="{{ route('admin.users.verifikator') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
+                            <i class="fa-solid fa-id-card text-[10px] text-sky-200 w-3 text-center"></i> Akun Verifikator
                         </a>
                     </div>
                 </div>
 
                 <div>
-                    <!-- Katalog & Kategori Terbuka -->
                     <button type="button" data-menu="katalog" class="menu-toggle w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
                         <i class="fa-solid fa-box-open w-4 text-center text-white transition-colors"></i><span class="text-white">Katalog & Kategori</span>
                         <i class="fa-solid fa-chevron-down text-[10px] ml-auto menu-chevron rotated" data-chevron="katalog"></i>
                     </button>
                     <div class="submenu pl-4 mt-1 space-y-1 open" data-submenu="katalog">
-                        <!-- MENU AKTIF DI SINI -->
-                        <a href="#" class="flex items-center justify-between px-3.5 py-2 rounded-lg active-menu transition-all text-xs">
+                        <a href="{{ route('admin.products') }}" class="flex items-center justify-between px-3.5 py-2 rounded-lg active-menu transition-all text-xs">
                             <div class="flex items-center gap-2"><i class="fa-solid fa-list-check text-[10px] text-white w-3 text-center"></i> Daftar Jasa</div>
-                            <span class="bg-amber-400 text-slate-900 text-[9px] px-1.5 py-0.5 rounded font-extrabold">5 Baru</span>
+                            @if($pendingCount > 0)
+                                <span class="bg-amber-400 text-slate-900 text-[9px] px-1.5 py-0.5 rounded font-extrabold">{{ $pendingCount }} Baru</span>
+                            @endif
                         </a>
-                        <a href="#" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
+                        <a href="{{ route('admin.categories.index') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
                             <i class="fa-solid fa-tags text-[10px] text-sky-200 w-3 text-center"></i> Kategori Jasa
                         </a>
                     </div>
                 </div>
 
-                <!-- Bagian menu lain disederhanakan untuk contoh ini -->
-                <a href="#" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                    <i class="fa-solid fa-receipt w-4 text-center group-hover:text-white transition-colors"></i><span>Keuangan</span>
+                <div>
+                    <button type="button" data-menu="transaksi" class="menu-toggle w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
+                        <i class="fa-solid fa-receipt w-4 text-center group-hover:text-white transition-colors"></i><span>Keuangan</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] ml-auto menu-chevron" data-chevron="transaksi"></i>
+                    </button>
+                    <div class="submenu pl-4 mt-1 space-y-1" data-submenu="transaksi">
+                        <a href="{{ route('admin.transactions') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
+                            <i class="fa-solid fa-clock-rotate-left text-[10px] text-sky-200 w-3 text-center"></i> Riwayat Pesanan
+                        </a>
+                        <a href="{{ route('admin.withdrawals') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
+                            <i class="fa-solid fa-wallet text-[10px] text-sky-200 w-3 text-center"></i> Penarikan Saldo
+                        </a>
+                    </div>
+                </div>
+                <a href="{{ route('admin.memberships') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
+                    <i class="fa-solid fa-crown w-4 text-center group-hover:text-amber-300 transition-colors"></i><span>Paket Membership</span>
+                </a>
+                <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-6">Sistem</p>
+                <a href="{{ route('admin.maintenance') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-server w-4 text-center group-hover:text-white transition-colors"></i><span>Maintenance & Backup</span></div>
                 </a>
             </nav>
+            <div class="p-4 border-t border-white/15">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-red-600/80 text-white hover:bg-red-700 text-xs font-bold transition-all duration-300 shadow-md">
+                        <i class="fa-solid fa-power-off"></i><span>Keluar Sistem</span>
+                    </button>
+                </form>
+            </div>
         </aside>
 
         <!-- MAIN CONTENT -->
@@ -105,18 +146,29 @@
             </header>
 
             <div class="p-6 sm:p-8 space-y-6 overflow-y-auto no-scrollbar">
-                
+
+                @if(session('success'))
+                    <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold px-4 py-3 rounded-xl shadow-sm">
+                        <i class="fa-solid fa-circle-check mr-1"></i> {{ session('success') }}
+                    </div>
+                @endif
+                @if(session('error'))
+                    <div class="bg-red-50 border border-red-200 text-red-800 text-sm font-semibold px-4 py-3 rounded-xl shadow-sm">
+                        <i class="fa-solid fa-circle-xmark mr-1"></i> {{ session('error') }}
+                    </div>
+                @endif
+
                 <!-- SUMMARY CARDS -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     <div class="bg-gradient-to-br from-amber-50 via-white to-amber-100/60 border-l-4 border-amber-500 border-y border-r border-amber-200 p-5 rounded-2xl card-hover shadow-sm">
                         <div class="flex justify-between items-start mb-2 relative z-10">
-                            <div><span class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Menunggu Tinjauan</span><div class="text-3xl font-black text-slate-900 mt-1">5</div></div>
+                            <div><span class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Menunggu Tinjauan</span><div class="text-3xl font-black text-slate-900 mt-1">{{ $pendingCount }}</div></div>
                             <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/30"><i class="fa-solid fa-clock text-lg"></i></div>
                         </div>
                     </div>
                     <div class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100/60 border-l-4 border-emerald-500 border-y border-r border-emerald-200 p-5 rounded-2xl card-hover shadow-sm">
                         <div class="flex justify-between items-start mb-2 relative z-10">
-                            <div><span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Jasa Aktif</span><div class="text-3xl font-black text-slate-900 mt-1">640</div></div>
+                            <div><span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Jasa Aktif</span><div class="text-3xl font-black text-slate-900 mt-1">{{ number_format($activeCount, 0, ',', '.') }}</div></div>
                             <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/30"><i class="fa-solid fa-box-open text-lg"></i></div>
                         </div>
                     </div>
@@ -125,10 +177,10 @@
                 <!-- MAIN TABLE AREA -->
                 <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 backdrop-blur-sm">
-                        <div class="relative">
+                        <form method="GET" action="{{ route('admin.products') }}" class="relative w-full sm:w-72">
                             <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                            <input type="text" placeholder="Cari nama jasa..." class="pl-8 pr-4 py-2 w-full sm:w-72 bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
-                        </div>
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama jasa..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
+                        </form>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -143,69 +195,110 @@
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-sky-100/70">
-                                
-                                <!-- Baris: Menunggu Persetujuan -->
-                                <tr class="hover:bg-sky-50/50 transition-colors bg-white">
-                                    <td class="py-3 px-6">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-12 h-10 rounded-lg bg-slate-200 flex items-center justify-center overflow-hidden border border-slate-300">
-                                                <i class="fa-solid fa-image text-slate-400"></i>
+                                @forelse($products as $product)
+                                    @php
+                                        $statusColor = match($product->status) {
+                                            'pending' => 'text-amber-700 bg-amber-100 border-amber-200',
+                                            'active' => 'text-emerald-700 bg-emerald-100 border-emerald-200',
+                                            'inactive' => 'text-slate-600 bg-slate-100 border-slate-200',
+                                            default => 'text-slate-600 bg-slate-100 border-slate-200',
+                                        };
+                                        $statusLabel = match($product->status) {
+                                            'pending' => 'Menunggu',
+                                            'active' => 'Aktif',
+                                            'inactive' => 'Nonaktif',
+                                            default => ucfirst($product->status),
+                                        };
+                                    @endphp
+                                    <tr class="hover:bg-sky-50/50 transition-colors bg-white">
+                                        <td class="py-3 px-6">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-12 h-10 rounded-lg bg-slate-200 flex items-center justify-center overflow-hidden border border-slate-300 shrink-0">
+                                                    @if(!empty($product->image) && \Illuminate\Support\Facades\Storage::disk('public')->exists($product->image))
+                                                        <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+                                                    @else
+                                                        <i class="fa-solid fa-image text-slate-400"></i>
+                                                    @endif
+                                                </div>
+                                                <div>
+                                                    <p class="font-bold text-slate-800 text-xs line-clamp-1">{{ $product->title }}</p>
+                                                    <p class="text-[10px] text-sky-600 font-bold mt-0.5">{{ $product->category->name ?? '-' }}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p class="font-bold text-slate-800 text-xs line-clamp-1">Jasa Pembuatan Landing Page Next.js</p>
-                                                <p class="text-[10px] text-sky-600 font-bold mt-0.5">Pembuatan Website & IT</p>
+                                        </td>
+                                        <td class="py-3 px-6">
+                                            <p class="text-xs font-bold text-slate-700">{{ $product->seller->name ?? '-' }}</p>
+                                        </td>
+                                        <td class="py-3 px-6">
+                                            <p class="text-xs font-bold text-emerald-600">Rp {{ number_format($product->price ?? 0, 0, ',', '.') }}</p>
+                                        </td>
+                                        <td class="py-3 px-6">
+                                            <span class="text-[10px] font-bold {{ $statusColor }} px-2.5 py-1 rounded-md border">{{ $statusLabel }}</span>
+                                        </td>
+                                        <td class="py-3 px-6">
+                                            <div class="flex items-center justify-center gap-2">
+                                                @if($product->status === 'pending')
+                                                    <form method="POST" action="{{ route('admin.products.approve', $product->id_product) }}" onsubmit="return confirm('Setujui produk ini?');">
+                                                        @csrf
+                                                        <button type="submit" class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Setujui"><i class="fa-solid fa-check text-[10px]"></i></button>
+                                                    </form>
+                                                    <form method="POST" action="{{ route('admin.products.takedown', $product->id_product) }}" onsubmit="return confirm('Tolak / takedown produk ini?');">
+                                                        @csrf
+                                                        <button type="submit" class="w-7 h-7 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm" title="Tolak"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                                                    </form>
+                                                @elseif($product->status === 'active')
+                                                    <form method="POST" action="{{ route('admin.products.takedown', $product->id_product) }}" onsubmit="return confirm('Takedown produk ini dari katalog?');">
+                                                        @csrf
+                                                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-600 hover:text-white transition-all text-[10px] font-bold shadow-sm"><i class="fa-solid fa-ban"></i> Takedown</button>
+                                                    </form>
+                                                @else
+                                                    <form method="POST" action="{{ route('admin.products.approve', $product->id_product) }}" onsubmit="return confirm('Aktifkan kembali produk ini?');">
+                                                        @csrf
+                                                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-[10px] font-bold shadow-sm"><i class="fa-solid fa-rotate-left"></i> Aktifkan</button>
+                                                    </form>
+                                                @endif
+                                                <button type="button" class="btn-delete-product w-7 h-7 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm" title="Hapus Permanen"
+                                                    data-id="{{ $product->id_product }}"
+                                                    data-title="{{ $product->title }}">
+                                                    <i class="fa-solid fa-trash text-[10px]"></i>
+                                                </button>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td class="py-3 px-6">
-                                        <p class="text-xs font-bold text-slate-700">Ahmad Fauzi</p>
-                                    </td>
-                                    <td class="py-3 px-6">
-                                        <p class="text-xs font-bold text-emerald-600">Rp 450.000</p>
-                                    </td>
-                                    <td class="py-3 px-6"><span class="text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-md">Menunggu</span></td>
-                                    <td class="py-3 px-6">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <button class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Setujui"><i class="fa-solid fa-check text-[10px]"></i></button>
-                                            <button class="w-7 h-7 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm" title="Tolak"><i class="fa-solid fa-xmark text-[10px]"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <!-- Baris: Aktif -->
-                                <tr class="hover:bg-sky-50/50 transition-colors bg-white">
-                                    <td class="py-3 px-6">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-12 h-10 rounded-lg bg-slate-200 flex items-center justify-center overflow-hidden border border-slate-300">
-                                                <i class="fa-solid fa-image text-slate-400"></i>
-                                            </div>
-                                            <div>
-                                                <p class="font-bold text-slate-800 text-xs line-clamp-1">Desain Logo Profesional Bisnis UMKM</p>
-                                                <p class="text-[10px] text-sky-600 font-bold mt-0.5">Desain Grafis</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="py-3 px-6">
-                                        <p class="text-xs font-bold text-slate-700">Siti Aisyah</p>
-                                    </td>
-                                    <td class="py-3 px-6">
-                                        <p class="text-xs font-bold text-emerald-600">Rp 150.000</p>
-                                    </td>
-                                    <td class="py-3 px-6"><span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-md">Aktif</span></td>
-                                    <td class="py-3 px-6">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <button class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all text-[10px] font-bold shadow-sm"><i class="fa-solid fa-eye"></i> Detail</button>
-                                        </div>
-                                    </td>
-                                </tr>
-
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="py-10 text-center text-sm text-slate-500">Belum ada data produk/jasa.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
+
+                    @if($products->hasPages())
+                        <div class="p-5 border-t border-sky-100 bg-white/50">
+                            {{ $products->links() }}
+                        </div>
+                    @endif
                 </div>
 
             </div>
         </main>
+    </div>
+
+    <!-- MODAL: HAPUS PRODUK -->
+    <div id="deleteProductModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+        <div class="modal-overlay absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('deleteProductModal')"></div>
+        <div class="modal-box relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <div class="w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h3 class="font-display font-extrabold text-lg text-slate-900 mb-1">Hapus Produk Permanen?</h3>
+            <p class="text-xs text-slate-600 mb-5">Anda akan menghapus <strong id="deleteProductTitle"></strong> secara permanen. Tindakan ini tidak dapat dibatalkan.</p>
+            <form id="deleteProductForm" method="POST" action="" class="flex justify-center gap-2">
+                @csrf
+                @method('DELETE')
+                <button type="button" onclick="closeModal('deleteProductModal')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
+                <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 shadow-md">Ya, Hapus</button>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -224,6 +317,26 @@
                 const chevron = document.querySelector(`[data-chevron="${key}"]`);
                 submenu.classList.toggle('open');
                 chevron.classList.toggle('rotated');
+            });
+        });
+
+        function openModal(id) {
+            const el = document.getElementById(id);
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        }
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+
+        document.querySelectorAll('.btn-delete-product').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const form = document.getElementById('deleteProductForm');
+                form.action = `{{ url('admin/products') }}/${btn.dataset.id}`;
+                document.getElementById('deleteProductTitle').textContent = btn.dataset.title;
+                openModal('deleteProductModal');
             });
         });
     </script>

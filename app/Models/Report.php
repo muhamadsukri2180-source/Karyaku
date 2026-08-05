@@ -11,16 +11,31 @@ class Report extends Model
     protected $primaryKey = 'id_report';
 
     protected $fillable = [
-        'user_id', 'product_id', 'reason', 'description', 'status',
+        'user_id',    // pelapor
+        'product_id',
+        'reason',
+        'description',
+        'status', // pending, reviewed, dismissed
+        'reviewed_by',
+        'reviewed_at',
     ];
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'user_id', 'id_user');
-    }
+    protected $casts = [
+        'reviewed_at' => 'datetime',
+    ];
 
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id', 'id_product');
+    }
+
+    public function reporter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id_user');
+    }
+
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by', 'id_user');
     }
 }
