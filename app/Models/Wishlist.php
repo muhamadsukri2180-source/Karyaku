@@ -8,19 +8,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Wishlist extends Model
 {
     protected $table = 'wishlists';
+
     protected $primaryKey = 'id_wishlist';
 
-    const UPDATED_AT = null; // ERD tidak punya updated_at
-
-    protected $fillable = ['user_id', 'product_id'];
+    protected $fillable = [
+        'user_id',
+        'product_id'
+    ];
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id', 'id_user');
+        return $this->belongsTo(User::class,'user_id','id_user');
     }
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class, 'product_id', 'id_product');
+        return $this->belongsTo(Product::class,'product_id','id_product');
     }
 }
