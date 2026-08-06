@@ -5,9 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Karyaku - Akun Verifikator & Verifikasi Identitas</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         tailwind.config = {
@@ -24,7 +29,6 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(14, 165, 233, 0.3); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(14, 165, 233, 0.5); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -35,8 +39,6 @@
         .menu-chevron.rotated { transform: rotate(180deg); }
         .card-hover { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .card-hover:hover { transform: scale(1.015) translateY(-3px); box-shadow: 0 15px 30px -10px rgba(14, 165, 233, 0.25); border-color: rgba(14, 165, 233, 0.5); }
-        .modal-overlay { transition: opacity .25s ease; }
-        .modal-box { transition: all .25s ease; }
         .tab-btn.active-tab { background: #0EA5E9; color: #fff; box-shadow: 0 8px 15px -5px rgba(14,165,233,0.4); }
     </style>
 </head>
@@ -128,6 +130,10 @@
                 <a href="{{ route('admin.maintenance') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
                     <div class="flex items-center gap-3"><i class="fa-solid fa-server w-4 text-center group-hover:text-white transition-colors"></i><span>Maintenance & Backup</span></div>
                 </a>
+                <a href="{{ route('admin.pelanggaran') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1">
+                    <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-white transition-colors"></i>
+                    <span>Pelanggaran</span>
+                </a>
             </nav>
             <div class="p-4 border-t border-white/15">
                 <form method="POST" action="{{ route('logout') }}">
@@ -153,17 +159,6 @@
 
             <div class="p-6 sm:p-8 space-y-6 overflow-y-auto no-scrollbar">
 
-                @if(session('success'))
-                    <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold px-4 py-3 rounded-xl shadow-sm">
-                        <i class="fa-solid fa-circle-check mr-1"></i> {{ session('success') }}
-                    </div>
-                @endif
-                @if(session('error'))
-                    <div class="bg-red-50 border border-red-200 text-red-800 text-sm font-semibold px-4 py-3 rounded-xl shadow-sm">
-                        <i class="fa-solid fa-circle-xmark mr-1"></i> {{ session('error') }}
-                    </div>
-                @endif
-
                 <!-- SUMMARY CARDS -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     <div class="bg-gradient-to-br from-indigo-50 via-white to-blue-100/60 border-l-4 border-indigo-500 border-y border-r border-indigo-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-sm">
@@ -182,20 +177,22 @@
                         <p class="text-[10px] text-slate-600 font-medium border-t border-amber-200/50 pt-2 mt-2">Menunggu validasi tim</p>
                     </div>
 
+                    <!-- CARD 3: Dilengkapi Ikon Centang/Lencana yang Jelas -->
                     <div class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100/60 border-l-4 border-emerald-500 border-y border-r border-emerald-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-sm">
                         <div class="flex justify-between items-start mb-2 relative z-10">
                             <div><span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Selesai Diverifikasi</span><div class="text-3xl font-black text-slate-900 mt-1">{{ $selesaiHariIni }} Hari Ini</div></div>
-                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/30"><i class="fa-solid fa-badge-check text-lg"></i></div>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/30"><i class="fa-solid fa-circle-check text-lg"></i></div>
                         </div>
                         <p class="text-[10px] text-slate-600 font-medium border-t border-emerald-200/50 pt-2 mt-2">Akurat dan cepat</p>
                     </div>
 
-                    <div class="bg-gradient-to-br from-sky-50 via-white to-blue-100/60 border-l-4 border-sky-500 border-y border-r border-sky-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-sm">
+                    <!-- CARD 4: Warna Biru dengan Ikon Jelas -->
+                    <div class="bg-gradient-to-br from-blue-50 via-white to-blue-100/60 border-l-4 border-blue-500 border-y border-r border-blue-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-sm">
                         <div class="flex justify-between items-start mb-2 relative z-10">
-                            <div><span class="text-[11px] font-bold text-sky-900 uppercase tracking-wider">Akurasi Sistem</span><div class="text-3xl font-black text-slate-900 mt-1">{{ $akurasiSistem }}%</div></div>
-                            <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold shadow-md shadow-sky-500/30"><i class="fa-solid fa-chart-line text-lg"></i></div>
+                            <div><span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Akurasi Sistem</span><div class="text-3xl font-black text-slate-900 mt-1">{{ $akurasiSistem }}%</div></div>
+                            <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/30"><i class="fa-solid fa-chart-line text-lg"></i></div>
                         </div>
-                        <p class="text-[10px] text-slate-600 font-medium border-t border-sky-200/50 pt-2 mt-2">Kinerja verifikator</p>
+                        <p class="text-[10px] text-slate-600 font-medium border-t border-blue-200/50 pt-2 mt-2">Kinerja verifikator</p>
                     </div>
                 </div>
 
@@ -216,7 +213,9 @@
                             <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                             <input type="text" id="verifSearch" onkeyup="filterVerifikator()" placeholder="Cari nama verifikator..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
                         </div>
-                        <button type="button" onclick="openModal('addVerifierModal')" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/30 transition-all flex items-center justify-center gap-2 w-full sm:w-auto">
+                        
+                        <!-- TOMBOL 3D BIRU KOKOH -->
+                        <button type="button" onclick="openModal('addVerifierModal')" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-blue-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#cbd5e1] transition-all cursor-pointer w-full sm:w-auto">
                             <i class="fa-solid fa-user-shield"></i> Tambah Verifikator Baru
                         </button>
                     </div>
@@ -257,15 +256,16 @@
                                         </td>
                                         <td class="py-3 px-6">
                                             <div class="flex items-center justify-center gap-2">
-                                               <button type="button"
-    class="btn-edit-verifier px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all text-xs font-bold shadow-sm"
-    data-id="{{ $v->id_user }}"
-    data-name="{{ $v->name }}"
-    data-email="{{ $v->email }}">
-    <i class="fa-solid fa-pen-to-square"></i> Edit
-</button>
-                                                <button type="button" onclick="openDeleteVerifierModal('{{ $v->id_user }}', '{{ addslashes($v->name) }}')" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all text-xs font-bold shadow-sm">
-                                                    <i class="fa-solid fa-trash"></i> Hapus
+                                                <button type="button"
+                                                    class="btn-edit-verifier w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center justify-center"
+                                                    data-id="{{ $v->id_user }}"
+                                                    data-name="{{ $v->name }}"
+                                                    data-email="{{ $v->email }}"
+                                                    title="Edit Verifikator">
+                                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                                </button>
+                                                <button type="button" onclick="confirmDeleteVerifier('{{ $v->id_user }}', '{{ addslashes($v->name) }}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Hapus Verifikator">
+                                                    <i class="fa-solid fa-trash text-xs"></i>
                                                 </button>
                                             </div>
                                         </td>
@@ -320,13 +320,10 @@
                                         </td>
                                         <td class="py-3 px-6">
                                             <div class="flex items-center justify-center gap-2">
-                                                <form method="POST" action="{{ route('admin.users.approveSeller', $item->id) }}" onsubmit="return confirm('Setujui pengajuan identitas ini?');">
-                                                    @csrf
-                                                    <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold shadow-sm">
-                                                        <i class="fa-solid fa-check"></i> Setujui
-                                                    </button>
-                                                </form>
-                                                <button type="button" onclick="openRejectModal('{{ $item->id }}', '{{ addslashes($item->user->name ?? '-') }}')" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all text-xs font-bold shadow-sm">
+                                                <button type="button" onclick="confirmApprove('{{ route('admin.users.approveSeller', $item->id) }}', '{{ addslashes($item->user->name ?? '-') }}')" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold shadow-sm flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-check"></i> Setujui
+                                                </button>
+                                                <button type="button" onclick="openRejectModal('{{ $item->id }}', '{{ addslashes($item->user->name ?? '-') }}')" class="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all text-xs font-bold shadow-sm flex items-center gap-1.5">
                                                     <i class="fa-solid fa-xmark"></i> Tolak
                                                 </button>
                                             </div>
@@ -353,14 +350,16 @@
     </div>
 
     <!-- MODAL: TAMBAH VERIFIKATOR -->
-    <div id="addVerifierModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
-        <div class="modal-overlay absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('addVerifierModal')"></div>
-        <div class="modal-box relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-display font-extrabold text-lg text-slate-900">Tambah Verifikator Baru</h3>
-                <button onclick="closeModal('addVerifierModal')" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+    <div id="addVerifierModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 overflow-hidden" id="addVerifierModalContent">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center"><i class="fa-solid fa-user-shield text-sm"></i></div>
+                    <h3 class="font-extrabold text-slate-900 font-display text-base">Tambah Verifikator Baru</h3>
+                </div>
+                <button type="button" onclick="closeModal('addVerifierModal')" class="text-slate-400 hover:text-red-500 transition-colors w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form method="POST" action="{{ route('admin.users.addVerifier') }}" class="space-y-3">
+            <form method="POST" action="{{ route('admin.users.addVerifier') }}" class="p-6 space-y-4">
                 @csrf
                 <div>
                     <label class="text-xs font-bold text-slate-700">Nama Lengkap</label>
@@ -372,25 +371,32 @@
                 </div>
                 <div>
                     <label class="text-xs font-bold text-slate-700">Password</label>
-                    <input type="password" name="password" required minlength="8" class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                    <div class="relative mt-1">
+                        <input type="password" name="password" id="addVerifierPassword" required minlength="8" class="w-full border border-sky-200 rounded-xl px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                        <button type="button" onclick="togglePassword('addVerifierPassword', 'eyeIconAddVerifier')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none">
+                            <i class="fa-solid fa-eye text-sm" id="eyeIconAddVerifier"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('addVerifierModal')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
-                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 shadow-md">Simpan Verifikator</button>
+                <div class="flex justify-end gap-2 pt-3">
+                    <button type="button" onclick="closeModal('addVerifierModal')" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">Simpan Verifikator</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- MODAL: EDIT VERIFIKATOR -->
-    <div id="editVerifierModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
-        <div class="modal-overlay absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('editVerifierModal')"></div>
-        <div class="modal-box relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-display font-extrabold text-lg text-slate-900">Edit Verifikator</h3>
-                <button onclick="closeModal('editVerifierModal')" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+    <div id="editVerifierModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 overflow-hidden" id="editVerifierModalContent">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-pen-to-square text-sm"></i></div>
+                    <h3 class="font-extrabold text-slate-900 font-display text-base">Edit Verifikator</h3>
+                </div>
+                <button type="button" onclick="closeModal('editVerifierModal')" class="text-slate-400 hover:text-red-500 transition-colors w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form id="editVerifierForm" method="POST" action="" class="space-y-3">
+            <form id="editVerifierForm" method="POST" action="" class="p-6 space-y-4">
                 @csrf
                 @method('PUT')
                 <div>
@@ -403,55 +409,47 @@
                 </div>
                 <div>
                     <label class="text-xs font-bold text-slate-700">Password Baru (opsional)</label>
-                    <input type="password" name="password" minlength="8" placeholder="Kosongkan jika tidak diubah" class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                    <div class="relative mt-1">
+                        <input type="password" name="password" id="editVerifierPassword" minlength="8" placeholder="Kosongkan jika tidak diubah" class="w-full border border-sky-200 rounded-xl px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                        <button type="button" onclick="togglePassword('editVerifierPassword', 'eyeIconEditVerifier')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none">
+                            <i class="fa-solid fa-eye text-sm" id="eyeIconEditVerifier"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('editVerifierModal')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
-                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 shadow-md">Simpan Perubahan</button>
+                <div class="flex justify-end gap-2 pt-3">
+                    <button type="button" onclick="closeModal('editVerifierModal')" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">Simpan Perubahan</button>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL: HAPUS VERIFIKATOR -->
-    <div id="deleteVerifierModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
-        <div class="modal-overlay absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('deleteVerifierModal')"></div>
-        <div class="modal-box relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-            <div class="w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
-            <h3 class="font-display font-extrabold text-lg text-slate-900 mb-1">Hapus Verifikator?</h3>
-            <p class="text-xs text-slate-600 mb-5">Anda akan menghapus <strong id="deleteVerifierName"></strong> secara permanen.</p>
-            <form id="deleteVerifierForm" method="POST" action="" class="flex justify-center gap-2">
-                @csrf
-                @method('DELETE')
-                <button type="button" onclick="closeModal('deleteVerifierModal')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
-                <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 shadow-md">Ya, Hapus</button>
             </form>
         </div>
     </div>
 
     <!-- MODAL: TOLAK PENGAJUAN IDENTITAS -->
-    <div id="rejectModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
-        <div class="modal-overlay absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('rejectModal')"></div>
-        <div class="modal-box relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-display font-extrabold text-lg text-slate-900">Tolak Pengajuan Identitas</h3>
-                <button onclick="closeModal('rejectModal')" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+    <div id="rejectModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 overflow-hidden" id="rejectModalContent">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center"><i class="fa-solid fa-xmark text-sm"></i></div>
+                    <h3 class="font-extrabold text-slate-900 font-display text-base">Tolak Pengajuan Identitas</h3>
+                </div>
+                <button type="button" onclick="closeModal('rejectModal')" class="text-slate-400 hover:text-red-500 transition-colors w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <p class="text-xs text-slate-600 mb-4">Anda akan menolak pengajuan dari <strong id="rejectUserName"></strong>. Berikan alasan penolakan (opsional).</p>
-            <form id="rejectForm" method="POST" action="" class="space-y-3">
+            <form id="rejectForm" method="POST" action="" class="p-6 space-y-4">
                 @csrf
+                <p class="text-xs text-slate-600">Anda akan menolak pengajuan dari <strong id="rejectUserName"></strong>. Berikan alasan penolakan (opsional).</p>
                 <div>
                     <label class="text-xs font-bold text-slate-700">Catatan Penolakan</label>
                     <textarea name="notes" rows="3" maxlength="500" placeholder="Contoh: Foto KTP buram, mohon unggah ulang." class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30"></textarea>
                 </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('rejectModal')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
-                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 shadow-md">Tolak Pengajuan</button>
+                <div class="flex justify-end gap-2 pt-3">
+                    <button type="button" onclick="closeModal('rejectModal')" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">Tolak Pengajuan</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- SCRIPTS -->
     <script>
         const sidebar = document.getElementById('sidebar');
         const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
@@ -459,17 +457,33 @@
         const sidebarOverlay = document.getElementById('sidebarOverlay');
 
         function toggleSidebar() { sidebar.classList.toggle('open'); sidebar.classList.toggle('closed'); sidebarOverlay.classList.toggle('hidden'); }
-        sidebarToggleBtn.addEventListener('click', toggleSidebar); sidebarCloseBtn.addEventListener('click', toggleSidebar); sidebarOverlay.addEventListener('click', toggleSidebar);
+        if(sidebarToggleBtn) sidebarToggleBtn.addEventListener('click', toggleSidebar);
+        if(sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', toggleSidebar);
+        if(sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
 
         document.querySelectorAll('.menu-toggle').forEach(btn => {
             btn.addEventListener('click', () => {
                 const key = btn.getAttribute('data-menu');
                 const submenu = document.querySelector(`[data-submenu="${key}"]`);
                 const chevron = document.querySelector(`[data-chevron="${key}"]`);
-                submenu.classList.toggle('open');
-                chevron.classList.toggle('rotated');
+                if(submenu) submenu.classList.toggle('open');
+                if(chevron) chevron.classList.toggle('rotated');
             });
         });
+
+        function togglePassword(fieldId, iconId) {
+            const input = document.getElementById(fieldId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
 
         function switchTab(tab) {
             document.getElementById('tabStaf').classList.toggle('hidden', tab !== 'staf');
@@ -485,40 +499,104 @@
             });
         }
 
-        function openModal(id) {
-            const el = document.getElementById(id);
-            el.classList.remove('hidden');
-            el.classList.add('flex');
-        }
-        function closeModal(id) {
-            const el = document.getElementById(id);
-            el.classList.add('hidden');
-            el.classList.remove('flex');
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = document.getElementById(modalId + 'Content');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
         }
 
-function openEditVerifierModal(v) {
-    const form = document.getElementById('editVerifierForm');
-    form.action = `{{ url('admin/users/verifier') }}/${v.id}`;
-    document.getElementById('editVerifierName').value = v.name ?? '';
-    document.getElementById('editVerifierEmail').value = v.email ?? '';
-    openModal('editVerifierModal');
-}
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = document.getElementById(modalId + 'Content');
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
 
-document.querySelectorAll('.btn-edit-verifier').forEach(btn => {
-    btn.addEventListener('click', () => {
-        openEditVerifierModal({
-            id: btn.dataset.id,
-            name: btn.dataset.name,
-            email: btn.dataset.email,
+        function openEditVerifierModal(v) {
+            const form = document.getElementById('editVerifierForm');
+            form.action = `{{ url('admin/users/verifier') }}/${v.id}`;
+            document.getElementById('editVerifierName').value = v.name ?? '';
+            document.getElementById('editVerifierEmail').value = v.email ?? '';
+            openModal('editVerifierModal');
+        }
+
+        document.querySelectorAll('.btn-edit-verifier').forEach(btn => {
+            btn.addEventListener('click', () => {
+                openEditVerifierModal({
+                    id: btn.dataset.id,
+                    name: btn.dataset.name,
+                    email: btn.dataset.email,
+                });
+            });
         });
-    });
-});
 
-        function openDeleteVerifierModal(id, name) {
-            const form = document.getElementById('deleteVerifierForm');
-            form.action = `{{ url('admin/users/verifier') }}/${id}`;
-            document.getElementById('deleteVerifierName').textContent = name;
-            openModal('deleteVerifierModal');
+        function confirmDeleteVerifier(id, name) {
+            Swal.fire({
+                title: 'Hapus Verifikator?',
+                text: `Anda akan menghapus "${name}" secara permanen.`,
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `{{ url('admin/users/verifier') }}/${id}`;
+                    
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = '{{ csrf_token() }}';
+                    form.appendChild(csrfInput);
+
+                    const methodInput = document.createElement('input');
+                    methodInput.type = 'hidden';
+                    methodInput.name = '_method';
+                    methodInput.value = 'DELETE';
+                    form.appendChild(methodInput);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+
+        function confirmApprove(actionUrl, name) {
+            Swal.fire({
+                title: 'Setujui Pengajuan?',
+                text: `Setujui pengajuan identitas dari ${name}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Setujui!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = actionUrl;
+                    
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = '{{ csrf_token() }}';
+                    form.appendChild(csrfInput);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
         }
 
         function openRejectModal(id, name) {
@@ -527,6 +605,13 @@ document.querySelectorAll('.btn-edit-verifier').forEach(btn => {
             document.getElementById('rejectUserName').textContent = name;
             openModal('rejectModal');
         }
+
+        @if (session('success'))
+            Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", timer: 3000, showConfirmButton: false });
+        @endif
+        @if (session('error'))
+            Swal.fire({ icon: 'error', title: 'Gagal!', text: "{{ session('error') }}", confirmButtonColor: '#ef4444' });
+        @endif
     </script>
 </body>
 </html>

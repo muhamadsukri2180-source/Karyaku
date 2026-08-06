@@ -31,7 +31,7 @@ class AdminController extends Controller
     {
         $year = (int) $request->query('year', now()->year);
 
-        $totalProducts        = Product::count();
+        $totalProducts         = Product::count();
         $pendingProductsCount = Product::where('status', 'pending')->count();
 
         $totalOrders  = Order::count();
@@ -169,7 +169,6 @@ class AdminController extends Controller
         $targetRole = $request->input('target_role', 'none');
         $statusFile = storage_path('framework/maintenance_mode.json');
 
-        // Jika mode Normal, hapus file konfigurasi maintenance
         if ($targetRole === 'none') {
             if (file_exists($statusFile)) {
                 unlink($statusFile);
@@ -180,15 +179,12 @@ class AdminController extends Controller
             return redirect()->back()->with('success', 'Sistem kembali Online dan Berjalan Normal.');
         }
 
-        // Simpan target role ke file JSON agar Middleware kustom yang menyaring, 
-        // sehingga Panel Admin TIDAK IKUT DOWN (Error 503)
         $data = [
             'target_role' => $targetRole,
             'time' => now()
         ];
         file_put_contents($statusFile, json_encode($data));
 
-        // Pastikan status Laravel 'up' agar admin tetap bisa akses panel
         if (app()->isDownForMaintenance()) {
             Artisan::call('up');
         }
@@ -509,7 +505,6 @@ class AdminController extends Controller
             'name'        => 'required|string|max:255|unique:categories,name',
             'description' => 'nullable|string',
             'status'      => 'nullable|in:aktif,nonaktif',
-            'icon'        => 'nullable|string|max:100',
         ]);
 
         Category::create($validated);
@@ -525,7 +520,6 @@ class AdminController extends Controller
             'name'        => 'required|string|max:255|unique:categories,name,' . $category->id_category . ',id_category',
             'description' => 'nullable|string',
             'status'      => 'required|in:aktif,nonaktif',
-            'icon'        => 'nullable|string|max:100',
         ]);
 
         $category->update($validated);
@@ -736,7 +730,38 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 10. PROFILE ADMIN
+    | 10. LAPORAN PELANGGARAN (SISTEM)
+    |--------------------------------------------------------------------------
+    */
+    public function pelanggaran()
+    {
+        $reports = Report::latest()->paginate(15);
+        return view('admin.sistem.pelanggaran', compact('reports'));
+    }
+
+    public function tindakUserPelanggaran(Request $request, string|int $id)
+    {
+        $request->validate([
+            'action' => 'required|string',
+            'admin_notes' => 'required|string|max:500',
+        ]);
+
+        return redirect()->back()->with('success', 'Tindak lanjut pelanggaran pengguna berhasil disimpan.');
+    }
+
+    public function tindakProdukPelanggaran(Request $request, string|int $id)
+    {
+        $request->validate([
+            'action' => 'required|string',
+            'admin_notes' => 'required|string|max:500',
+        ]);
+
+        return redirect()->back()->with('success', 'Tindak lanjut pelanggaran produk berhasil disimpan.');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 11. PROFILE ADMIN
     |--------------------------------------------------------------------------
     */
     public function profile()

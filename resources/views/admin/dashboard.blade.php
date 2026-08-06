@@ -255,9 +255,9 @@
                 $adminUser = auth()->user();
                 $adminName = $adminUser->name ?? 'Admin';
                 $initials  = collect(explode(' ', trim($adminName)))
-                                ->map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)))
-                                ->take(2)
-                                ->implode('');
+                            ->map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)))
+                            ->take(2)
+                            ->implode('');
             @endphp
             <div class="p-4 mx-4 my-5 rounded-2xl bg-white/10 border border-white/20 flex items-center gap-3 backdrop-blur-md shadow-inner">
                 <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">
@@ -349,6 +349,12 @@
                     @if($isMaintenance)
                         <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
                     @endif
+                </a>
+
+                <!-- MENU PELANGGARAN YANG DITAMBAHKAN -->
+                <a href="{{ route('admin.pelanggaran') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1">
+                    <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-white transition-colors"></i>
+                    <span>Pelanggaran</span>
                 </a>
             </nav>
 
@@ -628,13 +634,13 @@
                                         <p class="text-[11px] text-slate-600 mt-0.5">Ada {{ $pendingReportsCount }} laporan yang perlu ditinjau</p>
                                     </div>
                                 </div>
-                                <div class="relative group border-none bg-transparent p-0 outline-none cursor-pointer">
+                                <a href="{{ route('admin.pelanggaran') }}" class="relative group border-none bg-transparent p-0 outline-none cursor-pointer">
                                     <span class="absolute top-0 left-0 w-full h-full bg-black bg-opacity-15 rounded-lg transform translate-y-0.5 transition duration-300 group-hover:translate-y-1"></span>
                                     <span class="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-slate-200 via-slate-300 to-slate-200"></span>
                                     <div class="relative px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-xs font-bold text-red-700 hover:bg-red-600 hover:text-white transform -translate-y-0.5 transition duration-300 group-hover:-translate-y-1 shadow-sm">
                                         Periksa
                                     </div>
-                                </div>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -700,7 +706,6 @@
 
         let yearlyChartInstance;
 
-        // Data awal dikirim langsung dari controller (AdminController@dashboard)
         const initialYear = {{ (int) $year }};
         const initialChartData = @json($chartData);
         const chartDataUrl = "{{ route('admin.dashboard.chartData') }}";
@@ -795,7 +800,6 @@
             });
         });
 
-        // Ambil data chart dari endpoint AdminController@dashboardChartData
         function fetchChartData(year) {
             fetch(`${chartDataUrl}?year=${year}`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }

@@ -93,7 +93,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/memberships/{id}', [AdminController::class, 'updateMembership'])->name('memberships.update');
     Route::delete('/memberships/{id}', [AdminController::class, 'deleteMembership'])->name('memberships.delete');
 
-    // 8. Profile Admin
+    // 8. Laporan Pelanggaran (Sistem)
+    Route::get('/pelanggaran', [AdminController::class, 'pelanggaran'])->name('pelanggaran');
+    Route::post('/pelanggaran/user/{id}', [AdminController::class, 'tindakUserPelanggaran'])->name('pelanggaran.user');
+    Route::post('/pelanggaran/produk/{id}', [AdminController::class, 'tindakProdukPelanggaran'])->name('pelanggaran.produk');
+
+    // 9. Profile Admin
     Route::get('/profile', [AdminController::class, 'profile'])->name('profile');
     Route::put('/profile', [AdminController::class, 'updateProfile'])->name('profile.update');
 });
