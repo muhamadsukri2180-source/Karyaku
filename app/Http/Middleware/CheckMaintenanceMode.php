@@ -10,11 +10,10 @@ class CheckMaintenanceMode
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // 1. DAFTAR HALAMAN PUBLIK & ADMIN (Selalu diizinkan diakses meskipun maintenance aktif)
+        // 1. DAFTAR HALAMAN PUBLIK & ADMIN (Selalu diizinkan diakses)
         if ($request->is(
             '/',            // Landing page
-            'login',        // Halaman Login
-            'register',     // Halaman Register
+            'auth*',        // Halaman Login & Register (karena berawalan auth/)
             'password*',    // Fitur Reset Password
             'forgot-password', 
             'reset-password',
@@ -47,7 +46,7 @@ class CheckMaintenanceMode
                     }
                 }
 
-                // Jika target adalah 'all' (Down Semua User kecuali Admin) untuk area dashboard user
+                // Jika target adalah 'all' (Down Semua User kecuali Admin) untuk area user
                 if ($targetRole === 'all') {
                     abort(503, 'Sistem sedang dalam pemeliharaan.');
                 }
