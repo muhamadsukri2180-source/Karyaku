@@ -28,6 +28,13 @@ Route::prefix('auth')->group(function () {
 
     Route::get('/register', [AuthController::class, 'showRegister'])->name('auth.register');
     Route::post('/register', [AuthController::class, 'register'])->name('auth.register.submit');
+
+    // --- RUTE LUPA & RESET PASSWORD ---
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->middleware('guest')->name('password.request');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->middleware('guest')->name('password.email');
+
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->middleware('guest')->name('password.reset');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('guest')->name('password.store');
 });
 
 // Logout (Harus Authenticated)

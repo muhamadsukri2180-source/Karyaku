@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -33,7 +35,6 @@ class AuthController extends Controller
             'terms'    => 'required',
         ]);
 
-        // Semua user yang daftar lewat form ini otomatis jadi "pembeli"
         $role = Role::where('role_name', 'pembeli')->firstOrFail();
 
         User::create([
@@ -44,8 +45,6 @@ class AuthController extends Controller
             'status'   => 'active',
         ]);
 
-        // Tidak auto-login. Arahkan ke halaman login,
-        // sambil bawa email agar bisa langsung diisi otomatis di form login.
         return redirect()
             ->route('auth.login')
             ->with('success', 'Registrasi berhasil! Silakan masuk dengan akun kamu.')
@@ -88,6 +87,66 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('auth.login');
+    }
+
+    // ==========================================
+    // FITUR LUPA & RESET PASSWORD
+    // ==========================================
+
+    // Tampilkan form lupa password (kirim email)
+    public function showForgotPassword()
+    {
+        return view('auth.forgot_password');
+    }
+
+    // Kirim tautan reset password ke email
+    public function sendResetLinkEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+        ], [
+            'email.exists' => 'Email tersebut tidak terdaftar di sistem kami.',
+        ]);
+
+        $status = Password::sendResetLink($request->only('email'));
+
+        return $status === Password::RESET_LINK_SENT
+            ? back()->with('status', 'Tautan reset password berhasil dikirim ke email Anda.')
+            : back()->withErrors(['email' => 'Terjadi kesalahan, silakan coba lagi.']);
+    }
+
+    // Tampilkan form buat password baru (dari link email)
+    public function showResetPassword(Request $request, string $token)
+    {
+        return view('auth.reset_password', [
+            'token' => $token,
+            'email' => $request->email
+        ]);
+    }
+
+    // Proses simpan password baru
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token'    => 'required',
+            'email'    => 'required|email',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(Str::random(60));
+
+                $user->save();
+            }
+        );
+
+        return $status === Password::PASSWORD_RESET
+            ? redirect()->route('auth.login')->with('success', 'Password berhasil diubah! Silakan masuk dengan password baru.')
+            : back()->withErrors(['email' => [__($status)]]);
     }
 
     // Helper redirect sesuai role
