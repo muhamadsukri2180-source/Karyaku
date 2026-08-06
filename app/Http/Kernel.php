@@ -17,10 +17,16 @@ class Kernel extends HttpKernel
         // \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,
-        \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
+        
+        // Dinonaktifkan agar tidak bentrok dengan maintenance kustom per-role
+        // \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
+        
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+
+        // Middleware kustom maintenance aplikasi
+        \App\Http\Middleware\CheckMaintenanceMode::class,
     ];
 
     /**

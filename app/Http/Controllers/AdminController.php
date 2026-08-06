@@ -48,7 +48,7 @@ class AdminController extends Controller
         $pendingIdentityCount = IdentityVerification::where('status', 'pending')->count();
         $pendingReportsCount  = Report::where('status', 'pending')->count();
 
-        // Grafik: jumlah order per bulan pada tahun yang dipilih
+        // Grafik: jumlah order per tahun yang dipilih
         $chartRaw = Order::selectRaw('MONTH(created_at) as bulan, COUNT(*) as total')
             ->whereYear('created_at', $year)
             ->groupBy('bulan')
@@ -116,7 +116,6 @@ class AdminController extends Controller
         ));
     }
 
-    // GET /admin/dashboard/chart-data  (admin.dashboard.chartData) - AJAX ganti tahun
     public function dashboardChartData(Request $request)
     {
         $year = (int) $request->query('year', now()->year);
@@ -137,14 +136,18 @@ class AdminController extends Controller
     /*
     |--------------------------------------------------------------------------
     | 2. MAINTENANCE MODE + BACKUP
-    | GET  /admin/maintenance                (admin.maintenance)
-    | POST /admin/toggle-maintenance         (admin.toggleMaintenance)
-    | View: resources/views/admin/sistem/maintenance.blade.php
     |--------------------------------------------------------------------------
     */
     public function maintenance()
     {
         $isMaintenance = app()->isDownForMaintenance();
+        
+        $statusFile = storage_path('framework/maintenance_mode.json');
+        $currentMode = 'none';
+        if (file_exists($statusFile)) {
+            $data = json_decode(file_get_contents($statusFile), true);
+            $currentMode = $data['target_role'] ?? 'none';
+        }
 
         Storage::disk('local')->makeDirectory('backups');
 
@@ -158,20 +161,39 @@ class AdminController extends Controller
             ->sortByDesc('created_at')
             ->values();
 
-        return view('admin.sistem.maintenance', compact('isMaintenance', 'backups'));
+        return view('admin.sistem.maintenance', compact('isMaintenance', 'currentMode', 'backups'));
     }
 
     public function toggleMaintenance(Request $request)
     {
-        if (app()->isDownForMaintenance()) {
-            Artisan::call('up');
-            return redirect()->back()->with('success', 'Sistem kembali Online (Maintenance Mode Nonaktif).');
+        $targetRole = $request->input('target_role', 'none');
+        $statusFile = storage_path('framework/maintenance_mode.json');
+
+        // Jika mode Normal, hapus file konfigurasi maintenance
+        if ($targetRole === 'none') {
+            if (file_exists($statusFile)) {
+                unlink($statusFile);
+            }
+            if (app()->isDownForMaintenance()) {
+                Artisan::call('up');
+            }
+            return redirect()->back()->with('success', 'Sistem kembali Online dan Berjalan Normal.');
         }
 
-        $secretKey = $request->input('secret_key', 'admin-access-' . str()->random(6));
-        Artisan::call('down', ['--secret' => $secretKey, '--refresh' => 15]);
+        // Simpan target role ke file JSON agar Middleware kustom yang menyaring, 
+        // sehingga Panel Admin TIDAK IKUT DOWN (Error 503)
+        $data = [
+            'target_role' => $targetRole,
+            'time' => now()
+        ];
+        file_put_contents($statusFile, json_encode($data));
 
-        return redirect()->back()->with('warning', 'Sistem masuk ke Maintenance Mode. Akses rahasia: /' . $secretKey);
+        // Pastikan status Laravel 'up' agar admin tetap bisa akses panel
+        if (app()->isDownForMaintenance()) {
+            Artisan::call('up');
+        }
+
+        return redirect()->back()->with('warning', 'Mode Maintenance berhasil diterapkan untuk target: ' . strtoupper($targetRole));
     }
 
     public function createBackup()
@@ -201,13 +223,13 @@ class AdminController extends Controller
 
     public function downloadBackup(string $filename)
     {
-        $path = 'backups/' . basename($filename);
+        $path = storage_path('app/backups/' . basename($filename));
 
-        if (! Storage::disk('local')->exists($path)) {
+        if (!file_exists($path)) {
             abort(404, 'File backup tidak ditemukan.');
         }
 
-        return Storage::disk('local')->download($path);
+        return response()->download($path);
     }
 
     public function deleteBackup(string $filename)
@@ -219,21 +241,21 @@ class AdminController extends Controller
     /*
     |--------------------------------------------------------------------------
     | 3. MANAJEMEN PENGGUNA (Akun Pengguna)
-    | GET /admin/users  (admin.users)
-    | View: resources/views/admin/manajemen/akun_pengguna.blade.php
     |--------------------------------------------------------------------------
     */
     public function users(Request $request)
     {
         $search = $request->query('search');
 
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $users */
         $users = User::with(['role', 'membership'])
             ->whereHas('role', fn ($q) => $q->whereIn('role_name', ['pembeli', 'penjual']))
             ->when($search, fn ($q) => $q->where(fn ($qq) => $qq->where('name', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")))
             ->latest()
-            ->paginate(15)
-            ->withQueryString();
+            ->paginate(15);
+            
+        $users->withQueryString();
 
         $totalUsers     = User::whereHas('role', fn ($q) => $q->whereIn('role_name', ['pembeli', 'penjual']))->count();
         $activeCreators = User::whereHas('role', fn ($q) => $q->where('role_name', 'penjual'))->whereHas('products')->count();
@@ -247,7 +269,6 @@ class AdminController extends Controller
         ));
     }
 
-    // POST /admin/users  (admin.users.store)
     public function storeUser(Request $request)
     {
         $validated = $request->validate([
@@ -271,8 +292,7 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Pengguna baru berhasil ditambahkan.');
     }
 
-    // PUT /admin/users/{id}  (admin.users.update)
-    public function updateUser(Request $request, $id)
+    public function updateUser(Request $request, string|int $id)
     {
         $user = User::findOrFail($id);
 
@@ -295,8 +315,7 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Data pengguna berhasil diperbarui.');
     }
 
-    // DELETE /admin/users/{id}  (admin.users.delete) — sudah ada di route lamamu
-    public function deleteUser($id)
+    public function deleteUser(string|int $id)
     {
         $user = User::findOrFail($id);
 
@@ -312,8 +331,6 @@ class AdminController extends Controller
     /*
     |--------------------------------------------------------------------------
     | 4. AKUN VERIFIKATOR & ANTREAN VERIFIKASI IDENTITAS
-    | GET /admin/users/verifikator  (admin.users.verifikator)
-    | View: resources/views/admin/manajemen/akun_verifikator.blade.php
     |--------------------------------------------------------------------------
     */
     public function verifikator()
@@ -330,10 +347,13 @@ class AdminController extends Controller
                 return $v;
             });
 
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $pendingQueue */
         $pendingQueue = IdentityVerification::with('user')
             ->where('status', 'pending')
             ->latest()
             ->paginate(10);
+            
+        $pendingQueue->withQueryString();
 
         $totalVerifikator = $verifikators->count();
         $antreanMasuk     = IdentityVerification::where('status', 'pending')->count();
@@ -348,7 +368,6 @@ class AdminController extends Controller
         ));
     }
 
-    // POST /admin/users/add-verifier  (admin.users.addVerifier) — sudah ada di route lamamu
     public function addVerifier(Request $request)
     {
         $request->validate([
@@ -370,8 +389,7 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Verifikator berhasil ditambahkan.');
     }
 
-    // PUT /admin/users/verifier/{id}  (admin.users.updateVerifier)
-    public function updateVerifier(Request $request, $id)
+    public function updateVerifier(Request $request, string|int $id)
     {
         $verifier = User::findOrFail($id);
 
@@ -391,15 +409,13 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Data verifikator berhasil diperbarui.');
     }
 
-    // DELETE /admin/users/verifier/{id}  (admin.users.deleteVerifier)
-    public function deleteVerifier($id)
+    public function deleteVerifier(string|int $id)
     {
         User::findOrFail($id)->delete();
         return redirect()->back()->with('success', 'Verifikator berhasil dihapus.');
     }
 
-    // POST /admin/users/approve-seller/{id}  (admin.users.approveSeller) — sudah ada di route lamamu
-    public function approveSeller(Request $request, $id)
+    public function approveSeller(Request $request, string|int $id)
     {
         $verification = IdentityVerification::findOrFail($id);
         $verification->update([
@@ -413,8 +429,7 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Pengajuan identitas disetujui.');
     }
 
-    // POST /admin/users/reject-seller/{id}  (admin.users.rejectSeller)
-    public function rejectSeller(Request $request, $id)
+    public function rejectSeller(Request $request, string|int $id)
     {
         $request->validate(['notes' => 'nullable|string|max:500']);
 
@@ -432,19 +447,19 @@ class AdminController extends Controller
     /*
     |--------------------------------------------------------------------------
     | 5. KATALOG: DAFTAR JASA (Product)
-    | GET /admin/products  (admin.products) — sudah ada di route lamamu
-    | View: resources/views/admin/katalog/daftar_jasa.blade.php
     |--------------------------------------------------------------------------
     */
     public function products(Request $request)
     {
         $search = $request->query('search');
 
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $products */
         $products = Product::with(['category', 'seller'])
             ->when($search, fn ($q) => $q->where('title', 'like', "%{$search}%"))
             ->latest()
-            ->paginate(15)
-            ->withQueryString();
+            ->paginate(15);
+            
+        $products->withQueryString();
 
         $pendingCount = Product::where('status', 'pending')->count();
         $activeCount  = Product::where('status', 'active')->count();
@@ -452,20 +467,19 @@ class AdminController extends Controller
         return view('admin.katalog.daftar_jasa', compact('products', 'pendingCount', 'activeCount'));
     }
 
-    public function approveProduct($id)
+    public function approveProduct(string|int $id)
     {
         Product::where('id_product', $id)->update(['status' => 'active']);
         return redirect()->back()->with('success', 'Produk berhasil disetujui.');
     }
 
-    public function takedownProduct($id)
+    public function takedownProduct(string|int $id)
     {
         Product::where('id_product', $id)->update(['status' => 'inactive']);
         return redirect()->back()->with('success', 'Produk berhasil di-takedown.');
     }
 
-    // DELETE /admin/products/{id}  (admin.products.delete)
-    public function deleteProduct($id)
+    public function deleteProduct(string|int $id)
     {
         Product::where('id_product', $id)->delete();
         return redirect()->back()->with('success', 'Produk berhasil dihapus permanen.');
@@ -474,8 +488,6 @@ class AdminController extends Controller
     /*
     |--------------------------------------------------------------------------
     | 6. KATALOG: KATEGORI JASA
-    | GET /admin/categories  (admin.categories.index)
-    | View: resources/views/admin/katalog/kategori_jasa.blade.php
     |--------------------------------------------------------------------------
     */
     public function categories()
@@ -491,7 +503,6 @@ class AdminController extends Controller
         ));
     }
 
-    // POST /admin/categories  (admin.categories.store) — sudah ada di route lamamu
     public function storeCategory(Request $request)
     {
         $validated = $request->validate([
@@ -506,8 +517,7 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Kategori baru berhasil ditambahkan.');
     }
 
-    // PUT /admin/categories/{id}  (admin.categories.update)
-    public function updateCategory(Request $request, $id)
+    public function updateCategory(Request $request, string|int $id)
     {
         $category = Category::findOrFail($id);
 
@@ -523,8 +533,7 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Kategori berhasil diperbarui.');
     }
 
-    // DELETE /admin/categories/{id}  (admin.categories.delete) — sudah ada di route lamamu
-    public function deleteCategory($id)
+    public function deleteCategory(string|int $id)
     {
         $category = Category::findOrFail($id);
 
@@ -540,22 +549,22 @@ class AdminController extends Controller
     /*
     |--------------------------------------------------------------------------
     | 7. TRANSAKSI & KEUANGAN: RIWAYAT PESANAN
-    | GET /admin/transactions  (admin.transactions) — sudah ada di route lamamu
-    | View: resources/views/admin/keuangan/riwayat_pesanan.blade.php
     |--------------------------------------------------------------------------
     */
     public function transactions(Request $request)
     {
         $search = $request->query('search');
 
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $orders */
         $orders = Order::with(['buyer', 'items.product.seller'])
             ->when($search, function ($q) use ($search) {
                 $q->whereHas('buyer', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
                   ->orWhere('id_order', 'like', "%{$search}%");
             })
             ->latest()
-            ->paginate(15)
-            ->withQueryString();
+            ->paginate(15);
+            
+        $orders->withQueryString();
 
         $totalCommission = Order::where('payment_status', 'paid')->sum('total_price') * 0.05;
 
@@ -569,7 +578,6 @@ class AdminController extends Controller
         ));
     }
 
-    // GET /admin/transactions/export  (admin.transactions.export)
     public function exportTransactions()
     {
         $orders   = Order::with(['buyer', 'items'])->latest()->get();
@@ -601,8 +609,7 @@ class AdminController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    // GET /admin/transactions/{id}  (admin.transactions.detail)
-    public function transactionDetail($id)
+    public function transactionDetail(string|int $id)
     {
         $order = Order::with(['buyer', 'items.product.seller'])->findOrFail($id);
         return response()->json($order);
@@ -611,22 +618,22 @@ class AdminController extends Controller
     /*
     |--------------------------------------------------------------------------
     | 8. KEUANGAN: PENARIKAN SALDO
-    | GET /admin/withdrawals  (admin.withdrawals)
-    | View: resources/views/admin/keuangan/penarikan_saldo.blade.php
     |--------------------------------------------------------------------------
     */
     public function withdrawals(Request $request)
     {
         $search = $request->query('search');
 
-        $withdrawalList = Withdrawal::with('user')
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $withdrawals */
+        $withdrawals = Withdrawal::with('user')
             ->when($search, function ($q) use ($search) {
                 $q->whereHas('user', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
                   ->orWhere('id_withdrawal', 'like', "%{$search}%");
             })
             ->latest()
-            ->paginate(15)
-            ->withQueryString();
+            ->paginate(15);
+            
+        $withdrawals->withQueryString();
 
         $menungguDiproses = Withdrawal::where('status', 'pending')->count();
         $selesaiBulanIni  = Withdrawal::where('status', 'processed')
@@ -636,15 +643,14 @@ class AdminController extends Controller
         $gagalDitolak = Withdrawal::where('status', 'rejected')->count();
 
         return view('admin.keuangan.penarikan_saldo', [
-            'withdrawals'      => $withdrawalList,
+            'withdrawals'      => $withdrawals,
             'menungguDiproses' => $menungguDiproses,
             'selesaiBulanIni'  => $selesaiBulanIni,
             'gagalDitolak'     => $gagalDitolak,
         ]);
     }
 
-    // POST /admin/withdrawals/{id}/process  (admin.withdrawals.process)
-    public function processWithdrawal($id)
+    public function processWithdrawal(string|int $id)
     {
         $withdrawal = Withdrawal::findOrFail($id);
         $withdrawal->update([
@@ -656,8 +662,7 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Penarikan saldo berhasil diproses.');
     }
 
-    // POST /admin/withdrawals/{id}/reject  (admin.withdrawals.reject)
-    public function rejectWithdrawal(Request $request, $id)
+    public function rejectWithdrawal(Request $request, string|int $id)
     {
         $request->validate(['notes' => 'nullable|string|max:500']);
 
@@ -675,8 +680,6 @@ class AdminController extends Controller
     /*
     |--------------------------------------------------------------------------
     | 9. MEMBERSHIP CARD MANAGEMENT
-    | GET /admin/memberships  (admin.memberships) — sudah ada di route lamamu
-    | View: resources/views/admin/membership/paket_membership.blade.php
     |--------------------------------------------------------------------------
     */
     public function memberships()
@@ -687,7 +690,6 @@ class AdminController extends Controller
         return view('admin.membership.paket_membership', compact('memberships', 'totalPelangganAktif'));
     }
 
-    // POST /admin/memberships  (admin.memberships.store)
     public function storeMembership(Request $request)
     {
         $validated = $request->validate([
@@ -703,8 +705,7 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Paket membership baru berhasil ditambahkan.');
     }
 
-    // PUT /admin/memberships/{id}  (admin.memberships.update) — sudah ada di route lamamu
-    public function updateMembership(Request $request, $id)
+    public function updateMembership(Request $request, string|int $id)
     {
         $validated = $request->validate([
             'name'          => 'required|string',
@@ -720,8 +721,7 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Kartu membership berhasil diperbarui.');
     }
 
-    // DELETE /admin/memberships/{id}  (admin.memberships.delete)
-    public function deleteMembership($id)
+    public function deleteMembership(string|int $id)
     {
         $membership = Membership::findOrFail($id);
 
@@ -736,7 +736,7 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 10. PROFILE ADMIN — sudah ada di route lamamu
+    | 10. PROFILE ADMIN
     |--------------------------------------------------------------------------
     */
     public function profile()

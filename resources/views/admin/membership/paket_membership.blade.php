@@ -4,17 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Karyaku - Paket Membership</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
+        tailwind.config = { 
+            theme: { 
+                extend: { 
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Sora', 'sans-serif'] },
-                    colors: { sky: '#0EA5E9', skyHover: '#0284C7', skyDeep: '#0B3D62', coral: '#FF7A59' }
-                }
-            }
+                    colors: { sky: '#0EA5E9', skyHover: '#0284C7', skyDeep: '#0B3D62' }
+                } 
+            } 
         }
     </script>
     <style>
@@ -22,7 +28,6 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(14, 165, 233, 0.3); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(14, 165, 233, 0.5); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -31,12 +36,9 @@
         .submenu.open { max-height: 400px; }
         .menu-chevron { transition: transform .3s ease; }
         .menu-chevron.rotated { transform: rotate(180deg); }
-        .card-hover { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .card-hover:hover { transform: scale(1.015) translateY(-3px); box-shadow: 0 15px 30px -10px rgba(14, 165, 233, 0.25); border-color: rgba(14, 165, 233, 0.5); }
-        .modal-backdrop { background: rgba(15, 23, 42, 0.55); }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-100 via-sky-100/40 to-blue-200/50 text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-sky/20 selection:text-skyDeep min-h-screen">
+<body class="bg-gradient-to-br from-slate-100 via-sky-100/40 to-blue-200/50 text-slate-800 font-sans antialiased min-h-screen">
 
     <div class="flex min-h-screen relative">
         <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden hidden transition-opacity duration-300"></div>
@@ -45,7 +47,7 @@
         <aside id="sidebar" class="w-[260px] bg-gradient-to-b from-skyDeep via-skyHover to-sky text-white flex flex-col shrink-0 border-r border-sky-400/20 shadow-2xl fixed lg:sticky top-0 h-screen z-50 closed lg:translate-x-0">
             <div class="p-6 border-b border-white/15 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-white text-sky flex items-center justify-center text-lg font-bold shadow-lg shadow-skyDeep/20"><i class="fa-solid fa-layer-group"></i></div>
+                    <div class="w-9 h-9 rounded-xl bg-white text-sky flex items-center justify-center text-lg font-bold shadow-lg"><i class="fa-solid fa-layer-group"></i></div>
                     <div>
                         <h1 class="font-display font-extrabold text-[17px] leading-none tracking-wide text-white">Karyaku</h1>
                         <span class="text-[9px] text-sky-200 font-bold uppercase tracking-[0.2em] mt-1 block">Admin Panel</span>
@@ -119,9 +121,10 @@
                 <a href="{{ route('admin.memberships') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl active-menu transition-all group">
                     <i class="fa-solid fa-crown w-4 text-center text-amber-300"></i><span>Paket Membership</span>
                 </a>
+
                 <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-6">Sistem</p>
                 <a href="{{ route('admin.maintenance') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                    <div class="flex items-center gap-3"><i class="fa-solid fa-server w-4 text-center group-hover:text-white transition-colors"></i><span>Maintenance & Backup</span></div>
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-server w-4 text-center text-white transition-colors"></i><span>Maintenance & Backup</span></div>
                 </a>
             </nav>
             <div class="p-4 border-t border-white/15">
@@ -134,43 +137,77 @@
             </div>
         </aside>
 
+        <!-- MAIN CONTENT -->
         <main class="flex-1 flex flex-col min-w-0 w-full">
-            <header class="bg-gradient-to-r from-white via-sky-50/50 to-blue-50/50 backdrop-blur-xl border-b border-sky-200 px-6 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+            <header class="bg-white/70 backdrop-blur-xl border-b border-sky-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
                 <div class="flex items-center gap-4">
                     <button id="sidebarToggleBtn" class="lg:hidden w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition border border-sky-200 shadow-sm"><i class="fa-solid fa-bars text-base"></i></button>
                     <div>
                         <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900">Paket Membership</h2>
-                        <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Kelola paket langganan premium untuk kreator (CRUD).</p>
+                        <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Kelola paket langganan premium untuk kreator.</p>
                     </div>
                 </div>
             </header>
 
-            <div class="p-6 sm:p-8 space-y-6 overflow-y-auto no-scrollbar">
-
+            <div class="p-6 sm:p-8 space-y-6">
+                
                 @if (session('success'))
-                    <div class="bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold px-4 py-3 rounded-xl">
-                        <i class="fa-solid fa-circle-check mr-1"></i> {{ session('success') }}
-                    </div>
+                    <script>Swal.fire({icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", timer: 2500, showConfirmButton: false});</script>
                 @endif
                 @if (session('error'))
-                    <div class="bg-red-50 border border-red-300 text-red-800 text-xs font-semibold px-4 py-3 rounded-xl">
-                        <i class="fa-solid fa-circle-exclamation mr-1"></i> {{ session('error') }}
-                    </div>
+                    <script>Swal.fire({icon: 'error', title: 'Gagal!', text: "{{ session('error') }}", confirmButtonColor: '#ef4444'});</script>
                 @endif
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                    <div class="bg-gradient-to-br from-amber-50 via-white to-amber-100/60 border-l-4 border-amber-500 border-y border-r border-amber-200 p-5 rounded-2xl card-hover shadow-sm">
-                        <div class="flex justify-between items-start mb-2">
-                            <div><span class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Total Pelanggan Aktif</span><div class="text-3xl font-black text-slate-900 mt-1">{{ $totalPelangganAktif }}</div></div>
-                            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/30"><i class="fa-solid fa-crown text-lg"></i></div>
+                <!-- SUMMARY CARDS -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div class="bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 p-4 rounded-2xl shadow-sm">
+                        <span class="text-[10px] font-extrabold text-emerald-800 uppercase tracking-widest">Total Pelanggan Aktif</span>
+                        <div class="flex items-end justify-between mt-2">
+                            <div class="text-3xl font-black text-slate-900">{{ $totalPelangganAktif ?? 0 }}</div>
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold"><i class="fa-solid fa-users text-sm"></i></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-blue-50 to-white border border-blue-200 p-4 rounded-2xl shadow-sm">
+                        <span class="text-[10px] font-extrabold text-blue-800 uppercase tracking-widest">Diamond Plan</span>
+                        <div class="flex items-end justify-between mt-2">
+                            <div class="text-3xl font-black text-slate-900">45</div>
+                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold"><i class="fa-regular fa-gem text-sm"></i></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-amber-50 to-white border border-amber-200 p-4 rounded-2xl shadow-sm">
+                        <span class="text-[10px] font-extrabold text-amber-800 uppercase tracking-widest">Gold Plan</span>
+                        <div class="flex items-end justify-between mt-2">
+                            <div class="text-3xl font-black text-slate-900">120</div>
+                            <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold"><i class="fa-solid fa-crown text-sm"></i></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-slate-100 to-white border border-slate-300 p-4 rounded-2xl shadow-sm">
+                        <span class="text-[10px] font-extrabold text-slate-600 uppercase tracking-widest">Silver Plan</span>
+                        <div class="flex items-end justify-between mt-2">
+                            <div class="text-3xl font-black text-slate-900">150</div>
+                            <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold"><i class="fa-solid fa-medal text-sm"></i></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-orange-50 to-white border border-orange-200 p-4 rounded-2xl shadow-sm">
+                        <span class="text-[10px] font-extrabold text-orange-800 uppercase tracking-widest">Bronze Plan</span>
+                        <div class="flex items-end justify-between mt-2">
+                            <div class="text-3xl font-black text-slate-900">105</div>
+                            <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center font-bold"><i class="fa-solid fa-award text-sm"></i></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 backdrop-blur-sm">
-                        <h3 class="font-extrabold text-slate-900 text-sm font-display">Daftar Paket ({{ $memberships->count() }})</h3>
-                        <button type="button" onclick="openMembershipModal()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/30 transition-all flex items-center justify-center gap-2 w-full sm:w-auto">
+                <!-- TABEL UTAMA -->
+                <div class="bg-white border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <h3 class="font-extrabold text-slate-900 text-lg font-display">Daftar Paket Membership</h3>
+                        
+                        <!-- TOMBOL 3D STABIL -->
+                        <button type="button" onclick="openAddModal()" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-blue-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#cbd5e1] transition-all cursor-pointer">
                             <i class="fa-solid fa-plus"></i> Tambah Paket Baru
                         </button>
                     </div>
@@ -178,7 +215,7 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-sky-50/80 border-b border-sky-100 text-sky-900 text-[11px] uppercase tracking-wider font-bold">
+                                <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-[11px] uppercase tracking-wider font-bold">
                                     <th class="py-4 px-6">Nama Paket & Ikon</th>
                                     <th class="py-4 px-6">Harga / Siklus</th>
                                     <th class="py-4 px-6">Fitur Unggulan</th>
@@ -186,43 +223,36 @@
                                     <th class="py-4 px-6 text-center">Aksi (CRUD)</th>
                                 </tr>
                             </thead>
-                            <tbody class="text-sm divide-y divide-sky-100/70">
-                                @forelse ($memberships as $membership)
-                                <tr class="hover:bg-sky-50/50 transition-colors bg-white">
+                            <tbody class="text-sm divide-y divide-slate-100">
+                                @forelse ($memberships ?? [] as $membership)
+                                <tr class="hover:bg-slate-50 transition-colors bg-white">
                                     <td class="py-3 px-6">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-orange-500 text-white flex items-center justify-center text-lg border border-amber-200 shadow-sm"><i class="fa-solid fa-crown"></i></div>
+                                            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-600 text-white flex items-center justify-center text-lg shadow-sm"><i class="fa-regular fa-gem"></i></div>
                                             <div>
                                                 <p class="font-bold text-slate-800 text-xs">{{ $membership->name }}</p>
                                                 <p class="text-[10px] text-slate-500 font-medium">Durasi {{ $membership->duration_days }} hari</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="py-3 px-6">
-                                        <p class="text-xs font-bold text-sky-700">Rp {{ number_format($membership->price, 0, ',', '.') }}</p>
-                                    </td>
+                                    <td class="py-3 px-6"><p class="text-xs font-bold text-sky-700">Rp {{ number_format($membership->price, 0, ',', '.') }}</p></td>
                                     <td class="py-3 px-6"><p class="text-[11px] text-slate-600 w-48 truncate">{{ $membership->benefit }}</p></td>
-                                    <td class="py-3 px-6">
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">{{ $membership->users_count ?? 0 }} pengguna</span>
-                                    </td>
+                                    <td class="py-3 px-6"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">{{ $membership->users_count ?? 0 }} pengguna</span></td>
                                     <td class="py-3 px-6">
                                         <div class="flex items-center justify-center gap-2">
-                                            <button type="button"
-                                                onclick='openMembershipModal(@json($membership))'
-                                                class="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all text-xs font-bold shadow-sm" title="Edit">
-                                                <i class="fa-solid fa-pen-to-square"></i> Edit
-                                            </button>
-                                            <form action="{{ route('admin.memberships.delete', $membership->id_membership) }}" method="POST" onsubmit="return confirm('Hapus paket ini?');">
+                                            <button type="button" onclick='openEditModal(@json($membership))' class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                                            
+                                            <form action="{{ route('admin.memberships.delete', $membership->id_membership) }}" method="POST" class="inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all text-xs font-bold shadow-sm" title="Hapus"><i class="fa-solid fa-trash"></i> Hapus</button>
+                                                <button type="button" onclick="confirmDelete(this)" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm" title="Hapus"><i class="fa-solid fa-trash"></i></button>
                                             </form>
                                         </div>
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="py-8 px-6 text-center text-xs text-slate-500 font-semibold">Belum ada paket membership.</td>
+                                    <td colspan="5" class="text-center py-6 text-slate-400 text-xs font-semibold">Belum ada data paket membership.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -234,93 +264,263 @@
         </main>
     </div>
 
-    <!-- MODAL TAMBAH/EDIT MEMBERSHIP -->
-    <div id="membershipModal" class="fixed inset-0 z-[60] hidden items-center justify-center modal-backdrop p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div class="p-5 border-b border-sky-100 flex items-center justify-between">
-                <h3 id="membershipModalTitle" class="font-extrabold text-slate-900 font-display">Tambah Paket Baru</h3>
-                <button type="button" onclick="closeMembershipModal()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <!-- MODAL 1: TAMBAH PAKET -->
+    <div id="addModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0 w-screen h-screen">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4" id="addModalContent">
+            
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-2xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-plus text-sm"></i></div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-base font-display">Tambah Paket Baru</h3>
+                        <p class="text-[10px] font-semibold text-slate-500">Lengkapi data paket membership.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAddModal()" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form id="membershipForm" method="POST" class="p-5 space-y-4">
-                @csrf
-                <input type="hidden" name="_method" id="membershipMethod" value="POST">
 
+            <form id="addForm" method="POST" action="{{ route('admin.memberships.store') }}" class="p-5 space-y-4">
+                @csrf
                 <div>
-                    <label class="text-[11px] font-bold text-slate-600 uppercase">Nama Paket</label>
-                    <input type="text" name="name" id="membership_name" required class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Nama Paket</label>
+                    <input type="text" name="name" id="add_name" placeholder="Contoh: Platinum Plan" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="text-[11px] font-bold text-slate-600 uppercase">Harga (Rp)</label>
-                        <input type="number" name="price" id="membership_price" required min="0" class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                        <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Harga (Rp)</label>
+                        <input type="number" name="price" id="add_price" min="0" placeholder="150000" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all">
                     </div>
                     <div>
-                        <label class="text-[11px] font-bold text-slate-600 uppercase">Durasi (Hari)</label>
-                        <input type="number" name="duration_days" id="membership_duration" required min="1" class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                        <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Durasi (Hari)</label>
+                        <input type="number" name="duration_days" id="add_duration" min="1" placeholder="30" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all">
                     </div>
                 </div>
                 <div>
-                    <label class="text-[11px] font-bold text-slate-600 uppercase">Maksimal Upload Produk</label>
-                    <input type="number" name="max_upload" id="membership_max_upload" required min="0" class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Maksimal Upload</label>
+                    <input type="number" name="max_upload" id="add_max_upload" min="0" placeholder="999 untuk tanpa batas" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all">
                 </div>
                 <div>
-                    <label class="text-[11px] font-bold text-slate-600 uppercase">Fitur / Benefit</label>
-                    <textarea name="benefit" id="membership_benefit" required rows="3" class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30"></textarea>
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Fitur / Benefit</label>
+                    <textarea name="benefit" id="add_benefit" rows="2" placeholder="Sebutkan fitur unggulan..." class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all"></textarea>
                 </div>
-                <button type="submit" class="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">Simpan Paket</button>
+                <div class="pt-2">
+                    <button type="button" onclick="submitAdd()" class="w-full py-3 bg-emerald-600 text-white text-sm font-bold rounded-xl shadow-[0_4px_0_0_#065f46] hover:bg-emerald-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#065f46] transition-all cursor-pointer">
+                        Simpan Paket Baru
+                    </button>
+                </div>
             </form>
         </div>
     </div>
 
+    <!-- MODAL 2: EDIT PAKET -->
+    <div id="editModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0 w-screen h-screen">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 border-t-4 border-blue-500" id="editModalContent">
+            
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-blue-50/50 rounded-t-xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-pen-to-square text-sm"></i></div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-base font-display">Edit Paket</h3>
+                        <p class="text-[10px] font-semibold text-blue-600">Ubah detail data membership.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeEditModal()" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form id="editForm" method="POST" action="" class="p-5 space-y-4">
+                @csrf
+                @method('PUT')
+                
+                <div>
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Nama Paket</label>
+                    <input type="text" name="name" id="edit_name" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Harga (Rp)</label>
+                        <input type="number" name="price" id="edit_price" min="0" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Durasi (Hari)</label>
+                        <input type="number" name="duration_days" id="edit_duration" min="1" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Maksimal Upload</label>
+                    <input type="number" name="max_upload" id="edit_max_upload" min="0" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all">
+                </div>
+                <div>
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Fitur / Benefit</label>
+                    <textarea name="benefit" id="edit_benefit" rows="2" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all"></textarea>
+                </div>
+                <div class="pt-2">
+                    <button type="button" onclick="submitEdit()" class="w-full py-3 bg-blue-600 text-white text-sm font-bold rounded-xl shadow-[0_4px_0_0_#1e40af] hover:bg-blue-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#1e40af] transition-all cursor-pointer">
+                        Update Perubahan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT & VALIDASI -->
     <script>
+        // --- Sidebar Logic ---
         const sidebar = document.getElementById('sidebar');
         const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
         const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
+        
         function toggleSidebar() { sidebar.classList.toggle('open'); sidebar.classList.toggle('closed'); sidebarOverlay.classList.toggle('hidden'); }
-        sidebarToggleBtn.addEventListener('click', toggleSidebar); sidebarCloseBtn.addEventListener('click', toggleSidebar); sidebarOverlay.addEventListener('click', toggleSidebar);
+        if(sidebarToggleBtn) sidebarToggleBtn.addEventListener('click', toggleSidebar);
+        if(sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', toggleSidebar);
+        if(sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
 
         document.querySelectorAll('.menu-toggle').forEach(btn => {
             btn.addEventListener('click', () => {
                 const key = btn.getAttribute('data-menu');
                 const submenu = document.querySelector(`[data-submenu="${key}"]`);
                 const chevron = document.querySelector(`[data-chevron="${key}"]`);
-                submenu.classList.toggle('open'); chevron.classList.toggle('rotated');
+                if(submenu) submenu.classList.toggle('open');
+                if(chevron) chevron.classList.toggle('rotated');
             });
         });
 
-        const storeUrl = "{{ route('admin.memberships.store') }}";
-
-        function openMembershipModal(membership = null) {
-            const modal = document.getElementById('membershipModal');
-            const form = document.getElementById('membershipForm');
-            const title = document.getElementById('membershipModalTitle');
-            const method = document.getElementById('membershipMethod');
-
-            if (membership) {
-                title.textContent = 'Edit Paket Membership';
-                form.action = `{{ url('admin/memberships') }}/${membership.id_membership}`;
-                method.value = 'PUT';
-                document.getElementById('membership_name').value = membership.name ?? '';
-                document.getElementById('membership_price').value = membership.price ?? '';
-                document.getElementById('membership_duration').value = membership.duration_days ?? '';
-                document.getElementById('membership_max_upload').value = membership.max_upload ?? '';
-                document.getElementById('membership_benefit').value = membership.benefit ?? '';
-            } else {
-                title.textContent = 'Tambah Paket Baru';
-                form.action = storeUrl;
-                method.value = 'POST';
-                form.reset();
-            }
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+        // --- SweetAlert Hapus ---
+        function confirmDelete(button) {
+            Swal.fire({
+                title: 'Hapus Paket?',
+                text: "Data yang dihapus tidak dapat dikembalikan!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    button.closest('form').submit();
+                }
+            });
         }
 
-        function closeMembershipModal() {
-            const modal = document.getElementById('membershipModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+        // --- MODAL TAMBAH (Add) ---
+        const addModal = document.getElementById('addModal');
+        const addModalContent = document.getElementById('addModalContent');
+
+        function openAddModal() {
+            document.getElementById('addForm').reset();
+            addModal.classList.remove('hidden');
+            setTimeout(() => {
+                addModal.classList.remove('opacity-0');
+                addModalContent.classList.remove('scale-95');
+                addModalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeAddModal() {
+            addModal.classList.add('opacity-0');
+            addModalContent.classList.remove('scale-100');
+            addModalContent.classList.add('scale-95');
+            setTimeout(() => { addModal.classList.add('hidden'); }, 300);
+        }
+
+        function submitAdd() {
+            const name = document.getElementById('add_name').value.trim();
+            const price = document.getElementById('add_price').value.trim();
+            const duration = document.getElementById('add_duration').value.trim();
+            const maxUpload = document.getElementById('add_max_upload').value.trim();
+            const benefit = document.getElementById('add_benefit').value.trim();
+
+            if (!name || !price || !duration || !maxUpload || !benefit) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan',
+                    text: 'Silahkan isi semua form input',
+                    confirmButtonColor: '#0EA5E9'
+                });
+                return;
+            }
+
+            document.getElementById('addForm').submit();
+        }
+
+        // --- MODAL EDIT (Edit) ---
+        const editModal = document.getElementById('editModal');
+        const editModalContent = document.getElementById('editModalContent');
+        let originalEditData = {};
+
+        function openEditModal(membership) {
+            if(membership) {
+                originalEditData = {
+                    name: String(membership.name || ''),
+                    price: String(membership.price || ''),
+                    duration_days: String(membership.duration_days || ''),
+                    max_upload: String(membership.max_upload || ''),
+                    benefit: String(membership.benefit || '')
+                };
+
+                document.getElementById('edit_name').value = originalEditData.name;
+                document.getElementById('edit_price').value = originalEditData.price;
+                document.getElementById('edit_duration').value = originalEditData.duration_days;
+                document.getElementById('edit_max_upload').value = originalEditData.max_upload;
+                document.getElementById('edit_benefit').value = originalEditData.benefit;
+
+                // Set dynamic route update
+                document.getElementById('editForm').action = "/admin/memberships/" + membership.id_membership;
+            }
+            
+            editModal.classList.remove('hidden');
+            setTimeout(() => {
+                editModal.classList.remove('opacity-0');
+                editModalContent.classList.remove('scale-95');
+                editModalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeEditModal() {
+            editModal.classList.add('opacity-0');
+            editModalContent.classList.remove('scale-100');
+            editModalContent.classList.add('scale-95');
+            setTimeout(() => { editModal.classList.add('hidden'); }, 300);
+        }
+
+        function submitEdit() {
+            const currentData = {
+                name: document.getElementById('edit_name').value.trim(),
+                price: document.getElementById('edit_price').value.trim(),
+                duration_days: document.getElementById('edit_duration').value.trim(),
+                max_upload: document.getElementById('edit_max_upload').value.trim(),
+                benefit: document.getElementById('edit_benefit').value.trim()
+            };
+
+            if (!currentData.name || !currentData.price || !currentData.duration_days || !currentData.max_upload || !currentData.benefit) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan',
+                    text: 'Silahkan isi semua form input',
+                    confirmButtonColor: '#0EA5E9'
+                });
+                return;
+            }
+
+            if (
+                currentData.name === originalEditData.name &&
+                currentData.price === originalEditData.price &&
+                currentData.duration_days === originalEditData.duration_days &&
+                currentData.max_upload === originalEditData.max_upload &&
+                currentData.benefit === originalEditData.benefit
+            ) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan',
+                    text: 'Silahkan ubah input yang diperlukan',
+                    confirmButtonColor: '#0EA5E9'
+                });
+                return;
+            }
+
+            document.getElementById('editForm').submit();
         }
     </script>
 </body>
