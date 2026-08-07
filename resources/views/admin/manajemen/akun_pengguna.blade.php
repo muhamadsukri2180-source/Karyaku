@@ -39,6 +39,18 @@
         .menu-chevron.rotated { transform: rotate(180deg); }
         .card-hover { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .card-hover:hover { transform: scale(1.015) translateY(-3px); box-shadow: 0 15px 30px -10px rgba(14, 165, 233, 0.25); border-color: rgba(14, 165, 233, 0.5); }
+
+        /* Menghilangkan ikon bawaan browser (reveal password) */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none !important;
+        }
+        input[type="password"]::-webkit-credentials-auto-fill-button {
+            visibility: hidden !important;
+            pointer-events: none !important;
+            position: absolute !important;
+            right: 0 !important;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-100 via-sky-100/40 to-blue-200/50 text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-sky/20 selection:text-skyDeep min-h-screen">
@@ -89,6 +101,9 @@
                         </a>
                         <a href="{{ route('admin.users.verifikator') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
                             <i class="fa-solid fa-id-card text-[10px] text-sky-200 w-3 text-center"></i> Akun Verifikator
+                        </a>
+                        <a href="{{ route('admin.manajemen.akun_service') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
+                            <i class="fa-solid fa-headset text-[10px] text-sky-200 w-3 text-center"></i> Akun & Layanan CS
                         </a>
                     </div>
                 </div>
@@ -296,7 +311,6 @@
 
     <!-- MODAL: TAMBAH PENGGUNA -->
     <div id="addUserModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
-        <!-- Perubahan: Diberikan max-h-[90vh] dan overflow-y-auto agar modal dapat discroll saat dropdown terbuka -->
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col transform scale-95 transition-transform duration-300 mx-4 overflow-hidden" id="addUserModalContent">
             <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
                 <div class="flex items-center gap-3">
@@ -319,7 +333,7 @@
                     <label class="text-xs font-bold text-slate-700">Password</label>
                     <div class="relative mt-1">
                         <input type="password" name="password" id="addPassword" required minlength="8" class="w-full border border-sky-200 rounded-xl px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
-                        <button type="button" onclick="togglePassword('addPassword', 'eyeIconAdd')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none">
+                        <button type="button" onclick="togglePassword('addPassword', 'eyeIconAdd')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none cursor-pointer">
                             <i class="fa-solid fa-eye text-sm" id="eyeIconAdd"></i>
                         </button>
                     </div>
@@ -330,7 +344,6 @@
                 </div>
                 <div>
                     <label class="text-xs font-bold text-slate-700">Peran (Role)</label>
-                    <!-- Custom Dropdown Role Add -->
                     <div class="relative mt-1">
                         <input type="checkbox" id="roleDropdownToggleAdd" class="sr-only peer">
                         <label for="roleDropdownToggleAdd" class="flex items-center justify-between w-full border border-sky-200 rounded-xl px-3 py-2 text-sm bg-white cursor-pointer select-none shadow-sm hover:border-sky-400 transition">
@@ -349,7 +362,6 @@
                 </div>
                 <div>
                     <label class="text-xs font-bold text-slate-700">Status</label>
-                    <!-- Custom Dropdown Status Add -->
                     <div class="relative mt-1">
                         <input type="checkbox" id="statusDropdownToggleAdd" class="sr-only peer">
                         <label for="statusDropdownToggleAdd" class="flex items-center justify-between w-full border border-sky-200 rounded-xl px-3 py-2 text-sm bg-white cursor-pointer select-none shadow-sm hover:border-sky-400 transition">
@@ -397,7 +409,7 @@
                     <label class="text-xs font-bold text-slate-700">Password Baru (opsional)</label>
                     <div class="relative mt-1">
                         <input type="password" name="password" id="editPassword" minlength="8" placeholder="Kosongkan jika tidak diubah" class="w-full border border-sky-200 rounded-xl px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
-                        <button type="button" onclick="togglePassword('editPassword', 'eyeIconEdit')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none">
+                        <button type="button" onclick="togglePassword('editPassword', 'eyeIconEdit')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none cursor-pointer">
                             <i class="fa-solid fa-eye text-sm" id="eyeIconEdit"></i>
                         </button>
                     </div>
@@ -408,7 +420,6 @@
                 </div>
                 <div>
                     <label class="text-xs font-bold text-slate-700">Peran (Role)</label>
-                    <!-- Custom Dropdown Role Edit -->
                     <div class="relative mt-1">
                         <input type="checkbox" id="roleDropdownToggleEdit" class="sr-only peer">
                         <label for="roleDropdownToggleEdit" class="flex items-center justify-between w-full border border-sky-200 rounded-xl px-3 py-2 text-sm bg-white cursor-pointer select-none shadow-sm hover:border-sky-400 transition">
@@ -427,7 +438,6 @@
                 </div>
                 <div>
                     <label class="text-xs font-bold text-slate-700">Status</label>
-                    <!-- Custom Dropdown Status Edit -->
                     <div class="relative mt-1">
                         <input type="checkbox" id="statusDropdownToggleEdit" class="sr-only peer">
                         <label for="statusDropdownToggleEdit" class="flex items-center justify-between w-full border border-sky-200 rounded-xl px-3 py-2 text-sm bg-white cursor-pointer select-none shadow-sm hover:border-sky-400 transition">
@@ -527,7 +537,6 @@
             document.getElementById('editUserEmail').value = user.email ?? '';
             document.getElementById('editUserPhone').value = user.phone ?? '';
 
-            // Set Role Custom Dropdown
             const roleId = user.role ?? '';
             document.getElementById('roleInputEdit').value = roleId;
             let roleText = 'Kreator (Penjual)';
@@ -536,7 +545,6 @@
             }
             document.getElementById('selectedRoleTextEdit').textContent = roleText;
 
-            // Set Status Custom Dropdown
             const statusVal = user.status ?? 'active';
             document.getElementById('statusInputEdit').value = statusVal;
             let statusText = 'Aktif';
