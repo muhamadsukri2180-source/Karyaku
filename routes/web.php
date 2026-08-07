@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PembeliController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\CustomerServiceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -74,7 +75,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/users/approve-seller/{id}', [AdminController::class, 'approveSeller'])->name('users.approveSeller');
     Route::post('/users/reject-seller/{id}', [AdminController::class, 'rejectSeller'])->name('users.rejectSeller');
 
-    // 4. Katalog & Kategori
+    // 4. Manajemen Akun & Layanan Customer Service
+    Route::get('/manajemen/akun-service', [AdminController::class, 'serviceAccounts'])->name('manajemen.akun_service');
+    Route::post('/manajemen/akun-service', [AdminController::class, 'storeServiceAccount'])->name('manajemen.akun_service.store');
+    Route::delete('/manajemen/akun-service/{id}', [AdminController::class, 'deleteServiceAccount'])->name('manajemen.akun_service.destroy');
+    Route::put('/manajemen/ticket/{id}', [AdminController::class, 'updateTicketStatus'])->name('manajemen.ticket.update');
+
+    // 5. Katalog & Kategori
     Route::get('/products', [AdminController::class, 'products'])->name('products');
     Route::post('/products/approve/{id}', [AdminController::class, 'approveProduct'])->name('products.approve');
     Route::post('/products/takedown/{id}', [AdminController::class, 'takedownProduct'])->name('products.takedown');
@@ -85,42 +92,36 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/categories/{id}', [AdminController::class, 'updateCategory'])->name('categories.update');
     Route::delete('/categories/{id}', [AdminController::class, 'deleteCategory'])->name('categories.delete');
 
-    // 5. Transaksi & Keuangan
+    // 6. Transaksi & Keuangan
     Route::get('/transactions', [AdminController::class, 'transactions'])->name('transactions');
     Route::get('/transactions/export', [AdminController::class, 'exportTransactions'])->name('transactions.export');
     Route::get('/transactions/{id}', [AdminController::class, 'transactionDetail'])->name('transactions.detail');
 
-    // 6. Penarikan Saldo (Withdrawal)
+    // 7. Penarikan Saldo (Withdrawal)
     Route::get('/withdrawals', [AdminController::class, 'withdrawals'])->name('withdrawals');
     Route::post('/withdrawals/{id}/process', [AdminController::class, 'processWithdrawal'])->name('withdrawals.process');
     Route::post('/withdrawals/{id}/reject', [AdminController::class, 'rejectWithdrawal'])->name('withdrawals.reject');
 
-    // 7. Membership Card Management
+    // 8. Membership Card Management
     Route::get('/memberships', [AdminController::class, 'memberships'])->name('memberships');
     Route::post('/memberships', [AdminController::class, 'storeMembership'])->name('memberships.store');
     Route::put('/memberships/{id}', [AdminController::class, 'updateMembership'])->name('memberships.update');
     Route::delete('/memberships/{id}', [AdminController::class, 'deleteMembership'])->name('memberships.delete');
 
-    // 8. Laporan Pelanggaran (Sistem)
+    // 9. Laporan Pelanggaran (Sistem)
     Route::get('/pelanggaran', [AdminController::class, 'pelanggaran'])->name('pelanggaran');
     Route::post('/pelanggaran/user/{id}', [AdminController::class, 'tindakUserPelanggaran'])->name('pelanggaran.user');
     Route::post('/pelanggaran/produk/{id}', [AdminController::class, 'tindakProdukPelanggaran'])->name('pelanggaran.produk');
 
-    // 9. Profile Admin
+    // 10. Profile Admin
     Route::get('/profile', [AdminController::class, 'profile'])->name('profile');
     Route::put('/profile', [AdminController::class, 'updateProfile'])->name('profile.update');
 
-
-
-    // ==========================================
-    // 9. MANAJEMEN NOTIFIKASI
-    // ==========================================
+    // 11. Manajemen Notifikasi
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications', [NotificationController::class, 'store'])->name('notifications.store');
     Route::put('/notifications/{id}', [NotificationController::class, 'update'])->name('notifications.update');
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.delete');
-
-
 
 });
 
@@ -171,4 +172,8 @@ Route::middleware(['auth', 'role:pembeli'])->prefix('pembeli')->name('pembeli.')
 
     Route::get('/profile', [PembeliController::class, 'profile'])->name('profile');
     Route::put('/profile', [PembeliController::class, 'updateProfile'])->name('profile.update');
+
+    // Customer Service (User / Pembeli Side)
+    Route::get('/customer-service', [CustomerServiceController::class, 'userIndex'])->name('service.index');
+    Route::post('/customer-service', [CustomerServiceController::class, 'userStore'])->name('service.store');
 });

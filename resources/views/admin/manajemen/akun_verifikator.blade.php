@@ -40,6 +40,18 @@
         .card-hover { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .card-hover:hover { transform: scale(1.015) translateY(-3px); box-shadow: 0 15px 30px -10px rgba(14, 165, 233, 0.25); border-color: rgba(14, 165, 233, 0.5); }
         .tab-btn.active-tab { background: #0EA5E9; color: #fff; box-shadow: 0 8px 15px -5px rgba(14,165,233,0.4); }
+
+        /* Menghilangkan ikon bawaan browser (reveal password) */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none !important;
+        }
+        input[type="password"]::-webkit-credentials-auto-fill-button {
+            visibility: hidden !important;
+            pointer-events: none !important;
+            position: absolute !important;
+            right: 0 !important;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-100 via-sky-100/40 to-blue-200/50 text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-sky/20 selection:text-skyDeep min-h-screen">
@@ -90,6 +102,9 @@
                         </a>
                         <a href="{{ route('admin.users.verifikator') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg active-menu transition-all text-xs">
                             <i class="fa-solid fa-id-card text-[10px] text-white w-3 text-center"></i> Akun Verifikator
+                        </a>
+                        <a href="{{ route('admin.manajemen.akun_service') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
+                            <i class="fa-solid fa-headset text-[10px] text-sky-200 w-3 text-center"></i> Akun & Layanan CS
                         </a>
                     </div>
                 </div>
@@ -205,7 +220,6 @@
                         <p class="text-[10px] text-slate-600 font-medium border-t border-amber-200/50 pt-2 mt-2">Menunggu validasi tim</p>
                     </div>
 
-                    <!-- CARD 3: Dilengkapi Ikon Centang/Lencana yang Jelas -->
                     <div class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100/60 border-l-4 border-emerald-500 border-y border-r border-emerald-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-sm">
                         <div class="flex justify-between items-start mb-2 relative z-10">
                             <div><span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Selesai Diverifikasi</span><div class="text-3xl font-black text-slate-900 mt-1">{{ $selesaiHariIni }} Hari Ini</div></div>
@@ -214,7 +228,6 @@
                         <p class="text-[10px] text-slate-600 font-medium border-t border-emerald-200/50 pt-2 mt-2">Akurat dan cepat</p>
                     </div>
 
-                    <!-- CARD 4: Warna Biru dengan Ikon Jelas -->
                     <div class="bg-gradient-to-br from-blue-50 via-white to-blue-100/60 border-l-4 border-blue-500 border-y border-r border-blue-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-sm">
                         <div class="flex justify-between items-start mb-2 relative z-10">
                             <div><span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Akurasi Sistem</span><div class="text-3xl font-black text-slate-900 mt-1">{{ $akurasiSistem }}%</div></div>
@@ -401,7 +414,7 @@
                     <label class="text-xs font-bold text-slate-700">Password</label>
                     <div class="relative mt-1">
                         <input type="password" name="password" id="addVerifierPassword" required minlength="8" class="w-full border border-sky-200 rounded-xl px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
-                        <button type="button" onclick="togglePassword('addVerifierPassword', 'eyeIconAddVerifier')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none">
+                        <button type="button" onclick="togglePassword('addVerifierPassword', 'eyeIconAddVerifier')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none cursor-pointer">
                             <i class="fa-solid fa-eye text-sm" id="eyeIconAddVerifier"></i>
                         </button>
                     </div>
@@ -439,7 +452,7 @@
                     <label class="text-xs font-bold text-slate-700">Password Baru (opsional)</label>
                     <div class="relative mt-1">
                         <input type="password" name="password" id="editVerifierPassword" minlength="8" placeholder="Kosongkan jika tidak diubah" class="w-full border border-sky-200 rounded-xl px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
-                        <button type="button" onclick="togglePassword('editVerifierPassword', 'eyeIconEditVerifier')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none">
+                        <button type="button" onclick="togglePassword('editVerifierPassword', 'eyeIconEditVerifier')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none cursor-pointer">
                             <i class="fa-solid fa-eye text-sm" id="eyeIconEditVerifier"></i>
                         </button>
                     </div>
