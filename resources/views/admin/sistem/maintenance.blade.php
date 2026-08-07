@@ -12,15 +12,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <script>
-        tailwind.config = { 
-            theme: { 
-                extend: { 
+        tailwind.config = {
+            theme: {
+                extend: {
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Sora', 'sans-serif'] },
                     colors: { sky: '#0EA5E9', skyHover: '#0284C7', skyDeep: '#0B3D62' }
-                } 
-            } 
+                }
+            }
         }
     </script>
     <style>
@@ -28,7 +28,7 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(14, 165, 233, 0.3); border-radius: 10px; }
-        
+
         #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         @media (max-width: 1023px) { #sidebar.closed { transform: translateX(-100%); } #sidebar.open { transform: translateX(0); } }
         .submenu { max-height: 0; overflow: hidden; transition: max-height .3s ease-in-out; }
@@ -134,35 +134,27 @@
                     <span>Pelanggaran</span>
                 </a>
 
+                <a href="{{ route('admin.notifications.index') }}"
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifikasi.*') ? 'bg-white/20 text-white font-bold' : '' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
+                        <span>Notifikasi</span>
+                    </div>
+                    @php
+                        $unreadNotificationsCount = 0;
+                        if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
+                            $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
+                        } else {
+                            $unreadNotificationsCount = \App\Models\Notification::count();
+                        }
+                    @endphp
 
-                            <!-- MENU NOTIFIKASI -->
-            <a href="{{ route('admin.notifications.index') }}"
-            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifications.*') ? 'bg-white/20 text-white font-bold' : '' }}">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
-                    <span>Notifikasi</span>
-                </div>
-                
-                @php
-                    $unreadNotificationsCount = 0;
-                    if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
-                        $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
-                    } else {
-                        $unreadNotificationsCount = \App\Models\Notification::count();
-                    }
-                @endphp
-
-                @if($unreadNotificationsCount > 0)
-                    <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
-                        {{ $unreadNotificationsCount }}
-                    </span>
-                @endif
-            </a>
-
-
-
-
-
+                    @if($unreadNotificationsCount > 0)
+                        <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
+                            {{ $unreadNotificationsCount }}
+                        </span>
+                    @endif
+                </a>
             </nav>
             <div class="p-4 border-t border-white/15">
                 <form action="{{ route('logout') }}" method="POST">
@@ -187,26 +179,32 @@
             </header>
 
             <div class="p-6 sm:p-8 space-y-6">
-                
+
                 <!-- Status Server Card -->
-                <div class="bg-white border-l-4 {{ $currentMode == 'none' ? 'border-emerald-500' : 'border-red-500' }} border-y border-r border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div class="flex items-center gap-4 w-full md:w-auto">
-                        <div class="w-12 h-12 rounded-full {{ $currentMode == 'none' ? 'bg-emerald-100' : 'bg-red-100' }} flex shrink-0 items-center justify-center border-4 border-white shadow-sm">
-                            <span class="w-4 h-4 rounded-full {{ $currentMode == 'none' ? 'bg-emerald-500' : 'bg-red-500' }} animate-pulse"></span>
-                        </div>
-                        <div>
-                            <h3 class="font-extrabold text-slate-900 text-lg">
-                                {{ $currentMode == 'none' ? 'Sistem Berjalan Normal (Online)' : 'Sistem Sedang Maintenance' }}
-                            </h3>
-                            <p class="text-xs text-slate-600 mt-0.5 font-medium">
-                                {{ $currentMode == 'none' ? 'Server aktif dan dapat diakses.' : 'Mode perbaikan aktif untuk target terpilih.' }}
-                            </p>
+                <div class="bg-white border-l-4 {{ $currentMode == 'none' ? 'border-emerald-500' : 'border-red-500' }} border-y border-r border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col gap-6">
+
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div class="flex items-center gap-4 w-full md:w-auto">
+                            <div class="w-12 h-12 rounded-full {{ $currentMode == 'none' ? 'bg-emerald-100' : 'bg-red-100' }} flex shrink-0 items-center justify-center border-4 border-white shadow-sm">
+                                <span class="w-4 h-4 rounded-full {{ $currentMode == 'none' ? 'bg-emerald-500' : 'bg-red-500' }} animate-pulse"></span>
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-slate-900 text-lg">
+                                    {{ $currentMode == 'none' ? 'Sistem Berjalan Normal (Online)' : 'Sistem Sedang Maintenance' }}
+                                </h3>
+                                <p class="text-xs text-slate-600 mt-0.5 font-medium">
+                                    {{ $currentMode == 'none' ? 'Server aktif dan dapat diakses.' : 'Mode perbaikan aktif untuk target terpilih.' }}
+                                    @if($currentMode != 'none' && $currentEndAt)
+                                        &middot; Selesai: {{ \Carbon\Carbon::parse($currentEndAt)->locale('id')->translatedFormat('d M Y - H:i') }} WIB
+                                    @endif
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    
-                    <form action="{{ route('admin.toggleMaintenance') }}" method="POST" id="formMaintenance" class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+
+                    <form action="{{ route('admin.toggleMaintenance') }}" method="POST" id="formMaintenance" class="flex flex-col gap-4">
                         @csrf
-                        
+
                         @php
                             $options = [
                                 'none' => 'Normal (Online)',
@@ -215,31 +213,46 @@
                                 'penjual' => 'Down Penjual',
                                 'verifikator' => 'Down Verifikator'
                             ];
+                            $endAtValue = $currentEndAt ? \Carbon\Carbon::parse($currentEndAt)->format('Y-m-d\TH:i') : '';
                         @endphp
-                        
-                        <div class="relative w-full sm:w-[280px]" id="customDropdown">
-                            <input type="hidden" name="target_role" id="targetRoleInput" value="{{ $currentMode }}">
-                            
-                            <button type="button" id="dropdownBtn" class="w-full flex items-center justify-between bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl px-4 py-2.5 shadow-sm hover:border-sky-300 focus:outline-none transition-all">
-                                <span id="dropdownText">{{ $options[$currentMode] ?? 'Normal (Online)' }}</span>
-                                <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-300" id="dropdownIcon"></i>
-                            </button>
 
-                            <div id="dropdownMenu" class="absolute z-50 left-0 top-full mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] p-2 hidden flex-col gap-1 opacity-0 transition-opacity duration-200">
-                                @foreach($options as $val => $label)
-                                    <button type="button" 
-                                            class="dropdown-option w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer {{ $currentMode == $val ? 'bg-[#0EA5E9] text-white shadow-md shadow-sky-500/20' : 'text-slate-600 hover:bg-slate-50' }}" 
-                                            data-value="{{ $val }}">
-                                        {{ $label }}
-                                    </button>
-                                @endforeach
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
+                            <div class="relative w-full sm:w-[280px]" id="customDropdown">
+                                <input type="hidden" name="target_role" id="targetRoleInput" value="{{ $currentMode }}">
+
+                                <button type="button" id="dropdownBtn" class="w-full flex items-center justify-between bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl px-4 py-2.5 shadow-sm hover:border-sky-300 focus:outline-none transition-all">
+                                    <span id="dropdownText">{{ $options[$currentMode] ?? 'Normal (Online)' }}</span>
+                                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-300" id="dropdownIcon"></i>
+                                </button>
+
+                                <div id="dropdownMenu" class="absolute z-50 left-0 top-full mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] p-2 hidden flex-col gap-1 opacity-0 transition-opacity duration-200">
+                                    @foreach($options as $val => $label)
+                                        <button type="button"
+                                                class="dropdown-option w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer {{ $currentMode == $val ? 'bg-[#0EA5E9] text-white shadow-md shadow-sky-500/20' : 'text-slate-600 hover:bg-slate-50' }}"
+                                                data-value="{{ $val }}">
+                                            {{ $label }}
+                                        </button>
+                                    @endforeach
+                                </div>
                             </div>
+
+                            <!-- Field Waktu Selesai (muncul otomatis jika mode != none) -->
+                            <div id="endAtWrapper" class="w-full sm:w-[260px] {{ $currentMode == 'none' ? 'hidden' : '' }}">
+                                <input type="datetime-local" name="end_at" id="endAtInput"
+                                       value="{{ $endAtValue }}"
+                                       class="w-full bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl px-4 py-2.5 shadow-sm hover:border-sky-300 focus:outline-none focus:border-sky-400 transition-all">
+                            </div>
+
+                            <!-- Button Terapkan -->
+                            <button type="button" onclick="confirmMaintenance()" class="w-full sm:w-auto px-5 py-2.5 bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white text-xs font-bold rounded-xl transition-all shadow-sm shrink-0 flex items-center justify-center">
+                                <i class="fa-solid fa-power-off mr-2"></i> Terapkan
+                            </button>
                         </div>
 
-                        <!-- Button Terapkan -->
-                        <button type="button" onclick="confirmMaintenance()" class="w-full sm:w-auto px-5 py-2.5 bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white text-xs font-bold rounded-xl transition-all shadow-sm shrink-0 flex items-center justify-center">
-                            <i class="fa-solid fa-power-off mr-2"></i> Terapkan
-                        </button>
+                        <p id="endAtHint" class="text-[11px] text-slate-500 font-medium {{ $currentMode == 'none' ? 'hidden' : '' }}">
+                            <i class="fa-solid fa-circle-info mr-1 text-sky-500"></i>
+                            Isi perkiraan tanggal & jam server kembali online. Waktu ini akan ditampilkan sebagai hitung mundur ke pengguna.
+                        </p>
                     </form>
                 </div>
 
@@ -247,8 +260,7 @@
                 <div class="bg-white border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <h3 class="font-extrabold text-slate-900 text-lg font-display">Riwayat Backup Database</h3>
-                        
-                        <!-- TOMBOL 3D BIRU KOKOH -->
+
                         <button type="button" onclick="openBackupModal()" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-blue-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#cbd5e1] transition-all cursor-pointer">
                             <i class="fa-solid fa-cloud-arrow-up"></i> Buat Backup Baru
                         </button>
@@ -298,7 +310,7 @@
         </main>
     </div>
 
-    <!-- MODAL BUAT BACKUP (POSISI TENGAH PRESISI) -->
+    <!-- MODAL BUAT BACKUP -->
     <div id="backupModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4" id="backupModalContent">
             <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-2xl">
@@ -316,7 +328,6 @@
                     <p class="text-[10px] text-slate-500 mt-1.5"><i class="fa-solid fa-circle-info mr-1"></i> Nama di-generate secara otomatis oleh sistem.</p>
                 </div>
                 <div class="pt-2">
-                    <!-- TOMBOL BIRU SOLID DI DALAM POPUP -->
                     <button type="button" onclick="executeBackup()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all flex justify-center items-center gap-2 cursor-pointer">
                         <i class="fa-solid fa-database"></i> Mulai Proses Backup
                     </button>
@@ -331,10 +342,10 @@
         const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
         const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
-        
-        function toggleSidebar() { 
-            sidebar.classList.toggle('open'); sidebar.classList.toggle('closed'); 
-            sidebarOverlay.classList.toggle('hidden'); 
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('open'); sidebar.classList.toggle('closed');
+            sidebarOverlay.classList.toggle('hidden');
         }
         if(sidebarToggleBtn) sidebarToggleBtn.addEventListener('click', toggleSidebar);
         if(sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', toggleSidebar);
@@ -357,6 +368,21 @@
         const targetRoleInput = document.getElementById('targetRoleInput');
         const options = document.querySelectorAll('.dropdown-option');
 
+        // --- Elemen untuk field Waktu Selesai ---
+        const endAtWrapper = document.getElementById('endAtWrapper');
+        const endAtHint = document.getElementById('endAtHint');
+        const endAtInput = document.getElementById('endAtInput');
+
+        function toggleEndAtField(val) {
+            if (val === 'none') {
+                endAtWrapper.classList.add('hidden');
+                endAtHint.classList.add('hidden');
+            } else {
+                endAtWrapper.classList.remove('hidden');
+                endAtHint.classList.remove('hidden');
+            }
+        }
+
         dropdownBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             dropdownMenu.classList.toggle('hidden');
@@ -376,7 +402,7 @@
             option.addEventListener('click', () => {
                 const val = option.getAttribute('data-value');
                 const text = option.innerText;
-                
+
                 targetRoleInput.value = val;
                 dropdownText.innerText = text;
 
@@ -385,6 +411,8 @@
                 });
 
                 option.className = 'dropdown-option w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold transition-all bg-[#0EA5E9] text-white shadow-md shadow-sky-500/20 cursor-pointer';
+
+                toggleEndAtField(val);
 
                 dropdownMenu.classList.add('opacity-0');
                 setTimeout(() => { dropdownMenu.classList.add('hidden'); }, 200);
@@ -403,7 +431,19 @@
         @endif
 
         function confirmMaintenance() {
+            const roleValue = targetRoleInput.value;
             const roleSelected = dropdownText.innerText;
+
+            if (roleValue !== 'none' && !endAtInput.value) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Waktu Selesai Belum Diisi',
+                    text: 'Silakan isi perkiraan tanggal & jam server kembali online sebelum menerapkan mode maintenance.',
+                    confirmButtonColor: '#0EA5E9'
+                });
+                return;
+            }
+
             Swal.fire({
                 title: 'Terapkan Pengaturan?',
                 text: "Status server akan diubah menjadi: " + roleSelected,

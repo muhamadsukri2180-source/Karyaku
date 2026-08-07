@@ -24,8 +24,7 @@ class AdminController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
-    | 1. DASHBOARD  ->  GET /admin/dashboard  (admin.dashboard)
-    | View: resources/views/admin/dashboard.blade.php
+    | 1. DASHBOARD -> GET /admin/dashboard
     |--------------------------------------------------------------------------
     */
     public function dashboard(Request $request)
@@ -49,7 +48,6 @@ class AdminController extends Controller
         $pendingIdentityCount = IdentityVerification::where('status', 'pending')->count();
         $pendingReportsCount  = Report::where('status', 'pending')->count();
 
-        // Grafik: jumlah order per tahun yang dipilih
         $chartRaw = Order::selectRaw('MONTH(created_at) as bulan, COUNT(*) as total')
             ->whereYear('created_at', $year)
             ->groupBy('bulan')
@@ -60,7 +58,6 @@ class AdminController extends Controller
             $chartData[] = (int) ($chartRaw[$m] ?? 0);
         }
 
-        // Top kategori berdasarkan jumlah item yang benar-benar terjual (order_items)
         $topCategories = Category::all()->map(function ($cat) {
             $cat->order_count = OrderItem::whereHas('product', fn ($q) => $q->where('category_id', $cat->id_category))->count();
             return $cat;
@@ -72,7 +69,6 @@ class AdminController extends Controller
             return $cat;
         });
 
-        // Aktivitas terkini gabungan
         $recentOrders = Order::with('buyer')->latest()->take(3)->get()->map(fn ($o) => [
             'title' => 'Order Baru #' . $o->kode_order,
             'desc'  => 'Pembeli "' . ($o->buyer->name ?? '-') . '" membuat pesanan baru.',
@@ -141,14 +137,44 @@ class AdminController extends Controller
     */
     public function maintenance()
     {
-        $isMaintenance = app()->isDownForMaintenance();
-        
         $statusFile = storage_path('framework/maintenance_mode.json');
         $currentMode = 'none';
+        $currentEndAt = null;
+
         if (file_exists($statusFile)) {
-            $data = json_decode(file_get_contents($statusFile), true);
-            $currentMode = $data['target_role'] ?? 'none';
+            $data       = json_decode(file_get_contents($statusFile), true);
+            $targetRole = $data['target_role'] ?? 'none';
+            $endAt      = $data['end_at'] ?? null;
+
+            // =========================================================
+            // CEK EXPIRATION PAKAI TIMESTAMP WIB
+            // =========================================================
+            if ($targetRole !== 'none' && $endAt) {
+                try {
+                    $targetTimestamp = isset($data['timestamp']) 
+                        ? $data['timestamp'] 
+                        : Carbon::parse($endAt, 'Asia/Jakarta')->timestamp;
+
+                    if (now('Asia/Jakarta')->timestamp >= $targetTimestamp) {
+                        @unlink($statusFile);
+                        $currentMode  = 'none';
+                        $currentEndAt = null;
+                    } else {
+                        $currentMode  = $targetRole;
+                        $currentEndAt = $endAt;
+                    }
+                } catch (\Exception $e) {
+                    @unlink($statusFile);
+                    $currentMode  = 'none';
+                    $currentEndAt = null;
+                }
+            } else {
+                $currentMode  = $targetRole;
+                $currentEndAt = $endAt;
+            }
         }
+
+        $isMaintenance = app()->isDownForMaintenance();
 
         Storage::disk('local')->makeDirectory('backups');
 
@@ -162,7 +188,7 @@ class AdminController extends Controller
             ->sortByDesc('created_at')
             ->values();
 
-        return view('admin.sistem.maintenance', compact('isMaintenance', 'currentMode', 'backups'));
+        return view('admin.sistem.maintenance', compact('isMaintenance', 'currentMode', 'currentEndAt', 'backups'));
     }
 
     public function toggleMaintenance(Request $request)
@@ -172,7 +198,7 @@ class AdminController extends Controller
 
         if ($targetRole === 'none') {
             if (file_exists($statusFile)) {
-                unlink($statusFile);
+                @unlink($statusFile);
             }
             if (app()->isDownForMaintenance()) {
                 Artisan::call('up');
@@ -180,11 +206,21 @@ class AdminController extends Controller
             return redirect()->back()->with('success', 'Sistem kembali Online dan Berjalan Normal.');
         }
 
+        $validated = $request->validate([
+            'end_at' => 'required|date',
+        ]);
+
+        // Paksa penafsiran waktu input secara presisi di zona waktu Asia/Jakarta (WIB)
+        $endAtCarbon = Carbon::parse($validated['end_at'], 'Asia/Jakarta');
+
         $data = [
             'target_role' => $targetRole,
-            'time' => now()
+            'time'        => now('Asia/Jakarta')->toIso8601String(),
+            'end_at'      => $endAtCarbon->toIso8601String(),
+            'timestamp'   => $endAtCarbon->timestamp, // Simpan Unix Timestamp detik
         ];
-        file_put_contents($statusFile, json_encode($data));
+
+        file_put_contents($statusFile, json_encode($data, JSON_PRETTY_PRINT));
 
         if (app()->isDownForMaintenance()) {
             Artisan::call('up');
@@ -251,7 +287,7 @@ class AdminController extends Controller
                 ->orWhere('email', 'like', "%{$search}%")))
             ->latest()
             ->paginate(15);
-            
+
         $users->withQueryString();
 
         $totalUsers    = User::whereHas('role', fn ($q) => $q->whereIn('role_name', ['pembeli', 'penjual']))->count();
@@ -349,7 +385,7 @@ class AdminController extends Controller
             ->where('status', 'pending')
             ->latest()
             ->paginate(10);
-            
+
         $pendingQueue->withQueryString();
 
         $totalVerifikator = $verifikators->count();
@@ -443,16 +479,16 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 5. AKUN & LAYANAN CUSTOMER SERVICE (MANAJEMEN CS)
+    | 5. AKUN & LAYANAN CUSTOMER SERVICE
     |--------------------------------------------------------------------------
     */
     public function serviceAccounts()
     {
         $roleCs = Role::where('role_name', 'customer_service')->first();
         $csUsers = $roleCs ? User::where('id_role', $roleCs->id_role)->get() : collect();
-        
+
         $tickets = CustomerService::with('user')->latest()->get();
-        
+
         $stats = [
             'selesai' => $tickets->where('status', 'selesai')->count(),
             'proses'  => $tickets->where('status', 'proses')->count(),
@@ -516,7 +552,7 @@ class AdminController extends Controller
             ->when($search, fn ($q) => $q->where('title', 'like', "%{$search}%"))
             ->latest()
             ->paginate(15);
-            
+
         $products->withQueryString();
 
         $pendingCount = Product::where('status', 'pending')->count();
@@ -619,7 +655,7 @@ class AdminController extends Controller
             })
             ->latest()
             ->paginate(15);
-            
+
         $orders->withQueryString();
 
         $totalCommission = Order::where('payment_status', 'paid')->sum('total_price') * 0.05;
@@ -688,7 +724,7 @@ class AdminController extends Controller
             })
             ->latest()
             ->paginate(15);
-            
+
         $withdrawals->withQueryString();
 
         $menungguDiproses = Withdrawal::where('status', 'pending')->count();
@@ -749,11 +785,11 @@ class AdminController extends Controller
         $bronzeCount  = User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Bronze%'))->count();
 
         return view('admin.membership.paket_membership', compact(
-            'memberships', 
-            'totalPelangganAktif', 
-            'diamondCount', 
-            'goldCount', 
-            'silverCount', 
+            'memberships',
+            'totalPelangganAktif',
+            'diamondCount',
+            'goldCount',
+            'silverCount',
             'bronzeCount'
         ));
     }

@@ -10,10 +10,18 @@ class NotificationController extends Controller
     /**
      * Tampilkan daftar notifikasi.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $notifications = Notification::latest()->paginate(10);
-        return view('admin.notifications.index', compact('notifications'));
+        $search = $request->query('search');
+
+        $notifications = Notification::when($search, function ($query, $search) {
+            return $query->where('name', 'like', "%{$search}%")
+                         ->orWhere('description', 'like', "%{$search}%");
+        })->latest()->paginate(10);
+
+        $notifications->withQueryString();
+
+        return view('admin.sistem.notifikasi', compact('notifications'));
     }
 
     /**
@@ -34,7 +42,7 @@ class NotificationController extends Controller
     /**
      * Perbarui data notifikasi.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int|string $id)
     {
         $notification = Notification::findOrFail($id);
 
@@ -51,7 +59,7 @@ class NotificationController extends Controller
     /**
      * Hapus data notifikasi.
      */
-    public function destroy($id)
+    public function destroy(int|string $id)
     {
         $notification = Notification::findOrFail($id);
         $notification->delete();
