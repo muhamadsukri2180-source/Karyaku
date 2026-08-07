@@ -129,6 +129,30 @@
                 <a href="{{ route('admin.pelanggaran') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl active-menu transition-all group mt-1">
                     <i class="fa-solid fa-triangle-exclamation w-4 text-center text-white"></i><span>Pelanggaran</span>
                 </a>
+
+                <!-- MENU NOTIFIKASI -->
+                <a href="{{ route('admin.notifications.index') }}"
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifications.*') ? 'bg-white/20 text-white font-bold' : '' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
+                        <span>Notifikasi</span>
+                    </div>
+                    
+                    @php
+                        $unreadNotificationsCount = 0;
+                        if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
+                            $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
+                        } else {
+                            $unreadNotificationsCount = \App\Models\Notification::count();
+                        }
+                    @endphp
+
+                    @if($unreadNotificationsCount > 0)
+                        <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
+                            {{ $unreadNotificationsCount }}
+                        </span>
+                    @endif
+                </a>
             </nav>
             <div class="p-4 border-t border-white/15">
                 <form action="{{ route('logout') }}" method="POST">
@@ -173,7 +197,6 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-[11px] uppercase tracking-wider font-bold">
-                                    <th class="py-4 px-6">ID Laporan</th>
                                     <th class="py-4 px-6">Alasan Laporan</th>
                                     <th class="py-4 px-6">Tanggal</th>
                                     <th class="py-4 px-6 text-center">Aksi</th>
@@ -182,9 +205,6 @@
                             <tbody class="text-sm divide-y divide-slate-100">
                                 @forelse($reports ?? [] as $report)
                                 <tr class="hover:bg-slate-50 transition-colors bg-white">
-                                    <td class="py-3 px-6">
-                                        <div class="font-bold text-slate-800 text-xs">#{{ $report->id ?? $report->id_report ?? $loop->iteration }}</div>
-                                    </td>
                                     <td class="py-3 px-6">
                                         <p class="text-xs font-semibold text-slate-700">{{ $report->reason ?? $report->description ?? 'Tidak ada keterangan.' }}</p>
                                     </td>
@@ -199,7 +219,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="text-center py-10 text-slate-400 text-xs font-semibold">Belum ada data laporan pengguna.</td>
+                                    <td colspan="3" class="text-center py-10 text-slate-400 text-xs font-semibold">Belum ada data laporan pengguna.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -221,7 +241,6 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-[11px] uppercase tracking-wider font-bold">
-                                    <th class="py-4 px-6">ID Laporan</th>
                                     <th class="py-4 px-6">Alasan Laporan</th>
                                     <th class="py-4 px-6">Tanggal</th>
                                     <th class="py-4 px-6 text-center">Aksi</th>
@@ -230,9 +249,6 @@
                             <tbody class="text-sm divide-y divide-slate-100">
                                 @forelse($reports ?? [] as $report)
                                 <tr class="hover:bg-slate-50 transition-colors bg-white">
-                                    <td class="py-3 px-6">
-                                        <div class="font-bold text-slate-800 text-xs">#{{ $report->id ?? $report->id_report ?? $loop->iteration }}</div>
-                                    </td>
                                     <td class="py-3 px-6">
                                         <p class="text-xs font-semibold text-slate-700">{{ $report->reason ?? $report->description ?? 'Tidak ada keterangan.' }}</p>
                                     </td>
@@ -247,7 +263,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="text-center py-10 text-slate-400 text-xs font-semibold">Belum ada data laporan produk.</td>
+                                    <td colspan="3" class="text-center py-10 text-slate-400 text-xs font-semibold">Belum ada data laporan produk.</td>
                                 </tr>
                                 @endforelse
                             </tbody>

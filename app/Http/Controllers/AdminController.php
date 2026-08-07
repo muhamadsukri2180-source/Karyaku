@@ -12,6 +12,7 @@ use App\Models\Membership;
 use App\Models\IdentityVerification;
 use App\Models\Withdrawal;
 use App\Models\Report;
+use App\Models\CustomerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
@@ -253,7 +254,7 @@ class AdminController extends Controller
             
         $users->withQueryString();
 
-        $totalUsers     = User::whereHas('role', fn ($q) => $q->whereIn('role_name', ['pembeli', 'penjual']))->count();
+        $totalUsers    = User::whereHas('role', fn ($q) => $q->whereIn('role_name', ['pembeli', 'penjual']))->count();
         $activeCreators = User::whereHas('role', fn ($q) => $q->where('role_name', 'penjual'))->whereHas('products')->count();
         $newThisMonth   = User::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
         $blockedUsers   = User::where('status', 'blocked')->count();
@@ -442,7 +443,68 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 5. KATALOG: DAFTAR JASA (Product)
+    | 5. AKUN & LAYANAN CUSTOMER SERVICE (MANAJEMEN CS)
+    |--------------------------------------------------------------------------
+    */
+    public function serviceAccounts()
+    {
+        $roleCs = Role::where('role_name', 'customer_service')->first();
+        $csUsers = $roleCs ? User::where('id_role', $roleCs->id_role)->get() : collect();
+        
+        $tickets = CustomerService::with('user')->latest()->get();
+        
+        $stats = [
+            'selesai' => $tickets->where('status', 'selesai')->count(),
+            'proses'  => $tickets->where('status', 'proses')->count(),
+            'belum'   => $tickets->where('status', 'belum')->count(),
+        ];
+
+        return view('admin.manajemen.akun_service', compact('csUsers', 'tickets', 'stats'));
+    }
+
+    public function storeServiceAccount(Request $request)
+    {
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
+            'password' => 'required|min:6',
+        ]);
+
+        $role = Role::firstOrCreate(['role_name' => 'customer_service']);
+
+        User::create([
+            'id_role'  => $role->id_role,
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password),
+            'status'   => 'active',
+        ]);
+
+        return back()->with('success', 'Akun Customer Service berhasil ditambahkan!');
+    }
+
+    public function deleteServiceAccount(string|int $id)
+    {
+        $user = User::findOrFail($id);
+        $user->delete();
+
+        return back()->with('success', 'Akun Customer Service berhasil dihapus!');
+    }
+
+    public function updateTicketStatus(Request $request, string|int $id)
+    {
+        $ticket = CustomerService::findOrFail($id);
+        $ticket->update([
+            'status'     => $request->status,
+            'admin_note' => $request->admin_note,
+        ]);
+
+        return back()->with('success', 'Status keluhan / masukan berhasil diperbarui!');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 6. KATALOG: DAFTAR JASA (Product)
     |--------------------------------------------------------------------------
     */
     public function products(Request $request)
@@ -483,7 +545,7 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 6. KATALOG: KATEGORI JASA
+    | 7. KATALOG: KATEGORI JASA
     |--------------------------------------------------------------------------
     */
     public function categories()
@@ -542,7 +604,7 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 7. TRANSAKSI & KEUANGAN: RIWAYAT PESANAN
+    | 8. TRANSAKSI & KEUANGAN: RIWAYAT PESANAN
     |--------------------------------------------------------------------------
     */
     public function transactions(Request $request)
@@ -611,7 +673,7 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 8. KEUANGAN: PENARIKAN SALDO
+    | 9. KEUANGAN: PENARIKAN SALDO
     |--------------------------------------------------------------------------
     */
     public function withdrawals(Request $request)
@@ -673,7 +735,7 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 9. MEMBERSHIP CARD MANAGEMENT
+    | 10. MEMBERSHIP CARD MANAGEMENT
     |--------------------------------------------------------------------------
     */
     public function memberships()
@@ -681,7 +743,19 @@ class AdminController extends Controller
         $memberships = Membership::withCount('users')->get();
         $totalPelangganAktif = User::whereNotNull('id_membership')->count();
 
-        return view('admin.membership.paket_membership', compact('memberships', 'totalPelangganAktif'));
+        $diamondCount = User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Diamond%'))->count();
+        $goldCount    = User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Gold%'))->count();
+        $silverCount  = User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Silver%'))->count();
+        $bronzeCount  = User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Bronze%'))->count();
+
+        return view('admin.membership.paket_membership', compact(
+            'memberships', 
+            'totalPelangganAktif', 
+            'diamondCount', 
+            'goldCount', 
+            'silverCount', 
+            'bronzeCount'
+        ));
     }
 
     public function storeMembership(Request $request)
@@ -730,7 +804,7 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 10. LAPORAN PELANGGARAN (SISTEM)
+    | 11. LAPORAN PELANGGARAN (SISTEM)
     |--------------------------------------------------------------------------
     */
     public function pelanggaran()
@@ -761,7 +835,7 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 11. PROFILE ADMIN
+    | 12. PROFILE ADMIN
     |--------------------------------------------------------------------------
     */
     public function profile()

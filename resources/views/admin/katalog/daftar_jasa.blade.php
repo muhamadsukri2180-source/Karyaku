@@ -127,6 +127,33 @@
                     <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-white transition-colors"></i>
                     <span>Pelanggaran</span>
                 </a>
+
+
+                <!-- MENU NOTIFIKASI -->
+                <a href="{{ route('admin.notifications.index') }}"
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifications.*') ? 'bg-white/20 text-white font-bold' : '' }}">
+                <div class="flex items-center gap-3">
+                <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
+                <span>Notifikasi</span>
+                </div>
+    
+                @php
+                $unreadNotificationsCount = 0;
+                if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
+                $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
+                } else {
+                    $unreadNotificationsCount = \App\Models\Notification::count();
+                }
+                @endphp
+
+                @if($unreadNotificationsCount > 0)
+                    <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
+                    {{ $unreadNotificationsCount }}
+                    </span>
+                @endif
+                </a>
+
+
                 
             </nav>
             <div class="p-4 border-t border-white/15">

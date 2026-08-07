@@ -131,7 +131,30 @@
                     <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-white transition-colors"></i>
                     <span>Pelanggaran</span>
                 </a>
-                
+
+                <!-- MENU NOTIFIKASI -->
+                <a href="{{ route('admin.notifications.index') }}"
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifications.*') ? 'bg-white/20 text-white font-bold' : '' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
+                        <span>Notifikasi</span>
+                    </div>
+                    
+                    @php
+                        $unreadNotificationsCount = 0;
+                        if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
+                            $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
+                        } else {
+                            $unreadNotificationsCount = \App\Models\Notification::count();
+                        }
+                    @endphp
+
+                    @if($unreadNotificationsCount > 0)
+                        <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
+                            {{ $unreadNotificationsCount }}
+                        </span>
+                    @endif
+                </a>
             </nav>
             <div class="p-4 border-t border-white/15">
                 <form action="{{ route('logout') }}" method="POST">
@@ -164,7 +187,7 @@
                     <script>Swal.fire({icon: 'error', title: 'Gagal!', text: "{{ session('error') }}", confirmButtonColor: '#ef4444'});</script>
                 @endif
 
-                <!-- SUMMARY CARDS -->
+                <!-- SUMMARY CARDS (DIHUBUNGKAN KE DATABASE) -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                     <div class="bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 p-4 rounded-2xl shadow-sm">
                         <span class="text-[10px] font-extrabold text-emerald-800 uppercase tracking-widest">Total Pelanggan Aktif</span>
@@ -177,7 +200,7 @@
                     <div class="bg-gradient-to-br from-blue-50 to-white border border-blue-200 p-4 rounded-2xl shadow-sm">
                         <span class="text-[10px] font-extrabold text-blue-800 uppercase tracking-widest">Diamond Plan</span>
                         <div class="flex items-end justify-between mt-2">
-                            <div class="text-3xl font-black text-slate-900">45</div>
+                            <div class="text-3xl font-black text-slate-900">{{ $diamondCount ?? 0 }}</div>
                             <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold"><i class="fa-regular fa-gem text-sm"></i></div>
                         </div>
                     </div>
@@ -185,7 +208,7 @@
                     <div class="bg-gradient-to-br from-amber-50 to-white border border-amber-200 p-4 rounded-2xl shadow-sm">
                         <span class="text-[10px] font-extrabold text-amber-800 uppercase tracking-widest">Gold Plan</span>
                         <div class="flex items-end justify-between mt-2">
-                            <div class="text-3xl font-black text-slate-900">120</div>
+                            <div class="text-3xl font-black text-slate-900">{{ $goldCount ?? 0 }}</div>
                             <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold"><i class="fa-solid fa-crown text-sm"></i></div>
                         </div>
                     </div>
@@ -193,7 +216,7 @@
                     <div class="bg-gradient-to-br from-slate-100 to-white border border-slate-300 p-4 rounded-2xl shadow-sm">
                         <span class="text-[10px] font-extrabold text-slate-600 uppercase tracking-widest">Silver Plan</span>
                         <div class="flex items-end justify-between mt-2">
-                            <div class="text-3xl font-black text-slate-900">150</div>
+                            <div class="text-3xl font-black text-slate-900">{{ $silverCount ?? 0 }}</div>
                             <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold"><i class="fa-solid fa-medal text-sm"></i></div>
                         </div>
                     </div>
@@ -201,7 +224,7 @@
                     <div class="bg-gradient-to-br from-orange-50 to-white border border-orange-200 p-4 rounded-2xl shadow-sm">
                         <span class="text-[10px] font-extrabold text-orange-800 uppercase tracking-widest">Bronze Plan</span>
                         <div class="flex items-end justify-between mt-2">
-                            <div class="text-3xl font-black text-slate-900">105</div>
+                            <div class="text-3xl font-black text-slate-900">{{ $bronzeCount ?? 0 }}</div>
                             <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center font-bold"><i class="fa-solid fa-award text-sm"></i></div>
                         </div>
                     </div>
@@ -219,14 +242,15 @@
                     </div>
 
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                        <table class="w-full text-left border-collapse table-auto">
                             <thead>
                                 <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-[11px] uppercase tracking-wider font-bold">
-                                    <th class="py-4 px-6">Nama Paket & Ikon</th>
-                                    <th class="py-4 px-6">Harga / Siklus</th>
-                                    <th class="py-4 px-6">Fitur Unggulan</th>
-                                    <th class="py-4 px-6">Pelanggan</th>
-                                    <th class="py-4 px-6 text-center">Aksi (CRUD)</th>
+                                    <th class="py-4 px-6 w-1/4">Nama Paket & Ikon</th>
+                                    <th class="py-4 px-6 w-1/6">Harga / Siklus</th>
+                                    <th class="py-4 px-6 w-1/5">Fitur Unggulan</th>
+                                    <th class="py-4 px-6 w-1/6">Maksimal Upload</th>
+                                    <th class="py-4 px-6 w-1/6">Pelanggan</th>
+                                    <th class="py-4 px-6 text-center w-28">Aksi (CRUD)</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-slate-100">
@@ -242,7 +266,8 @@
                                         </div>
                                     </td>
                                     <td class="py-3 px-6"><p class="text-xs font-bold text-sky-700">Rp {{ number_format($membership->price, 0, ',', '.') }}</p></td>
-                                    <td class="py-3 px-6"><p class="text-[11px] text-slate-600 w-48 truncate">{{ $membership->benefit }}</p></td>
+                                    <td class="py-3 px-6"><p class="text-[11px] text-slate-600 pr-4">{{ $membership->benefit }}</p></td>
+                                    <td class="py-3 px-6"><span class="text-xs font-bold text-slate-700">{{ $membership->max_upload ?? '-' }}</span></td>
                                     <td class="py-3 px-6"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">{{ $membership->users_count ?? 0 }} pengguna</span></td>
                                     <td class="py-3 px-6">
                                         <div class="flex items-center justify-center gap-2">
@@ -258,7 +283,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="text-center py-6 text-slate-400 text-xs font-semibold">Belum ada data paket membership.</td>
+                                    <td colspan="6" class="text-center py-6 text-slate-400 text-xs font-semibold">Belum ada data paket membership.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -370,7 +395,6 @@
 
     <!-- JAVASCRIPT & VALIDASI -->
     <script>
-        // --- Sidebar Logic ---
         const sidebar = document.getElementById('sidebar');
         const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
         const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
@@ -391,7 +415,6 @@
             });
         });
 
-        // --- SweetAlert Hapus ---
         function confirmDelete(button) {
             Swal.fire({
                 title: 'Hapus Paket?',
@@ -410,7 +433,6 @@
             });
         }
 
-        // --- MODAL TAMBAH (Add) ---
         const addModal = document.getElementById('addModal');
         const addModalContent = document.getElementById('addModalContent');
 
@@ -451,7 +473,6 @@
             document.getElementById('addForm').submit();
         }
 
-        // --- MODAL EDIT (Edit) ---
         const editModal = document.getElementById('editModal');
         const editModalContent = document.getElementById('editModalContent');
         let originalEditData = {};
@@ -472,7 +493,6 @@
                 document.getElementById('edit_max_upload').value = originalEditData.max_upload;
                 document.getElementById('edit_benefit').value = originalEditData.benefit;
 
-                // Set dynamic route update
                 document.getElementById('editForm').action = "/admin/memberships/" + membership.id_membership;
             }
             
