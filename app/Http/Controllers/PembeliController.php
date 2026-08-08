@@ -31,15 +31,23 @@ class PembeliController extends Controller
             ->take(5)
             ->get();
 
+        $rekomendasi = Product::with(['category', 'seller'])
+            ->where('status', 'active')
+            ->orderByDesc('sold_count')
+            ->take(4)
+            ->get();
+
         return view('pembeli.dashboard', compact(
-            'totalPesanan', 'totalSelesai', 'totalBelanja', 'totalWishlist', 'totalKeranjang', 'recentOrders'
+            'totalPesanan', 'totalSelesai', 'totalBelanja', 'totalWishlist', 'totalKeranjang', 'recentOrders', 'rekomendasi'
         ));
     }
 
     // ================= MARKETPLACE =================
     public function marketplace(Request $request)
     {
-        $query = Product::with(['category', 'seller'])->where('status', 'approved');
+        // PENTING: status produk yang sudah disetujui admin adalah 'active'
+        // (lihat AdminController::approveProduct), bukan 'approved'.
+        $query = Product::with(['category', 'seller'])->where('status', 'active');
 
         if ($request->filled('q')) {
             $query->where('title', 'like', '%' . $request->q . '%');
@@ -56,7 +64,9 @@ class PembeliController extends Controller
             case 'termurah':
                 $query->orderBy('price');
                 break;
-            case 'rating':
+            case 'termahal':
+                $query->orderByDesc('price');
+                break;
             case 'terlaris':
                 $query->orderByDesc('sold_count');
                 break;
@@ -65,7 +75,7 @@ class PembeliController extends Controller
         }
 
         $products   = $query->paginate(12)->withQueryString();
-        $categories = Category::all();
+        $categories = Category::orderBy('name')->get();
 
         $wishlistIds = Wishlist::where('user_id', Auth::id())->pluck('product_id')->toArray();
 
@@ -81,7 +91,7 @@ class PembeliController extends Controller
 
         $produkLain = Product::where('seller_id', $product->seller_id)
             ->where('id_product', '!=', $product->id_product)
-            ->where('status', 'approved')
+            ->where('status', 'active')
             ->take(4)
             ->get();
 
@@ -95,7 +105,7 @@ class PembeliController extends Controller
     // ================= KERANJANG =================
     public function keranjangIndex()
     {
-        $items = Cart::with('product.seller')->where('user_id', Auth::id())->get();
+        $items = Cart::with('product.seller')->where('user_id', Auth::id())->latest('id_cart')->get();
 
         return view('pembeli.keranjang', compact('items'));
     }
@@ -152,6 +162,11 @@ class PembeliController extends Controller
             return back()->withErrors(['cart_ids' => 'Tidak ada item yang dipilih.']);
         }
 
+        // Pastikan tidak ada produk yang sudah dihapus/nonaktif ikut ter-checkout
+        if ($carts->contains(fn ($c) => ! $c->product || $c->product->status !== 'active')) {
+            return back()->withErrors(['cart_ids' => 'Salah satu produk di keranjang sudah tidak tersedia. Silakan hapus item tersebut.']);
+        }
+
         $order = DB::transaction(function () use ($carts) {
             $total = $carts->sum(fn ($c) => $c->product->price * $c->quantity);
 
@@ -163,11 +178,14 @@ class PembeliController extends Controller
             ]);
 
             foreach ($carts as $cart) {
+                $subtotal = $cart->product->price * $cart->quantity;
+
                 OrderItem::create([
                     'order_id'   => $order->id_order,
                     'product_id' => $cart->product_id,
                     'price'      => $cart->product->price,
                     'quantity'   => $cart->quantity,
+                    'subtotal'   => $subtotal,
                 ]);
 
                 $cart->product->increment('sold_count', $cart->quantity);
@@ -185,6 +203,15 @@ class PembeliController extends Controller
     // ================= WISHLIST =================
     public function wishlistToggle($productId)
     {
+        $product = Product::find($productId);
+
+        if (! $product) {
+            if (request()->wantsJson()) {
+                return response()->json(['status' => 'error', 'message' => 'Produk tidak ditemukan.'], 404);
+            }
+            return back()->withErrors(['wishlist' => 'Produk tidak ditemukan.']);
+        }
+
         $existing = Wishlist::where('user_id', Auth::id())->where('product_id', $productId)->first();
 
         if ($existing) {
@@ -199,12 +226,15 @@ class PembeliController extends Controller
             return response()->json(['status' => $status]);
         }
 
-        return back();
+        return back()->with('success', $status === 'added' ? 'Ditambahkan ke wishlist.' : 'Dihapus dari wishlist.');
     }
 
     public function wishlistIndex()
     {
-        $items = Wishlist::with('product.seller')->where('user_id', Auth::id())->get();
+        $items = Wishlist::with('product.seller', 'product.category')
+            ->where('user_id', Auth::id())
+            ->latest('id_wishlist')
+            ->get();
 
         return view('pembeli.wishlist', compact('items'));
     }
@@ -232,10 +262,11 @@ class PembeliController extends Controller
     // ================= DOWNLOAD =================
     public function downloadIndex()
     {
-        $orderItems = OrderItem::with('product', 'order')
+        $orderItems = OrderItem::with('product.seller', 'order')
             ->whereHas('order', function ($q) {
                 $q->where('buyer_id', Auth::id())->where('payment_status', 'paid');
             })
+            ->latest('id_order_item')
             ->get();
 
         return view('pembeli.download', compact('orderItems'));
