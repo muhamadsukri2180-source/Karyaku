@@ -416,12 +416,6 @@
                         </a>
                     @endif
                     @php $totalNotif = $pendingIdentityCount + $pendingProductsCount + $pendingReportsCount; @endphp
-                    <button class="w-10 h-10 rounded-full bg-white hover:bg-sky-50 hover:text-sky text-slate-700 flex items-center justify-center transition border border-sky-300 relative shadow-sm">
-                        <i class="fa-solid fa-bell text-sm"></i>
-                        @if($totalNotif > 0)
-                            <span class="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-coral border-2 border-white"></span>
-                        @endif
-                    </button>
                 </div>
             </header>
 
