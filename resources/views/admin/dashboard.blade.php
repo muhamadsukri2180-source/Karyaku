@@ -265,10 +265,6 @@
                 </div>
                 <div class="overflow-hidden">
                     <p class="text-sm font-bold text-white truncate">{{ $adminName }}</p>
-                    <div class="flex items-center gap-1.5 mt-0.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                        <p class="text-[10px] text-sky-100 truncate">Online</p>
-                    </div>
                 </div>
             </div>
 

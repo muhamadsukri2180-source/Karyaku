@@ -55,10 +55,6 @@
                 <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">{{ $initials ?: 'AD' }}</div>
                 <div class="overflow-hidden">
                     <p class="text-sm font-bold text-white truncate">{{ $admin->name ?? 'Admin' }}</p>
-                    <div class="flex items-center gap-1.5 mt-0.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                        <p class="text-[10px] text-sky-100 truncate">Online</p>
-                    </div>
                 </div>
             </div>
 

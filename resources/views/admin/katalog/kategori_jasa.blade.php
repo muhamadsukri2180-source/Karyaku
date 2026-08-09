@@ -68,13 +68,9 @@
             </div>
 
             <div class="p-4 mx-4 my-5 rounded-2xl bg-white/10 border border-white/20 flex items-center gap-3 backdrop-blur-md shadow-inner">
-                <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">{{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}</div>
+                <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 2)) }}</div>
                 <div class="overflow-hidden">
                     <p class="text-sm font-bold text-white truncate">{{ auth()->user()->name ?? 'Admin' }}</p>
-                    <div class="flex items-center gap-1.5 mt-0.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                        <p class="text-[10px] text-sky-100 truncate">Online</p>
-                    </div>
                 </div>
             </div>
 
