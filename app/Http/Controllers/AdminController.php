@@ -229,30 +229,49 @@ class AdminController extends Controller
         return redirect()->back()->with('warning', 'Mode Maintenance berhasil diterapkan untuk target: ' . strtoupper($targetRole));
     }
 
-    public function createBackup()
-    {
-        $filename = 'backup-' . now()->format('Y-m-d_His') . '.sql';
-        $path     = storage_path('app/backups/' . $filename);
+   public function createBackup()
+{
+    $filename = 'backup-' . now()->format('Y-m-d_His') . '.sql';
+    $path     = storage_path('app/backups/' . $filename);
 
-        Storage::disk('local')->makeDirectory('backups');
+    Storage::disk('local')->makeDirectory('backups');
 
-        $db  = config('database.connections.mysql');
-        $cmd = sprintf(
-            'mysqldump --user=%s --password=%s --host=%s %s > %s',
-            escapeshellarg($db['username']),
-            escapeshellarg($db['password']),
-            escapeshellarg($db['host']),
-            escapeshellarg($db['database']),
-            escapeshellarg($path)
-        );
+    $db           = config('database.connections.mysql');
+    $mysqldumpBin = config('database.mysqldump_path', 'mysqldump');
 
-        try {
-            Process::run($cmd);
-            return redirect()->back()->with('success', 'Backup database berhasil dibuat: ' . $filename);
-        } catch (\Throwable $e) {
-            return redirect()->back()->with('error', 'Gagal membuat backup: ' . $e->getMessage());
-        }
+    $args = [
+        $mysqldumpBin,
+        '--user=' . $db['username'],
+        '--host=' . $db['host'],
+        '--port=' . ($db['port'] ?? 3306),
+        '--result-file=' . $path,
+        $db['database'],
+    ];
+
+    if (!empty($db['password'])) {
+        $args[] = '--password=' . $db['password'];
     }
+
+    try {
+        $process = new \Symfony\Component\Process\Process($args);
+        $process->setTimeout(300);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            @unlink($path);
+            throw new \RuntimeException($process->getErrorOutput() ?: $process->getOutput() ?: 'mysqldump gagal dijalankan.');
+        }
+
+        if (!file_exists($path) || filesize($path) === 0) {
+            @unlink($path);
+            throw new \RuntimeException('File backup kosong. Cek kredensial database atau path mysqldump.');
+        }
+
+        return redirect()->back()->with('success', 'Backup database berhasil dibuat: ' . $filename);
+    } catch (\Throwable $e) {
+        return redirect()->back()->with('error', 'Gagal membuat backup: ' . $e->getMessage());
+    }
+}
 
     public function downloadBackup(string $filename)
     {

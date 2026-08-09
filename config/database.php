@@ -147,5 +147,5 @@ return [
         ],
 
     ],
-
+'mysqldump_path' => env('MYSQLDUMP_PATH', 'mysqldump'),
 ];
