@@ -133,28 +133,6 @@
                     <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-white transition-colors"></i>
                     <span>Pelanggaran</span>
                 </a>
-
-                <a href="{{ route('admin.notifications.index') }}"
-                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifikasi.*') ? 'bg-white/20 text-white font-bold' : '' }}">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
-                        <span>Notifikasi</span>
-                    </div>
-                    @php
-                        $unreadNotificationsCount = 0;
-                        if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
-                            $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
-                        } else {
-                            $unreadNotificationsCount = \App\Models\Notification::count();
-                        }
-                    @endphp
-
-                    @if($unreadNotificationsCount > 0)
-                        <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
-                            {{ $unreadNotificationsCount }}
-                        </span>
-                    @endif
-                </a>
             </nav>
             <div class="p-4 border-t border-white/15">
                 <form action="{{ route('logout') }}" method="POST">
@@ -195,7 +173,7 @@
                                 <p class="text-xs text-slate-600 mt-0.5 font-medium">
                                     {{ $currentMode == 'none' ? 'Server aktif dan dapat diakses.' : 'Mode perbaikan aktif untuk target terpilih.' }}
                                     @if($currentMode != 'none' && $currentEndAt)
-                                        &middot; Selesai: {{ \Carbon\Carbon::parse($currentEndAt)->locale('id')->translatedFormat('d M Y - H:i') }} WIB
+                                        &middot; Selesai: {{ \Carbon\Carbon::parse($currentEndAt)->setTimezone('Asia/Jakarta')->translatedFormat('d M Y - H:i') }} WIB
                                     @endif
                                 </p>
                             </div>
@@ -213,7 +191,7 @@
                                 'penjual' => 'Down Penjual',
                                 'verifikator' => 'Down Verifikator'
                             ];
-                            $endAtValue = $currentEndAt ? \Carbon\Carbon::parse($currentEndAt)->format('Y-m-d\TH:i') : '';
+                            $endAtValue = $currentEndAt ? \Carbon\Carbon::parse($currentEndAt, 'Asia/Jakarta')->format('Y-m-d\TH:i') : '';
                         @endphp
 
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
@@ -236,7 +214,7 @@
                                 </div>
                             </div>
 
-                            <!-- Field Waktu Selesai (muncul otomatis jika mode != none) -->
+                            <!-- Field Waktu Selesai -->
                             <div id="endAtWrapper" class="w-full sm:w-[260px] {{ $currentMode == 'none' ? 'hidden' : '' }}">
                                 <input type="datetime-local" name="end_at" id="endAtInput"
                                        value="{{ $endAtValue }}"
@@ -368,7 +346,6 @@
         const targetRoleInput = document.getElementById('targetRoleInput');
         const options = document.querySelectorAll('.dropdown-option');
 
-        // --- Elemen untuk field Waktu Selesai ---
         const endAtWrapper = document.getElementById('endAtWrapper');
         const endAtHint = document.getElementById('endAtHint');
         const endAtInput = document.getElementById('endAtInput');

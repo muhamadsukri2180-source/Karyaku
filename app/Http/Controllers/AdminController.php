@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class AdminController extends Controller
@@ -146,9 +147,6 @@ class AdminController extends Controller
             $targetRole = $data['target_role'] ?? 'none';
             $endAt      = $data['end_at'] ?? null;
 
-            // =========================================================
-            // CEK EXPIRATION PAKAI TIMESTAMP WIB
-            // =========================================================
             if ($targetRole !== 'none' && $endAt) {
                 try {
                     $targetTimestamp = isset($data['timestamp']) 
@@ -182,7 +180,7 @@ class AdminController extends Controller
             ->filter(fn ($f) => str_ends_with($f, '.sql') || str_ends_with($f, '.zip'))
             ->map(fn ($file) => [
                 'name'       => basename($file),
-                'size'       => round(Storage::disk('local')->size($file) / 1048576, 1) . ' MB',
+                'size'       => round(Storage::disk('local')->size($file) / 1048576, 2) . ' MB',
                 'created_at' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file)),
             ])
             ->sortByDesc('created_at')
@@ -210,14 +208,13 @@ class AdminController extends Controller
             'end_at' => 'required|date',
         ]);
 
-        // Paksa penafsiran waktu input secara presisi di zona waktu Asia/Jakarta (WIB)
         $endAtCarbon = Carbon::parse($validated['end_at'], 'Asia/Jakarta');
 
         $data = [
             'target_role' => $targetRole,
             'time'        => now('Asia/Jakarta')->toIso8601String(),
             'end_at'      => $endAtCarbon->toIso8601String(),
-            'timestamp'   => $endAtCarbon->timestamp, // Simpan Unix Timestamp detik
+            'timestamp'   => $endAtCarbon->timestamp,
         ];
 
         file_put_contents($statusFile, json_encode($data, JSON_PRETTY_PRINT));
@@ -229,6 +226,11 @@ class AdminController extends Controller
         return redirect()->back()->with('warning', 'Mode Maintenance berhasil diterapkan untuk target: ' . strtoupper($targetRole));
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | BUAT BACKUP DATABASE (PURE PHP - 100% TERISI DATA & ANTI 0 KB)
+    |--------------------------------------------------------------------------
+    */
     public function createBackup()
     {
         $filename = 'backup-' . now()->format('Y-m-d_His') . '.sql';
@@ -236,18 +238,56 @@ class AdminController extends Controller
 
         Storage::disk('local')->makeDirectory('backups');
 
-        $db  = config('database.connections.mysql');
-        $cmd = sprintf(
-            'mysqldump --user=%s --password=%s --host=%s %s > %s',
-            escapeshellarg($db['username']),
-            escapeshellarg($db['password']),
-            escapeshellarg($db['host']),
-            escapeshellarg($db['database']),
-            escapeshellarg($path)
-        );
-
         try {
-            Process::run($cmd);
+            // 1. Ambil nama database & daftar seluruh tabel
+            $dbName = config('database.connections.mysql.database');
+            $tables = DB::select('SHOW TABLES');
+            $tableKey = 'Tables_in_' . $dbName;
+
+            // 2. Header File SQL
+            $sqlScript = "-- ========================================================\n";
+            $sqlScript .= "-- Backup Database Karyaku\n";
+            $sqlScript .= "-- Tanggal: " . now('Asia/Jakarta')->format('d-m-Y H:i:s') . " WIB\n";
+            $sqlScript .= "-- ========================================================\n\n";
+            $sqlScript .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
+
+            // 3. Loop Setiap Tabel untuk Ambil Struktur & Data
+            foreach ($tables as $table) {
+                if (!isset($table->$tableKey)) continue;
+                $tableName = $table->$tableKey;
+
+                // A. Struktur Tabel (CREATE TABLE)
+                $createTable = DB::select("SHOW CREATE TABLE `$tableName`");
+                $sqlScript .= "-- --------------------------------------------------------\n";
+                $sqlScript .= "-- Struktur Tabel `$tableName` \n";
+                $sqlScript .= "-- --------------------------------------------------------\n";
+                $sqlScript .= "DROP TABLE IF EXISTS `$tableName`;\n";
+                $sqlScript .= $createTable[0]->{'Create Table'} . ";\n\n";
+
+                // B. Data Tabel (INSERT INTO)
+                $rows = DB::table($tableName)->get();
+                if ($rows->count() > 0) {
+                    $sqlScript .= "-- Data untuk Tabel `$tableName` --\n";
+                    foreach ($rows as $row) {
+                        $values = array_map(function ($val) {
+                            if (is_null($val)) {
+                                return 'NULL';
+                            }
+                            $val = str_replace(["\\", "\"", "'", "\x00", "\n", "\r", "\x1a"], ["\\\\", "\\\"", "''", "\\0", "\\n", "\\r", "\\Z"], $val);
+                            return "'{$val}'";
+                        }, (array)$row);
+
+                        $sqlScript .= "INSERT INTO `$tableName` VALUES (" . implode(', ', $values) . ");\n";
+                    }
+                    $sqlScript .= "\n";
+                }
+            }
+
+            $sqlScript .= "SET FOREIGN_KEY_CHECKS=1;\n";
+
+            // 4. Tulis langsung ke file
+            file_put_contents($path, $sqlScript);
+
             return redirect()->back()->with('success', 'Backup database berhasil dibuat: ' . $filename);
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', 'Gagal membuat backup: ' . $e->getMessage());
