@@ -7,7 +7,7 @@
     <title>Karyaku - Manajemen Notifikasi</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Sora', 'sans-serif'] },
-                    colors: { sky: '#0EA5E9', skyHover: '#0284C7', skyDeep: '#0B3D62', coral: '#FF7A59' }
+                    colors: { sky: '#0EA5E9', skyHover: '#0284C7', skyDeep: '#0B3D62' }
                 }
             }
         }
@@ -41,12 +41,12 @@
         .card-hover:hover { transform: scale(1.015) translateY(-3px); box-shadow: 0 15px 30px -10px rgba(14, 165, 233, 0.25); border-color: rgba(14, 165, 233, 0.5); }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-100 via-sky-100/40 to-blue-200/50 text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-sky/20 selection:text-skyDeep min-h-screen">
+<body class="bg-gradient-to-br from-slate-100 via-sky-100/40 to-blue-200/50 text-slate-800 font-sans antialiased min-h-screen">
 
     <div class="flex min-h-screen relative">
         <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden hidden transition-opacity duration-300"></div>
 
-        <!-- SIDEBAR -->
+        <!-- SIDEBAR FULL -->
         <aside id="sidebar" class="w-[260px] bg-gradient-to-b from-skyDeep via-skyHover to-sky text-white flex flex-col shrink-0 border-r border-sky-400/20 shadow-2xl fixed lg:sticky top-0 h-screen z-50 closed lg:translate-x-0">
             <div class="p-6 border-b border-white/15 flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -148,6 +148,7 @@
                     @endif
                 </a>
             </nav>
+
             <div class="p-4 border-t border-white/15">
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
@@ -158,104 +159,114 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
+        <!-- KONTEN UTAMA -->
         <main class="flex-1 flex flex-col min-w-0 w-full">
-            <header class="bg-gradient-to-r from-white via-sky-50/50 to-blue-50/50 backdrop-blur-xl border-b border-sky-200 px-6 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+            <header class="bg-white/70 backdrop-blur-xl border-b border-sky-200 px-6 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
                 <div class="flex items-center gap-4">
                     <button id="sidebarToggleBtn" class="lg:hidden w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition border border-sky-200 shadow-sm"><i class="fa-solid fa-bars text-base"></i></button>
                     <div>
                         <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900">Manajemen Notifikasi</h2>
-                        <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Kelola pesan notifikasi yang tampil untuk seluruh pengguna Karyaku.</p>
+                        <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Kelola pesan dan pengumuman yang dikirim ke pengguna sistem.</p>
                     </div>
                 </div>
-
-                <!-- TOMBOL 3D BIRU KOKOH -->
-                <button type="button" onclick="openModal('addNotificationModal')" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-blue-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#cbd5e1] transition-all cursor-pointer shrink-0">
-                    <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Tambah Notifikasi</span>
-                </button>
             </header>
 
-            <div class="p-6 sm:p-8 space-y-6 overflow-y-auto no-scrollbar">
+            <div class="p-6 sm:p-8 space-y-6">
 
-                <!-- SUMMARY CARD -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div class="bg-gradient-to-br from-blue-50 via-white to-blue-100/60 border-l-4 border-blue-500 border-y border-r border-blue-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-sm">
-                        <div class="flex justify-between items-start mb-2 relative z-10">
-                            <div><span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Total Notifikasi</span><div class="text-3xl font-black text-slate-900 mt-1">{{ number_format($notifications->total(), 0, ',', '.') }}</div></div>
-                            <div class="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/30"><i class="fa-solid fa-bell text-lg"></i></div>
+                <!-- SWEETALERT FLASH NOTIFICATION -->
+                @if (session('success'))
+                    <script>Swal.fire({icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", timer: 2500, showConfirmButton: false});</script>
+                @endif
+                @if (session('error'))
+                    <script>Swal.fire({icon: 'error', title: 'Gagal!', text: "{{ session('error') }}", confirmButtonColor: '#ef4444'});</script>
+                @endif
+
+                <!-- SUMMARY CARDS (SUDAH DIPERBAIKI) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-5">
+                    <div class="bg-gradient-to-br from-indigo-50 via-white to-indigo-100/60 border-l-4 border-indigo-500 border-y border-r border-indigo-200 p-5 rounded-2xl card-hover shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="text-[11px] font-bold text-indigo-900 uppercase tracking-wider">Total Notifikasi</span>
+                                <div class="text-3xl font-black text-slate-900 mt-1">{{ $totalNotifications ?? 0 }}</div>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-indigo-500 text-white flex items-center justify-center font-bold shadow-md">
+                                <i class="fa-solid fa-bell text-lg"></i>
+                            </div>
                         </div>
-                        <p class="text-[10px] text-slate-600 font-medium border-t border-blue-200/50 pt-2 mt-2">Seluruh notifikasi tersimpan di sistem</p>
                     </div>
-
-                    <div class="bg-gradient-to-br from-sky-50 via-white to-sky-100/60 border-l-4 border-slate-500 border-y border-r border-sky-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-sm hover:shadow-md transition-all duration-300">
-    <div class="flex justify-between items-start mb-2 relative z-10">
-        <div>
-            <span class="text-[11px] font-bold text-sky-900 uppercase tracking-wider">Halaman Saat Ini</span>
-            <div class="text-3xl font-black text-slate-900 mt-1">{{ $notifications->count() }}</div>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 text-white flex items-center justify-center font-bold shadow-md shadow-slate-500/30 border border-slate-400/30 ring-2 ring-slate-100">
-            <i class="fa-solid fa-list text-lg"></i>
-        </div>
-    </div>
-    <p class="text-[10px] text-slate-600 font-medium border-t border-sky-200/50 pt-2 mt-2">Notifikasi yang tampil di halaman ini</p>
-</div>
+                    <div class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100/60 border-l-4 border-emerald-500 border-y border-r border-emerald-200 p-5 rounded-2xl card-hover shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Dibuat Bulan Ini</span>
+                                <div class="text-3xl font-black text-slate-900 mt-1">{{ $newThisMonth ?? 0 }}</div>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-md">
+                                <i class="fa-solid fa-calendar-check text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- MAIN TABLE AREA -->
-                <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="p-5 border-b border-sky-100 bg-white/50 backdrop-blur-sm">
-                        <h3 class="font-extrabold text-slate-900 text-base font-display">Daftar Notifikasi</h3>
-                        <p class="text-[11px] text-slate-500 font-semibold mt-0.5">Notifikasi yang telah dibuat dan aktif ditampilkan ke pengguna.</p>
+                <div class="bg-white border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <form method="GET" action="{{ route('admin.notifications.index') }}" class="relative w-full sm:w-72">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau isi notifikasi..." class="pl-8 pr-4 py-2.5 w-full bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500 focus:bg-white transition-all">
+                        </form>
+
+                        <button type="button" onclick="openAddModal()" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-blue-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#cbd5e1] transition-all cursor-pointer w-full sm:w-auto">
+                            <i class="fa-solid fa-plus"></i> Tambah Notifikasi
+                        </button>
                     </div>
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-sky-50/80 border-b border-sky-100 text-sky-900 text-[11px] uppercase tracking-wider font-bold">
+                                <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-[11px] uppercase tracking-wider font-bold">
                                     <th class="py-4 px-6">Nama Notifikasi</th>
                                     <th class="py-4 px-6">Deskripsi</th>
                                     <th class="py-4 px-6">Tanggal Dibuat</th>
                                     <th class="py-4 px-6 text-center">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="text-sm divide-y divide-sky-100/70">
+                            <tbody class="text-sm divide-y divide-slate-100">
                                 @forelse ($notifications as $notification)
-                                    <tr class="hover:bg-sky-50/50 transition-colors bg-white">
-                                        <td class="py-3 px-6">
+                                    <tr class="hover:bg-slate-50 transition-colors bg-white">
+                                        <td class="py-3 px-6 font-bold text-slate-800 text-xs">
                                             <div class="flex items-center gap-3">
-                                                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-sky-500 to-blue-600 text-white flex items-center justify-center shadow-sm shrink-0"><i class="fa-solid fa-bell text-xs"></i></div>
-                                                <p class="font-bold text-slate-800 text-xs">{{ $notification->name }}</p>
+                                                <div class="w-9 h-9 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-sm border border-sky-200 shadow-sm shrink-0">
+                                                    <i class="fa-solid fa-bullhorn"></i>
+                                                </div>
+                                                <span>{{ $notification->name }}</span>
                                             </div>
                                         </td>
-                                        <td class="py-3 px-6">
-                                            <p class="text-xs text-slate-600 font-medium max-w-xs truncate">{{ $notification->description }}</p>
-                                        </td>
-                                        <td class="py-3 px-6">
-                                            <p class="text-xs font-semibold text-slate-700">{{ $notification->created_at ? $notification->created_at->translatedFormat('d M Y, H:i') : '-' }}</p>
+                                        <td class="py-3 px-6 text-xs text-slate-600 max-w-xs truncate">{{ $notification->description }}</td>
+                                        <td class="py-3 px-6 text-xs font-semibold text-slate-500">
+                                            {{ $notification->created_at ? $notification->created_at->translatedFormat('d M Y, H:i') : '-' }}
                                         </td>
                                         <td class="py-3 px-6">
                                             <div class="flex items-center justify-center gap-2">
-                                                <button type="button"
-                                                    class="btn-edit-notification w-8 h-8 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-600 hover:text-white transition-all shadow-sm flex items-center justify-center"
-                                                    data-id="{{ $notification->id }}"
-                                                    data-name="{{ $notification->name }}"
-                                                    data-description="{{ $notification->description }}"
-                                                    title="Edit Notifikasi">
-                                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                                <!-- TOMBOL EDIT -->
+                                                <button type="button" 
+                                                        onclick='openEditModal(@json($notification))' 
+                                                        class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm cursor-pointer flex items-center justify-center" 
+                                                        title="Edit Notifikasi">
+                                                    <i class="fa-solid fa-pen-to-square"></i>
                                                 </button>
-                                                <button type="button"
-                                                    class="btn-delete-notification w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center justify-center"
-                                                    data-id="{{ $notification->id }}"
-                                                    data-name="{{ $notification->name }}"
-                                                    title="Hapus Notifikasi">
-                                                    <i class="fa-solid fa-trash text-xs"></i>
-                                                </button>
+                                                <!-- TOMBOL HAPUS -->
+                                                <form action="{{ route('admin.notifications.destroy', $notification->id) }}" method="POST" class="inline">
+                                                    @csrf @method('DELETE')
+                                                    <button type="button" onclick="confirmDelete(this, '{{ $notification->name }}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm cursor-pointer flex items-center justify-center" title="Hapus Notifikasi">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="py-10 text-center text-sm text-slate-500">Belum ada data notifikasi.</td>
+                                        <td colspan="4" class="py-10 text-center text-slate-400 text-xs font-semibold">Belum ada data notifikasi yang tersedia.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -263,7 +274,7 @@
                     </div>
 
                     @if($notifications->hasPages())
-                        <div class="p-5 border-t border-sky-100 bg-white/50">
+                        <div class="p-4 border-t border-slate-100">
                             {{ $notifications->links() }}
                         </div>
                     @endif
@@ -273,79 +284,76 @@
         </main>
     </div>
 
-    <!-- MODAL: TAMBAH NOTIFIKASI -->
-    <div id="addNotificationModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col transform scale-95 transition-transform duration-300 mx-4 overflow-hidden" id="addNotificationModalContent">
-            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+    <!-- MODAL TAMBAH NOTIFIKASI -->
+    <div id="addNotificationModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0 w-screen h-screen">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 border-t-4 border-emerald-500" id="addModalContent">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-emerald-50/50 rounded-t-xl">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center"><i class="fa-solid fa-bell text-sm"></i></div>
-                    <h3 class="font-extrabold text-slate-900 font-display text-base">Tambah Notifikasi Baru</h3>
+                    <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-plus text-sm"></i></div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-base font-display">Tambah Notifikasi Baru</h3>
+                        <p class="text-[10px] font-semibold text-emerald-600">Buat pengumuman baru untuk pengguna.</p>
+                    </div>
                 </div>
-                <button type="button" onclick="closeModal('addNotificationModal')" class="text-slate-400 hover:text-red-500 transition-colors w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button type="button" onclick="closeAddModal()" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form action="{{ route('admin.notifications.store') }}" method="POST" class="p-6 space-y-4 overflow-y-auto flex-1">
+
+            <form id="addForm" action="{{ route('admin.notifications.store') }}" method="POST" class="p-5 space-y-4">
                 @csrf
                 <div>
-                    <label class="text-xs font-bold text-slate-700">Nama Notifikasi</label>
-                    <input type="text" name="name" required class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Nama Notifikasi</label>
+                    <input type="text" name="name" id="add_name" placeholder="Contoh: Pemeliharaan Sistem..." class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-700">Deskripsi</label>
-                    <textarea name="description" rows="4" required class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30"></textarea>
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Deskripsi</label>
+                    <textarea name="description" id="add_description" rows="4" placeholder="Tuliskan isi pengumuman notifikasi di sini..." class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all"></textarea>
                 </div>
-                <div class="flex justify-end gap-2 pt-3 pb-2">
-                    <button type="button" onclick="closeModal('addNotificationModal')" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">Simpan Notifikasi</button>
+
+                <div class="pt-2">
+                    <button type="button" onclick="submitAdd()" class="w-full py-3 bg-emerald-600 text-white text-sm font-bold rounded-xl shadow-[0_4px_0_0_#065f46] hover:bg-emerald-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#065f46] transition-all cursor-pointer">
+                        Simpan Notifikasi
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: EDIT NOTIFIKASI -->
-    <div id="editNotificationModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col transform scale-95 transition-transform duration-300 mx-4 overflow-hidden" id="editNotificationModalContent">
-            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+    <!-- MODAL EDIT NOTIFIKASI -->
+    <div id="editNotificationModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0 w-screen h-screen">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 border-t-4 border-blue-600" id="editModalContent">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-blue-50/50 rounded-t-xl">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-pen-to-square text-sm"></i></div>
-                    <h3 class="font-extrabold text-slate-900 font-display text-base">Edit Notifikasi</h3>
+                    <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-pen-to-square text-sm"></i></div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-base font-display">Edit Notifikasi</h3>
+                        <p class="text-[10px] font-semibold text-blue-600">Perbarui detail pengumuman.</p>
+                    </div>
                 </div>
-                <button type="button" onclick="closeModal('editNotificationModal')" class="text-slate-400 hover:text-red-500 transition-colors w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button type="button" onclick="closeEditModal()" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form id="editNotificationForm" method="POST" action="" class="p-6 space-y-4 overflow-y-auto flex-1">
+
+            <form id="editNotificationForm" method="POST" action="" class="p-5 space-y-4">
                 @csrf
                 @method('PUT')
                 <div>
-                    <label class="text-xs font-bold text-slate-700">Nama Notifikasi</label>
-                    <input type="text" id="editNotificationName" name="name" required class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Nama Notifikasi</label>
+                    <input type="text" name="name" id="editNotificationName" placeholder="Nama notifikasi" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-700">Deskripsi</label>
-                    <textarea id="editNotificationDescription" name="description" rows="4" required class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30"></textarea>
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Deskripsi</label>
+                    <textarea name="description" id="editNotificationDescription" rows="4" placeholder="Deskripsi..." class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all"></textarea>
                 </div>
-                <div class="flex justify-end gap-2 pt-3 pb-2">
-                    <button type="button" onclick="closeModal('editNotificationModal')" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">Simpan Perubahan</button>
+
+                <div class="pt-2">
+                    <button type="button" onclick="submitEdit()" class="w-full py-3 bg-blue-600 text-white text-sm font-bold rounded-xl shadow-[0_4px_0_0_#1e40af] hover:bg-blue-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#1e40af] transition-all cursor-pointer">
+                        Simpan Perubahan
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: HAPUS NOTIFIKASI -->
-    <div id="deleteNotificationModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm transform scale-95 transition-transform duration-300 mx-4 p-6 text-center" id="deleteNotificationModalContent">
-            <div class="w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
-            <h3 class="font-display font-extrabold text-lg text-slate-900 mb-1">Hapus Notifikasi?</h3>
-            <p class="text-xs text-slate-600 mb-5">Anda akan menghapus notifikasi <strong id="deleteNotificationName" class="text-slate-900"></strong> secara permanen. Tindakan ini tidak dapat dibatalkan.</p>
-            <form id="deleteNotificationForm" method="POST" action="" class="flex justify-center gap-2">
-                @csrf
-                @method('DELETE')
-                <button type="button" onclick="closeModal('deleteNotificationModal')" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
-                <button type="submit" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">Ya, Hapus</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- SCRIPTS -->
+    <!-- SCRIPT LOGIC JAVASCRIPT -->
     <script>
         const sidebar = document.getElementById('sidebar');
         const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
@@ -367,54 +375,102 @@
             });
         });
 
-        function openModal(modalId) {
-            const modal = document.getElementById(modalId);
-            const content = document.getElementById(modalId + 'Content');
-            modal.classList.remove('hidden');
+        // --- TAMBAH MODAL LOGIC ---
+        const addModal = document.getElementById('addNotificationModal');
+        const addModalContent = document.getElementById('addModalContent');
+
+        function openAddModal() {
+            document.getElementById('addForm').reset();
+            addModal.classList.remove('hidden');
             setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
+                addModal.classList.remove('opacity-0');
+                addModalContent.classList.remove('scale-95');
+                addModalContent.classList.add('scale-100');
             }, 10);
         }
 
-        function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            const content = document.getElementById(modalId + 'Content');
-            modal.classList.add('opacity-0');
-            content.classList.remove('scale-100');
-            content.classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        function closeAddModal() {
+            addModal.classList.add('opacity-0');
+            addModalContent.classList.remove('scale-100');
+            addModalContent.classList.add('scale-95');
+            setTimeout(() => { addModal.classList.add('hidden'); }, 300);
         }
 
-        document.querySelectorAll('.btn-edit-notification').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const editForm = document.getElementById('editNotificationForm');
-                editForm.action = `{{ url('admin/notifications') }}/${btn.dataset.id}`;
-                document.getElementById('editNotificationName').value = btn.dataset.name || '';
-                document.getElementById('editNotificationDescription').value = btn.dataset.description || '';
-                openModal('editNotificationModal');
-            });
-        });
+        function submitAdd() {
+            const name = document.getElementById('add_name').value.trim();
+            const desc = document.getElementById('add_description').value.trim();
+            if (!name || !desc) {
+                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Silakan isi nama dan deskripsi notifikasi.', confirmButtonColor: '#0EA5E9' });
+                return;
+            }
+            document.getElementById('addForm').submit();
+        }
 
-        document.querySelectorAll('.btn-delete-notification').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const deleteForm = document.getElementById('deleteNotificationForm');
-                deleteForm.action = `{{ url('admin/notifications') }}/${btn.dataset.id}`;
-                document.getElementById('deleteNotificationName').textContent = btn.dataset.name || '';
-                openModal('deleteNotificationModal');
-            });
-        });
+        // --- EDIT MODAL LOGIC ---
+        const editModal = document.getElementById('editNotificationModal');
+        const editModalContent = document.getElementById('editModalContent');
+        let originalEditData = {};
 
-        @if (session('success'))
-            Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", timer: 3000, showConfirmButton: false });
-        @endif
-        @if (session('error'))
-            Swal.fire({ icon: 'error', title: 'Gagal!', text: "{{ session('error') }}", confirmButtonColor: '#ef4444' });
-        @endif
-        @if ($errors->any())
-            Swal.fire({ icon: 'warning', title: 'Perhatian!', html: '<ul class="text-left text-xs space-y-1">@foreach($errors->all() as $err)<li>• {{ $err }}</li>@endforeach</ul>', confirmButtonColor: '#0EA5E9' });
-        @endif
+        function openEditModal(notification) {
+            if (notification) {
+                originalEditData = {
+                    name: String(notification.name || ''),
+                    description: String(notification.description || '')
+                };
+
+                document.getElementById('editNotificationName').value = originalEditData.name;
+                document.getElementById('editNotificationDescription').value = originalEditData.description;
+                document.getElementById('editNotificationForm').action = "/admin/notifications/" + notification.id;
+            }
+
+            editModal.classList.remove('hidden');
+            setTimeout(() => {
+                editModal.classList.remove('opacity-0');
+                editModalContent.classList.remove('scale-95');
+                editModalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeEditModal() {
+            editModal.classList.add('opacity-0');
+            editModalContent.classList.remove('scale-100');
+            editModalContent.classList.add('scale-95');
+            setTimeout(() => { editModal.classList.add('hidden'); }, 300);
+        }
+
+        function submitEdit() {
+            const currentName = document.getElementById('editNotificationName').value.trim();
+            const currentDesc = document.getElementById('editNotificationDescription').value.trim();
+
+            if (!currentName || !currentDesc) {
+                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Silakan lengkapi nama dan deskripsi notifikasi.', confirmButtonColor: '#0EA5E9' });
+                return;
+            }
+            if (currentName === originalEditData.name && currentDesc === originalEditData.description) {
+                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Silakan ubah data sebelum menyimpan.', confirmButtonColor: '#0EA5E9' });
+                return;
+            }
+            document.getElementById('editNotificationForm').submit();
+        }
+
+        // --- CONFIRM DELETE ---
+        function confirmDelete(button, name) {
+            Swal.fire({
+                title: 'Hapus Notifikasi?',
+                text: `Notifikasi "${name}" akan dihapus permanen.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    button.closest('form').submit();
+                }
+            });
+        }
     </script>
 </body>
 </html>

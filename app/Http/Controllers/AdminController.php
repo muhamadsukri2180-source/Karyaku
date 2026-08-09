@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class AdminController extends Controller
@@ -146,9 +147,6 @@ class AdminController extends Controller
             $targetRole = $data['target_role'] ?? 'none';
             $endAt      = $data['end_at'] ?? null;
 
-            // =========================================================
-            // CEK EXPIRATION PAKAI TIMESTAMP WIB
-            // =========================================================
             if ($targetRole !== 'none' && $endAt) {
                 try {
                     $targetTimestamp = isset($data['timestamp']) 
@@ -182,7 +180,7 @@ class AdminController extends Controller
             ->filter(fn ($f) => str_ends_with($f, '.sql') || str_ends_with($f, '.zip'))
             ->map(fn ($file) => [
                 'name'       => basename($file),
-                'size'       => round(Storage::disk('local')->size($file) / 1048576, 1) . ' MB',
+                'size'       => round(Storage::disk('local')->size($file) / 1048576, 2) . ' MB',
                 'created_at' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file)),
             ])
             ->sortByDesc('created_at')
@@ -210,14 +208,13 @@ class AdminController extends Controller
             'end_at' => 'required|date',
         ]);
 
-        // Paksa penafsiran waktu input secara presisi di zona waktu Asia/Jakarta (WIB)
         $endAtCarbon = Carbon::parse($validated['end_at'], 'Asia/Jakarta');
 
         $data = [
             'target_role' => $targetRole,
             'time'        => now('Asia/Jakarta')->toIso8601String(),
             'end_at'      => $endAtCarbon->toIso8601String(),
-            'timestamp'   => $endAtCarbon->timestamp, // Simpan Unix Timestamp detik
+            'timestamp'   => $endAtCarbon->timestamp,
         ];
 
         file_put_contents($statusFile, json_encode($data, JSON_PRETTY_PRINT));

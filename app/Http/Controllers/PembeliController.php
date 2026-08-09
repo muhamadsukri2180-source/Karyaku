@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\User;
 use App\Models\Wishlist;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -45,8 +46,6 @@ class PembeliController extends Controller
     // ================= MARKETPLACE =================
     public function marketplace(Request $request)
     {
-        // PENTING: status produk yang sudah disetujui admin adalah 'active'
-        // (lihat AdminController::approveProduct), bukan 'approved'.
         $query = Product::with(['category', 'seller'])->where('status', 'active');
 
         if ($request->filled('q')) {
@@ -74,16 +73,16 @@ class PembeliController extends Controller
                 $query->orderByDesc('sold_count');
         }
 
-        $products   = $query->paginate(12)->withQueryString();
+        // Menggunakan appends($request->query()) agar aman dari linter IDE
+        $products   = $query->paginate(12)->appends($request->query());
         $categories = Category::orderBy('name')->get();
-
         $wishlistIds = Wishlist::where('user_id', Auth::id())->pluck('product_id')->toArray();
 
         return view('pembeli.marketplace', compact('products', 'categories', 'wishlistIds'));
     }
 
     // ================= DETAIL PRODUK =================
-    public function produkDetail($id)
+    public function produkDetail(int|string $id)
     {
         $product = Product::with(['category', 'seller'])->findOrFail($id);
 
@@ -128,17 +127,18 @@ class PembeliController extends Controller
         return back()->with('success', 'Produk ditambahkan ke keranjang.');
     }
 
-    public function keranjangUpdate(Request $request, $id)
+    public function keranjangUpdate(Request $request, int|string $id)
     {
         $request->validate(['quantity' => 'required|integer|min:1']);
 
         $cart = Cart::where('user_id', Auth::id())->findOrFail($id);
-        $cart->update(['quantity' => $request->quantity]);
+        $cart->quantity = $request->quantity;
+        $cart->save();
 
         return back()->with('success', 'Jumlah item diperbarui.');
     }
 
-    public function keranjangDestroy($id)
+    public function keranjangDestroy(int|string $id)
     {
         Cart::where('user_id', Auth::id())->where('id_cart', $id)->delete();
 
@@ -162,7 +162,6 @@ class PembeliController extends Controller
             return back()->withErrors(['cart_ids' => 'Tidak ada item yang dipilih.']);
         }
 
-        // Pastikan tidak ada produk yang sudah dihapus/nonaktif ikut ter-checkout
         if ($carts->contains(fn ($c) => ! $c->product || $c->product->status !== 'active')) {
             return back()->withErrors(['cart_ids' => 'Salah satu produk di keranjang sudah tidak tersedia. Silakan hapus item tersebut.']);
         }
@@ -201,7 +200,7 @@ class PembeliController extends Controller
     }
 
     // ================= WISHLIST =================
-    public function wishlistToggle($productId)
+    public function wishlistToggle(int|string $productId)
     {
         $product = Product::find($productId);
 
@@ -250,7 +249,7 @@ class PembeliController extends Controller
         return view('pembeli.pesanan', compact('orders'));
     }
 
-    public function pesananDetail($id)
+    public function pesananDetail(int|string $id)
     {
         $order = Order::with('items.product.seller')
             ->where('buyer_id', Auth::id())
@@ -280,7 +279,7 @@ class PembeliController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $user = Auth::user();
+        $user = User::findOrFail(Auth::id());
 
         $validated = $request->validate([
             'name'  => 'required|string|max:255',

@@ -21,7 +21,17 @@ class NotificationController extends Controller
 
         $notifications->withQueryString();
 
-        return view('admin.sistem.notifikasi', compact('notifications'));
+        // Data Ringkasan Statistik
+        $totalNotifications = Notification::count();
+        $newThisMonth       = Notification::whereMonth('created_at', now()->month)
+                                          ->whereYear('created_at', now()->year)
+                                          ->count();
+
+        return view('admin.sistem.notifikasi', compact(
+            'notifications',
+            'totalNotifications',
+            'newThisMonth'
+        ));
     }
 
     /**
@@ -36,7 +46,7 @@ class NotificationController extends Controller
 
         Notification::create($validated);
 
-        return redirect()->back()->with('success', 'Notifikasi berhasil ditambahkan.');
+        return redirect()->back()->with('success', 'Notifikasi baru berhasil ditambahkan.');
     }
 
     /**
