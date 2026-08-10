@@ -17,7 +17,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -133,7 +132,7 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 2. MAINTENANCE MODE + BACKUP
+    | 2. MAINTENANCE MODE + BACKUP DATABASE (GOOGLE DRIVE)
     |--------------------------------------------------------------------------
     */
     public function maintenance()
@@ -226,49 +225,89 @@ class AdminController extends Controller
         return redirect()->back()->with('warning', 'Mode Maintenance berhasil diterapkan untuk target: ' . strtoupper($targetRole));
     }
 
-   public function createBackup()
-{
-    $filename = 'backup-' . now()->format('Y-m-d_His') . '.sql';
-    $path     = storage_path('app/backups/' . $filename);
+    /**
+     * DATABASE BACKUP & AUTO UPLOAD TO GOOGLE DRIVE
+     */
+    public function createBackup()
+    {
+        $filename = 'backup-' . now()->format('Y-m-d_His') . '.sql';
+        $localBackupPath = storage_path('app/backups/' . $filename);
 
-    Storage::disk('local')->makeDirectory('backups');
+        Storage::disk('local')->makeDirectory('backups');
 
-    $db           = config('database.connections.mysql');
-    $mysqldumpBin = config('database.mysqldump_path', 'mysqldump');
+        try {
+            set_time_limit(300);
+            ini_set('memory_limit', '512M');
 
-    $args = [
-        $mysqldumpBin,
-        '--user=' . $db['username'],
-        '--host=' . $db['host'],
-        '--port=' . ($db['port'] ?? 3306),
-        '--result-file=' . $path,
-        $db['database'],
-    ];
+            $dbName = config('database.connections.mysql.database');
+            $tables = DB::select('SHOW TABLES');
+            $tableKey = 'Tables_in_' . $dbName;
 
-    if (!empty($db['password'])) {
-        $args[] = '--password=' . $db['password'];
-    }
+            $sqlDump  = "-- Backup Database Karyaku\n";
+            $sqlDump .= "-- Tanggal: " . now()->format('d M Y - H:i:s') . " WIB\n\n";
+            $sqlDump .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
 
-    try {
-        $process = new \Symfony\Component\Process\Process($args);
-        $process->setTimeout(300);
-        $process->run();
+            foreach ($tables as $tableObj) {
+                $table = $tableObj->$tableKey ?? current((array)$tableObj);
 
-        if (!$process->isSuccessful()) {
-            @unlink($path);
-            throw new \RuntimeException($process->getErrorOutput() ?: $process->getOutput() ?: 'mysqldump gagal dijalankan.');
+                $createTableResult = DB::select("SHOW CREATE TABLE `{$table}`");
+                $createSql = $createTableResult[0]->{'Create Table'} ?? null;
+
+                if ($createSql) {
+                    $sqlDump .= "DROP TABLE IF EXISTS `{$table}`;\n";
+                    $sqlDump .= $createSql . ";\n\n";
+
+                    $rows = DB::table($table)->get();
+                    if ($rows->count() > 0) {
+                        foreach ($rows as $row) {
+                            $rowArray = (array)$row;
+                            $values = array_map(function ($val) {
+                                if (is_null($val)) return 'NULL';
+                                return DB::getPdo()->quote($val);
+                            }, $rowArray);
+
+                            $sqlDump .= "INSERT INTO `{$table}` (`" . implode('`, `', array_keys($rowArray)) . "`) VALUES (" . implode(', ', $values) . ");\n";
+                        }
+                        $sqlDump .= "\n";
+                    }
+                }
+            }
+
+            $sqlDump .= "SET FOREIGN_KEY_CHECKS=1;\n";
+
+            // 1. Simpan file backup ke lokal
+            file_put_contents($localBackupPath, $sqlDump);
+
+            // 2. Unggah ke Google Drive (dengan try-catch terpisah agar file lokal TETAP TERSIMPAN)
+            $driveUploaded = false;
+            $driveErrorMessage = null;
+
+            try {
+                $stream = fopen($localBackupPath, 'r');
+                $driveUploaded = Storage::disk('google')->put($filename, $stream);
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+            } catch (\Throwable $driveError) {
+                $driveErrorMessage = $driveError->getMessage();
+            }
+
+            if ($driveUploaded) {
+                return redirect()->back()->with('success', 'Backup database BERHASIL dibuat di lokal & dikirim ke Google Drive!');
+            }
+
+            // Jika Drive menolak/gagal, file lokal TETAP ADA di tabel & disk lokal
+            $msg = 'Backup database BERHASIL dibuat di lokal, namun GAGAL terkirim ke Google Drive.';
+            if ($driveErrorMessage) {
+                $msg .= ' Detail: ' . $driveErrorMessage;
+            }
+
+            return redirect()->back()->with('warning', $msg);
+
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Gagal membuat backup database: ' . $e->getMessage());
         }
-
-        if (!file_exists($path) || filesize($path) === 0) {
-            @unlink($path);
-            throw new \RuntimeException('File backup kosong. Cek kredensial database atau path mysqldump.');
-        }
-
-        return redirect()->back()->with('success', 'Backup database berhasil dibuat: ' . $filename);
-    } catch (\Throwable $e) {
-        return redirect()->back()->with('error', 'Gagal membuat backup: ' . $e->getMessage());
     }
-}
 
     public function downloadBackup(string $filename)
     {
@@ -306,7 +345,7 @@ class AdminController extends Controller
 
         $users->withQueryString();
 
-        $totalUsers    = User::whereHas('role', fn ($q) => $q->whereIn('role_name', ['pembeli', 'penjual']))->count();
+        $totalUsers   = User::whereHas('role', fn ($q) => $q->whereIn('role_name', ['pembeli', 'penjual']))->count();
         $activeCreators = User::whereHas('role', fn ($q) => $q->where('role_name', 'penjual'))->whereHas('products')->count();
         $newThisMonth   = User::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
         $blockedUsers   = User::where('status', 'blocked')->count();
@@ -666,8 +705,7 @@ class AdminController extends Controller
         /** @var \Illuminate\Pagination\LengthAwarePaginator $orders */
         $orders = Order::with(['buyer', 'items.product.seller'])
             ->when($search, function ($q) use ($search) {
-                $q->whereHas('buyer', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
-                  ->orWhere('id_order', 'like', "%{$search}%");
+                $q->whereHas('buyer', fn ($qq) => $qq->where('name', 'like', "%{$search}%"));
             })
             ->latest()
             ->paginate(15);
@@ -698,11 +736,10 @@ class AdminController extends Controller
 
         $callback = function () use ($orders) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['ID Order', 'Pembeli', 'Total', 'Status Pembayaran', 'Status Order', 'Tanggal']);
+            fputcsv($handle, ['Pembeli', 'Total', 'Status Pembayaran', 'Status Order', 'Tanggal']);
 
             foreach ($orders as $order) {
                 fputcsv($handle, [
-                    $order->kode_order,
                     $order->buyer->name ?? '-',
                     $order->total_price,
                     $order->payment_status,

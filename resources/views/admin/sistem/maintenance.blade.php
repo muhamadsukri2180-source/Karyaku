@@ -130,8 +130,7 @@
                     <span>Pelanggaran</span>
                 </a>
 
-                
-                 <!-- MENU NOTIFIKASI -->
+                <!-- MENU NOTIFIKASI -->
                 <a href="{{ route('admin.notifications.index') }}"
                 class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifikasi.*') ? 'bg-white/20 text-white font-bold' : '' }}">
                     <div class="flex items-center gap-3">
@@ -153,7 +152,6 @@
                         </span>
                     @endif
                 </a>
-
 
             </nav>
             <div class="p-4 border-t border-white/15">

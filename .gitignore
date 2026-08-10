@@ -17,3 +17,6 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+/storage/app/google-drive-key.json
+/storage/app/*.json
+/storage/app/backups/

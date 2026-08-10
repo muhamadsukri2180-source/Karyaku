@@ -44,6 +44,13 @@ return [
             'throw' => false,
         ],
 
+        'google' => [
+            'driver' => 'google',
+            'folder' => env('GOOGLE_DRIVE_FOLDER_ID'),
+            'serviceAccountJson' => storage_path('app/google-drive-key.json'),
+            'throw' => true,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
