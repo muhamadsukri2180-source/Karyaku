@@ -249,7 +249,7 @@
                                     <th class="py-4 px-6 w-1/5">Fitur Unggulan</th>
                                     <th class="py-4 px-6 w-1/6">Maksimal Upload</th>
                                     <th class="py-4 px-6 w-1/6">Pelanggan</th>
-                                    <th class="py-4 px-6 text-center w-28">Aksi (CRUD)</th>
+                                    <th class="py-4 px-6 text-center w-28">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-slate-100">

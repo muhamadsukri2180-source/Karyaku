@@ -6,6 +6,8 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PembeliController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\CustomerServiceController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\PenjualController;
 
 /*
 |--------------------------------------------------------------------------
@@ -139,11 +141,11 @@ Route::middleware(['auth', 'role:verifikator'])->prefix('verifikator')->group(fu
 // ==========================================
 // 5. PENJUAL ROUTES
 // ==========================================
-Route::middleware(['auth', 'role:penjual'])->prefix('penjual')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('penjual.dashboard');
-    })->name('penjual.dashboard');
-});
+// Route::middleware(['auth', 'role:penjual'])->prefix('penjual')->group(function () {
+//     Route::get('/dashboard', function () {
+//         return view('penjual.dashboard');
+//     })->name('penjual.dashboard');
+// });
 
 
 // ==========================================
@@ -176,4 +178,32 @@ Route::middleware(['auth', 'role:pembeli'])->prefix('pembeli')->name('pembeli.')
     // Customer Service (User / Pembeli Side)
     Route::get('/customer-service', [CustomerServiceController::class, 'userIndex'])->name('service.index');
     Route::post('/customer-service', [CustomerServiceController::class, 'userStore'])->name('service.store');
+
+
+    //routes untuk fitur pelanggaran, notifications, dan laporan
+    // Membership -> Upgrade jadi Penjual
+    Route::get('/membership', [PembeliController::class, 'membershipIndex'])->name('membership');
+    Route::post('/membership/{id}/beli', [PembeliController::class, 'membershipPurchase'])->name('membership.purchase');
+
+    // Notifikasi dari Admin
+    Route::get('/notifikasi', [PembeliController::class, 'notificationsIndex'])->name('notifications');
+
+
+});
+
+
+// ==========================================
+// 7. LAPORAN PELANGGARAN (pembeli & penjual, siapapun yang login)
+// ==========================================
+Route::middleware(['auth'])->group(function () {
+    Route::get('/laporan', [ReportController::class, 'create'])->name('reports.create');
+    Route::post('/laporan', [ReportController::class, 'store'])->name('reports.store');
+    Route::get('/laporan/riwayat', [ReportController::class, 'index'])->name('reports.index');
+});
+
+// ==========================================
+// 5. PENJUAL ROUTES
+// ==========================================
+Route::middleware(['auth'])->prefix('penjual')->name('penjual.')->group(function () {
+    Route::get('/dashboard', [PenjualController::class, 'dashboard'])->name('dashboard');
 });

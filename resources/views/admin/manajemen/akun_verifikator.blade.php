@@ -262,7 +262,7 @@
                                     <th class="py-4 px-6">Email Staf</th>
                                     <th class="py-4 px-6">Total Diperiksa</th>
                                     <th class="py-4 px-6">Status Tugas</th>
-                                    <th class="py-4 px-6 text-center">Aksi (CRUD)</th>
+                                    <th class="py-4 px-6 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="verifikatorTableBody" class="text-sm divide-y divide-sky-100/70">

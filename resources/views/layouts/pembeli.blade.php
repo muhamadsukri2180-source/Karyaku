@@ -123,6 +123,20 @@
     ::-webkit-scrollbar{ width: 8px; height: 8px; }
     ::-webkit-scrollbar-thumb{ background: var(--primary-soft); border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover{ background: var(--primary); }
+
+
+    .icon-btn-light{ width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.12); border: none; display: flex; align-items: center; justify-content: center; color: #fff; position: relative; font-size: 17px; transition: all .2s ease; flex-shrink: 0; }
+    .icon-btn-light:hover{ background: rgba(255,255,255,0.22); color: #fff; }
+    .icon-btn-light .dot{ position: absolute; top: 4px; right: 4px; min-width: 16px; height: 16px; padding: 0 3px; background: var(--coral); border-radius: 20px; border: 2px solid var(--primary-dark); font-size: 9.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .notif-dropdown{ position: absolute; right: 0; top: calc(100% + 10px); width: 300px; max-height: 380px; overflow-y: auto; background: #fff; border-radius: 14px; box-shadow: var(--shadow-hover); padding: 8px; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all .18s ease; z-index: 1040; }
+    .notif-menu.open .notif-dropdown{ opacity: 1; visibility: visible; transform: translateY(0); }
+    .notif-item{ display: block; padding: 10px 12px; border-radius: 10px; transition: background .15s ease; }
+    .notif-item:hover{ background: var(--primary-light); }
+    .notif-item .n-title{ font-size: 12.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; }
+    .notif-item .n-desc{ font-size: 11.5px; color: var(--text-muted); line-height: 1.4; }
+    .notif-item .n-time{ font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+
+
 </style>
 @stack('styles')
 </head>
@@ -160,7 +174,41 @@
             <a href="{{ route('pembeli.download') }}" class="nav-link {{ request()->routeIs('pembeli.download') ? 'active' : '' }}"><i class="bi bi-cloud-arrow-down-fill"></i> Download</a>
         </nav>
 
-        <div class="navbar-right">
+       <div class="navbar-right">
+            @php
+                $isPenjualNav = ($navUser->role->role_name ?? null) === 'penjual';
+            @endphp
+
+            @if (! $isPenjualNav)
+            <a href="{{ route('pembeli.membership') }}" class="btn-jual d-none d-md-inline-flex">
+                <i class="bi bi-shop-window"></i> <span>Daftar Sebagai Penjual</span>
+            </a>
+            @endif
+
+            @php
+                $latestNotifications = \App\Models\Notification::latest()->take(5)->get();
+                $newNotifCount = \App\Models\Notification::where('created_at', '>=', now()->subDays(3))->count();
+            @endphp
+            <div class="user-menu notif-menu" id="notifMenu">
+                <button class="icon-btn-light" id="btnNotif" type="button" title="Notifikasi">
+                    <i class="bi bi-bell"></i>
+                    @if ($newNotifCount > 0)<span class="dot">{{ $newNotifCount }}</span>@endif
+                </button>
+                <div class="notif-dropdown">
+                    @forelse ($latestNotifications as $notif)
+                        <div class="notif-item">
+                            <div class="n-title">{{ $notif->name }}</div>
+                            <div class="n-desc">{{ \Illuminate\Support\Str::limit($notif->description, 80) }}</div>
+                            <div class="n-time">{{ $notif->created_at->diffForHumans() }}</div>
+                        </div>
+                    @empty
+                        <div class="text-center text-muted small py-3">Belum ada notifikasi.</div>
+                    @endforelse
+                    <hr>
+                    <a href="{{ route('pembeli.notifications') }}" class="d-block text-center small fw-semibold py-2" style="color: var(--primary);">Lihat Semua Notifikasi</a>
+                </div>
+            </div>
+
             <div class="user-menu" id="userMenu">
                 <button class="user-chip" id="btnUserChip" type="button">
                     <img src="https://ui-avatars.com/api/?name={{ urlencode($navUser->name ?? 'Pembeli') }}&background=ffffff&color=1e3a8a" alt="avatar">
@@ -174,6 +222,8 @@
                     <a href="{{ route('pembeli.profile') }}"><i class="bi bi-person-fill"></i> Profile</a>
                     <a href="{{ route('pembeli.pesanan') }}"><i class="bi bi-receipt"></i> Pesanan Saya</a>
                     <a href="{{ route('pembeli.download') }}"><i class="bi bi-cloud-arrow-down-fill"></i> Download Saya</a>
+                    <a href="{{ route('reports.create') }}"><i class="bi bi-flag-fill"></i> Laporkan Pelanggaran</a>
+                    <a href="{{ route('reports.index') }}"><i class="bi bi-clock-history"></i> Riwayat Laporan Saya</a>
                     <hr>
                     <form action="{{ route('logout') }}" method="POST">
                         @csrf
@@ -182,6 +232,11 @@
                 </div>
             </div>
         </div>
+
+
+
+
+
     </div>
 
     <div class="mobile-menu-panel" id="mobileMenuPanel">
@@ -269,6 +324,23 @@
             if (e.key === 'Escape') userMenu.classList.remove('open');
         });
     }
+
+
+    const notifMenu = document.getElementById('notifMenu');
+    const btnNotif  = document.getElementById('btnNotif');
+    if (btnNotif && notifMenu) {
+        btnNotif.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notifMenu.classList.toggle('open');
+        });
+        document.addEventListener('click', (e) => {
+            if (!notifMenu.contains(e.target)) notifMenu.classList.remove('open');
+        });
+    }
+    
+
+
+
 
     // Toggle wishlist via AJAX (dipakai di marketplace, produk, wishlist page)
     document.querySelectorAll('.wish-btn[data-url]').forEach(btn => {

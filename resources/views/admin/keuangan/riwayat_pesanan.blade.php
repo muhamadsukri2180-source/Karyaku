@@ -233,6 +233,7 @@
                             <thead>
                                 <tr class="bg-sky-50/80 border-b border-sky-100 text-sky-900 text-[11px] uppercase tracking-wider font-bold">
                                     <th class="py-4 px-6">Layanan</th>
+                                    <th class="py-4 px-6">Pesanan & Layanan</th>
                                     <th class="py-4 px-6">Pelanggan & Kreator</th>
                                     <th class="py-4 px-6">Total Nilai</th>
                                     <th class="py-4 px-6">Status Order</th>

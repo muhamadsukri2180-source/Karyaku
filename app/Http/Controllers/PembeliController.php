@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Category;
+use App\Models\Membership;
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
-use App\Models\User;
+use App\Models\Role;
 use App\Models\Wishlist;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -73,16 +75,16 @@ class PembeliController extends Controller
                 $query->orderByDesc('sold_count');
         }
 
-        // Menggunakan appends($request->query()) agar aman dari linter IDE
-        $products   = $query->paginate(12)->appends($request->query());
+        $products   = $query->paginate(12)->withQueryString();
         $categories = Category::orderBy('name')->get();
+
         $wishlistIds = Wishlist::where('user_id', Auth::id())->pluck('product_id')->toArray();
 
         return view('pembeli.marketplace', compact('products', 'categories', 'wishlistIds'));
     }
 
     // ================= DETAIL PRODUK =================
-    public function produkDetail(int|string $id)
+    public function produkDetail($id)
     {
         $product = Product::with(['category', 'seller'])->findOrFail($id);
 
@@ -124,25 +126,24 @@ class PembeliController extends Controller
         $cart->quantity = ($cart->quantity ?? 0) + ($request->quantity ?? 1);
         $cart->save();
 
-        return back()->with('success', 'Produk ditambahkan ke keranjang.');
+        return back()->with('success', 'Produk berhasil ditambahkan ke keranjang!');
     }
 
-    public function keranjangUpdate(Request $request, int|string $id)
+    public function keranjangUpdate(Request $request, $id)
     {
         $request->validate(['quantity' => 'required|integer|min:1']);
 
         $cart = Cart::where('user_id', Auth::id())->findOrFail($id);
-        $cart->quantity = $request->quantity;
-        $cart->save();
+        $cart->update(['quantity' => $request->quantity]);
 
-        return back()->with('success', 'Jumlah item diperbarui.');
+        return back()->with('success', 'Jumlah item berhasil diperbarui.');
     }
 
-    public function keranjangDestroy(int|string $id)
+    public function keranjangDestroy($id)
     {
         Cart::where('user_id', Auth::id())->where('id_cart', $id)->delete();
 
-        return back()->with('success', 'Item dihapus dari keranjang.');
+        return back()->with('success', 'Item berhasil dihapus dari keranjang.');
     }
 
     // ================= CHECKOUT =================
@@ -200,7 +201,7 @@ class PembeliController extends Controller
     }
 
     // ================= WISHLIST =================
-    public function wishlistToggle(int|string $productId)
+    public function wishlistToggle($productId)
     {
         $product = Product::find($productId);
 
@@ -249,7 +250,7 @@ class PembeliController extends Controller
         return view('pembeli.pesanan', compact('orders'));
     }
 
-    public function pesananDetail(int|string $id)
+    public function pesananDetail($id)
     {
         $order = Order::with('items.product.seller')
             ->where('buyer_id', Auth::id())
@@ -279,7 +280,7 @@ class PembeliController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $user = User::findOrFail(Auth::id());
+        $user = Auth::user();
 
         $validated = $request->validate([
             'name'  => 'required|string|max:255',
@@ -290,5 +291,48 @@ class PembeliController extends Controller
         $user->update($validated);
 
         return back()->with('success', 'Profil berhasil diperbarui.');
+    }
+
+    // ================= MEMBERSHIP (UPGRADE JADI PENJUAL) =================
+    public function membershipIndex()
+    {
+        $memberships = Membership::orderBy('price')->get();
+        $user        = Auth::user();
+        $isPenjual   = ($user->role->role_name ?? null) === 'penjual';
+
+        return view('pembeli.membership', compact('memberships', 'user', 'isPenjual'));
+    }
+
+    public function membershipPurchase(Request $request, $id)
+{
+    $membership = Membership::findOrFail($id);
+    $user       = Auth::user();
+
+    $penjualRole = Role::where('role_name', 'penjual')->first();
+
+    if (! $penjualRole) {
+        return back()->with('error', 'Role penjual belum tersedia di database.');
+    }
+
+    // Update role dan membership di DB
+    $user->update([
+        'id_membership' => $membership->id_membership,
+        'id_role'       => $penjualRole->id_role,
+    ]);
+
+    // PENTING: Refresh instance user di Auth session agar tidak kena error 403
+    Auth::setUser($user->fresh(['role', 'membership']));
+
+    return redirect()->route('penjual.dashboard')
+        ->with('success', 'Selamat! Akun kamu berhasil menjadi Penjual dengan paket ' . $membership->name . '.');
+    }
+    
+
+    // ================= NOTIFIKASI (dari Admin) =================
+    public function notificationsIndex()
+    {
+        $notifications = Notification::latest()->paginate(10);
+
+        return view('pembeli.notifications', compact('notifications'));
     }
 }

@@ -896,30 +896,67 @@ class AdminController extends Controller
     | 11. LAPORAN PELANGGARAN (SISTEM)
     |--------------------------------------------------------------------------
     */
-    public function pelanggaran()
-    {
-        $reports = Report::latest()->paginate(15);
-        return view('admin.sistem.pelanggaran', compact('reports'));
-    }
+  public function pelanggaran()
+   {
+       // Laporan Pelanggaran Pengguna/Penjual
+       $reportsUser = Report::with(['reporter', 'reportedUser'])
+           ->whereNull('product_id')
+           ->whereNotNull('reported_user_id')
+           ->latest()
+           ->paginate(10, ['*'], 'user_page');
 
-    public function tindakUserPelanggaran(Request $request, string|int $id)
-    {
-        $request->validate([
-            'action' => 'required|string',
-            'admin_notes' => 'required|string|max:500',
-        ]);
+       // Laporan Pelanggaran Produk
+       $reportsProduk = Report::with(['reporter', 'product.seller'])
+           ->whereNotNull('product_id')
+           ->latest()
+           ->paginate(10, ['*'], 'produk_page');
 
-        return redirect()->back()->with('success', 'Tindak lanjut pelanggaran pengguna berhasil disimpan.');
-    }
+       return view('admin.sistem.pelanggaran', compact('reportsUser', 'reportsProduk'));
+   }
+
+
+   public function tindakUserPelanggaran(Request $request, string|int $id)
+   {
+       $request->validate([
+           'action'      => 'required|string|in:peringatan,suspend,abaikan',
+           'admin_notes' => 'required|string|max:500',
+       ]);
+
+       $report = Report::findOrFail($id);
+
+       // Logika penanganan tindakan oleh admin
+       $report->update([
+           'status'      => $request->action === 'abaikan' ? 'rejected' : 'resolved',
+           'admin_notes' => $request->admin_notes,
+       ]);
+
+       return redirect()->back()->with('success', 'Tindakan laporan berhasil diproses.');
+   }
+
+
+
 
     public function tindakProdukPelanggaran(Request $request, string|int $id)
     {
-        $request->validate([
-            'action' => 'required|string',
-            'admin_notes' => 'required|string|max:500',
-        ]);
+    $request->validate([
+        'action'      => 'required|string|in:peringatan,suspend,abaikan',
+        'admin_notes' => 'required|string|max:500',
+    ]);
 
-        return redirect()->back()->with('success', 'Tindak lanjut pelanggaran produk berhasil disimpan.');
+    $report = Report::findOrFail($id);
+
+    $report->update([
+        'status'      => $request->action === 'abaikan' ? 'dismissed' : 'reviewed',
+        'admin_note'  => $request->admin_notes,
+        'reviewed_by' => auth()->id(),
+        'reviewed_at' => now(),
+    ]);
+
+    if ($request->action === 'suspend' && $report->product_id) {
+        Product::where('id_product', $report->product_id)->update(['status' => 'inactive']);
+    }
+
+    return redirect()->back()->with('success', 'Tindak lanjut pelanggaran produk berhasil disimpan.');
     }
 
     /*

@@ -251,7 +251,7 @@
                                     <th class="py-4 px-6">Peran (Role)</th>
                                     <th class="py-4 px-6">Tgl Bergabung</th>
                                     <th class="py-4 px-6">Status</th>
-                                    <th class="py-4 px-6 text-center">Aksi (CRUD)</th>
+                                    <th class="py-4 px-6 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-sky-100/70">
