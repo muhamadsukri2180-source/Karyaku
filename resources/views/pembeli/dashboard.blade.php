@@ -335,11 +335,11 @@
         </a>
 
         <nav class="nav-menu">
-            <a href="#" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
-            <a href="#" class="nav-link active"><i class="bi bi-shop"></i> Marketplace</a>
-            <a href="#" class="nav-link"><i class="bi bi-heart-fill"></i> Wishlist <span class="badge-count">5</span></a>
+            <a href="dashboard" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+            <a href="marketplace" class="nav-link active"><i class="bi bi-shop"></i> Marketplace</a>
+            <a href="wishlist" class="nav-link"><i class="bi bi-heart-fill"></i> Wishlist <span class="badge-count">5</span></a>
             <a href="Keranjang" class="nav-link"><i class="bi bi-cart-fill"></i> Keranjang <span class="badge-count">3</span></a>
-            <a href="#" class="nav-link"><i class="bi bi-receipt"></i> Pesanan</a>
+            <a href="pesanan" class="nav-link"><i class="bi bi-receipt"></i> Pesanan</a>
             <a href="#" class="nav-link"><i class="bi bi-cloud-arrow-down-fill"></i> Download</a>
         </nav>
 
