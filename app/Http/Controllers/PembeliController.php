@@ -336,3 +336,4 @@ class PembeliController extends Controller
         return view('pembeli.notifications', compact('notifications'));
     }
 }
+

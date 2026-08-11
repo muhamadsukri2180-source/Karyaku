@@ -9,6 +9,11 @@ class Report extends Model
 {
     use HasFactory;
 
+    /**
+     * Nama primary key dari tabel reports.
+     */
+    protected $primaryKey = 'id_report';
+
     protected $fillable = [
         'user_id',
         'product_id',
@@ -16,7 +21,9 @@ class Report extends Model
         'reason',
         'description',
         'status',
-        'admin_notes',
+        'admin_note',
+        'reviewed_by',
+        'reviewed_at',
     ];
 
     /**

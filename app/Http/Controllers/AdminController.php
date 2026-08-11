@@ -896,68 +896,62 @@ class AdminController extends Controller
     | 11. LAPORAN PELANGGARAN (SISTEM)
     |--------------------------------------------------------------------------
     */
-  public function pelanggaran()
-   {
-       // Laporan Pelanggaran Pengguna/Penjual
-       $reportsUser = Report::with(['reporter', 'reportedUser'])
-           ->whereNull('product_id')
-           ->whereNotNull('reported_user_id')
-           ->latest()
-           ->paginate(10, ['*'], 'user_page');
+   public function pelanggaran()
+    {
+        // 1. Ambil Laporan Pengguna / Umum (product_id IS NULL)
+        // Menggunakan leftJoin / optional relationship agar row dengan reported_user_id = NULL tetap muncul
+        $reportsUser = Report::with(['reporter', 'reportedUser'])
+            ->whereNull('product_id')
+            ->latest()
+            ->paginate(10, ['*'], 'page_user');
 
-       // Laporan Pelanggaran Produk
-       $reportsProduk = Report::with(['reporter', 'product.seller'])
-           ->whereNotNull('product_id')
-           ->latest()
-           ->paginate(10, ['*'], 'produk_page');
+        // 2. Ambil Laporan Produk (product_id IS NOT NULL)
+        $reportsProduk = Report::with(['reporter', 'product.seller'])
+            ->whereNotNull('product_id')
+            ->latest()
+            ->paginate(10, ['*'], 'page_produk');
 
-       return view('admin.sistem.pelanggaran', compact('reportsUser', 'reportsProduk'));
-   }
+        return view('admin.sistem.pelanggaran', compact('reportsUser', 'reportsProduk'));
+    }
 
+    public function tindakUserPelanggaran(Request $request, string|int $id)
+    {
+        $request->validate([
+            'action'      => 'required|string|in:peringatan,suspend,abaikan',
+            'admin_notes' => 'required|string|max:500',
+        ]);
 
-   public function tindakUserPelanggaran(Request $request, string|int $id)
-   {
-       $request->validate([
-           'action'      => 'required|string|in:peringatan,suspend,abaikan',
-           'admin_notes' => 'required|string|max:500',
-       ]);
+        $report = Report::findOrFail($id);
 
-       $report = Report::findOrFail($id);
+        $report->update([
+            'status'      => $request->action === 'abaikan' ? 'dismissed' : 'reviewed',
+            'admin_note'  => $request->admin_notes,
+            'reviewed_at' => now(),
+            'reviewed_by' => auth()->id(),
+        ]);
 
-       // Logika penanganan tindakan oleh admin
-       $report->update([
-           'status'      => $request->action === 'abaikan' ? 'rejected' : 'resolved',
-           'admin_notes' => $request->admin_notes,
-       ]);
-
-       return redirect()->back()->with('success', 'Tindakan laporan berhasil diproses.');
-   }
-
-
-
+        return redirect()->back()->with('success', 'Tindakan laporan pengguna berhasil diproses.');
+    }
 
     public function tindakProdukPelanggaran(Request $request, string|int $id)
     {
-    $request->validate([
-        'action'      => 'required|string|in:peringatan,suspend,abaikan',
-        'admin_notes' => 'required|string|max:500',
-    ]);
+        $request->validate([
+            'action'      => 'required|string|in:peringatan,suspend,abaikan',
+            'admin_notes' => 'required|string|max:500',
+        ]);
 
-    $report = Report::findOrFail($id);
+        $report = Report::findOrFail($id);
 
-    $report->update([
-        'status'      => $request->action === 'abaikan' ? 'dismissed' : 'reviewed',
-        'admin_note'  => $request->admin_notes,
-        'reviewed_by' => auth()->id(),
-        'reviewed_at' => now(),
-    ]);
+        $report->update([
+            'status'      => $request->action === 'abaikan' ? 'dismissed' : 'reviewed',
+            'admin_note'  => $request->admin_notes,
+            'reviewed_at' => now(),
+            'reviewed_by' => auth()->id(),
+        ]);
 
-    if ($request->action === 'suspend' && $report->product_id) {
-        Product::where('id_product', $report->product_id)->update(['status' => 'inactive']);
+        return redirect()->back()->with('success', 'Tindakan laporan produk berhasil diproses.');
     }
-
-    return redirect()->back()->with('success', 'Tindak lanjut pelanggaran produk berhasil disimpan.');
-    }
+    
 
     /*
     |--------------------------------------------------------------------------

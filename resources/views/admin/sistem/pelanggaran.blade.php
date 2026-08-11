@@ -178,17 +178,17 @@
                 <!-- TAB SWITCHER -->
                 <div class="flex items-center gap-2 bg-white border border-sky-200 rounded-2xl p-1.5 w-full sm:w-max shadow-sm">
                     <button type="button" onclick="switchTab('pengguna')" id="tabBtnPengguna" class="tab-btn active-tab px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer">
-                        <i class="fa-solid fa-user-xmark mr-1"></i> Pelanggaran Pengguna
+                        <i class="fa-solid fa-user-xmark mr-1"></i> Pelanggaran Pengguna / Umum
                     </button>
                     <button type="button" onclick="switchTab('penjual')" id="tabBtnPenjual" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-sky-600 transition-all border border-transparent cursor-pointer">
                         <i class="fa-solid fa-shop-slash mr-1"></i> Pelanggaran Produk / Penjual
                     </button>
                 </div>
 
-              <!-- TAB 1: LAPORAN PENGGUNA -->
+                <!-- TAB 1: LAPORAN PENGGUNA / UMUM -->
                 <div id="tabPengguna" class="bg-white border border-sky-200 rounded-2xl shadow-sm overflow-hidden block">
                     <div class="p-5 border-b border-sky-100 flex items-center justify-between">
-                        <h3 class="font-extrabold text-slate-900 text-lg font-display">Daftar Laporan Pengguna</h3>
+                        <h3 class="font-extrabold text-slate-900 text-lg font-display">Daftar Laporan Pengguna & Umum</h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
@@ -197,6 +197,7 @@
                                     <th class="py-4 px-6">Pelapor</th>
                                     <th class="py-4 px-6">Dilaporkan</th>
                                     <th class="py-4 px-6">Alasan</th>
+                                    <th class="py-4 px-6">Deskripsi</th>
                                     <th class="py-4 px-6">Status</th>
                                     <th class="py-4 px-6">Tanggal</th>
                                     <th class="py-4 px-6 text-center">Aksi</th>
@@ -212,9 +213,16 @@
                                     };
                                 @endphp
                                 <tr class="hover:bg-slate-50 transition-colors bg-white">
-                                    <td class="py-3 px-6 text-xs font-semibold text-slate-700">{{ $report->reporter->name ?? '-' }}</td>
-                                    <td class="py-3 px-6 text-xs font-semibold text-slate-700">{{ $report->reportedUser->name ?? '-' }}</td>
-                                    <td class="py-3 px-6"><p class="text-xs text-slate-600 w-56 truncate">{{ $report->reason }}</p></td>
+                                    <td class="py-3 px-6 text-xs font-semibold text-slate-700">{{ $report->reporter->name ?? 'User #'.$report->user_id }}</td>
+                                    <td class="py-3 px-6 text-xs font-semibold text-slate-700">
+                                        @if($report->reportedUser)
+                                            <span class="text-slate-800">{{ $report->reportedUser->name }}</span>
+                                        @else
+                                            <span class="text-slate-400 italic">Laporan Umum / Sistem</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-3 px-6"><p class="text-xs text-slate-700 font-medium">{{ $report->reason }}</p></td>
+                                    <td class="py-3 px-6"><p class="text-xs text-slate-600 w-48 truncate">{{ $report->description ?? '-' }}</p></td>
                                     <td class="py-3 px-6"><span class="text-[10px] font-bold px-2 py-1 rounded-md border {{ $statusColor }}">{{ ucfirst($report->status) }}</span></td>
                                     <td class="py-3 px-6 text-xs text-slate-600">{{ optional($report->created_at)->format('d M Y - H:i') }}</td>
                                     <td class="py-3 px-6">
@@ -231,14 +239,14 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-10 text-slate-400 text-xs font-semibold">Belum ada data laporan pengguna.</td>
+                                    <td colspan="7" class="text-center py-10 text-slate-400 text-xs font-semibold">Belum ada data laporan pengguna.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
                     @if($reportsUser->hasPages())
-                        <div class="p-4 border-t border-slate-100">{{ $reportsUser->links() }}</div>
+                        <div class="p-4 border-t border-slate-100">{{ $reportsUser->appends(request()->query())->links() }}</div>
                     @endif
                 </div>
 
@@ -269,7 +277,7 @@
                                     };
                                 @endphp
                                 <tr class="hover:bg-slate-50 transition-colors bg-white">
-                                    <td class="py-3 px-6 text-xs font-semibold text-slate-700">{{ $report->reporter->name ?? '-' }}</td>
+                                    <td class="py-3 px-6 text-xs font-semibold text-slate-700">{{ $report->reporter->name ?? 'User #'.$report->user_id }}</td>
                                     <td class="py-3 px-6">
                                         <p class="text-xs font-semibold text-slate-700">{{ $report->product->title ?? 'Produk dihapus' }}</p>
                                         <p class="text-[10px] text-slate-500">{{ $report->product->seller->name ?? '-' }}</p>
@@ -298,7 +306,7 @@
                         </table>
                     </div>
                     @if($reportsProduk->hasPages())
-                        <div class="p-4 border-t border-slate-100">{{ $reportsProduk->links() }}</div>
+                        <div class="p-4 border-t border-slate-100">{{ $reportsProduk->appends(request()->query())->links() }}</div>
                     @endif
                 </div>
 
@@ -316,7 +324,7 @@
                 </div>
                 <button type="button" onclick="closeTindakModal()" class="text-slate-400 hover:text-red-500 transition-colors w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form action="" method="POST" id="formTindak" class="p-6 space-y-4">
+            <form action="#" method="POST" id="formTindak" class="p-6 space-y-4">
                 @csrf
                 <div>
                     <label class="text-xs font-bold text-slate-700 uppercase tracking-wide">Pilih Aksi</label>
