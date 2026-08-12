@@ -416,44 +416,182 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Pengguna berhasil dihapus.');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | 4. AKUN VERIFIKATOR & ANTREAN VERIFIKASI IDENTITAS
-    |--------------------------------------------------------------------------
-    */
+   /*
+|--------------------------------------------------------------------------
+| 4. AKUN VERIFIKATOR & ANTREAN VERIFIKASI IDENTITAS
+|--------------------------------------------------------------------------
+*/
+
     public function verifikator()
     {
-        $verifikatorRole = Role::where('role_name', 'verifikator')->first();
+    /*
+    |--------------------------------------------------------------------------
+    | ROLE VERIFIKATOR
+    |--------------------------------------------------------------------------
+    */
 
-        $verifikators = User::where('id_role', $verifikatorRole->id_role ?? 0)
-            ->latest()
-            ->get()
-            ->map(function ($v) {
-                $v->total_checked = $v->identityVerificationsAsVerifier()
-                    ->whereIn('status', ['approved', 'rejected'])
-                    ->count();
-                return $v;
-            });
+    $verifikatorRole = Role::where(
+        'role_name',
+        'verifikator'
+    )->first();
 
-        /** @var \Illuminate\Pagination\LengthAwarePaginator $pendingQueue */
-        $pendingQueue = IdentityVerification::with('user')
-            ->where('status', 'pending')
-            ->latest()
-            ->paginate(10);
 
-        $pendingQueue->withQueryString();
+    /*
+    |--------------------------------------------------------------------------
+    | DATA VERIFIKATOR
+    |--------------------------------------------------------------------------
+    */
 
-        $totalVerifikator = $verifikators->count();
-        $antreanMasuk     = IdentityVerification::where('status', 'pending')->count();
-        $selesaiHariIni   = IdentityVerification::whereDate('verified_at', today())->count();
+    $verifikators = collect();
 
-        $totalDiperiksa = max(1, IdentityVerification::whereIn('status', ['approved', 'rejected'])->count());
-        $totalDisetujui = IdentityVerification::where('status', 'approved')->count();
-        $akurasiSistem  = round(($totalDisetujui / $totalDiperiksa) * 100, 1);
+    if ($verifikatorRole) {
 
-        return view('admin.manajemen.akun_verifikator', compact(
-            'verifikators', 'pendingQueue', 'totalVerifikator', 'antreanMasuk', 'selesaiHariIni', 'akurasiSistem'
-        ));
+        $verifikators = User::where(
+            'id_role',
+            $verifikatorRole->id_role
+        )
+        ->latest('id_user')
+        ->get()
+        ->map(function ($v) {
+
+            $v->total_checked = IdentityVerification::where(
+                'verifier_id',
+                $v->id_user
+            )
+            ->whereIn(
+                'status',
+                [
+                    'approved',
+                    'rejected'
+                ]
+            )
+            ->count();
+
+            return $v;
+        });
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ANTREAN VERIFIKASI
+    |--------------------------------------------------------------------------
+    |
+    | Hanya mengambil pengajuan yang masih pending.
+    |
+    */
+
+    $pendingQueue = IdentityVerification::with([
+        'user'
+    ])
+    ->where(
+        'status',
+        'pending'
+    )
+    ->latest('id_identity_verification')
+    ->paginate(10)
+    ->withQueryString();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TOTAL VERIFIKATOR
+    |--------------------------------------------------------------------------
+    */
+
+    $totalVerifikator = $verifikators->count();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TOTAL ANTREAN
+    |--------------------------------------------------------------------------
+    */
+
+    $antreanMasuk = IdentityVerification::where(
+        'status',
+        'pending'
+    )->count();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SELESAI HARI INI
+    |--------------------------------------------------------------------------
+    */
+
+    $selesaiHariIni = IdentityVerification::whereDate(
+        'verified_at',
+        today()
+    )
+    ->whereIn(
+        'status',
+        [
+            'approved',
+            'rejected'
+        ]
+    )
+    ->count();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TOTAL BERKAS YANG SUDAH DIPROSES
+    |--------------------------------------------------------------------------
+    */
+
+    $totalDiperiksa = IdentityVerification::whereIn(
+        'status',
+        [
+            'approved',
+            'rejected'
+        ]
+    )->count();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TOTAL BERKAS DISETUJUI
+    |--------------------------------------------------------------------------
+    */
+
+    $totalDisetujui = IdentityVerification::where(
+        'status',
+        'approved'
+    )->count();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | AKURASI SISTEM
+    |--------------------------------------------------------------------------
+    */
+
+    $akurasiSistem = $totalDiperiksa > 0
+        ? round(
+            ($totalDisetujui / $totalDiperiksa) * 100,
+            1
+        )
+        : 100;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | VIEW
+    |--------------------------------------------------------------------------
+    */
+
+    return view(
+        'admin.manajemen.akun_verifikator',
+        compact(
+            'verifikators',
+            'pendingQueue',
+            'totalVerifikator',
+            'antreanMasuk',
+            'selesaiHariIni',
+            'akurasiSistem'
+        )
+    );
     }
 
     public function addVerifier(Request $request)
@@ -503,33 +641,308 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Verifikator berhasil dihapus.');
     }
 
+   /*
+|--------------------------------------------------------------------------
+| SETUJUI PENDAFTARAN PENJUAL
+|--------------------------------------------------------------------------
+*/
+
+   /*
+    |--------------------------------------------------------------------------
+    | SETUJUI PENDAFTARAN PENJUAL
+    |--------------------------------------------------------------------------
+    */
+
     public function approveSeller(Request $request, string|int $id)
     {
-        $verification = IdentityVerification::findOrFail($id);
+    /*
+    |--------------------------------------------------------------------------
+    | PASTIKAN USER LOGIN
+    |--------------------------------------------------------------------------
+    */
+
+    if (!auth()->check()) {
+        return redirect()
+            ->route('auth.login')
+            ->with(
+                'error',
+                'Sesi login telah berakhir. Silakan login kembali.'
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | AMBIL DATA VERIFIKASI
+    |--------------------------------------------------------------------------
+    |
+    | Primary key:
+    | id_identity_verification
+    |
+    */
+
+    $verification = IdentityVerification::find($id);
+
+    if (!$verification) {
+        return redirect()
+            ->back()
+            ->with(
+                'error',
+                'Data pengajuan verifikasi tidak ditemukan.'
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CEGAH DATA YANG SUDAH DIPROSES
+    |--------------------------------------------------------------------------
+    */
+
+    if ($verification->status !== 'pending') {
+        return redirect()
+            ->back()
+            ->with(
+                'error',
+                'Pengajuan ini sudah diproses sebelumnya.'
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PASTIKAN USER PEMOHON ADA
+    |--------------------------------------------------------------------------
+    */
+
+    $user = User::where(
+        'id_user',
+        $verification->user_id
+    )->first();
+
+    if (!$user) {
+        return redirect()
+            ->back()
+            ->with(
+                'error',
+                'User pemohon tidak ditemukan.'
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CARI ROLE PENJUAL
+    |--------------------------------------------------------------------------
+    |
+    | Role penjual harus sudah tersedia di tabel roles.
+    |
+    */
+
+    $penjualRole = Role::where(
+        'role_name',
+        'penjual'
+    )->first();
+
+    if (!$penjualRole) {
+        return redirect()
+            ->back()
+            ->with(
+                'error',
+                'Role penjual tidak ditemukan di database.'
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PROSES APPROVAL DALAM TRANSAKSI
+    |--------------------------------------------------------------------------
+    */
+
+    DB::beginTransaction();
+
+    try {
+
+        /*
+        |--------------------------------------------------------------
+        | Update identity verification
+        |--------------------------------------------------------------
+        */
+
         $verification->update([
             'status'      => 'approved',
             'verifier_id' => auth()->id(),
             'verified_at' => now(),
         ]);
 
-        User::where('id_user', $verification->user_id)->update(['status' => 'active']);
 
-        return redirect()->back()->with('success', 'Pengajuan identitas disetujui.');
+        /*
+        |--------------------------------------------------------------
+        | UBAH ROLE USER
+        |--------------------------------------------------------------
+        |
+        | Sebelumnya:
+        | pembeli
+        |
+        | Sesudah approve:
+        | penjual
+        |
+        */
+
+        $user->update([
+            'id_role' => $penjualRole->id_role,
+            'status'  => 'active',
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------
+        | COMMIT TRANSAKSI
+        |--------------------------------------------------------------
+        */
+
+        DB::commit();
+
+
+        /*
+        |--------------------------------------------------------------
+        | BERHASIL
+        |--------------------------------------------------------------
+        */
+
+        return redirect()
+            ->back()
+            ->with(
+                'success',
+                'Pengajuan identitas berhasil disetujui. Akun user sekarang menjadi penjual.'
+            );
+
+
+    } catch (\Throwable $e) {
+
+        /*
+        |--------------------------------------------------------------
+        | ROLLBACK JIKA TERJADI ERROR
+        |--------------------------------------------------------------
+        */
+
+        DB::rollBack();
+
+        report($e);
+
+        return redirect()
+            ->back()
+            ->with(
+                'error',
+                'Pengajuan gagal disetujui. Silakan coba lagi.'
+            );
     }
+    }
+
+
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TOLAK PENDAFTARAN PENJUAL
+    |--------------------------------------------------------------------------
+    */
 
     public function rejectSeller(Request $request, string|int $id)
     {
-        $request->validate(['notes' => 'nullable|string|max:500']);
+    /*
+    |--------------------------------------------------------------------------
+    | PASTIKAN USER LOGIN
+    |--------------------------------------------------------------------------
+    */
 
-        $verification = IdentityVerification::findOrFail($id);
+    if (!auth()->check()) {
+        return redirect()
+            ->route('auth.login')
+            ->with(
+                'error',
+                'Sesi login telah berakhir. Silakan login kembali.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDASI CATATAN
+    |--------------------------------------------------------------------------
+    */
+
+    $validated = $request->validate([
+        'notes' => 'nullable|string|max:500',
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | AMBIL DATA VERIFIKASI
+    |--------------------------------------------------------------------------
+    */
+
+    $verification = IdentityVerification::find($id);
+
+    if (!$verification) {
+        return redirect()
+            ->back()
+            ->with(
+                'error',
+                'Data pengajuan verifikasi tidak ditemukan.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CEGAH DATA YANG SUDAH DIPROSES
+    |--------------------------------------------------------------------------
+    */
+
+    if ($verification->status !== 'pending') {
+        return redirect()
+            ->back()
+            ->with(
+                'error',
+                'Pengajuan ini sudah diproses sebelumnya.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PROSES PENOLAKAN
+    |--------------------------------------------------------------------------
+    */
+
+    try {
+
         $verification->update([
             'status'      => 'rejected',
             'verifier_id' => auth()->id(),
-            'notes'       => $request->notes,
+            'notes'       => $validated['notes'] ?? null,
             'verified_at' => now(),
         ]);
 
-        return redirect()->back()->with('success', 'Pengajuan identitas ditolak.');
+        return redirect()
+            ->back()
+            ->with(
+                'success',
+                'Pengajuan identitas berhasil ditolak.'
+            );
+
+    } catch (\Throwable $e) {
+
+        report($e);
+
+        return redirect()
+            ->back()
+            ->with(
+                'error',
+                'Pengajuan gagal ditolak. Silakan coba lagi.'
+            );
+    }
     }
 
     /*

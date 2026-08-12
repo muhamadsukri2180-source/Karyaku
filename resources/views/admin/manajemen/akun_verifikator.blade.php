@@ -315,73 +315,279 @@
                 </div>
 
                 <!-- TAB 2: ANTREAN VERIFIKASI -->
-                <div id="tabAntrean" class="hidden bg-gradient-to-b from-white to-amber-50/30 border border-amber-200 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="p-5 border-b border-amber-100 bg-white/50 backdrop-blur-sm">
-                        <h3 class="font-extrabold text-slate-900 text-sm font-display">Antrean Verifikasi Identitas Kreator</h3>
-                        <p class="text-[11px] text-slate-600 mt-0.5">Tinjau dan putuskan status pengajuan identitas kreator baru.</p>
-                    </div>
+<div id="tabAntrean"
+     class="hidden bg-gradient-to-b from-white to-amber-50/30 border border-amber-200 rounded-2xl shadow-sm overflow-hidden">
 
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-amber-50/80 border-b border-amber-100 text-amber-900 text-[11px] uppercase tracking-wider font-bold">
-                                    <th class="py-4 px-6">Pemohon</th>
-                                    <th class="py-4 px-6">Tgl Pengajuan</th>
-                                    <th class="py-4 px-6">Status</th>
-                                    <th class="py-4 px-6 text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-sm divide-y divide-amber-100/70">
-                                @forelse($pendingQueue as $item)
-                                    @php
-                                        $iInitials = collect(explode(' ', trim($item->user->name ?? '-')))->map(fn($w)=>mb_strtoupper(mb_substr($w,0,1)))->take(2)->implode('');
-                                    @endphp
-                                    <tr class="hover:bg-amber-50/40 transition-colors bg-white">
-                                        <td class="py-3 px-6">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">{{ $iInitials ?: '??' }}</div>
-                                                <div>
-                                                    <p class="font-bold text-slate-800 text-xs">{{ $item->user->name ?? '-' }}</p>
-                                                    <p class="text-[10px] text-slate-500 font-medium">{{ $item->user->email ?? '-' }}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="py-3 px-6"><p class="text-xs font-semibold text-slate-700">{{ $item->created_at->translatedFormat('d M Y, H:i') }}</p></td>
-                                        <td class="py-3 px-6">
-                                            <span class="text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-md flex items-center w-max gap-1.5">
-                                                <i class="fa-regular fa-clock"></i> Menunggu
-                                            </span>
-                                        </td>
-                                        <td class="py-3 px-6">
-                                            <div class="flex items-center justify-center gap-2">
-                                                <button type="button" onclick="confirmApprove('{{ route('admin.users.approveSeller', $item->id) }}', '{{ addslashes($item->user->name ?? '-') }}')" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold shadow-sm flex items-center gap-1.5">
-                                                    <i class="fa-solid fa-check"></i> Setujui
-                                                </button>
-                                                <button type="button" onclick="openRejectModal('{{ $item->id }}', '{{ addslashes($item->user->name ?? '-') }}')" class="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all text-xs font-bold shadow-sm flex items-center gap-1.5">
-                                                    <i class="fa-solid fa-xmark"></i> Tolak
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="py-10 text-center text-sm text-slate-500">Tidak ada antrean verifikasi saat ini. 🎉</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+    <div class="p-5 border-b border-amber-100 bg-white/50 backdrop-blur-sm">
+        <h3 class="font-extrabold text-slate-900 text-sm font-display">
+            Antrean Verifikasi Identitas Kreator
+        </h3>
 
-                    @if($pendingQueue->hasPages())
-                        <div class="p-5 border-t border-amber-100 bg-white/50">
-                            {{ $pendingQueue->links() }}
-                        </div>
-                    @endif
+        <p class="text-[11px] text-slate-600 mt-0.5">
+            Tinjau dan putuskan status pengajuan identitas kreator baru.
+        </p>
+    </div>
+
+    <div class="overflow-x-auto">
+
+        <table class="w-full text-left border-collapse">
+
+            <thead>
+
+                <tr class="bg-amber-50/80 border-b border-amber-100 text-amber-900 text-[11px] uppercase tracking-wider font-bold">
+
+                    <th class="py-4 px-6">
+                        Pemohon
+                    </th>
+
+                    <th class="py-4 px-6">
+                        Tgl Pengajuan
+                    </th>
+
+                    <th class="py-4 px-6">
+                        Status
+                    </th>
+
+                    <th class="py-4 px-6 text-center">
+                        Aksi
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody class="text-sm divide-y divide-amber-100/70">
+
+             @forelse($pendingQueue as $item)
+
+    @php
+        $userName = $item->user->name ?? '-';
+        $userEmail = $item->user->email ?? '-';
+
+        $iInitials = collect(
+            explode(' ', trim($userName))
+        )
+        ->filter()
+        ->map(
+            fn($w) => mb_strtoupper(
+                mb_substr($w, 0, 1)
+            )
+        )
+        ->take(2)
+        ->implode('');
+
+        /*
+        |--------------------------------------------------------------------------
+        | ID VERIFIKASI
+        |--------------------------------------------------------------------------
+        |
+        | Primary key tabel identity_verifications:
+        | id_identity_verification
+        |
+        */
+        $verificationId = $item->id_identity_verification;
+    @endphp
+
+    <tr class="hover:bg-amber-50/40 transition-colors bg-white">
+
+        <!-- PEMOHON -->
+        <td class="py-3 px-6">
+
+            <div class="flex items-center gap-3">
+
+                <div class="w-9 h-9 rounded-full
+                            bg-gradient-to-tr
+                            from-amber-500
+                            to-orange-600
+                            text-white
+                            flex
+                            items-center
+                            justify-center
+                            font-bold
+                            text-xs
+                            shadow-sm">
+
+                    {{ $iInitials ?: '??' }}
+
+                </div>
+
+                <div>
+
+                    <p class="font-bold text-slate-800 text-xs">
+                        {{ $userName }}
+                    </p>
+
+                    <p class="text-[10px] text-slate-500 font-medium">
+                        {{ $userEmail }}
+                    </p>
+
                 </div>
 
             </div>
-        </main>
+
+        </td>
+
+
+        <!-- TANGGAL -->
+        <td class="py-3 px-6">
+
+            <p class="text-xs font-semibold text-slate-700">
+
+                {{ optional($item->created_at)->translatedFormat('d M Y, H:i') ?? '-' }}
+
+            </p>
+
+        </td>
+
+
+        <!-- STATUS -->
+        <td class="py-3 px-6">
+
+            <span class="text-[10px]
+                         font-bold
+                         text-amber-700
+                         bg-amber-100
+                         border
+                         border-amber-200
+                         px-2.5
+                         py-1
+                         rounded-md
+                         flex
+                         items-center
+                         w-max
+                         gap-1.5">
+
+                <i class="fa-regular fa-clock"></i>
+
+                Menunggu
+
+            </span>
+
+        </td>
+
+
+        <!-- AKSI -->
+        <td class="py-3 px-6">
+
+            <div class="flex items-center justify-center gap-2">
+
+                <!-- SETUJUI -->
+                <form
+                    method="POST"
+                    action="{{ route(
+                        'admin.users.approveSeller',
+                        ['id' => $verificationId]
+                    ) }}"
+                    onsubmit="return confirm('Apakah kamu yakin ingin menyetujui pengajuan ini?')"
+                >
+
+                    @csrf
+
+                    <button
+                        type="submit"
+                        class="px-3
+                               py-1.5
+                               rounded-lg
+                               bg-emerald-50
+                               text-emerald-700
+                               border
+                               border-emerald-200
+                               hover:bg-emerald-600
+                               hover:text-white
+                               transition-all
+                               text-xs
+                               font-bold
+                               shadow-sm
+                               flex
+                               items-center
+                               gap-1.5"
+                    >
+
+                        <i class="fa-solid fa-check"></i>
+
+                        Setujui
+
+                    </button>
+
+                </form>
+
+
+                <!-- TOLAK -->
+                <button
+                    type="button"
+                    onclick="openRejectModal(
+                        '{{ $verificationId }}',
+                        '{{ addslashes($userName) }}'
+                    )"
+                    class="px-3
+                           py-1.5
+                           rounded-lg
+                           bg-red-50
+                           text-red-600
+                           border
+                           border-red-200
+                           hover:bg-red-600
+                           hover:text-white
+                           transition-all
+                           text-xs
+                           font-bold
+                           shadow-sm
+                           flex
+                           items-center
+                           gap-1.5"
+                >
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                    Tolak
+
+                </button>
+
+            </div>
+
+        </td>
+
+    </tr>
+
+@empty
+
+    <tr>
+
+        <td
+            colspan="4"
+            class="py-10
+                   text-center
+                   text-sm
+                   text-slate-500">
+
+            Tidak ada antrean verifikasi saat ini. 🎉
+
+        </td>
+
+    </tr>
+
+@endforelse
+
+
+            </tbody>
+
+        </table>
+
     </div>
+
+
+    @if($pendingQueue->hasPages())
+
+        <div class="p-5 border-t border-amber-100 bg-white/50">
+
+            {{ $pendingQueue->links() }}
+
+        </div>
+
+    @endif
+
+</div>
+
 
     <!-- MODAL: TAMBAH VERIFIKATOR -->
     <div id="addVerifierModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
@@ -605,47 +811,56 @@
             });
         }
 
-        function confirmApprove(actionUrl, name) {
-            Swal.fire({
-                title: 'Setujui Pengajuan?',
-                text: `Setujui pengajuan identitas dari ${name}?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#94a3b8',
-                confirmButtonText: 'Ya, Setujui!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = actionUrl;
-                    
-                    const csrfInput = document.createElement('input');
-                    csrfInput.type = 'hidden';
-                    csrfInput.name = '_token';
-                    csrfInput.value = '{{ csrf_token() }}';
-                    form.appendChild(csrfInput);
+     function confirmApprove(actionUrl, name) {
+    Swal.fire({
+        title: 'Setujui Pengajuan?',
+        text: `Setujui pengajuan identitas dari ${name}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: 'Ya, Setujui!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
 
-                    document.body.appendChild(form);
-                    form.submit();
-                }
-            });
+        if (result.isConfirmed) {
+
+            const form = document.createElement('form');
+
+            form.method = 'POST';
+
+            form.action = actionUrl;
+
+            const csrfInput = document.createElement('input');
+
+            csrfInput.type = 'hidden';
+
+            csrfInput.name = '_token';
+
+            csrfInput.value = '{{ csrf_token() }}';
+
+            form.appendChild(csrfInput);
+
+            document.body.appendChild(form);
+
+            form.submit();
         }
 
-        function openRejectModal(id, name) {
-            const form = document.getElementById('rejectForm');
-            form.action = `{{ url('admin/users/reject-seller') }}/${id}`;
-            document.getElementById('rejectUserName').textContent = name;
-            openModal('rejectModal');
-        }
+    });
+    }
 
-        @if (session('success'))
-            Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", timer: 3000, showConfirmButton: false });
-        @endif
-        @if (session('error'))
-            Swal.fire({ icon: 'error', title: 'Gagal!', text: "{{ session('error') }}", confirmButtonColor: '#ef4444' });
-        @endif
+
+       function openRejectModal(id, name) {
+
+    const form = document.getElementById('rejectForm');
+
+    form.action = `{{ url('admin/users/reject-seller') }}/${id}`;
+
+    document.getElementById('rejectUserName').textContent = name;
+
+    openModal('rejectModal');
+    }
+
     </script>
 </body>
 </html>

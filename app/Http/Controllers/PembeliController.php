@@ -303,30 +303,24 @@ class PembeliController extends Controller
         return view('pembeli.membership', compact('memberships', 'user', 'isPenjual'));
     }
 
+
+
+
+
     public function membershipPurchase(Request $request, $id)
-{
+    {
     $membership = Membership::findOrFail($id);
-    $user       = Auth::user();
 
-    $penjualRole = Role::where('role_name', 'penjual')->first();
-
-    if (! $penjualRole) {
-        return back()->with('error', 'Role penjual belum tersedia di database.');
+    return redirect()->route(
+        'pembeli.seller.registration.create',
+        [
+            'membership' => $membership->id_membership,
+        ]
+    );
     }
 
-    // Update role dan membership di DB
-    $user->update([
-        'id_membership' => $membership->id_membership,
-        'id_role'       => $penjualRole->id_role,
-    ]);
 
-    // PENTING: Refresh instance user di Auth session agar tidak kena error 403
-    Auth::setUser($user->fresh(['role', 'membership']));
 
-    return redirect()->route('penjual.dashboard')
-        ->with('success', 'Selamat! Akun kamu berhasil menjadi Penjual dengan paket ' . $membership->name . '.');
-    }
-    
 
     // ================= NOTIFIKASI (dari Admin) =================
     public function notificationsIndex()
@@ -336,4 +330,5 @@ class PembeliController extends Controller
         return view('pembeli.notifications', compact('notifications'));
     }
 }
+
 

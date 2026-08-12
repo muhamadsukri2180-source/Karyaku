@@ -8,6 +8,9 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\CustomerServiceController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PenjualController;
+use App\Http\Controllers\SellerRegistrationController;
+use App\Http\Controllers\VerifikatorController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -128,14 +131,44 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 });
 
 
-// ==========================================
-// 4. VERIFIKATOR ROUTES
-// ==========================================
-Route::middleware(['auth', 'role:verifikator'])->prefix('verifikator')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('verifikator.dashboard');
-    })->name('verifikator.dashboard');
-});
+// // ==========================================
+// // 4. VERIFIKATOR ROUTES
+// // ==========================================
+// Route::middleware(['auth', 'role:verifikator'])->prefix('verifikator')->group(function () {
+//     Route::get('/dashboard', function () {
+//         return view('verifikator.dashboard');
+//     })->name('verifikator.dashboard');
+// });
+
+
+
+Route::middleware(['auth', 'role:verifikator'])
+    ->prefix('verifikator')
+    ->name('verifikator.')
+    ->group(function () {
+
+        Route::get(
+            '/dashboard',
+            [VerifikatorController::class, 'dashboard']
+        )->name('dashboard');
+
+        Route::get(
+            '/pendaftaran/{id}',
+            [VerifikatorController::class, 'show']
+        )->name('pendaftaran.show');
+
+        Route::post(
+            '/pendaftaran/{id}/approve',
+            [VerifikatorController::class, 'approve']
+        )->name('pendaftaran.approve');
+
+        Route::post(
+            '/pendaftaran/{id}/reject',
+            [VerifikatorController::class, 'reject']
+        )->name('pendaftaran.reject');
+    });
+
+
 
 
 // ==========================================
@@ -183,13 +216,42 @@ Route::middleware(['auth', 'role:pembeli'])->prefix('pembeli')->name('pembeli.')
     //routes untuk fitur pelanggaran, notifications, dan laporan
     // Membership -> Upgrade jadi Penjual
     Route::get('/membership', [PembeliController::class, 'membershipIndex'])->name('membership');
-    Route::post('/membership/{id}/beli', [PembeliController::class, 'membershipPurchase'])->name('membership.purchase');
+    // Route::post('/membership/{id}/beli', [PembeliController::class, 'membershipPurchase'])->name('membership.purchase');
+
+    Route::post('/membership/{id}/purchase', [PembeliController::class, 'membershipPurchase'])->name('membership.purchase');
+
 
     // Notifikasi dari Admin
     Route::get('/notifikasi', [PembeliController::class, 'notificationsIndex'])->name('notifications');
 
 
-});
+
+    // ==========================================
+    // PENDAFTARAN MENJADI PENJUAL
+    // ==========================================
+
+    Route::get(
+    '/daftar-penjual',
+    [SellerRegistrationController::class, 'create']
+    )->name('seller.registration.create');
+
+    Route::post(
+    '/daftar-penjual',
+    [SellerRegistrationController::class, 'store']
+    )->name('seller.registration.store');
+
+    Route::get(
+    '/daftar-penjual/status',
+    [SellerRegistrationController::class, 'status']
+    )->name('seller.registration.status');
+
+    Route::delete(
+    '/daftar-penjual/cancel',
+    [SellerRegistrationController::class, 'cancel']
+    )->name('seller.registration.cancel');
+
+
+    });
 
 
 // ==========================================
