@@ -224,6 +224,7 @@
                     <a href="{{ route('pembeli.download') }}"><i class="bi bi-cloud-arrow-down-fill"></i> Download Saya</a>
                     <a href="{{ route('reports.create') }}"><i class="bi bi-flag-fill"></i> Laporkan Pelanggaran</a>
                     <a href="{{ route('reports.index') }}"><i class="bi bi-clock-history"></i> Riwayat Laporan Saya</a>
+                    <a href="{{ route('pembeli.peringatan') }}"><i class="bi bi-exclamation-triangle-fill"></i> Peringatan Saya</a>
                     <a href="{{ route('pembeli.seller.registration.status') }}">
                     <i class="bi bi-person-check-fill"></i>
                     Status Pendaftaran Penjual

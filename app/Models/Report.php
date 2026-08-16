@@ -26,6 +26,17 @@ class Report extends Model
         'reviewed_at',
     ];
 
+
+
+    /**
+     * Cast atribut ke tipe data spesifik (Supaya reviewed_at otomatis jadi objek Carbon/Datetime)
+     */
+    protected $casts = [
+        'reviewed_at' => 'datetime',
+    ];
+
+
+
     /**
      * Relasi ke pelapor (User yang membuat laporan)
      */

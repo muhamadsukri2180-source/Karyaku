@@ -329,6 +329,22 @@ class PembeliController extends Controller
 
         return view('pembeli.notifications', compact('notifications'));
     }
+
+
+    // ================= PERINGATAN DITERIMA (dari Admin/CS) =================
+    public function peringatanIndex()
+    {
+        $peringatan = \App\Models\Report::where('reported_user_id', Auth::id())
+            ->whereIn('status', ['reviewed', 'escalated'])
+            ->whereNotNull('admin_note')
+            ->latest('reviewed_at')
+            ->paginate(10);
+
+        return view('pembeli.peringatan', compact('peringatan'));
+    }
+
+
+
 }
 
 

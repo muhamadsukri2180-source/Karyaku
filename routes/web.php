@@ -10,6 +10,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PenjualController;
 use App\Http\Controllers\SellerRegistrationController;
 use App\Http\Controllers\VerifikatorController;
+use App\Http\Controllers\CsController;
 
 
 /*
@@ -251,6 +252,9 @@ Route::middleware(['auth', 'role:pembeli'])->prefix('pembeli')->name('pembeli.')
     )->name('seller.registration.cancel');
 
 
+    Route::get('/peringatan', [PembeliController::class, 'peringatanIndex'])->name('peringatan');
+
+
     });
 
 
@@ -263,9 +267,34 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/laporan/riwayat', [ReportController::class, 'index'])->name('reports.index');
 });
 
+
+
+
 // ==========================================
 // 5. PENJUAL ROUTES
 // ==========================================
-Route::middleware(['auth'])->prefix('penjual')->name('penjual.')->group(function () {
+Route::middleware(['auth', 'role:penjual'])->prefix('penjual')->name('penjual.')->group(function () {
     Route::get('/dashboard', [PenjualController::class, 'dashboard'])->name('dashboard');
 });
+
+
+
+
+
+// ==========================================
+// 8. CUSTOMER SERVICE ROUTES (AUTH + ROLE: CUSTOMER_SERVICE)
+// ==========================================
+Route::middleware(['auth', 'role:customer_service'])->prefix('cs')->name('cs.')->group(function () {
+    Route::get('/dashboard', [CsController::class, 'dashboard'])->name('dashboard');
+
+    Route::get('/laporan', [CsController::class, 'laporan'])->name('laporan');
+    Route::post('/laporan/{id}/tindak', [CsController::class, 'tindakLaporan'])->name('laporan.tindak');
+
+
+    Route::get('/transaksi', [CsController::class, 'transaksi'])->name('transaksi');
+    Route::get('/transaksi/{id}', [CsController::class, 'transaksiDetail'])->name('transaksi.detail');
+
+    Route::get('/notifikasi', [CsController::class, 'notifikasi'])->name('notifikasi');
+});
+
+

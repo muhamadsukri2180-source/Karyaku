@@ -206,11 +206,12 @@
                             <tbody class="text-sm divide-y divide-slate-100">
                                 @forelse($reportsUser as $report)
                                 @php
-                                    $statusColor = match($report->status) {
-                                        'reviewed' => 'bg-blue-50 text-blue-700 border-blue-200',
-                                        'dismissed' => 'bg-slate-100 text-slate-600 border-slate-200',
-                                        default => 'bg-amber-50 text-amber-700 border-amber-200',
-                                    };
+                                $statusColor = match($report->status) {
+                                'reviewed' => 'bg-blue-50 text-blue-700 border-blue-200',
+                                'dismissed' => 'bg-slate-100 text-slate-600 border-slate-200',
+                                'escalated' => 'bg-red-50 text-red-700 border-red-200',
+                                default => 'bg-amber-50 text-amber-700 border-amber-200',
+                                };
                                 @endphp
                                 <tr class="hover:bg-slate-50 transition-colors bg-white">
                                     <td class="py-3 px-6 text-xs font-semibold text-slate-700">{{ $report->reporter->name ?? 'User #'.$report->user_id }}</td>
@@ -227,7 +228,7 @@
                                     <td class="py-3 px-6 text-xs text-slate-600">{{ optional($report->created_at)->format('d M Y - H:i') }}</td>
                                     <td class="py-3 px-6">
                                         <div class="flex justify-center">
-                                            @if($report->status === 'pending')
+                                            @if(in_array($report->status, ['pending', 'escalated']))
                                             <button type="button" onclick="openTindakModal('user', '{{ $report->id_report }}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer">
                                                 <i class="fa-solid fa-gavel"></i> Tindak Lanjut
                                             </button>
