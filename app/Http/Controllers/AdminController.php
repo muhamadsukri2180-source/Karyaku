@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use ZipArchive;
 
 class AdminController extends Controller
 {
@@ -179,13 +180,32 @@ class AdminController extends Controller
             ->filter(fn ($f) => str_ends_with($f, '.sql') || str_ends_with($f, '.zip'))
             ->map(fn ($file) => [
                 'name'       => basename($file),
-                'size'       => round(Storage::disk('local')->size($file) / 1048576, 2) . ' MB',
+                'size'       => $this->formatBytes(Storage::disk('local')->size($file)),
                 'created_at' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file)),
             ])
             ->sortByDesc('created_at')
             ->values();
 
         return view('admin.sistem.maintenance', compact('isMaintenance', 'currentMode', 'currentEndAt', 'backups'));
+    }
+
+    /**
+     * Format ukuran file (byte) menjadi string yang mudah dibaca (B/KB/MB/GB).
+     * Menghindari file kecil (misal beberapa KB) tampil sebagai "0 MB".
+     */
+    private function formatBytes(int $bytes, int $decimals = 2): string
+    {
+        if ($bytes <= 0) {
+            return '0 B';
+        }
+
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $power = (int) floor(log($bytes, 1024));
+        $power = max(0, min($power, count($units) - 1));
+
+        $value = $bytes / (1024 ** $power);
+
+        return round($value, $decimals) . ' ' . $units[$power];
     }
 
     public function toggleMaintenance(Request $request)
@@ -226,12 +246,25 @@ class AdminController extends Controller
     }
 
     /**
-     * DATABASE BACKUP & AUTO UPLOAD TO GOOGLE DRIVE
+     * DATABASE BACKUP (ZIP) & AUTO UPLOAD TO GOOGLE DRIVE
+     *
+     * Alur:
+     * 1. Generate dump SQL manual (tanpa bergantung ke binary mysqldump,
+     *    supaya tidak kena masalah PATH di Windows/Laragon).
+     * 2. Simpan sementara sebagai .sql lokal.
+     * 3. Kompres .sql tersebut jadi .zip pakai ZipArchive bawaan PHP.
+     * 4. Hapus file .sql mentah, sisakan .zip saja di storage lokal.
+     * 5. Upload .zip ke Google Drive.
      */
     public function createBackup()
     {
-        $filename = 'backup-' . now()->format('Y-m-d_His') . '.sql';
-        $localBackupPath = storage_path('app/backups/' . $filename);
+        $timestamp    = now()->format('Y-m-d_His');
+        $sqlFilename  = 'backup-' . $timestamp . '.sql';
+        $zipFilename  = 'backup-' . $timestamp . '.zip';
+
+        $backupDir     = storage_path('app/backups');
+        $localSqlPath  = $backupDir . DIRECTORY_SEPARATOR . $sqlFilename;
+        $localZipPath  = $backupDir . DIRECTORY_SEPARATOR . $zipFilename;
 
         Storage::disk('local')->makeDirectory('backups');
 
@@ -239,8 +272,8 @@ class AdminController extends Controller
             set_time_limit(300);
             ini_set('memory_limit', '512M');
 
-            $dbName = config('database.connections.mysql.database');
-            $tables = DB::select('SHOW TABLES');
+            $dbName   = config('database.connections.mysql.database');
+            $tables   = DB::select('SHOW TABLES');
             $tableKey = 'Tables_in_' . $dbName;
 
             $sqlDump  = "-- Backup Database Karyaku\n";
@@ -248,7 +281,7 @@ class AdminController extends Controller
             $sqlDump .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
 
             foreach ($tables as $tableObj) {
-                $table = $tableObj->$tableKey ?? current((array)$tableObj);
+                $table = $tableObj->$tableKey ?? current((array) $tableObj);
 
                 $createTableResult = DB::select("SHOW CREATE TABLE `{$table}`");
                 $createSql = $createTableResult[0]->{'Create Table'} ?? null;
@@ -260,7 +293,7 @@ class AdminController extends Controller
                     $rows = DB::table($table)->get();
                     if ($rows->count() > 0) {
                         foreach ($rows as $row) {
-                            $rowArray = (array)$row;
+                            $rowArray = (array) $row;
                             $values = array_map(function ($val) {
                                 if (is_null($val)) return 'NULL';
                                 return DB::getPdo()->quote($val);
@@ -275,16 +308,38 @@ class AdminController extends Controller
 
             $sqlDump .= "SET FOREIGN_KEY_CHECKS=1;\n";
 
-            // 1. Simpan file backup ke lokal
-            file_put_contents($localBackupPath, $sqlDump);
+            // 1. Simpan dulu file SQL mentah ke lokal
+            file_put_contents($localSqlPath, $sqlDump);
 
-            // 2. Unggah ke Google Drive (dengan try-catch terpisah agar file lokal TETAP TERSIMPAN)
-            $driveUploaded = false;
+            // 2. Kompres file SQL menjadi ZIP
+            $zip = new ZipArchive();
+            if ($zip->open($localZipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+                throw new \Exception('Gagal membuat file ZIP backup di server.');
+            }
+            $zip->addFile($localSqlPath, $sqlFilename);
+            $zip->close();
+
+            // 3. Hapus file .sql mentah, sisakan .zip saja
+            if (file_exists($localSqlPath)) {
+                @unlink($localSqlPath);
+            }
+
+            if (!file_exists($localZipPath)) {
+                throw new \Exception('File ZIP backup tidak ditemukan setelah proses kompresi.');
+            }
+
+            if (filesize($localZipPath) === 0) {
+                @unlink($localZipPath);
+                throw new \Exception('Proses kompresi ZIP menghasilkan file kosong (0 byte). Backup dibatalkan.');
+            }
+
+            // 4. Unggah ZIP ke Google Drive (try-catch terpisah agar file lokal TETAP TERSIMPAN)
+            $driveUploaded     = false;
             $driveErrorMessage = null;
 
             try {
-                $stream = fopen($localBackupPath, 'r');
-                $driveUploaded = Storage::disk('google')->put($filename, $stream);
+                $stream = fopen($localZipPath, 'r');
+                $driveUploaded = Storage::disk('google')->put($zipFilename, $stream);
                 if (is_resource($stream)) {
                     fclose($stream);
                 }
@@ -293,11 +348,11 @@ class AdminController extends Controller
             }
 
             if ($driveUploaded) {
-                return redirect()->back()->with('success', 'Backup database BERHASIL dibuat di lokal & dikirim ke Google Drive!');
+                return redirect()->back()->with('success', 'Backup database (ZIP) BERHASIL dibuat di lokal & dikirim ke Google Drive!');
             }
 
-            // Jika Drive menolak/gagal, file lokal TETAP ADA di tabel & disk lokal
-            $msg = 'Backup database BERHASIL dibuat di lokal, namun GAGAL terkirim ke Google Drive.';
+            // Jika Drive menolak/gagal, file lokal (.zip) TETAP ADA
+            $msg = 'Backup database (ZIP) BERHASIL dibuat di lokal, namun GAGAL terkirim ke Google Drive.';
             if ($driveErrorMessage) {
                 $msg .= ' Detail: ' . $driveErrorMessage;
             }

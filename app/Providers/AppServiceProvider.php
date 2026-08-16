@@ -16,13 +16,13 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Storage::extend('google', function($app, $config) {
+        Storage::extend('google', function ($app, $config) {
             $client = new \Google\Client();
-            if (!empty($config['serviceAccountJson'])) {
-                $client->setAuthConfig($config['serviceAccountJson']);
-            }
+            $client->setClientId($config['clientId']);
+            $client->setClientSecret($config['clientSecret']);
+            $client->refreshToken($config['refreshToken']);
             $client->addScope(\Google\Service\Drive::DRIVE);
-            
+
             $service = new \Google\Service\Drive($client);
             $adapter = new GoogleDriveAdapter($service, $config['folder'] ?? '/', [
                 'useDisplayPaths' => true,

@@ -279,7 +279,9 @@
                                 <tr class="hover:bg-slate-50 transition-colors bg-white">
                                     <td class="py-3 px-6">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center border border-sky-200"><i class="fa-solid fa-file-code"></i></div>
+                                            <div class="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center border border-sky-200">
+                                                <i class="fa-solid {{ str_ends_with($backup['name'], '.zip') ? 'fa-file-zipper' : 'fa-file-code' }}"></i>
+                                            </div>
                                             <p class="font-bold text-slate-800 text-xs">{{ $backup['name'] }}</p>
                                         </div>
                                     </td>
@@ -322,8 +324,8 @@
                 @csrf
                 <div>
                     <label class="text-xs font-bold text-slate-700 uppercase tracking-wide">Nama File Backup</label>
-                    <input type="text" value="backup-{{ date('Y-m-d_His') }}.sql" class="mt-2 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 focus:outline-none transition-all cursor-not-allowed" readonly>
-                    <p class="text-[10px] text-slate-500 mt-1.5"><i class="fa-solid fa-circle-info mr-1"></i> Nama di-generate secara otomatis oleh sistem.</p>
+                    <input type="text" value="backup-{{ date('Y-m-d_His') }}.zip" class="mt-2 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 focus:outline-none transition-all cursor-not-allowed" readonly>
+                    <p class="text-[10px] text-slate-500 mt-1.5"><i class="fa-solid fa-circle-info mr-1"></i> Nama di-generate secara otomatis oleh sistem. File akan dikompres ke format ZIP sebelum dikirim ke Google Drive.</p>
                 </div>
                 <div class="pt-2">
                     <button type="button" onclick="executeBackup()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all flex justify-center items-center gap-2 cursor-pointer">

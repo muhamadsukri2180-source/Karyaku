@@ -1,4 +1,4 @@
-@extends('layouts.pembeli')
+<!-- @extends('layouts.pembeli')
 @section('title', $product->title)
 
 @section('content')
@@ -72,4 +72,4 @@
 </div>
 @endif
 
-@endsection
+@endsection -->
