@@ -12,7 +12,6 @@ use App\Http\Controllers\SellerRegistrationController;
 use App\Http\Controllers\VerifikatorController;
 use App\Http\Controllers\CsController;
 
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -129,20 +128,21 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/notifications/{id}', [NotificationController::class, 'update'])->name('notifications.update');
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
+    // 12. Keamanan System & Monitoring IP
+    Route::get('/security/verify', [AdminController::class, 'securityVerifyPage'])->name('security.verify');
+    Route::post('/security/verify', [AdminController::class, 'securityProcessVerify'])->name('security.process_verify');
+
+    Route::get('/security/ip-monitor', [AdminController::class, 'securityIndex'])->name('security.index');
+    Route::post('/security/allowed-ip', [AdminController::class, 'securityStoreAllowedIp'])->name('security.allowed_ip.store');
+    Route::delete('/security/allowed-ip/{id}', [AdminController::class, 'securityDestroyAllowedIp'])->name('security.allowed_ip.destroy');
+    Route::post('/security/toggle/{id}', [AdminController::class, 'securityToggleStatus'])->name('security.toggle');
+    Route::delete('/security/log/{id}', [AdminController::class, 'securityDestroyLog'])->name('security.log.destroy');
 });
 
 
-// // ==========================================
-// // 4. VERIFIKATOR ROUTES
-// // ==========================================
-// Route::middleware(['auth', 'role:verifikator'])->prefix('verifikator')->group(function () {
-//     Route::get('/dashboard', function () {
-//         return view('verifikator.dashboard');
-//     })->name('verifikator.dashboard');
-// });
-
-
-
+// ==========================================
+// 4. VERIFIKATOR ROUTES
+// ==========================================
 Route::middleware(['auth', 'role:verifikator'])
     ->prefix('verifikator')
     ->name('verifikator.')
@@ -170,16 +170,12 @@ Route::middleware(['auth', 'role:verifikator'])
     });
 
 
-
-
 // ==========================================
 // 5. PENJUAL ROUTES
 // ==========================================
-// Route::middleware(['auth', 'role:penjual'])->prefix('penjual')->group(function () {
-//     Route::get('/dashboard', function () {
-//         return view('penjual.dashboard');
-//     })->name('penjual.dashboard');
-// });
+Route::middleware(['auth', 'role:penjual'])->prefix('penjual')->name('penjual.')->group(function () {
+    Route::get('/dashboard', [PenjualController::class, 'dashboard'])->name('dashboard');
+});
 
 
 // ==========================================
@@ -213,49 +209,21 @@ Route::middleware(['auth', 'role:pembeli'])->prefix('pembeli')->name('pembeli.')
     Route::get('/customer-service', [CustomerServiceController::class, 'userIndex'])->name('service.index');
     Route::post('/customer-service', [CustomerServiceController::class, 'userStore'])->name('service.store');
 
-
-    //routes untuk fitur pelanggaran, notifications, dan laporan
     // Membership -> Upgrade jadi Penjual
     Route::get('/membership', [PembeliController::class, 'membershipIndex'])->name('membership');
-    // Route::post('/membership/{id}/beli', [PembeliController::class, 'membershipPurchase'])->name('membership.purchase');
-
     Route::post('/membership/{id}/purchase', [PembeliController::class, 'membershipPurchase'])->name('membership.purchase');
-
 
     // Notifikasi dari Admin
     Route::get('/notifikasi', [PembeliController::class, 'notificationsIndex'])->name('notifications');
 
-
-
-    // ==========================================
-    // PENDAFTARAN MENJADI PENJUAL
-    // ==========================================
-
-    Route::get(
-    '/daftar-penjual',
-    [SellerRegistrationController::class, 'create']
-    )->name('seller.registration.create');
-
-    Route::post(
-    '/daftar-penjual',
-    [SellerRegistrationController::class, 'store']
-    )->name('seller.registration.store');
-
-    Route::get(
-    '/daftar-penjual/status',
-    [SellerRegistrationController::class, 'status']
-    )->name('seller.registration.status');
-
-    Route::delete(
-    '/daftar-penjual/cancel',
-    [SellerRegistrationController::class, 'cancel']
-    )->name('seller.registration.cancel');
-
+    // Pendaftaran Menjadi Penjual
+    Route::get('/daftar-penjual', [SellerRegistrationController::class, 'create'])->name('seller.registration.create');
+    Route::post('/daftar-penjual', [SellerRegistrationController::class, 'store'])->name('seller.registration.store');
+    Route::get('/daftar-penjual/status', [SellerRegistrationController::class, 'status'])->name('seller.registration.status');
+    Route::delete('/daftar-penjual/cancel', [SellerRegistrationController::class, 'cancel'])->name('seller.registration.cancel');
 
     Route::get('/peringatan', [PembeliController::class, 'peringatanIndex'])->name('peringatan');
-
-
-    });
+});
 
 
 // ==========================================
@@ -268,19 +236,6 @@ Route::middleware(['auth'])->group(function () {
 });
 
 
-
-
-// ==========================================
-// 5. PENJUAL ROUTES
-// ==========================================
-Route::middleware(['auth', 'role:penjual'])->prefix('penjual')->name('penjual.')->group(function () {
-    Route::get('/dashboard', [PenjualController::class, 'dashboard'])->name('dashboard');
-});
-
-
-
-
-
 // ==========================================
 // 8. CUSTOMER SERVICE ROUTES (AUTH + ROLE: CUSTOMER_SERVICE)
 // ==========================================
@@ -290,11 +245,8 @@ Route::middleware(['auth', 'role:customer_service'])->prefix('cs')->name('cs.')-
     Route::get('/laporan', [CsController::class, 'laporan'])->name('laporan');
     Route::post('/laporan/{id}/tindak', [CsController::class, 'tindakLaporan'])->name('laporan.tindak');
 
-
     Route::get('/transaksi', [CsController::class, 'transaksi'])->name('transaksi');
     Route::get('/transaksi/{id}', [CsController::class, 'transaksiDetail'])->name('transaksi.detail');
 
     Route::get('/notifikasi', [CsController::class, 'notifikasi'])->name('notifikasi');
 });
-
-
