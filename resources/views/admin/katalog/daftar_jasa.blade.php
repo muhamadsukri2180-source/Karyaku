@@ -55,10 +55,6 @@
                 <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">{{ $initials ?: 'AD' }}</div>
                 <div class="overflow-hidden">
                     <p class="text-sm font-bold text-white truncate">{{ $admin->name ?? 'Admin' }}</p>
-                    <div class="flex items-center gap-1.5 mt-0.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                        <p class="text-[10px] text-sky-100 truncate">Online</p>
-                    </div>
                 </div>
             </div>
 
@@ -81,7 +77,7 @@
                             <i class="fa-solid fa-id-card text-[10px] text-sky-200 w-3 text-center"></i> Akun Verifikator
                         </a>
                         <a href="{{ route('admin.manajemen.akun_service') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-headset text-[10px] text-sky-200 w-3 text-center"></i> Akun Customer Service
+                            <i class="fa-solid fa-headset text-[10px] text-sky-200 w-3 text-center"></i> Akun & Layanan CS
                         </a>
                     </div>
                 </div>
@@ -130,7 +126,32 @@
                     <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-white transition-colors"></i>
                     <span>Pelanggaran</span>
                 </a>
-                
+                 <a href="{{ route('admin.security.index') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl {{ request()->routeIs('admin.security.*') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }} transition-all group mt-1">
+                    <i class="fa-solid fa-shield-halved w-4 text-center text-white"></i><span>Keamanan System</span>
+                </a>
+                <!-- MENU NOTIFIKASI -->
+                <a href="{{ route('admin.notifications.index') }}"
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifications.*') ? 'bg-white/20 text-white font-bold' : '' }}">
+                <div class="flex items-center gap-3">
+                <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
+                <span>Notifikasi</span>
+                </div>
+                @php
+                $unreadNotificationsCount = 0;
+                if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
+                $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
+                } else {
+                    $unreadNotificationsCount = \App\Models\Notification::count();
+                }
+                @endphp
+
+                @if($unreadNotificationsCount > 0)
+                    <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
+                    {{ $unreadNotificationsCount }}
+                    </span>
+                @endif
+                </a>
+
             </nav>
             <div class="p-4 border-t border-white/15">
                 <form method="POST" action="{{ route('logout') }}">
@@ -167,19 +188,21 @@
                     </div>
                 @endif
 
-                <!-- SUMMARY CARDS -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <div class="bg-gradient-to-br from-amber-50 via-white to-amber-100/60 border-l-4 border-amber-500 border-y border-r border-amber-200 p-5 rounded-2xl card-hover shadow-sm">
+                <!-- SUMMARY CARDS (rata penuh - 2 kolom sejajar mengisi lebar halaman) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="bg-gradient-to-br from-amber-50 via-white to-amber-100/60 border-l-4 border-amber-500 border-y border-r border-amber-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-sm">
                         <div class="flex justify-between items-start mb-2 relative z-10">
-                            <div><span class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Menunggu Tinjauan</span><div class="text-3xl font-black text-slate-900 mt-1">{{ $pendingCount }}</div></div>
+                            <div><span class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Menunggu Tinjauan</span><div class="text-3xl font-black text-slate-900 mt-1">{{ number_format($pendingCount, 0, ',', '.') }}</div></div>
                             <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/30"><i class="fa-solid fa-clock text-lg"></i></div>
                         </div>
+                        <p class="text-[10px] text-slate-600 font-medium border-t border-amber-200/50 pt-2 mt-2">Jasa baru yang perlu disetujui admin</p>
                     </div>
-                    <div class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100/60 border-l-4 border-emerald-500 border-y border-r border-emerald-200 p-5 rounded-2xl card-hover shadow-sm">
+                    <div class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100/60 border-l-4 border-emerald-500 border-y border-r border-emerald-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-sm">
                         <div class="flex justify-between items-start mb-2 relative z-10">
                             <div><span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Jasa Aktif</span><div class="text-3xl font-black text-slate-900 mt-1">{{ number_format($activeCount, 0, ',', '.') }}</div></div>
                             <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/30"><i class="fa-solid fa-box-open text-lg"></i></div>
                         </div>
+                        <p class="text-[10px] text-slate-600 font-medium border-t border-emerald-200/50 pt-2 mt-2">Sudah tayang di katalog Karyaku</p>
                     </div>
                 </div>
 
@@ -249,27 +272,27 @@
                                                 @if($product->status === 'pending')
                                                     <form method="POST" action="{{ route('admin.products.approve', $product->id_product) }}" onsubmit="return confirm('Setujui produk ini?');">
                                                         @csrf
-                                                        <button type="submit" class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Setujui"><i class="fa-solid fa-check text-[10px]"></i></button>
+                                                        <button type="submit" class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Setujui"><i class="fa-solid fa-check text-xs"></i></button>
                                                     </form>
                                                     <form method="POST" action="{{ route('admin.products.takedown', $product->id_product) }}" onsubmit="return confirm('Tolak / takedown produk ini?');">
                                                         @csrf
-                                                        <button type="submit" class="w-7 h-7 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm" title="Tolak"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                                                        <button type="submit" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Tolak"><i class="fa-solid fa-xmark text-xs"></i></button>
                                                     </form>
                                                 @elseif($product->status === 'active')
                                                     <form method="POST" action="{{ route('admin.products.takedown', $product->id_product) }}" onsubmit="return confirm('Takedown produk ini dari katalog?');">
                                                         @csrf
-                                                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-600 hover:text-white transition-all text-[10px] font-bold shadow-sm"><i class="fa-solid fa-ban"></i> Takedown</button>
+                                                        <button type="submit" class="px-3 py-2 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-600 hover:text-white transition-all text-[11px] font-bold shadow-sm"><i class="fa-solid fa-ban"></i> Takedown</button>
                                                     </form>
                                                 @else
                                                     <form method="POST" action="{{ route('admin.products.approve', $product->id_product) }}" onsubmit="return confirm('Aktifkan kembali produk ini?');">
                                                         @csrf
-                                                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-[10px] font-bold shadow-sm"><i class="fa-solid fa-rotate-left"></i> Aktifkan</button>
+                                                        <button type="submit" class="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-[11px] font-bold shadow-sm"><i class="fa-solid fa-rotate-left"></i> Aktifkan</button>
                                                     </form>
                                                 @endif
-                                                <button type="button" class="btn-delete-product w-7 h-7 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm" title="Hapus Permanen"
+                                                <button type="button" class="btn-delete-product w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Hapus Permanen"
                                                     data-id="{{ $product->id_product }}"
                                                     data-title="{{ $product->title }}">
-                                                    <i class="fa-solid fa-trash text-[10px]"></i>
+                                                    <i class="fa-solid fa-trash text-xs"></i>
                                                 </button>
                                             </div>
                                         </td>
@@ -304,8 +327,8 @@
             <form id="deleteProductForm" method="POST" action="" class="flex justify-center gap-2">
                 @csrf
                 @method('DELETE')
-                <button type="button" onclick="closeModal('deleteProductModal')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
-                <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 shadow-md">Ya, Hapus</button>
+                <button type="button" onclick="closeModal('deleteProductModal')" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
+                <button type="submit" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">Ya, Hapus</button>
             </form>
         </div>
     </div>

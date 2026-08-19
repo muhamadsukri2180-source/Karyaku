@@ -159,6 +159,7 @@ class AuthController extends Controller
             'verifikator' => redirect()->route('verifikator.dashboard'),
             'penjual'     => redirect()->route('penjual.dashboard'),
             'pembeli'     => redirect()->route('pembeli.dashboard'),
+            'customer_service' => redirect()->route('cs.dashboard'),
             default       => redirect()->route('landing'),
         };
     }

@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Membership extends Model
 {
+    protected $table = 'memberships';
+
     protected $primaryKey = 'id_membership';
 
     protected $fillable = [
@@ -13,11 +15,30 @@ class Membership extends Model
         'price',
         'duration_days',
         'max_upload',
-        'benefit'
+        'benefit',
+    ];
+
+    protected $casts = [
+        'price' => 'decimal:2',
+        'duration_days' => 'integer',
+        'max_upload' => 'integer',
     ];
 
     public function users()
     {
-        return $this->hasMany(User::class, 'id_membership', 'id_membership');
+        return $this->hasMany(
+            User::class,
+            'id_membership',
+            'id_membership'
+        );
+    }
+
+    public function identityVerifications()
+    {
+        return $this->hasMany(
+            IdentityVerification::class,
+            'membership_id',
+            'id_membership'
+        );
     }
 }

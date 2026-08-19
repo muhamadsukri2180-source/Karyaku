@@ -75,9 +75,9 @@
         }
 
         @keyframes bluePulseGlow {
-            0%   { transform: scale(1) translate(0, 0);      opacity: 0.35; }
+            0%   { transform: scale(1) translate(0, 0);    opacity: 0.35; }
             50%  { transform: scale(1.25) translate(-6px, 6px); opacity: 0.55; }
-            100% { transform: scale(1) translate(0, 0);      opacity: 0.35; }
+            100% { transform: scale(1) translate(0, 0);    opacity: 0.35; }
         }
         .blob-live {
             animation: bluePulseGlow 3.5s ease-in-out infinite;
@@ -265,10 +265,6 @@
                 </div>
                 <div class="overflow-hidden">
                     <p class="text-sm font-bold text-white truncate">{{ $adminName }}</p>
-                    <div class="flex items-center gap-1.5 mt-0.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                        <p class="text-[10px] text-sky-100 truncate">Online</p>
-                    </div>
                 </div>
             </div>
 
@@ -354,10 +350,37 @@
                     @endif
                 </a>
 
-                <!-- MENU PELANGGARAN YANG DITAMBAHKAN -->
+                <!-- MENU PELANGGARAN -->
                 <a href="{{ route('admin.pelanggaran') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1">
                     <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-white transition-colors"></i>
                     <span>Pelanggaran</span>
+                </a>
+
+                 <a href="{{ route('admin.security.index') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl {{ request()->routeIs('admin.security.*') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }} transition-all group mt-1">
+                    <i class="fa-solid fa-shield-halved w-4 text-center text-white"></i><span>Keamanan System</span>
+                </a>
+
+                <!-- MENU NOTIFIKASI -->
+                <a href="{{ route('admin.notifications.index') }}"
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifikasi.*') ? 'bg-white/20 text-white font-bold' : '' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
+                        <span>Notifikasi</span>
+                    </div>
+                    @php
+                        $unreadNotificationsCount = 0;
+                        if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
+                            $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
+                        } else {
+                            $unreadNotificationsCount = \App\Models\Notification::count();
+                        }
+                    @endphp
+
+                    @if($unreadNotificationsCount > 0)
+                        <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
+                            {{ $unreadNotificationsCount }}
+                        </span>
+                    @endif
                 </a>
             </nav>
 
@@ -394,12 +417,6 @@
                         </a>
                     @endif
                     @php $totalNotif = $pendingIdentityCount + $pendingProductsCount + $pendingReportsCount; @endphp
-                    <button class="w-10 h-10 rounded-full bg-white hover:bg-sky-50 hover:text-sky text-slate-700 flex items-center justify-center transition border border-sky-300 relative shadow-sm">
-                        <i class="fa-solid fa-bell text-sm"></i>
-                        @if($totalNotif > 0)
-                            <span class="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-coral border-2 border-white"></span>
-                        @endif
-                    </button>
                 </div>
             </header>
 
@@ -513,14 +530,14 @@
                                 <p id="chartSubtitle" class="text-[11px] text-slate-600 mt-1">Pertumbuhan transaksi berdasarkan data order (Tahun {{ $year }})</p>
                             </div>
 
-                            <!-- Custom Real-time Dynamic Year Dropdown -->
+                            <!-- Custom Real-time Dynamic Year Dropdown (Starts from 2026 onwards) -->
                             <div class="dropdown">
                                 <input type="checkbox" id="yearDropdownToggle" class="sr-only">
                                 <label for="yearDropdownToggle" class="trigger">
                                     <span id="selectedYearText">Tahun {{ $year }}</span>
                                 </label>
                                 <ul id="yearList" class="list webkit-scrollbar">
-                                    <!-- Populated dynamically via JS -->
+                                    <!-- Populated dynamically via JS starting from 2026 -->
                                 </ul>
                             </div>
                         </div>
@@ -530,15 +547,36 @@
                         </div>
                     </div>
 
-                    <div class="lg:col-span-4 bg-gradient-to-br from-white via-indigo-50/70 to-purple-100/40 border border-indigo-200/80 p-6 rounded-2xl card-hover shadow-md">
-                        <div class="flex justify-between items-center mb-6">
+                    <div class="lg:col-span-4 bg-gradient-to-br from-white via-indigo-50/70 to-purple-100/40 border border-indigo-200/80 p-6 rounded-2xl card-hover shadow-md relative">
+                        <div class="flex justify-between items-center mb-6 relative">
                             <div>
                                 <h3 class="font-extrabold text-slate-900 text-lg font-display">Top Kategori</h3>
                                 <p class="text-[11px] text-slate-600 mt-1">Berdasarkan order item</p>
                             </div>
-                            <button class="w-8 h-8 rounded-full bg-white hover:bg-indigo-50 text-slate-500 flex items-center justify-center transition border border-indigo-200 shadow-sm">
-                                <i class="fa-solid fa-ellipsis-vertical"></i>
-                            </button>
+                            <div class="relative">
+                                <button id="topCatMenuBtn" type="button" class="w-8 h-8 rounded-full bg-white hover:bg-indigo-50 text-slate-500 flex items-center justify-center transition border border-indigo-200 shadow-sm cursor-pointer">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                                <!-- Popup Card untuk Titik Tiga -->
+                                <div id="topCatPopup" class="absolute right-0 top-10 w-64 bg-white border border-indigo-100 rounded-2xl shadow-xl p-4 hidden z-50 transition-all duration-200">
+                                    <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
+                                        <span class="text-xs font-bold text-slate-800">Detail Kategori Populer</span>
+                                        <button type="button" id="closeTopCatPopup" class="text-slate-400 hover:text-slate-600 text-xs"><i class="fa-solid fa-xmark"></i></button>
+                                    </div>
+                                    @if($topCategories->isEmpty())
+                                        <p class="text-xs text-slate-500 text-center py-4 font-semibold">Admin belum menambahkan kategori</p>
+                                    @else
+                                        <div class="space-y-2.5 max-h-48 overflow-y-auto webkit-scrollbar pr-1">
+                                            @foreach($topCategories as $cat)
+                                                <div class="flex items-center justify-between text-xs bg-slate-50 p-2 rounded-xl">
+                                                    <span class="font-bold text-slate-800 truncate max-w-[130px]">{{ $cat->name }}</span>
+                                                    <span class="font-extrabold text-indigo-600">{{ $cat->percentage }}%</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
 
                         <div class="space-y-5">
@@ -707,6 +745,28 @@
             });
         });
 
+        // Toggle Popup Top Kategori (Titik Tiga)
+        const topCatMenuBtn = document.getElementById('topCatMenuBtn');
+        const topCatPopup = document.getElementById('topCatPopup');
+        const closeTopCatPopup = document.getElementById('closeTopCatPopup');
+
+        if(topCatMenuBtn && topCatPopup) {
+            topCatMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                topCatPopup.classList.toggle('hidden');
+            });
+            if(closeTopCatPopup) {
+                closeTopCatPopup.addEventListener('click', () => {
+                    topCatPopup.classList.add('hidden');
+                });
+            }
+            document.addEventListener('click', (e) => {
+                if(!topCatPopup.contains(e.target) && !topCatMenuBtn.contains(e.target)) {
+                    topCatPopup.classList.add('hidden');
+                }
+            });
+        }
+
         let yearlyChartInstance;
 
         const initialYear = {{ (int) $year }};
@@ -714,7 +774,8 @@
         const chartDataUrl = "{{ route('admin.dashboard.chartData') }}";
 
         document.addEventListener('DOMContentLoaded', function () {
-            const startYear = 2020;
+            // Fix 1: Start year from 2026 (launch year) and update dynamically in real-time
+            const startYear = 2026;
             const currentRealYear = new Date().getFullYear();
             const maxYear = Math.max(startYear, currentRealYear, initialYear);
 

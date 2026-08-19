@@ -4,7 +4,13 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PembeliController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\CustomerServiceController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\PenjualController;
+use App\Http\Controllers\SellerRegistrationController;
+use App\Http\Controllers\VerifikatorController;
+use App\Http\Controllers\CsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -115,26 +121,60 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // 10. Profile Admin
     Route::get('/profile', [AdminController::class, 'profile'])->name('profile');
     Route::put('/profile', [AdminController::class, 'updateProfile'])->name('profile.update');
+
+    // 11. Manajemen Notifikasi
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications', [NotificationController::class, 'store'])->name('notifications.store');
+    Route::put('/notifications/{id}', [NotificationController::class, 'update'])->name('notifications.update');
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+
+    // 12. Keamanan System & Monitoring IP
+    Route::get('/security/verify', [AdminController::class, 'securityVerifyPage'])->name('security.verify');
+    Route::post('/security/verify', [AdminController::class, 'securityProcessVerify'])->name('security.process_verify');
+
+    Route::get('/security/ip-monitor', [AdminController::class, 'securityIndex'])->name('security.index');
+    Route::post('/security/allowed-ip', [AdminController::class, 'securityStoreAllowedIp'])->name('security.allowed_ip.store');
+    Route::delete('/security/allowed-ip/{id}', [AdminController::class, 'securityDestroyAllowedIp'])->name('security.allowed_ip.destroy');
+    Route::post('/security/toggle/{id}', [AdminController::class, 'securityToggleStatus'])->name('security.toggle');
+    Route::delete('/security/log/{id}', [AdminController::class, 'securityDestroyLog'])->name('security.log.destroy');
 });
 
 
 // ==========================================
 // 4. VERIFIKATOR ROUTES
 // ==========================================
-Route::middleware(['auth', 'role:verifikator'])->prefix('verifikator')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('verifikator.dashboard');
-    })->name('verifikator.dashboard');
-});
+Route::middleware(['auth', 'role:verifikator'])
+    ->prefix('verifikator')
+    ->name('verifikator.')
+    ->group(function () {
+
+        Route::get(
+            '/dashboard',
+            [VerifikatorController::class, 'dashboard']
+        )->name('dashboard');
+
+        Route::get(
+            '/pendaftaran/{id}',
+            [VerifikatorController::class, 'show']
+        )->name('pendaftaran.show');
+
+        Route::post(
+            '/pendaftaran/{id}/approve',
+            [VerifikatorController::class, 'approve']
+        )->name('pendaftaran.approve');
+
+        Route::post(
+            '/pendaftaran/{id}/reject',
+            [VerifikatorController::class, 'reject']
+        )->name('pendaftaran.reject');
+    });
 
 
 // ==========================================
 // 5. PENJUAL ROUTES
 // ==========================================
-Route::middleware(['auth', 'role:penjual'])->prefix('penjual')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('penjual.dashboard');
-    })->name('penjual.dashboard');
+Route::middleware(['auth', 'role:penjual'])->prefix('penjual')->name('penjual.')->group(function () {
+    Route::get('/dashboard', [PenjualController::class, 'dashboard'])->name('dashboard');
 });
 
 
@@ -168,4 +208,45 @@ Route::middleware(['auth', 'role:pembeli'])->prefix('pembeli')->name('pembeli.')
     // Customer Service (User / Pembeli Side)
     Route::get('/customer-service', [CustomerServiceController::class, 'userIndex'])->name('service.index');
     Route::post('/customer-service', [CustomerServiceController::class, 'userStore'])->name('service.store');
+
+    // Membership -> Upgrade jadi Penjual
+    Route::get('/membership', [PembeliController::class, 'membershipIndex'])->name('membership');
+    Route::post('/membership/{id}/purchase', [PembeliController::class, 'membershipPurchase'])->name('membership.purchase');
+
+    // Notifikasi dari Admin
+    Route::get('/notifikasi', [PembeliController::class, 'notificationsIndex'])->name('notifications');
+
+    // Pendaftaran Menjadi Penjual
+    Route::get('/daftar-penjual', [SellerRegistrationController::class, 'create'])->name('seller.registration.create');
+    Route::post('/daftar-penjual', [SellerRegistrationController::class, 'store'])->name('seller.registration.store');
+    Route::get('/daftar-penjual/status', [SellerRegistrationController::class, 'status'])->name('seller.registration.status');
+    Route::delete('/daftar-penjual/cancel', [SellerRegistrationController::class, 'cancel'])->name('seller.registration.cancel');
+
+    Route::get('/peringatan', [PembeliController::class, 'peringatanIndex'])->name('peringatan');
+});
+
+
+// ==========================================
+// 7. LAPORAN PELANGGARAN (pembeli & penjual, siapapun yang login)
+// ==========================================
+Route::middleware(['auth'])->group(function () {
+    Route::get('/laporan', [ReportController::class, 'create'])->name('reports.create');
+    Route::post('/laporan', [ReportController::class, 'store'])->name('reports.store');
+    Route::get('/laporan/riwayat', [ReportController::class, 'index'])->name('reports.index');
+});
+
+
+// ==========================================
+// 8. CUSTOMER SERVICE ROUTES (AUTH + ROLE: CUSTOMER_SERVICE)
+// ==========================================
+Route::middleware(['auth', 'role:customer_service'])->prefix('cs')->name('cs.')->group(function () {
+    Route::get('/dashboard', [CsController::class, 'dashboard'])->name('dashboard');
+
+    Route::get('/laporan', [CsController::class, 'laporan'])->name('laporan');
+    Route::post('/laporan/{id}/tindak', [CsController::class, 'tindakLaporan'])->name('laporan.tindak');
+
+    Route::get('/transaksi', [CsController::class, 'transaksi'])->name('transaksi');
+    Route::get('/transaksi/{id}', [CsController::class, 'transaksiDetail'])->name('transaksi.detail');
+
+    Route::get('/notifikasi', [CsController::class, 'notifikasi'])->name('notifikasi');
 });

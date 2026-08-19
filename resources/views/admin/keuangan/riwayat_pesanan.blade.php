@@ -55,13 +55,9 @@
             </div>
 
             <div class="p-4 mx-4 my-5 rounded-2xl bg-white/10 border border-white/20 flex items-center gap-3 backdrop-blur-md shadow-inner">
-                <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">{{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}</div>
+                <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 2)) }}</div>
                 <div class="overflow-hidden">
                     <p class="text-sm font-bold text-white truncate">{{ auth()->user()->name ?? 'Admin' }}</p>
-                    <div class="flex items-center gap-1.5 mt-0.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                        <p class="text-[10px] text-sky-100 truncate">Online</p>
-                    </div>
                 </div>
             </div>
 
@@ -132,6 +128,32 @@
                     <span>Pelanggaran</span>
                 </a>
 
+                <a href="{{ route('admin.security.index') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl {{ request()->routeIs('admin.security.*') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }} transition-all group mt-1">
+                    <i class="fa-solid fa-shield-halved w-4 text-center text-white"></i><span>Keamanan System</span>
+                </a>
+
+                <!-- MENU NOTIFIKASI -->
+                <a href="{{ route('admin.notifications.index') }}"
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifikasi.*') ? 'bg-white/20 text-white font-bold' : '' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
+                        <span>Notifikasi</span>
+                    </div>
+                    @php
+                        $unreadNotificationsCount = 0;
+                        if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
+                            $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
+                        } else {
+                            $unreadNotificationsCount = \App\Models\Notification::count();
+                        }
+                    @endphp
+
+                    @if($unreadNotificationsCount > 0)
+                        <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
+                            {{ $unreadNotificationsCount }}
+                        </span>
+                    @endif
+                </a>
             </nav>
             <div class="p-4 border-t border-white/15">
                 <form action="{{ route('logout') }}" method="POST">
@@ -199,9 +221,10 @@
                 <!-- MAIN TABLE AREA -->
                 <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 backdrop-blur-sm">
+                        <!-- Form Pencarian: Hanya cari Nama Pelanggan -->
                         <form action="{{ route('admin.transactions') }}" method="GET" class="relative w-full sm:w-72">
                             <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari ID Pesanan atau Nama..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Nama Pelanggan..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
                         </form>
 
                         <a href="{{ route('admin.transactions.export') }}" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-500/30 transition-all flex items-center justify-center gap-2 w-full sm:w-auto">
@@ -213,7 +236,8 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-sky-50/80 border-b border-sky-100 text-sky-900 text-[11px] uppercase tracking-wider font-bold">
-                                    <th class="py-4 px-6">ID Pesanan & Layanan</th>
+                                    <th class="py-4 px-6">Layanan</th>
+                                    <th class="py-4 px-6">Pesanan & Layanan</th>
                                     <th class="py-4 px-6">Pelanggan & Kreator</th>
                                     <th class="py-4 px-6">Total Nilai</th>
                                     <th class="py-4 px-6">Status Order</th>
@@ -230,8 +254,7 @@
                                 @endphp
                                 <tr class="hover:bg-sky-50/50 transition-colors bg-white">
                                     <td class="py-3 px-6">
-                                        <p class="font-bold text-sky-700 text-xs">#{{ $order->kode_order }}</p>
-                                        <p class="text-[11px] text-slate-600 font-medium mt-0.5 w-48 truncate">{{ $productTitle }}{{ $extraItems }}</p>
+                                        <p class="text-xs text-slate-800 font-bold w-48 truncate">{{ $productTitle }}{{ $extraItems }}</p>
                                     </td>
                                     <td class="py-3 px-6">
                                         <p class="text-xs font-bold text-slate-800"><i class="fa-solid fa-user text-[10px] text-slate-400 mr-1"></i> {{ $order->buyer->name ?? '-' }} (Pembeli)</p>
@@ -320,7 +343,6 @@
                         </div>
                     `).join('');
                     content.innerHTML = `
-                        <p><span class="font-bold">Kode Order:</span> ${data.kode_order}</p>
                         <p><span class="font-bold">Pembeli:</span> ${data.buyer?.name ?? '-'}</p>
                         <p><span class="font-bold">Status:</span> ${data.status}</p>
                         <p><span class="font-bold">Pembayaran:</span> ${data.payment_status}</p>

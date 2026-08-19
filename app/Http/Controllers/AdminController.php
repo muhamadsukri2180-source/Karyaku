@@ -13,19 +13,22 @@ use App\Models\IdentityVerification;
 use App\Models\Withdrawal;
 use App\Models\Report;
 use App\Models\CustomerService;
+use App\Models\IpLog;
+use App\Models\AllowedIp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
+use ZipArchive;
 
 class AdminController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
-    | 1. DASHBOARD  ->  GET /admin/dashboard  (admin.dashboard)
-    | View: resources/views/admin/dashboard.blade.php
+    | 1. DASHBOARD -> GET /admin/dashboard
     |--------------------------------------------------------------------------
     */
     public function dashboard(Request $request)
@@ -49,7 +52,6 @@ class AdminController extends Controller
         $pendingIdentityCount = IdentityVerification::where('status', 'pending')->count();
         $pendingReportsCount  = Report::where('status', 'pending')->count();
 
-        // Grafik: jumlah order per tahun yang dipilih
         $chartRaw = Order::selectRaw('MONTH(created_at) as bulan, COUNT(*) as total')
             ->whereYear('created_at', $year)
             ->groupBy('bulan')
@@ -60,7 +62,6 @@ class AdminController extends Controller
             $chartData[] = (int) ($chartRaw[$m] ?? 0);
         }
 
-        // Top kategori berdasarkan jumlah item yang benar-benar terjual (order_items)
         $topCategories = Category::all()->map(function ($cat) {
             $cat->order_count = OrderItem::whereHas('product', fn ($q) => $q->where('category_id', $cat->id_category))->count();
             return $cat;
@@ -72,7 +73,6 @@ class AdminController extends Controller
             return $cat;
         });
 
-        // Aktivitas terkini gabungan
         $recentOrders = Order::with('buyer')->latest()->take(3)->get()->map(fn ($o) => [
             'title' => 'Order Baru #' . $o->kode_order,
             'desc'  => 'Pembeli "' . ($o->buyer->name ?? '-') . '" membuat pesanan baru.',
@@ -136,19 +136,46 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 2. MAINTENANCE MODE + BACKUP
+    | 2. MAINTENANCE MODE + BACKUP DATABASE (GOOGLE DRIVE)
     |--------------------------------------------------------------------------
     */
     public function maintenance()
     {
-        $isMaintenance = app()->isDownForMaintenance();
-        
         $statusFile = storage_path('framework/maintenance_mode.json');
         $currentMode = 'none';
+        $currentEndAt = null;
+
         if (file_exists($statusFile)) {
-            $data = json_decode(file_get_contents($statusFile), true);
-            $currentMode = $data['target_role'] ?? 'none';
+            $data       = json_decode(file_get_contents($statusFile), true);
+            $targetRole = $data['target_role'] ?? 'none';
+            $endAt      = $data['end_at'] ?? null;
+
+            if ($targetRole !== 'none' && $endAt) {
+                try {
+                    $targetTimestamp = isset($data['timestamp']) 
+                        ? $data['timestamp'] 
+                        : Carbon::parse($endAt, 'Asia/Jakarta')->timestamp;
+
+                    if (now('Asia/Jakarta')->timestamp >= $targetTimestamp) {
+                        @unlink($statusFile);
+                        $currentMode  = 'none';
+                        $currentEndAt = null;
+                    } else {
+                        $currentMode  = $targetRole;
+                        $currentEndAt = $endAt;
+                    }
+                } catch (\Exception $e) {
+                    @unlink($statusFile);
+                    $currentMode  = 'none';
+                    $currentEndAt = null;
+                }
+            } else {
+                $currentMode  = $targetRole;
+                $currentEndAt = $endAt;
+            }
         }
+
+        $isMaintenance = app()->isDownForMaintenance();
 
         Storage::disk('local')->makeDirectory('backups');
 
@@ -156,13 +183,28 @@ class AdminController extends Controller
             ->filter(fn ($f) => str_ends_with($f, '.sql') || str_ends_with($f, '.zip'))
             ->map(fn ($file) => [
                 'name'       => basename($file),
-                'size'       => round(Storage::disk('local')->size($file) / 1048576, 1) . ' MB',
+                'size'       => $this->formatBytes(Storage::disk('local')->size($file)),
                 'created_at' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file)),
             ])
             ->sortByDesc('created_at')
             ->values();
 
-        return view('admin.sistem.maintenance', compact('isMaintenance', 'currentMode', 'backups'));
+        return view('admin.sistem.maintenance', compact('isMaintenance', 'currentMode', 'currentEndAt', 'backups'));
+    }
+
+    private function formatBytes(int $bytes, int $decimals = 2): string
+    {
+        if ($bytes <= 0) {
+            return '0 B';
+        }
+
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $power = (int) floor(log($bytes, 1024));
+        $power = max(0, min($power, count($units) - 1));
+
+        $value = $bytes / (1024 ** $power);
+
+        return round($value, $decimals) . ' ' . $units[$power];
     }
 
     public function toggleMaintenance(Request $request)
@@ -172,7 +214,7 @@ class AdminController extends Controller
 
         if ($targetRole === 'none') {
             if (file_exists($statusFile)) {
-                unlink($statusFile);
+                @unlink($statusFile);
             }
             if (app()->isDownForMaintenance()) {
                 Artisan::call('up');
@@ -180,11 +222,20 @@ class AdminController extends Controller
             return redirect()->back()->with('success', 'Sistem kembali Online dan Berjalan Normal.');
         }
 
+        $validated = $request->validate([
+            'end_at' => 'required|date',
+        ]);
+
+        $endAtCarbon = Carbon::parse($validated['end_at'], 'Asia/Jakarta');
+
         $data = [
             'target_role' => $targetRole,
-            'time' => now()
+            'time'        => now('Asia/Jakarta')->toIso8601String(),
+            'end_at'      => $endAtCarbon->toIso8601String(),
+            'timestamp'   => $endAtCarbon->timestamp,
         ];
-        file_put_contents($statusFile, json_encode($data));
+
+        file_put_contents($statusFile, json_encode($data, JSON_PRETTY_PRINT));
 
         if (app()->isDownForMaintenance()) {
             Artisan::call('up');
@@ -195,26 +246,104 @@ class AdminController extends Controller
 
     public function createBackup()
     {
-        $filename = 'backup-' . now()->format('Y-m-d_His') . '.sql';
-        $path     = storage_path('app/backups/' . $filename);
+        $timestamp    = now()->format('Y-m-d_His');
+        $sqlFilename  = 'backup-' . $timestamp . '.sql';
+        $zipFilename  = 'backup-' . $timestamp . '.zip';
+
+        $backupDir     = storage_path('app/backups');
+        $localSqlPath  = $backupDir . DIRECTORY_SEPARATOR . $sqlFilename;
+        $localZipPath  = $backupDir . DIRECTORY_SEPARATOR . $zipFilename;
 
         Storage::disk('local')->makeDirectory('backups');
 
-        $db  = config('database.connections.mysql');
-        $cmd = sprintf(
-            'mysqldump --user=%s --password=%s --host=%s %s > %s',
-            escapeshellarg($db['username']),
-            escapeshellarg($db['password']),
-            escapeshellarg($db['host']),
-            escapeshellarg($db['database']),
-            escapeshellarg($path)
-        );
-
         try {
-            Process::run($cmd);
-            return redirect()->back()->with('success', 'Backup database berhasil dibuat: ' . $filename);
+            set_time_limit(300);
+            ini_set('memory_limit', '512M');
+
+            $dbName   = config('database.connections.mysql.database');
+            $tables   = DB::select('SHOW TABLES');
+            $tableKey = 'Tables_in_' . $dbName;
+
+            $sqlDump  = "-- Backup Database Karyaku\n";
+            $sqlDump .= "-- Tanggal: " . now()->format('d M Y - H:i:s') . " WIB\n\n";
+            $sqlDump .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
+
+            foreach ($tables as $tableObj) {
+                $table = $tableObj->$tableKey ?? current((array) $tableObj);
+
+                $createTableResult = DB::select("SHOW CREATE TABLE `{$table}`");
+                $createSql = $createTableResult[0]->{'Create Table'} ?? null;
+
+                if ($createSql) {
+                    $sqlDump .= "DROP TABLE IF EXISTS `{$table}`;\n";
+                    $sqlDump .= $createSql . ";\n\n";
+
+                    $rows = DB::table($table)->get();
+                    if ($rows->count() > 0) {
+                        foreach ($rows as $row) {
+                            $rowArray = (array) $row;
+                            $values = array_map(function ($val) {
+                                if (is_null($val)) return 'NULL';
+                                return DB::getPdo()->quote($val);
+                            }, $rowArray);
+
+                            $sqlDump .= "INSERT INTO `{$table}` (`" . implode('`, `', array_keys($rowArray)) . "`) VALUES (" . implode(', ', $values) . ");\n";
+                        }
+                        $sqlDump .= "\n";
+                    }
+                }
+            }
+
+            $sqlDump .= "SET FOREIGN_KEY_CHECKS=1;\n";
+
+            file_put_contents($localSqlPath, $sqlDump);
+
+            $zip = new ZipArchive();
+            if ($zip->open($localZipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+                throw new \Exception('Gagal membuat file ZIP backup di server.');
+            }
+            $zip->addFile($localSqlPath, $sqlFilename);
+            $zip->close();
+
+            if (file_exists($localSqlPath)) {
+                @unlink($localSqlPath);
+            }
+
+            if (!file_exists($localZipPath)) {
+                throw new \Exception('File ZIP backup tidak ditemukan setelah proses kompresi.');
+            }
+
+            if (filesize($localZipPath) === 0) {
+                @unlink($localZipPath);
+                throw new \Exception('Proses kompresi ZIP menghasilkan file kosong (0 byte). Backup dibatalkan.');
+            }
+
+            $driveUploaded     = false;
+            $driveErrorMessage = null;
+
+            try {
+                $stream = fopen($localZipPath, 'r');
+                $driveUploaded = Storage::disk('google')->put($zipFilename, $stream);
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+            } catch (\Throwable $driveError) {
+                $driveErrorMessage = $driveError->getMessage();
+            }
+
+            if ($driveUploaded) {
+                return redirect()->back()->with('success', 'Backup database (ZIP) BERHASIL dibuat di lokal & dikirim ke Google Drive!');
+            }
+
+            $msg = 'Backup database (ZIP) BERHASIL dibuat di lokal, namun GAGAL terkirim ke Google Drive.';
+            if ($driveErrorMessage) {
+                $msg .= ' Detail: ' . $driveErrorMessage;
+            }
+
+            return redirect()->back()->with('warning', $msg);
+
         } catch (\Throwable $e) {
-            return redirect()->back()->with('error', 'Gagal membuat backup: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal membuat backup database: ' . $e->getMessage());
         }
     }
 
@@ -251,10 +380,10 @@ class AdminController extends Controller
                 ->orWhere('email', 'like', "%{$search}%")))
             ->latest()
             ->paginate(15);
-            
+
         $users->withQueryString();
 
-        $totalUsers     = User::whereHas('role', fn ($q) => $q->whereIn('role_name', ['pembeli', 'penjual']))->count();
+        $totalUsers   = User::whereHas('role', fn ($q) => $q->whereIn('role_name', ['pembeli', 'penjual']))->count();
         $activeCreators = User::whereHas('role', fn ($q) => $q->where('role_name', 'penjual'))->whereHas('products')->count();
         $newThisMonth   = User::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
         $blockedUsers   = User::where('status', 'blocked')->count();
@@ -334,31 +463,34 @@ class AdminController extends Controller
     {
         $verifikatorRole = Role::where('role_name', 'verifikator')->first();
 
-        $verifikators = User::where('id_role', $verifikatorRole->id_role ?? 0)
-            ->latest()
-            ->get()
-            ->map(function ($v) {
-                $v->total_checked = $v->identityVerificationsAsVerifier()
-                    ->whereIn('status', ['approved', 'rejected'])
-                    ->count();
-                return $v;
-            });
+        $verifikators = collect();
+        if ($verifikatorRole) {
+            $verifikators = User::where('id_role', $verifikatorRole->id_role)
+                ->latest('id_user')
+                ->get()
+                ->map(function ($v) {
+                    $v->total_checked = IdentityVerification::where('verifier_id', $v->id_user)
+                        ->whereIn('status', ['approved', 'rejected'])
+                        ->count();
+                    return $v;
+                });
+        }
 
-        /** @var \Illuminate\Pagination\LengthAwarePaginator $pendingQueue */
-        $pendingQueue = IdentityVerification::with('user')
+        $pendingQueue = IdentityVerification::with(['user'])
             ->where('status', 'pending')
-            ->latest()
-            ->paginate(10);
-            
-        $pendingQueue->withQueryString();
+            ->latest('id_identity_verification')
+            ->paginate(10)
+            ->withQueryString();
 
         $totalVerifikator = $verifikators->count();
         $antreanMasuk     = IdentityVerification::where('status', 'pending')->count();
-        $selesaiHariIni   = IdentityVerification::whereDate('verified_at', today())->count();
+        $selesaiHariIni   = IdentityVerification::whereDate('verified_at', today())
+            ->whereIn('status', ['approved', 'rejected'])
+            ->count();
 
-        $totalDiperiksa = max(1, IdentityVerification::whereIn('status', ['approved', 'rejected'])->count());
+        $totalDiperiksa = IdentityVerification::whereIn('status', ['approved', 'rejected'])->count();
         $totalDisetujui = IdentityVerification::where('status', 'approved')->count();
-        $akurasiSistem  = round(($totalDisetujui / $totalDiperiksa) * 100, 1);
+        $akurasiSistem  = $totalDiperiksa > 0 ? round(($totalDisetujui / $totalDiperiksa) * 100, 1) : 100;
 
         return view('admin.manajemen.akun_verifikator', compact(
             'verifikators', 'pendingQueue', 'totalVerifikator', 'antreanMasuk', 'selesaiHariIni', 'akurasiSistem'
@@ -414,45 +546,105 @@ class AdminController extends Controller
 
     public function approveSeller(Request $request, string|int $id)
     {
-        $verification = IdentityVerification::findOrFail($id);
-        $verification->update([
-            'status'      => 'approved',
-            'verifier_id' => auth()->id(),
-            'verified_at' => now(),
-        ]);
+        if (!auth()->check()) {
+            return redirect()->route('auth.login')->with('error', 'Sesi login telah berakhir. Silakan login kembali.');
+        }
 
-        User::where('id_user', $verification->user_id)->update(['status' => 'active']);
+        $verification = IdentityVerification::find($id);
 
-        return redirect()->back()->with('success', 'Pengajuan identitas disetujui.');
+        if (!$verification) {
+            return redirect()->back()->with('error', 'Data pengajuan verifikasi tidak ditemukan.');
+        }
+
+        if ($verification->status !== 'pending') {
+            return redirect()->back()->with('error', 'Pengajuan ini sudah diproses sebelumnya.');
+        }
+
+        $user = User::where('id_user', $verification->user_id)->first();
+
+        if (!$user) {
+            return redirect()->back()->with('error', 'User pemohon tidak ditemukan.');
+        }
+
+        $penjualRole = Role::where('role_name', 'penjual')->first();
+
+        if (!$penjualRole) {
+            return redirect()->back()->with('error', 'Role penjual tidak ditemukan di database.');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $verification->update([
+                'status'      => 'approved',
+                'verifier_id' => auth()->id(),
+                'verified_at' => now(),
+            ]);
+
+            $user->update([
+                'id_role' => $penjualRole->id_role,
+                'status'  => 'active',
+            ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Pengajuan identitas berhasil disetujui. Akun user sekarang menjadi penjual.');
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            report($e);
+            return redirect()->back()->with('error', 'Pengajuan gagal disetujui. Silakan coba lagi.');
+        }
     }
 
     public function rejectSeller(Request $request, string|int $id)
     {
-        $request->validate(['notes' => 'nullable|string|max:500']);
+        if (!auth()->check()) {
+            return redirect()->route('auth.login')->with('error', 'Sesi login telah berakhir. Silakan login kembali.');
+        }
 
-        $verification = IdentityVerification::findOrFail($id);
-        $verification->update([
-            'status'      => 'rejected',
-            'verifier_id' => auth()->id(),
-            'notes'       => $request->notes,
-            'verified_at' => now(),
+        $validated = $request->validate([
+            'notes' => 'nullable|string|max:500',
         ]);
 
-        return redirect()->back()->with('success', 'Pengajuan identitas ditolak.');
+        $verification = IdentityVerification::find($id);
+
+        if (!$verification) {
+            return redirect()->back()->with('error', 'Data pengajuan verifikasi tidak ditemukan.');
+        }
+
+        if ($verification->status !== 'pending') {
+            return redirect()->back()->with('error', 'Pengajuan ini sudah diproses sebelumnya.');
+        }
+
+        try {
+            $verification->update([
+                'status'      => 'rejected',
+                'verifier_id' => auth()->id(),
+                'notes'       => $validated['notes'] ?? null,
+                'verified_at' => now(),
+            ]);
+
+            return redirect()->back()->with('success', 'Pengajuan identitas berhasil ditolak.');
+
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', 'Pengajuan gagal ditolak. Silakan coba lagi.');
+        }
     }
 
     /*
     |--------------------------------------------------------------------------
-    | 5. AKUN & LAYANAN CUSTOMER SERVICE (MANAJEMEN CS)
+    | 5. AKUN & LAYANAN CUSTOMER SERVICE
     |--------------------------------------------------------------------------
     */
     public function serviceAccounts()
     {
         $roleCs = Role::where('role_name', 'customer_service')->first();
         $csUsers = $roleCs ? User::where('id_role', $roleCs->id_role)->get() : collect();
-        
+
         $tickets = CustomerService::with('user')->latest()->get();
-        
+
         $stats = [
             'selesai' => $tickets->where('status', 'selesai')->count(),
             'proses'  => $tickets->where('status', 'proses')->count(),
@@ -516,7 +708,7 @@ class AdminController extends Controller
             ->when($search, fn ($q) => $q->where('title', 'like', "%{$search}%"))
             ->latest()
             ->paginate(15);
-            
+
         $products->withQueryString();
 
         $pendingCount = Product::where('status', 'pending')->count();
@@ -614,12 +806,11 @@ class AdminController extends Controller
         /** @var \Illuminate\Pagination\LengthAwarePaginator $orders */
         $orders = Order::with(['buyer', 'items.product.seller'])
             ->when($search, function ($q) use ($search) {
-                $q->whereHas('buyer', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
-                  ->orWhere('id_order', 'like', "%{$search}%");
+                $q->whereHas('buyer', fn ($qq) => $qq->where('name', 'like', "%{$search}%"));
             })
             ->latest()
             ->paginate(15);
-            
+
         $orders->withQueryString();
 
         $totalCommission = Order::where('payment_status', 'paid')->sum('total_price') * 0.05;
@@ -646,11 +837,10 @@ class AdminController extends Controller
 
         $callback = function () use ($orders) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['ID Order', 'Pembeli', 'Total', 'Status Pembayaran', 'Status Order', 'Tanggal']);
+            fputcsv($handle, ['Pembeli', 'Total', 'Status Pembayaran', 'Status Order', 'Tanggal']);
 
             foreach ($orders as $order) {
                 fputcsv($handle, [
-                    $order->kode_order,
                     $order->buyer->name ?? '-',
                     $order->total_price,
                     $order->payment_status,
@@ -688,7 +878,7 @@ class AdminController extends Controller
             })
             ->latest()
             ->paginate(15);
-            
+
         $withdrawals->withQueryString();
 
         $menungguDiproses = Withdrawal::where('status', 'pending')->count();
@@ -743,7 +933,19 @@ class AdminController extends Controller
         $memberships = Membership::withCount('users')->get();
         $totalPelangganAktif = User::whereNotNull('id_membership')->count();
 
-        return view('admin.membership.paket_membership', compact('memberships', 'totalPelangganAktif'));
+        $diamondCount = User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Diamond%'))->count();
+        $goldCount    = User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Gold%'))->count();
+        $silverCount  = User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Silver%'))->count();
+        $bronzeCount  = User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Bronze%'))->count();
+
+        return view('admin.membership.paket_membership', compact(
+            'memberships',
+            'totalPelangganAktif',
+            'diamondCount',
+            'goldCount',
+            'silverCount',
+            'bronzeCount'
+        ));
     }
 
     public function storeMembership(Request $request)
@@ -797,28 +999,55 @@ class AdminController extends Controller
     */
     public function pelanggaran()
     {
-        $reports = Report::latest()->paginate(15);
-        return view('admin.sistem.pelanggaran', compact('reports'));
+        $reportsUser = Report::with(['reporter', 'reportedUser'])
+            ->whereNull('product_id')
+            ->latest()
+            ->paginate(10, ['*'], 'page_user');
+
+        $reportsProduk = Report::with(['reporter', 'product.seller'])
+            ->whereNotNull('product_id')
+            ->latest()
+            ->paginate(10, ['*'], 'page_produk');
+
+        return view('admin.sistem.pelanggaran', compact('reportsUser', 'reportsProduk'));
     }
 
     public function tindakUserPelanggaran(Request $request, string|int $id)
     {
         $request->validate([
-            'action' => 'required|string',
+            'action'      => 'required|string|in:peringatan,suspend,abaikan',
             'admin_notes' => 'required|string|max:500',
         ]);
 
-        return redirect()->back()->with('success', 'Tindak lanjut pelanggaran pengguna berhasil disimpan.');
+        $report = Report::findOrFail($id);
+
+        $report->update([
+            'status'      => $request->action === 'abaikan' ? 'dismissed' : 'reviewed',
+            'admin_note'  => $request->admin_notes,
+            'reviewed_at' => now(),
+            'reviewed_by' => auth()->id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Tindakan laporan pengguna berhasil diproses.');
     }
 
     public function tindakProdukPelanggaran(Request $request, string|int $id)
     {
         $request->validate([
-            'action' => 'required|string',
+            'action'      => 'required|string|in:peringatan,suspend,abaikan',
             'admin_notes' => 'required|string|max:500',
         ]);
 
-        return redirect()->back()->with('success', 'Tindak lanjut pelanggaran produk berhasil disimpan.');
+        $report = Report::findOrFail($id);
+
+        $report->update([
+            'status'      => $request->action === 'abaikan' ? 'dismissed' : 'reviewed',
+            'admin_note'  => $request->admin_notes,
+            'reviewed_at' => now(),
+            'reviewed_by' => auth()->id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Tindakan laporan produk berhasil diproses.');
     }
 
     /*
@@ -851,5 +1080,117 @@ class AdminController extends Controller
         $admin->update($data);
 
         return redirect()->back()->with('success', 'Profil Admin berhasil diperbarui.');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 13. KEAMANAN SYSTEM & MONITORING IP
+    |--------------------------------------------------------------------------
+    */
+    public function securityVerifyPage()
+    {
+        // Jika sudah terverifikasi sebelumnya, langsung arahkan ke index keamanan
+        if (session()->has('security_verified_at')) {
+            return redirect()->route('admin.security.index');
+        }
+
+        return view('admin.security.verify');
+    }
+
+    public function securityProcessVerify(Request $request)
+    {
+        $request->validate([
+            'password' => 'required',
+            'pin'      => 'required|numeric',
+        ]);
+
+        if (!Hash::check($request->password, auth()->user()->password)) {
+            return back()->with('error', 'Password Admin Salah! Akses Ditolak.');
+        }
+
+        $secretPin = env('SECURITY_ACCESS_PIN', '123456');
+        if ($request->pin != $secretPin) {
+            return back()->with('error', 'Kode PIN Keamanan Salah! Akses Ditolak.');
+        }
+
+        // Simpan tanda verifikasi ke dalam session
+        session(['security_verified_at' => now()]);
+
+        return redirect()->route('admin.security.index')->with('success', 'Akses Keamanan Diberikan.');
+    }
+
+    public function securityIndex(Request $request)
+    {
+        // 🔒 PROTEKSI VERIFIKASI: Wajib Lolos PIN & Password Dulu
+        if (!session()->has('security_verified_at')) {
+            return redirect()->route('admin.security.verify')->with('warning', 'Silakan verifikasi kata sandi & PIN keamanan terlebih dahulu.');
+        }
+
+        $normalIps   = IpLog::where('status', 'normal')->latest('last_activity_at')->get();
+        $abnormalIps = IpLog::where('status', 'abnormal')->latest('last_activity_at')->get();
+        $allowedIps  = AllowedIp::latest()->get();
+        $myIp        = $request->ip();
+
+        return view('admin.security.index', compact('normalIps', 'abnormalIps', 'allowedIps', 'myIp'));
+    }
+
+    public function securityStoreAllowedIp(Request $request)
+    {
+        if (!session()->has('security_verified_at')) {
+            return redirect()->route('admin.security.verify');
+        }
+
+        $request->validate([
+            'ip_address' => 'required|ip|unique:allowed_ips,ip_address',
+            'label'      => 'required|string|max:100',
+        ]);
+
+        AllowedIp::create([
+            'ip_address' => $request->ip_address,
+            'label'      => $request->label,
+            'added_by'   => auth()->user()->name,
+        ]);
+
+        return back()->with('success', 'IP ' . $request->ip_address . ' berhasil ditambahkan ke Whitelist Akses!');
+    }
+
+    public function securityDestroyAllowedIp(string|int $id)
+    {
+        if (!session()->has('security_verified_at')) {
+            return redirect()->route('admin.security.verify');
+        }
+
+        $ip = AllowedIp::findOrFail($id);
+
+        if ($ip->ip_address === request()->ip()) {
+            return back()->with('error', 'Anda tidak dapat menghapus IP Anda sendiri yang sedang aktif digunakan!');
+        }
+
+        $ip->delete();
+        return back()->with('success', 'IP berhasil dihapus dari Whitelist.');
+    }
+
+    public function securityToggleStatus(string|int $id)
+    {
+        if (!session()->has('security_verified_at')) {
+            return redirect()->route('admin.security.verify');
+        }
+
+        $ip = IpLog::findOrFail($id);
+        $ip->status = $ip->status === 'normal' ? 'abnormal' : 'normal';
+        $ip->reason = $ip->status === 'abnormal' ? 'Ditandai manual sebagai ancaman oleh Admin' : 'Dibersihkan oleh Admin';
+        $ip->save();
+
+        return back()->with('success', 'Status IP ' . $ip->ip_address . ' diperbarui.');
+    }
+
+    public function securityDestroyLog(string|int $id)
+    {
+        if (!session()->has('security_verified_at')) {
+            return redirect()->route('admin.security.verify');
+        }
+
+        IpLog::findOrFail($id)->delete();
+        return back()->with('success', 'Log IP dihapus.');
     }
 }

@@ -54,7 +54,7 @@
     <div class="flex min-h-screen relative">
         <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden hidden transition-opacity duration-300"></div>
 
-        <!-- SIDEBAR (KONSISTEN) -->
+        <!-- SIDEBAR -->
         <aside id="sidebar" class="w-[260px] bg-gradient-to-b from-skyDeep via-skyHover to-sky text-white flex flex-col shrink-0 border-r border-sky-400/20 shadow-2xl fixed lg:sticky top-0 h-screen z-50 closed lg:translate-x-0">
             <div class="p-6 border-b border-white/15 flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -68,13 +68,9 @@
             </div>
 
             <div class="p-4 mx-4 my-5 rounded-2xl bg-white/10 border border-white/20 flex items-center gap-3 backdrop-blur-md shadow-inner">
-                <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">{{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}</div>
+                <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 2)) }}</div>
                 <div class="overflow-hidden">
                     <p class="text-sm font-bold text-white truncate">{{ auth()->user()->name ?? 'Admin' }}</p>
-                    <div class="flex items-center gap-1.5 mt-0.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                        <p class="text-[10px] text-sky-100 truncate">Online</p>
-                    </div>
                 </div>
             </div>
 
@@ -136,10 +132,6 @@
                     <i class="fa-solid fa-crown w-4 text-center group-hover:text-amber-300 transition-colors"></i><span>Paket Membership</span>
                 </a>
                 
-                <a href="{{ route('admin.pelanggaran') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                    <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-red-300 transition-colors"></i><span>Pelanggaran</span>
-                </a>
-
                 <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-6">Sistem</p>
                 <a href="{{ route('admin.maintenance') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
                     <div class="flex items-center gap-3"><i class="fa-solid fa-server w-4 text-center group-hover:text-white transition-colors"></i><span>Maintenance & Backup</span></div>
@@ -149,7 +141,30 @@
                     <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-white transition-colors"></i>
                     <span>Pelanggaran</span>
                 </a>
+                 <a href="{{ route('admin.security.index') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl {{ request()->routeIs('admin.security.*') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }} transition-all group mt-1">
+                    <i class="fa-solid fa-shield-halved w-4 text-center text-white"></i><span>Keamanan System</span>
+                </a>
+                <a href="{{ route('admin.notifications.index') }}"
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifications.*') ? 'bg-white/20 text-white font-bold' : '' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
+                        <span>Notifikasi</span>
+                    </div>
+                    @php
+                        $unreadNotificationsCount = 0;
+                        if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
+                            $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
+                        } else {
+                            $unreadNotificationsCount = \App\Models\Notification::count();
+                        }
+                    @endphp
 
+                    @if($unreadNotificationsCount > 0)
+                        <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
+                            {{ $unreadNotificationsCount }}
+                        </span>
+                    @endif
+                </a>
             </nav>
             <div class="p-4 border-t border-white/15">
                 <form action="{{ route('logout') }}" method="POST">
@@ -182,7 +197,7 @@
                     <script>Swal.fire({icon: 'error', title: 'Gagal!', text: "{{ session('error') }}", confirmButtonColor: '#ef4444'});</script>
                 @endif
 
-                <!-- SUMMARY CARDS KEMBALI DIMUNCULKAN -->
+                <!-- SUMMARY CARDS -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     <div class="bg-gradient-to-br from-indigo-50 via-white to-indigo-100/60 border-l-4 border-indigo-500 border-y border-r border-indigo-200 p-5 rounded-2xl card-hover shadow-sm">
                         <div class="flex justify-between items-start mb-2">
@@ -225,7 +240,8 @@
                                     <th class="py-4 px-6">Deskripsi Singkat</th>
                                     <th class="py-4 px-6">Total Produk/Jasa</th>
                                     <th class="py-4 px-6">Status</th>
-                                    <th class="py-4 px-6 text-center">Aksi (CRUD)</th>
+                                    <!-- SUDAH DIUBAH DARI 'Aksi (CRUD)' MENJADI 'Aksi' -->
+                                    <th class="py-4 px-6 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="categoryTableBody" class="text-sm divide-y divide-slate-100">
@@ -250,12 +266,14 @@
                                         </td>
                                         <td class="py-3 px-6">
                                             <div class="flex items-center justify-center gap-2">
-                                                <button type="button" onclick='openEditModal(@json($category))' class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm cursor-pointer" title="Edit">
+                                                <!-- TOMBOL EDIT -->
+                                                <button type="button" onclick='openEditModal(@json($category))' class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm cursor-pointer flex items-center justify-center" title="Edit Kategori">
                                                     <i class="fa-solid fa-pen-to-square"></i>
                                                 </button>
+                                                <!-- TOMBOL HAPUS -->
                                                 <form action="{{ url('admin/categories/'.$category->id_category) }}" method="POST" class="inline delete-form">
                                                     @csrf @method('DELETE')
-                                                    <button type="button" onclick="confirmDelete(this)" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm cursor-pointer" title="Hapus">
+                                                    <button type="button" onclick="confirmDelete(this)" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm cursor-pointer flex items-center justify-center" title="Hapus">
                                                         <i class="fa-solid fa-trash"></i>
                                                     </button>
                                                 </form>
@@ -275,7 +293,7 @@
         </main>
     </div>
 
-    <!-- MODAL 1: TAMBAH KATEGORI (DENGAN CUSTOM DROPDOWN ANIMASI) -->
+    <!-- MODAL 1: TAMBAH KATEGORI (Sesuai Gambar 2) -->
     <div id="addModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0 w-screen h-screen">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 border-t-4 border-emerald-500" id="addModalContent">
             <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-emerald-50/50 rounded-t-xl">
@@ -292,17 +310,16 @@
             <form id="addForm" method="POST" action="{{ route('admin.categories.store') }}" class="p-5 space-y-4">
                 @csrf
                 <div>
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Nama Kategori</label>
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">NAMA KATEGORI</label>
                     <input type="text" name="name" id="add_name" placeholder="Masukkan nama kategori" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all">
                 </div>
                 <div>
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Deskripsi</label>
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">DESKRIPSI</label>
                     <textarea name="description" id="add_description" rows="3" placeholder="Deskripsi singkat..." class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all"></textarea>
                 </div>
                 
-                <!-- CUSTOM DROPDOWN STATUS -->
                 <div>
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Status</label>
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">STATUS</label>
                     <div class="custom-dropdown mt-1">
                         <input type="hidden" name="status" id="add_status_hidden" value="aktif">
                         <input type="checkbox" id="addDropdownToggle" class="sr-only dropdown-toggle">
@@ -326,9 +343,9 @@
         </div>
     </div>
 
-    <!-- MODAL 2: EDIT KATEGORI (DENGAN CUSTOM DROPDOWN ANIMASI) -->
+    <!-- MODAL 2: EDIT KATEGORI (Tampilan Sesuai Gaya Gambar 2 dengan Tema Biru) -->
     <div id="editModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0 w-screen h-screen">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 border-t-4 border-blue-500" id="editModalContent">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 border-t-4 border-blue-600" id="editModalContent">
             <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-blue-50/50 rounded-t-xl">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-pen-to-square text-sm"></i></div>
@@ -343,17 +360,16 @@
             <form id="editForm" method="POST" action="" class="p-5 space-y-4">
                 @csrf @method('PUT')
                 <div>
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Nama Kategori</label>
-                    <input type="text" name="name" id="edit_name" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all">
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">NAMA KATEGORI</label>
+                    <input type="text" name="name" id="edit_name" placeholder="Masukkan nama kategori" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all">
                 </div>
                 <div>
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Deskripsi</label>
-                    <textarea name="description" id="edit_description" rows="3" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all"></textarea>
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">DESKRIPSI</label>
+                    <textarea name="description" id="edit_description" rows="3" placeholder="Deskripsi singkat..." class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all"></textarea>
                 </div>
                 
-                <!-- CUSTOM DROPDOWN STATUS -->
                 <div>
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Status</label>
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">STATUS</label>
                     <div class="custom-dropdown mt-1">
                         <input type="hidden" name="status" id="edit_status_hidden" value="aktif">
                         <input type="checkbox" id="editDropdownToggle" class="sr-only dropdown-toggle">
@@ -370,13 +386,14 @@
 
                 <div class="pt-2">
                     <button type="button" onclick="submitEdit()" class="w-full py-3 bg-blue-600 text-white text-sm font-bold rounded-xl shadow-[0_4px_0_0_#1e40af] hover:bg-blue-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#1e40af] transition-all cursor-pointer">
-                        Update Perubahan
+                        Simpan Perubahan
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- JAVASCRIPT LOGIC -->
     <script>
         const sidebar = document.getElementById('sidebar');
         const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
@@ -396,6 +413,14 @@
                 if(submenu) submenu.classList.toggle('open');
                 if(chevron) chevron.classList.toggle('rotated');
             });
+        });
+
+        // Close custom dropdowns when clicking outside
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.custom-dropdown')) {
+                const toggles = document.querySelectorAll('.dropdown-toggle');
+                toggles.forEach(t => t.checked = false);
+            }
         });
 
         function filterCategories() {
@@ -427,6 +452,7 @@
             document.getElementById(`${type}DropdownToggle`).checked = false;
         }
 
+        // --- TAMBAH KATEGORI MODAL LOGIC ---
         const addModal = document.getElementById('addModal');
         const addModalContent = document.getElementById('addModalContent');
 
@@ -457,6 +483,7 @@
             document.getElementById('addForm').submit();
         }
 
+        // --- EDIT KATEGORI MODAL LOGIC ---
         const editModal = document.getElementById('editModal');
         const editModalContent = document.getElementById('editModalContent');
         let originalEditData = {};

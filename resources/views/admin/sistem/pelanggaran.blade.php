@@ -57,13 +57,9 @@
             </div>
 
             <div class="p-4 mx-4 my-5 rounded-2xl bg-white/10 border border-white/20 flex items-center gap-3 backdrop-blur-md shadow-inner">
-                <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">{{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}</div>
+                <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 2)) }}</div>
                 <div class="overflow-hidden">
                     <p class="text-sm font-bold text-white truncate">{{ auth()->user()->name ?? 'Admin' }}</p>
-                    <div class="flex items-center gap-1.5 mt-0.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                        <p class="text-[10px] text-sky-100 truncate">Online</p>
-                    </div>
                 </div>
             </div>
 
@@ -129,8 +125,35 @@
                 <a href="{{ route('admin.maintenance') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
                     <i class="fa-solid fa-server w-4 text-center text-white"></i><span>Maintenance & Backup</span>
                 </a>
+
+                 <a href="{{ route('admin.security.index') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl {{ request()->routeIs('admin.security.*') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }} transition-all group mt-1">
+                    <i class="fa-solid fa-shield-halved w-4 text-center text-white"></i><span>Keamanan System</span>
+                </a>
+
                 <a href="{{ route('admin.pelanggaran') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl active-menu transition-all group mt-1">
                     <i class="fa-solid fa-triangle-exclamation w-4 text-center text-white"></i><span>Pelanggaran</span>
+                </a>
+                <!-- MENU NOTIFIKASI -->
+                <a href="{{ route('admin.notifications.index') }}"
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifikasi.*') ? 'bg-white/20 text-white font-bold' : '' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
+                        <span>Notifikasi</span>
+                    </div>
+                    @php
+                        $unreadNotificationsCount = 0;
+                        if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
+                            $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
+                        } else {
+                            $unreadNotificationsCount = \App\Models\Notification::count();
+                        }
+                    @endphp
+
+                    @if($unreadNotificationsCount > 0)
+                        <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
+                            {{ $unreadNotificationsCount }}
+                        </span>
+                    @endif
                 </a>
             </nav>
             <div class="p-4 border-t border-white/15">
@@ -160,58 +183,76 @@
                 <!-- TAB SWITCHER -->
                 <div class="flex items-center gap-2 bg-white border border-sky-200 rounded-2xl p-1.5 w-full sm:w-max shadow-sm">
                     <button type="button" onclick="switchTab('pengguna')" id="tabBtnPengguna" class="tab-btn active-tab px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer">
-                        <i class="fa-solid fa-user-xmark mr-1"></i> Pelanggaran Pengguna
+                        <i class="fa-solid fa-user-xmark mr-1"></i> Pelanggaran Pengguna / Umum
                     </button>
                     <button type="button" onclick="switchTab('penjual')" id="tabBtnPenjual" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-sky-600 transition-all border border-transparent cursor-pointer">
                         <i class="fa-solid fa-shop-slash mr-1"></i> Pelanggaran Produk / Penjual
                     </button>
                 </div>
 
-                <!-- TAB 1: LAPORAN PENGGUNA -->
+                <!-- TAB 1: LAPORAN PENGGUNA / UMUM -->
                 <div id="tabPengguna" class="bg-white border border-sky-200 rounded-2xl shadow-sm overflow-hidden block">
                     <div class="p-5 border-b border-sky-100 flex items-center justify-between">
-                        <h3 class="font-extrabold text-slate-900 text-lg font-display">Daftar Laporan Pengguna</h3>
+                        <h3 class="font-extrabold text-slate-900 text-lg font-display">Daftar Laporan Pengguna & Umum</h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-[11px] uppercase tracking-wider font-bold">
-                                    <th class="py-4 px-6">ID Laporan</th>
-                                    <th class="py-4 px-6">Alasan Laporan</th>
+                                    <th class="py-4 px-6">Pelapor</th>
+                                    <th class="py-4 px-6">Dilaporkan</th>
+                                    <th class="py-4 px-6">Alasan</th>
+                                    <th class="py-4 px-6">Deskripsi</th>
+                                    <th class="py-4 px-6">Status</th>
                                     <th class="py-4 px-6">Tanggal</th>
                                     <th class="py-4 px-6 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-slate-100">
-                                @forelse($reports ?? [] as $report)
+                                @forelse($reportsUser as $report)
+                                @php
+                                $statusColor = match($report->status) {
+                                'reviewed' => 'bg-blue-50 text-blue-700 border-blue-200',
+                                'dismissed' => 'bg-slate-100 text-slate-600 border-slate-200',
+                                'escalated' => 'bg-red-50 text-red-700 border-red-200',
+                                default => 'bg-amber-50 text-amber-700 border-amber-200',
+                                };
+                                @endphp
                                 <tr class="hover:bg-slate-50 transition-colors bg-white">
-                                    <td class="py-3 px-6">
-                                        <div class="font-bold text-slate-800 text-xs">#{{ $report->id ?? $report->id_report ?? $loop->iteration }}</div>
+                                    <td class="py-3 px-6 text-xs font-semibold text-slate-700">{{ $report->reporter->name ?? 'User #'.$report->user_id }}</td>
+                                    <td class="py-3 px-6 text-xs font-semibold text-slate-700">
+                                        @if($report->reportedUser)
+                                            <span class="text-slate-800">{{ $report->reportedUser->name }}</span>
+                                        @else
+                                            <span class="text-slate-400 italic">Laporan Umum / Sistem</span>
+                                        @endif
                                     </td>
-                                    <td class="py-3 px-6">
-                                        <p class="text-xs font-semibold text-slate-700">{{ $report->reason ?? $report->description ?? 'Tidak ada keterangan.' }}</p>
-                                    </td>
-                                    <td class="py-3 px-6 text-xs text-slate-600">{{ optional($report->created_at)->format('d M Y - H:i') ?? '-' }}</td>
+                                    <td class="py-3 px-6"><p class="text-xs text-slate-700 font-medium">{{ $report->reason }}</p></td>
+                                    <td class="py-3 px-6"><p class="text-xs text-slate-600 w-48 truncate">{{ $report->description ?? '-' }}</p></td>
+                                    <td class="py-3 px-6"><span class="text-[10px] font-bold px-2 py-1 rounded-md border {{ $statusColor }}">{{ ucfirst($report->status) }}</span></td>
+                                    <td class="py-3 px-6 text-xs text-slate-600">{{ optional($report->created_at)->format('d M Y - H:i') }}</td>
                                     <td class="py-3 px-6">
                                         <div class="flex justify-center">
-                                            <button type="button" onclick="openTindakModal('user', '{{ $report->id ?? $report->id_report ?? 1 }}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer">
+                                            @if(in_array($report->status, ['pending', 'escalated']))
+                                            <button type="button" onclick="openTindakModal('user', '{{ $report->id_report }}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer">
                                                 <i class="fa-solid fa-gavel"></i> Tindak Lanjut
                                             </button>
+                                            @else
+                                            <span class="text-[10px] text-slate-400 font-semibold">Sudah ditindak</span>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="text-center py-10 text-slate-400 text-xs font-semibold">Belum ada data laporan pengguna.</td>
+                                    <td colspan="7" class="text-center py-10 text-slate-400 text-xs font-semibold">Belum ada data laporan pengguna.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
-                    @if(isset($reports) && method_exists($reports, 'hasPages') && $reports->hasPages())
-                        <div class="p-4 border-t border-slate-100">
-                            {{ $reports->links() }}
-                        </div>
+                    @if($reportsUser->hasPages())
+                        <div class="p-4 border-t border-slate-100">{{ $reportsUser->appends(request()->query())->links() }}</div>
                     @endif
                 </div>
 
@@ -224,38 +265,55 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-[11px] uppercase tracking-wider font-bold">
-                                    <th class="py-4 px-6">ID Laporan</th>
-                                    <th class="py-4 px-6">Alasan Laporan</th>
+                                    <th class="py-4 px-6">Pelapor</th>
+                                    <th class="py-4 px-6">Produk & Penjual</th>
+                                    <th class="py-4 px-6">Alasan</th>
+                                    <th class="py-4 px-6">Status</th>
                                     <th class="py-4 px-6">Tanggal</th>
                                     <th class="py-4 px-6 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-slate-100">
-                                @forelse($reports ?? [] as $report)
+                                @forelse($reportsProduk as $report)
+                                @php
+                                    $statusColor = match($report->status) {
+                                        'reviewed' => 'bg-blue-50 text-blue-700 border-blue-200',
+                                        'dismissed' => 'bg-slate-100 text-slate-600 border-slate-200',
+                                        default => 'bg-amber-50 text-amber-700 border-amber-200',
+                                    };
+                                @endphp
                                 <tr class="hover:bg-slate-50 transition-colors bg-white">
+                                    <td class="py-3 px-6 text-xs font-semibold text-slate-700">{{ $report->reporter->name ?? 'User #'.$report->user_id }}</td>
                                     <td class="py-3 px-6">
-                                        <div class="font-bold text-slate-800 text-xs">#{{ $report->id ?? $report->id_report ?? $loop->iteration }}</div>
+                                        <p class="text-xs font-semibold text-slate-700">{{ $report->product->title ?? 'Produk dihapus' }}</p>
+                                        <p class="text-[10px] text-slate-500">{{ $report->product->seller->name ?? '-' }}</p>
                                     </td>
-                                    <td class="py-3 px-6">
-                                        <p class="text-xs font-semibold text-slate-700">{{ $report->reason ?? $report->description ?? 'Tidak ada keterangan.' }}</p>
-                                    </td>
-                                    <td class="py-3 px-6 text-xs text-slate-600">{{ optional($report->created_at)->format('d M Y - H:i') ?? '-' }}</td>
+                                    <td class="py-3 px-6"><p class="text-xs text-slate-600 w-56 truncate">{{ $report->reason }}</p></td>
+                                    <td class="py-3 px-6"><span class="text-[10px] font-bold px-2 py-1 rounded-md border {{ $statusColor }}">{{ ucfirst($report->status) }}</span></td>
+                                    <td class="py-3 px-6 text-xs text-slate-600">{{ optional($report->created_at)->format('d M Y - H:i') }}</td>
                                     <td class="py-3 px-6">
                                         <div class="flex justify-center">
-                                            <button type="button" onclick="openTindakModal('produk', '{{ $report->id ?? $report->id_report ?? 1 }}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer">
+                                            @if($report->status === 'pending')
+                                            <button type="button" onclick="openTindakModal('produk', '{{ $report->id_report }}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer">
                                                 <i class="fa-solid fa-shield-halved"></i> Tindak Lanjut
                                             </button>
+                                            @else
+                                            <span class="text-[10px] text-slate-400 font-semibold">Sudah ditindak</span>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="text-center py-10 text-slate-400 text-xs font-semibold">Belum ada data laporan produk.</td>
+                                    <td colspan="6" class="text-center py-10 text-slate-400 text-xs font-semibold">Belum ada data laporan produk.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
+                    @if($reportsProduk->hasPages())
+                        <div class="p-4 border-t border-slate-100">{{ $reportsProduk->appends(request()->query())->links() }}</div>
+                    @endif
                 </div>
 
             </div>
@@ -272,7 +330,7 @@
                 </div>
                 <button type="button" onclick="closeTindakModal()" class="text-slate-400 hover:text-red-500 transition-colors w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form action="" method="POST" id="formTindak" class="p-6 space-y-4">
+            <form action="#" method="POST" id="formTindak" class="p-6 space-y-4">
                 @csrf
                 <div>
                     <label class="text-xs font-bold text-slate-700 uppercase tracking-wide">Pilih Aksi</label>
