@@ -299,8 +299,12 @@ class PembeliController extends Controller
         $memberships = Membership::orderBy('price')->get();
         $user        = Auth::user();
         $isPenjual   = ($user->role->role_name ?? null) === 'penjual';
+        $pending     = \App\Models\IdentityVerification::where('user_id', Auth::id())
+            ->where('status', 'pending')
+            ->latest('id_identity_verification')
+            ->first();
 
-        return view('pembeli.membership', compact('memberships', 'user', 'isPenjual'));
+        return view('pembeli.membership', compact('memberships', 'user', 'isPenjual', 'pending'));
     }
 
 

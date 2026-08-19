@@ -180,7 +180,7 @@
             @endphp
 
             @if (! $isPenjualNav)
-            <a href="{{ route('pembeli.membership') }}" class="btn-jual d-none d-md-inline-flex">
+            <a href="{{ route('pembeli.seller.registration.create') }}" class="btn-jual d-none d-md-inline-flex">
                 <i class="bi bi-shop-window"></i> <span>Daftar Sebagai Penjual</span>
             </a>
             @endif
@@ -220,8 +220,6 @@
                 </button>
                 <div class="user-dropdown">
                     <a href="{{ route('pembeli.profile') }}"><i class="bi bi-person-fill"></i> Profile</a>
-                    <a href="{{ route('pembeli.pesanan') }}"><i class="bi bi-receipt"></i> Pesanan Saya</a>
-                    <a href="{{ route('pembeli.download') }}"><i class="bi bi-cloud-arrow-down-fill"></i> Download Saya</a>
                     <a href="{{ route('reports.create') }}"><i class="bi bi-flag-fill"></i> Laporkan Pelanggaran</a>
                     <a href="{{ route('reports.index') }}"><i class="bi bi-clock-history"></i> Riwayat Laporan Saya</a>
                     <a href="{{ route('pembeli.peringatan') }}"><i class="bi bi-exclamation-triangle-fill"></i> Peringatan Saya</a>

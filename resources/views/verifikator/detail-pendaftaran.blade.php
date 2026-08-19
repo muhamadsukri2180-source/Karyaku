@@ -180,48 +180,54 @@
 
 
         <div class="row">
-
             <div class="label">
                 Paket
             </div>
-
             {{ $registration->membership->name ?? '-' }}
-
         </div>
 
+        <div class="row">
+            <div class="label">
+                Metode Pembayaran
+            </div>
+            {{ $registration->payment_method ?? 'Transfer Bank' }}
+        </div>
 
         <div class="row">
-
             <div class="label">
                 Nominal Pembayaran
             </div>
-
-            Rp
-            {{ number_format($registration->payment_amount, 0, ',', '.') }}
-
+            Rp {{ number_format($registration->payment_amount, 0, ',', '.') }}
         </div>
 
+        <div class="row">
+            <div class="label">
+                Foto KTP
+            </div>
+            @if ($registration->identity_document)
+                <img
+                    src="{{ asset('storage/' . $registration->identity_document) }}"
+                    class="proof"
+                    alt="Foto KTP"
+                >
+            @else
+                Tidak ada foto KTP.
+            @endif
+        </div>
 
         <div class="row">
-
             <div class="label">
                 Bukti Pembayaran
             </div>
-
             @if ($registration->payment_proof)
-
                 <img
                     src="{{ asset('storage/' . $registration->payment_proof) }}"
                     class="proof"
                     alt="Bukti pembayaran"
                 >
-
             @else
-
                 Tidak ada bukti pembayaran.
-
             @endif
-
         </div>
 
     </div>

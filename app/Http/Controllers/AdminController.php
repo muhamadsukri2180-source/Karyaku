@@ -476,7 +476,7 @@ class AdminController extends Controller
                 });
         }
 
-        $pendingQueue = IdentityVerification::with(['user'])
+        $pendingQueue = IdentityVerification::with(['user', 'membership'])
             ->where('status', 'pending')
             ->latest('id_identity_verification')
             ->paginate(10)
@@ -582,8 +582,9 @@ class AdminController extends Controller
             ]);
 
             $user->update([
-                'id_role' => $penjualRole->id_role,
-                'status'  => 'active',
+                'id_role'       => $penjualRole->id_role,
+                'id_membership' => $verification->membership_id ?? $user->id_membership,
+                'status'        => 'active',
             ]);
 
             DB::commit();
@@ -1193,4 +1194,21 @@ class AdminController extends Controller
         IpLog::findOrFail($id)->delete();
         return back()->with('success', 'Log IP dihapus.');
     }
+    public function suspendUser(string|int $id)
+{
+    $user = User::findOrFail($id);
+
+    if ($user->role?->role_name === 'admin') {
+        return redirect()->back()->with('error', 'Akun Admin tidak dapat disuspend.');
+    }
+
+    $user->status = $user->status === 'blocked' ? 'active' : 'blocked';
+    $user->save();
+
+    $message = $user->status === 'blocked'
+        ? 'Pengguna berhasil disuspend.'
+        : 'Pengguna berhasil diaktifkan kembali.';
+
+    return redirect()->back()->with('success', $message);
+}
 }

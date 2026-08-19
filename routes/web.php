@@ -71,6 +71,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');
     Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('users.update');
     Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('users.delete');
+    Route::put('admin/users/{id}/suspend', [AdminController::class, 'suspendUser'])->name('admin.users.suspend');
 
     Route::get('/users/verifikator', [AdminController::class, 'verifikator'])->name('users.verifikator');
     Route::post('/users/add-verifier', [AdminController::class, 'addVerifier'])->name('users.addVerifier');
@@ -218,6 +219,7 @@ Route::middleware(['auth', 'role:pembeli'])->prefix('pembeli')->name('pembeli.')
 
     // Pendaftaran Menjadi Penjual
     Route::get('/daftar-penjual', [SellerRegistrationController::class, 'create'])->name('seller.registration.create');
+    Route::get('/daftar-penjual-alias', [SellerRegistrationController::class, 'create'])->name('daftar.penjual');
     Route::post('/daftar-penjual', [SellerRegistrationController::class, 'store'])->name('seller.registration.store');
     Route::get('/daftar-penjual/status', [SellerRegistrationController::class, 'status'])->name('seller.registration.status');
     Route::delete('/daftar-penjual/cancel', [SellerRegistrationController::class, 'cancel'])->name('seller.registration.cancel');

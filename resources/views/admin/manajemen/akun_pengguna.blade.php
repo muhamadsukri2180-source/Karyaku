@@ -190,7 +190,7 @@
                     <button id="sidebarToggleBtn" class="lg:hidden w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition border border-sky-200 shadow-sm"><i class="fa-solid fa-bars text-base"></i></button>
                     <div>
                         <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900">Akun Pengguna</h2>
-                        <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Kelola seluruh data kreator dan pembeli di Karyaku (CRUD).</p>
+                        <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Kelola seluruh data kreator dan pembeli di Karyaku (Suspend & Hapus).</p>
                     </div>
                 </div>
             </header>
@@ -233,18 +233,13 @@
                 </div>
 
                 <!-- MAIN TABLE AREA -->
-                <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 backdrop-blur-sm">
-                        <form method="GET" action="{{ route('admin.users') }}" class="relative w-full sm:w-72">
-                            <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau email..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
-                        </form>
-                        
-                        <!-- TOMBOL 3D BIRU KOKOH -->
-                        <button type="button" onclick="openAddUserModal()" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-blue-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#cbd5e1] transition-all cursor-pointer w-full sm:w-auto">
-                            <i class="fa-solid fa-user-plus"></i> Tambah Pengguna Baru
-                        </button>
-                    </div>
+               <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 backdrop-blur-sm">
+        <form method="GET" action="{{ route('admin.users') }}" class="relative w-full sm:flex-1">
+            <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau email..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
+        </form>
+    </div>
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
@@ -268,6 +263,7 @@
                                             'blocked' => 'bg-red-100 text-red-700 border-red-200',
                                             default => 'bg-slate-100 text-slate-600 border-slate-200',
                                         };
+                                        $isBlocked = $user->status === 'blocked';
                                     @endphp
                                     <tr class="hover:bg-sky-50/50 transition-colors bg-white">
                                         <td class="py-3 px-6">
@@ -292,17 +288,17 @@
                                         </td>
                                         <td class="py-3 px-6">
                                             <div class="flex items-center justify-center gap-2">
+                                                <!-- TOMBOL SUSPEND / AKTIFKAN -->
                                                 <button type="button"
-                                                    class="btn-edit-user w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center justify-center"
+                                                    class="btn-suspend-user w-8 h-8 rounded-lg {{ $isBlocked ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-600' : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-600' }} border hover:text-white transition-all shadow-sm flex items-center justify-center"
                                                     data-id="{{ $user->id_user }}"
                                                     data-name="{{ $user->name }}"
-                                                    data-email="{{ $user->email }}"
-                                                    data-phone="{{ $user->phone }}"
-                                                    data-role="{{ $user->id_role }}"
                                                     data-status="{{ $user->status }}"
-                                                    title="Edit Pengguna">
-                                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                                    title="{{ $isBlocked ? 'Aktifkan Kembali' : 'Suspend Pengguna' }}">
+                                                    <i class="fa-solid {{ $isBlocked ? 'fa-lock-open' : 'fa-ban' }} text-xs"></i>
                                                 </button>
+
+                                                <!-- TOMBOL HAPUS -->
                                                 <button type="button"
                                                     class="btn-delete-user w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center justify-center"
                                                     data-id="{{ $user->id_user }}"
@@ -333,157 +329,6 @@
         </main>
     </div>
 
-    <!-- MODAL: TAMBAH PENGGUNA -->
-    <div id="addUserModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col transform scale-95 transition-transform duration-300 mx-4 overflow-hidden" id="addUserModalContent">
-            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center"><i class="fa-solid fa-user-plus text-sm"></i></div>
-                    <h3 class="font-extrabold text-slate-900 font-display text-base">Tambah Pengguna Baru</h3>
-                </div>
-                <button type="button" onclick="closeModal('addUserModal')" class="text-slate-400 hover:text-red-500 transition-colors w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form method="POST" action="{{ route('admin.users.store') }}" class="p-6 space-y-4 overflow-y-auto flex-1">
-                @csrf
-                <div>
-                    <label class="text-xs font-bold text-slate-700">Nama Lengkap</label>
-                    <input type="text" name="name" required class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-700">Email</label>
-                    <input type="email" name="email" required class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-700">Password</label>
-                    <div class="relative mt-1">
-                        <input type="password" name="password" id="addPassword" required minlength="8" class="w-full border border-sky-200 rounded-xl px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
-                        <button type="button" onclick="togglePassword('addPassword', 'eyeIconAdd')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none cursor-pointer">
-                            <i class="fa-solid fa-eye text-sm" id="eyeIconAdd"></i>
-                        </button>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-700">No. Telepon</label>
-                    <input type="text" name="phone" class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-700">Peran (Role)</label>
-                    <div class="relative mt-1">
-                        <input type="checkbox" id="roleDropdownToggleAdd" class="sr-only peer">
-                        <label for="roleDropdownToggleAdd" class="flex items-center justify-between w-full border border-sky-200 rounded-xl px-3 py-2 text-sm bg-white cursor-pointer select-none shadow-sm hover:border-sky-400 transition">
-                            <span id="selectedRoleTextAdd" class="font-medium text-slate-800">Kreator (Penjual)</span>
-                            <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
-                        </label>
-                        <ul class="absolute left-0 right-0 mt-1 bg-white border border-sky-200 rounded-xl shadow-lg max-h-40 overflow-y-auto z-50 hidden peer-checked:block py-1">
-                            @foreach($roles as $role)
-                                <li onclick="selectRole('Add', '{{ $role->id_role }}', '{{ $role->role_name === 'penjual' ? 'Kreator (Penjual)' : 'Pembeli' }}')" class="px-3 py-2 text-xs font-medium text-slate-700 hover:bg-sky-50 hover:text-sky cursor-pointer transition">
-                                    {{ $role->role_name === 'penjual' ? 'Kreator (Penjual)' : 'Pembeli' }}
-                                </li>
-                            @endforeach
-                        </ul>
-                        <input type="hidden" name="id_role" id="roleInputAdd" value="{{ $roles->first()->id_role ?? 1 }}">
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-700">Status</label>
-                    <div class="relative mt-1">
-                        <input type="checkbox" id="statusDropdownToggleAdd" class="sr-only peer">
-                        <label for="statusDropdownToggleAdd" class="flex items-center justify-between w-full border border-sky-200 rounded-xl px-3 py-2 text-sm bg-white cursor-pointer select-none shadow-sm hover:border-sky-400 transition">
-                            <span id="selectedStatusTextAdd" class="font-medium text-slate-800">Aktif</span>
-                            <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
-                        </label>
-                        <ul class="absolute left-0 right-0 mt-1 bg-white border border-sky-200 rounded-xl shadow-lg max-h-40 overflow-y-auto z-50 hidden peer-checked:block py-1">
-                            <li onclick="selectStatus('Add', 'active', 'Aktif')" class="px-3 py-2 text-xs font-medium text-slate-700 hover:bg-sky-50 hover:text-sky cursor-pointer transition">Aktif</li>
-                            <li onclick="selectStatus('Add', 'inactive', 'Tidak Aktif')" class="px-3 py-2 text-xs font-medium text-slate-700 hover:bg-sky-50 hover:text-sky cursor-pointer transition">Tidak Aktif</li>
-                            <li onclick="selectStatus('Add', 'blocked', 'Diblokir')" class="px-3 py-2 text-xs font-medium text-slate-700 hover:bg-sky-50 hover:text-sky cursor-pointer transition">Diblokir</li>
-                        </ul>
-                        <input type="hidden" name="status" id="statusInputAdd" value="active">
-                    </div>
-                </div>
-                <div class="flex justify-end gap-2 pt-3 pb-2">
-                    <button type="button" onclick="closeModal('addUserModal')" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">Simpan Pengguna</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL: EDIT PENGGUNA -->
-    <div id="editUserModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col transform scale-95 transition-transform duration-300 mx-4 overflow-hidden" id="editUserModalContent">
-            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-pen-to-square text-sm"></i></div>
-                    <h3 class="font-extrabold text-slate-900 font-display text-base">Edit Pengguna</h3>
-                </div>
-                <button type="button" onclick="closeModal('editUserModal')" class="text-slate-400 hover:text-red-500 transition-colors w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form id="editUserForm" method="POST" action="" class="p-6 space-y-4 overflow-y-auto flex-1">
-                @csrf
-                @method('PUT')
-                <div>
-                    <label class="text-xs font-bold text-slate-700">Nama Lengkap</label>
-                    <input type="text" name="name" id="editUserName" required class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-700">Email</label>
-                    <input type="email" name="email" id="editUserEmail" required class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-700">Password Baru (opsional)</label>
-                    <div class="relative mt-1">
-                        <input type="password" name="password" id="editPassword" minlength="8" placeholder="Kosongkan jika tidak diubah" class="w-full border border-sky-200 rounded-xl px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
-                        <button type="button" onclick="togglePassword('editPassword', 'eyeIconEdit')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none cursor-pointer">
-                            <i class="fa-solid fa-eye text-sm" id="eyeIconEdit"></i>
-                        </button>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-700">No. Telepon</label>
-                    <input type="text" name="phone" id="editUserPhone" class="mt-1 w-full border border-sky-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-700">Peran (Role)</label>
-                    <div class="relative mt-1">
-                        <input type="checkbox" id="roleDropdownToggleEdit" class="sr-only peer">
-                        <label for="roleDropdownToggleEdit" class="flex items-center justify-between w-full border border-sky-200 rounded-xl px-3 py-2 text-sm bg-white cursor-pointer select-none shadow-sm hover:border-sky-400 transition">
-                            <span id="selectedRoleTextEdit" class="font-medium text-slate-800">Kreator (Penjual)</span>
-                            <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
-                        </label>
-                        <ul class="absolute left-0 right-0 mt-1 bg-white border border-sky-200 rounded-xl shadow-lg max-h-40 overflow-y-auto z-50 hidden peer-checked:block py-1">
-                            @foreach($roles as $role)
-                                <li onclick="selectRole('Edit', '{{ $role->id_role }}', '{{ $role->role_name === 'penjual' ? 'Kreator (Penjual)' : 'Pembeli' }}')" class="px-3 py-2 text-xs font-medium text-slate-700 hover:bg-sky-50 hover:text-sky cursor-pointer transition">
-                                    {{ $role->role_name === 'penjual' ? 'Kreator (Penjual)' : 'Pembeli' }}
-                                </li>
-                            @endforeach
-                        </ul>
-                        <input type="hidden" name="id_role" id="roleInputEdit" value="">
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-700">Status</label>
-                    <div class="relative mt-1">
-                        <input type="checkbox" id="statusDropdownToggleEdit" class="sr-only peer">
-                        <label for="statusDropdownToggleEdit" class="flex items-center justify-between w-full border border-sky-200 rounded-xl px-3 py-2 text-sm bg-white cursor-pointer select-none shadow-sm hover:border-sky-400 transition">
-                            <span id="selectedStatusTextEdit" class="font-medium text-slate-800">Aktif</span>
-                            <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
-                        </label>
-                        <ul class="absolute left-0 right-0 mt-1 bg-white border border-sky-200 rounded-xl shadow-lg max-h-40 overflow-y-auto z-50 hidden peer-checked:block py-1">
-                            <li onclick="selectStatus('Edit', 'active', 'Aktif')" class="px-3 py-2 text-xs font-medium text-slate-700 hover:bg-sky-50 hover:text-sky cursor-pointer transition">Aktif</li>
-                            <li onclick="selectStatus('Edit', 'inactive', 'Tidak Aktif')" class="px-3 py-2 text-xs font-medium text-slate-700 hover:bg-sky-50 hover:text-sky cursor-pointer transition">Tidak Aktif</li>
-                            <li onclick="selectStatus('Edit', 'blocked', 'Diblokir')" class="px-3 py-2 text-xs font-medium text-slate-700 hover:bg-sky-50 hover:text-sky cursor-pointer transition">Diblokir</li>
-                        </ul>
-                        <input type="hidden" name="status" id="statusInputEdit" value="active">
-                    </div>
-                </div>
-                <div class="flex justify-end gap-2 pt-3 pb-2">
-                    <button type="button" onclick="closeModal('editUserModal')" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">Simpan Perubahan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- SCRIPTS -->
     <script>
         const sidebar = document.getElementById('sidebar');
@@ -506,92 +351,50 @@
             });
         });
 
-        function selectRole(modalType, id, text) {
-            document.getElementById(`selectedRoleText${modalType}`).textContent = text;
-            document.getElementById(`roleInput${modalType}`).value = id;
-            document.getElementById(`roleDropdownToggle${modalType}`).checked = false;
-        }
-
-        function selectStatus(modalType, val, text) {
-            document.getElementById(`selectedStatusText${modalType}`).textContent = text;
-            document.getElementById(`statusInput${modalType}`).value = val;
-            document.getElementById(`statusDropdownToggle${modalType}`).checked = false;
-        }
-
-        function togglePassword(fieldId, iconId) {
-            const input = document.getElementById(fieldId);
-            const icon = document.getElementById(iconId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        }
-
-        function openModal(modalId) {
-            const modal = document.getElementById(modalId);
-            const content = document.getElementById(modalId + 'Content');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
-            }, 10);
-        }
-
-        function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            const content = document.getElementById(modalId + 'Content');
-            modal.classList.add('opacity-0');
-            content.classList.remove('scale-100');
-            content.classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300);
-        }
-
-        function openAddUserModal() { openModal('addUserModal'); }
-
-        function openEditUserModal(user) {
-            const form = document.getElementById('editUserForm');
-            form.action = `{{ url('admin/users') }}/${user.id}`;
-            document.getElementById('editUserName').value = user.name ?? '';
-            document.getElementById('editUserEmail').value = user.email ?? '';
-            document.getElementById('editUserPhone').value = user.phone ?? '';
-
-            const roleId = user.role ?? '';
-            document.getElementById('roleInputEdit').value = roleId;
-            let roleText = 'Kreator (Penjual)';
-            if (roleId == '2' || roleId.toString().toLowerCase().includes('pembeli')) {
-                roleText = 'Pembeli';
-            }
-            document.getElementById('selectedRoleTextEdit').textContent = roleText;
-
-            const statusVal = user.status ?? 'active';
-            document.getElementById('statusInputEdit').value = statusVal;
-            let statusText = 'Aktif';
-            if (statusVal === 'inactive') statusText = 'Tidak Aktif';
-            if (statusVal === 'blocked') statusText = 'Diblokir';
-            document.getElementById('selectedStatusTextEdit').textContent = statusText;
-
-            openModal('editUserModal');
-        }
-
-        document.querySelectorAll('.btn-edit-user').forEach(btn => {
+        // === SUSPEND / AKTIFKAN PENGGUNA ===
+        document.querySelectorAll('.btn-suspend-user').forEach(btn => {
             btn.addEventListener('click', () => {
-                openEditUserModal({
-                    id: btn.dataset.id,
-                    name: btn.dataset.name,
-                    email: btn.dataset.email,
-                    phone: btn.dataset.phone,
-                    role: btn.dataset.role,
-                    status: btn.dataset.status,
+                const id = btn.dataset.id;
+                const name = btn.dataset.name;
+                const isBlocked = btn.dataset.status === 'blocked';
+
+                Swal.fire({
+                    title: isBlocked ? 'Aktifkan Pengguna?' : 'Suspend Pengguna?',
+                    text: isBlocked
+                        ? `Akun "${name}" akan diaktifkan kembali dan bisa login seperti biasa.`
+                        : `Akun "${name}" akan disuspend (diblokir) dan tidak bisa login sampai diaktifkan kembali.`,
+                    icon: isBlocked ? 'question' : 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: isBlocked ? '#10b981' : '#f59e0b',
+                    cancelButtonColor: '#94a3b8',
+                    confirmButtonText: isBlocked ? 'Ya, Aktifkan!' : 'Ya, Suspend!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `{{ url('admin/users') }}/${id}/suspend`;
+
+                        const csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = '_token';
+                        csrfInput.value = '{{ csrf_token() }}';
+                        form.appendChild(csrfInput);
+
+                        const methodInput = document.createElement('input');
+                        methodInput.type = 'hidden';
+                        methodInput.name = '_method';
+                        methodInput.value = 'PUT';
+                        form.appendChild(methodInput);
+
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
                 });
             });
         });
 
+        // === HAPUS PENGGUNA ===
         document.querySelectorAll('.btn-delete-user').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = btn.dataset.id;
@@ -635,6 +438,9 @@
         @endif
         @if (session('error'))
             Swal.fire({ icon: 'error', title: 'Gagal!', text: "{{ session('error') }}", confirmButtonColor: '#ef4444' });
+        @endif
+        @if (session('warning'))
+            Swal.fire({ icon: 'warning', title: 'Perhatian!', text: "{{ session('warning') }}", confirmButtonColor: '#f59e0b' });
         @endif
         @if ($errors->any())
             Swal.fire({ icon: 'warning', title: 'Perhatian!', html: '<ul class="text-left text-xs space-y-1">@foreach($errors->all() as $err)<li>• {{ $err }}</li>@endforeach</ul>', confirmButtonColor: '#0EA5E9' });

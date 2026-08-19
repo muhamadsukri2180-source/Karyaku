@@ -4,7 +4,7 @@
 @section('content')
 
 <div class="mb-4">
-    <h4 class="fw-bold mb-1">Halo, {{ $navUser->name ?? 'Pembeli' }} 👋</h4>
+    <h4 class="fw-bold mb-1">Halo, {{ $navUser->name ?? 'Pembeli' }}</h4>
     <p class="text-muted mb-0" style="font-size: 13px;">Berikut ringkasan aktivitas belanja kamu di Karyaku.</p>
 </div>
 

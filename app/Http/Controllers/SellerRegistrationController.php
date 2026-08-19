@@ -10,297 +10,160 @@ use Illuminate\Support\Facades\Storage;
 
 class SellerRegistrationController extends Controller
 {
-    /**
-     * Menampilkan halaman pendaftaran penjual.
-     */
+    // ================= FORM PENDAFTARAN =================
     public function create(Request $request)
     {
-        $memberships = Membership::orderBy('price')->get();
-
-        $selectedMembership = null;
-
-        if ($request->filled('membership')) {
-            $selectedMembership = Membership::find(
-                $request->membership
-            );
-        }
-
         $user = Auth::user();
 
-        return view(
-            'pembeli.daftar-penjual',
-            compact(
-                'memberships',
-                'selectedMembership',
-                'user'
-            )
-        );
+        // Jika sudah penjual, arahkan ke status / dashboard
+        if ($user->role?->role_name === 'penjual') {
+            return redirect()->route('pembeli.seller.registration.status');
+        }
+
+        // Jika ada pendaftaran pending, arahkan ke status
+        $pending = IdentityVerification::where('user_id', $user->id_user)
+            ->where('status', 'pending')
+            ->latest('id_identity_verification')
+            ->first();
+
+        if ($pending) {
+            return redirect()->route('pembeli.seller.registration.status');
+        }
+
+        $memberships = Membership::orderBy('price', 'asc')->get();
+
+        $selectedMembershipId = $request->query('membership');
+        if ($selectedMembershipId && ! $memberships->contains('id_membership', (int) $selectedMembershipId)) {
+            $selectedMembershipId = null;
+        }
+
+        if (! $selectedMembershipId && $memberships->isNotEmpty()) {
+            $selectedMembershipId = $memberships->first()->id_membership;
+        }
+
+        $banks = ['BCA', 'BNI', 'BRI', 'Mandiri', 'CIMB Niaga', 'Permata', 'SeaBank', 'Bank Jago', 'BSI'];
+
+        $paymentMethods = [
+            'BCA'     => 'Transfer Bank BCA (0862398284994 a.n KARYAKU)',
+            'BNI'     => 'Transfer Bank BNI (8820192019 a.n KARYAKU)',
+            'Mandiri' => 'Transfer Bank Mandiri (137001928301 a.n KARYAKU)',
+            'BRI'     => 'Transfer Bank BRI (0192019283019 a.n KARYAKU)',
+            'QRIS'    => 'QRIS / All E-Wallet & Bank (Scan QR Karyaku)',
+            'GOPAY'   => 'GoPay (081234567890 a.n KARYAKU)',
+            'DANA'    => 'DANA (081234567890 a.n KARYAKU)',
+            'OVO'     => 'OVO (081234567890 a.n KARYAKU)',
+        ];
+
+        return view('pembeli.daftar-penjual', compact(
+            'user',
+            'memberships',
+            'selectedMembershipId',
+            'banks',
+            'paymentMethods',
+            'pending'
+        ));
     }
 
-    /**
-     * Menyimpan pengajuan pendaftaran penjual.
-     */
+    // ================= SIMPAN PENDAFTARAN =================
     public function store(Request $request)
     {
         $user = Auth::user();
 
-        /*
-        |--------------------------------------------------------------------------
-        | CEK ROLE
-        |--------------------------------------------------------------------------
-        */
-
-        if (($user->role->role_name ?? null) === 'penjual') {
-            return redirect()
-                ->route('penjual.dashboard')
-                ->with('error', 'Akun kamu sudah menjadi penjual.');
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | CEK PENDAFTARAN AKTIF
-        |--------------------------------------------------------------------------
-        */
-
-        $existing = IdentityVerification::where(
-            'user_id',
-            $user->id_user
-        )
-        ->whereIn('status', [
-            'pending',
-            'processing',
-        ])
-        ->latest('id_identity_verification')
-        ->first();
-
-        if ($existing) {
-            return redirect()
-                ->route('pembeli.seller.registration.status')
-                ->with(
-                    'info',
-                    'Pengajuan kamu sedang diproses oleh verifikator.'
-                );
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDASI
-        |--------------------------------------------------------------------------
-        */
-
         $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-            ],
-
-            'nik' => [
-                'required',
-                'string',
-                'max:50',
-            ],
-
-            'phone' => [
-                'required',
-                'string',
-                'max:20',
-            ],
-
-            'address' => [
-                'required',
-                'string',
-                'max:1000',
-            ],
-
-            'bank_name' => [
-                'required',
-                'string',
-                'max:100',
-            ],
-
-            'account_name' => [
-                'required',
-                'string',
-                'max:150',
-            ],
-
-            'account_number' => [
-                'required',
-                'string',
-                'max:100',
-            ],
-
-            'membership_id' => [
-                'required',
-                'exists:memberships,id_membership',
-            ],
-
-            'payment_proof' => [
-                'required',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:5120',
-            ],
+            'membership_id'     => 'required|exists:memberships,id_membership',
+            'nik'               => 'required|digits:16',
+            'phone'             => 'required|string|max:20',
+            'address'           => 'required|string|max:500',
+            'identity_document' => 'required|image|mimes:jpg,jpeg,png,webp|max:3072',
+            'bank_name'         => 'required|string|max:50',
+            'account_name'      => 'required|string|max:100',
+            'account_number'    => 'required|string|max:50',
+            'payment_method'    => 'required|string|max:100',
+            'payment_proof'     => 'required|image|mimes:jpg,jpeg,png,webp|max:3072',
+        ], [
+            'nik.digits'               => 'NIK harus berupa 16 digit angka.',
+            'identity_document.image'  => 'File KTP harus berupa gambar (jpg/jpeg/png/webp).',
+            'payment_proof.image'      => 'Bukti pembayaran harus berupa gambar (jpg/jpeg/png/webp).',
+            'payment_method.required'  => 'Silakan pilih metode pembayaran terlebih dahulu.',
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | CARI PAKET
-        |--------------------------------------------------------------------------
-        */
+        // Cegah submit ganda jika masih pending
+        $alreadyPending = IdentityVerification::where('user_id', $user->id_user)
+            ->where('status', 'pending')
+            ->exists();
 
-        $membership = Membership::findOrFail(
-            $validated['membership_id']
-        );
+        if ($alreadyPending) {
+            return redirect()->route('pembeli.seller.registration.status')
+                ->with('error', 'Kamu masih memiliki pendaftaran yang sedang diverifikasi.');
+        }
 
-        /*
-        |--------------------------------------------------------------------------
-        | UPLOAD BUKTI PEMBAYARAN
-        |--------------------------------------------------------------------------
-        */
+        $membership = Membership::findOrFail($validated['membership_id']);
 
-        $paymentProofPath = $request
-            ->file('payment_proof')
-            ->store(
-                'seller-registration/payment-proofs',
-                'public'
-            );
+        $identityPath = $request->file('identity_document')->store('identity-verifications/ktp', 'public');
+        $paymentPath  = $request->file('payment_proof')->store('identity-verifications/payment', 'public');
 
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE DATA USER
-        |--------------------------------------------------------------------------
-        |
-        | Nama dan nomor telepon tetap disimpan di users.
-        | Role BELUM diubah.
-        |
-        */
-
-        $user->update([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | SIMPAN PENGAJUAN
-        |--------------------------------------------------------------------------
-        */
+        // Update nomor telepon user jika diisi
+        if (! empty($validated['phone']) && $user->phone !== $validated['phone']) {
+            $user->update(['phone' => $validated['phone']]);
+        }
 
         IdentityVerification::create([
-            'user_id' => $user->id_user,
-
-            'verifier_id' => null,
-
-            'identity_document' => $validated['nik'],
-
-            'nik' => $validated['nik'],
-
-            'address' => $validated['address'],
-
-            'bank_name' => $validated['bank_name'],
-
-            'account_name' => $validated['account_name'],
-
-            'account_number' => $validated['account_number'],
-
-            'membership_id' => $membership->id_membership,
-
-            'payment_proof' => $paymentProofPath,
-
-            'payment_amount' => $membership->price,
-
+            'user_id'              => $user->id_user,
+            'identity_document'    => $identityPath,
+            'status'               => 'pending',
+            'nik'                  => $validated['nik'],
+            'address'              => $validated['address'],
+            'bank_name'            => $validated['bank_name'],
+            'account_name'         => $validated['account_name'],
+            'account_number'       => $validated['account_number'],
+            'membership_id'        => $membership->id_membership,
+            'payment_method'       => $validated['payment_method'],
+            'payment_proof'        => $paymentPath,
+            'payment_amount'       => $membership->price,
             'payment_submitted_at' => now(),
-
-            'submitted_at' => now(),
-
-            'status' => 'pending',
-
-            'notes' => null,
-
-            'verified_at' => null,
+            'submitted_at'         => now(),
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | REDIRECT
-        |--------------------------------------------------------------------------
-        */
-
-        return redirect()
-            ->route('pembeli.seller.registration.status')
-            ->with(
-                'success',
-                'Pendaftaran berhasil dikirim. Silakan tunggu proses verifikasi.'
-            );
+        return redirect()->route('pembeli.seller.registration.status')
+            ->with('success', 'Pendaftaran sebagai penjual berhasil dikirim! Silakan tunggu proses verifikasi dari admin.');
     }
 
-    /**
-     * Menampilkan status pendaftaran.
-     */
+    // ================= STATUS PENDAFTARAN =================
     public function status()
     {
-        $registration = IdentityVerification::with([
-            'membership',
-            'verifier',
-        ])
-        ->where(
-            'user_id',
-            Auth::id()
-        )
-        ->latest('id_identity_verification')
-        ->first();
+        $user = Auth::user();
 
-        return view(
-            'pembeli.status-daftar-penjual',
-            compact('registration')
-        );
+        $registration = IdentityVerification::with(['user', 'membership'])
+            ->where('user_id', $user->id_user)
+            ->latest('id_identity_verification')
+            ->first();
+
+        return view('pembeli.status-daftar-penjual', compact('registration', 'user'));
     }
 
-    /**
-     * Membatalkan pengajuan pending.
-     */
+    // ================= BATALKAN PENDAFTARAN =================
     public function cancel()
     {
-        $registration = IdentityVerification::where(
-            'user_id',
-            Auth::id()
-        )
-        ->whereIn('status', [
-            'pending',
-            'processing',
-        ])
-        ->latest('id_identity_verification')
-        ->first();
+        $user = Auth::user();
 
-        if (! $registration) {
-            return back()->with(
-                'error',
-                'Tidak ada pengajuan yang bisa dibatalkan.'
-            );
+        $registration = IdentityVerification::where('user_id', $user->id_user)
+            ->where('status', 'pending')
+            ->latest('id_identity_verification')
+            ->first();
+
+        if ($registration) {
+            if ($registration->identity_document) {
+                Storage::disk('public')->delete($registration->identity_document);
+            }
+            if ($registration->payment_proof) {
+                Storage::disk('public')->delete($registration->payment_proof);
+            }
+            $registration->delete();
+
+            return redirect()->route('pembeli.seller.registration.create')
+                ->with('success', 'Pengajuan pendaftaran penjual telah dibatalkan.');
         }
 
-        if ($registration->payment_proof) {
-            Storage::disk('public')->delete(
-                $registration->payment_proof
-            );
-        }
-
-        $registration->delete();
-
-        return redirect()
-            ->route('pembeli.membership')
-            ->with(
-                'success',
-                'Pengajuan pendaftaran berhasil dibatalkan.'
-            );
+        return back()->with('error', 'Tidak ada pengajuan pending yang dapat dibatalkan.');
     }
 }

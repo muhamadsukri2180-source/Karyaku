@@ -39,6 +39,7 @@ class IdentityVerification extends Model
         'membership_id',
 
         // PEMBAYARAN
+        'payment_method',
         'payment_proof',
         'payment_amount',
         'payment_submitted_at',

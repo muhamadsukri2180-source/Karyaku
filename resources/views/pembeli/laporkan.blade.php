@@ -3,18 +3,23 @@
 
 @section('content')
 
+{{-- Header Halaman --}}
 <div class="mb-4">
     <h4 class="fw-bold mb-1">Laporkan Pelanggaran</h4>
-    <p class="text-muted mb-0" style="font-size:13px;">Laporkan produk atau pengguna yang melanggar aturan Karyaku. Laporan kamu akan ditinjau oleh admin.</p>
+    <p class="text-muted mb-0" style="font-size:13px;">
+        Laporkan produk atau pengguna yang melanggar aturan Karyaku. Laporan kamu akan ditinjau oleh admin.
+    </p>
 </div>
 
-<div class="card-box p-4" style="max-width:640px;">
+{{-- Card Form Laporan --}}
+<div class="card-box p-4 shadow-sm rounded-3 border">
     <form action="{{ route('reports.store') }}" method="POST">
         @csrf
 
+        {{-- Pilihan Tipe Target --}}
         <div class="mb-3">
             <label class="form-label small fw-semibold">Apa yang ingin kamu laporkan?</label>
-            <div class="d-flex gap-3 flex-wrap">
+            <div class="d-flex gap-4 flex-wrap mt-1">
                 <div class="form-check">
                     <input class="form-check-input target-type" type="radio" name="target_type" id="tProduk" value="produk" {{ old('target_type', 'produk') == 'produk' ? 'checked' : '' }}>
                     <label class="form-check-label small" for="tProduk">Produk Tertentu</label>
@@ -30,6 +35,7 @@
             </div>
         </div>
 
+        {{-- Dropdown Produk --}}
         <div class="mb-3" id="groupProduk">
             <label class="form-label small fw-semibold">Pilih Produk</label>
             <select name="product_id" class="form-select">
@@ -42,6 +48,7 @@
             </select>
         </div>
 
+        {{-- Dropdown Pengguna --}}
         <div class="mb-3 d-none" id="groupUser">
             <label class="form-label small fw-semibold">Pilih Pengguna</label>
             <select name="reported_user_id" class="form-select">
@@ -54,25 +61,32 @@
             </select>
         </div>
 
+        {{-- Dropdown Alasan --}}
         <div class="mb-3">
             <label class="form-label small fw-semibold">Alasan Laporan</label>
             <select name="reason" class="form-select" required>
                 <option value="">-- Pilih Alasan --</option>
-                <option value="Konten tidak sesuai / palsu">Konten tidak sesuai / palsu</option>
-                <option value="Penipuan / tidak mengirim pesanan">Penipuan / tidak mengirim pesanan</option>
-                <option value="Pelanggaran hak cipta">Pelanggaran hak cipta</option>
-                <option value="Perilaku tidak sopan">Perilaku tidak sopan</option>
-                <option value="Lainnya">Lainnya</option>
+                <option value="Konten tidak sesuai / palsu" {{ old('reason') == 'Konten tidak sesuai / palsu' ? 'selected' : '' }}>Konten tidak sesuai / palsu</option>
+                <option value="Penipuan / tidak mengirim pesanan" {{ old('reason') == 'Penipuan / tidak mengirim pesanan' ? 'selected' : '' }}>Penipuan / tidak mengirim pesanan</option>
+                <option value="Pelanggaran hak cipta" {{ old('reason') == 'Pelanggaran hak cipta' ? 'selected' : '' }}>Pelanggaran hak cipta</option>
+                <option value="Perilaku tidak sopan" {{ old('reason') == 'Perilaku tidak sopan' ? 'selected' : '' }}>Perilaku tidak sopan</option>
+                <option value="Lainnya" {{ old('reason') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
             </select>
         </div>
 
+        {{-- Input Textarea --}}
         <div class="mb-4">
             <label class="form-label small fw-semibold">Keterangan Tambahan</label>
             <textarea name="description" rows="4" class="form-control" placeholder="Jelaskan detail kejadian...">{{ old('description') }}</textarea>
         </div>
 
-        <button type="submit" class="btn btn-primary fw-semibold px-4"><i class="bi bi-send-fill"></i> Kirim Laporan</button>
-        <a href="{{ route('reports.index') }}" class="btn btn-outline-secondary px-4">Riwayat Laporan Saya</a>
+        {{-- Tombol Aksi --}}
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary fw-semibold px-4">
+                <i class="bi bi-send-fill me-1"></i> Kirim Laporan
+            </button>
+            <a href="{{ route('reports.index') }}" class="btn btn-outline-secondary px-4">Riwayat Laporan Saya</a>
+        </div>
     </form>
 </div>
 
@@ -91,6 +105,8 @@
     }
 
     document.querySelectorAll('.target-type').forEach(el => el.addEventListener('change', syncTargetType));
+    
+    // Sinkronisasi posisi awal saat halaman dimuat
     syncTargetType();
 
     @if(session('success'))
