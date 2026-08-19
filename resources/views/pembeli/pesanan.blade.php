@@ -1,675 +1,1952 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pesanan Saya - Karyaku</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <title>Pesanan - Karyaku</title>
 
-<style>
-    :root{
-        --primary: #2563eb;
-        --primary-dark: #1e3a8a;
-        --primary-darker: #14225c;
-        --primary-light: #eff6ff;
-        --primary-soft: #dbeafe;
-        --coral: #FF7A59;
-        --coral-dark: #F0623F;
-        --white: #ffffff;
-        --text-dark: #1e293b;
-        --text-muted: #64748b;
-        --border-color: #e5edff;
-        --radius: 18px;
-        --shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
-        --shadow-hover: 0 16px 34px rgba(37, 99, 235, 0.16);
-        --navbar-h: 68px;
-    }
-    *{ box-sizing: border-box; }
-    body{
-        font-family: 'Poppins', sans-serif;
-        background: var(--primary-light);
-        color: var(--text-dark);
-        overflow-x: hidden;
-    }
-    a{ text-decoration: none; }
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    /* ---------------- Background decor ---------------- */
-    .bg-decor{ position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-    .bg-decor span{
-        position: absolute; border-radius: 50%;
-        background: radial-gradient(circle at 30% 30%, var(--primary-soft), transparent 70%);
-        opacity: .5; animation: floatBlob 14s ease-in-out infinite;
-    }
-    .bg-decor span:nth-child(1){ width: 380px; height: 380px; top: -120px; right: -100px; animation-duration: 16s; }
-    .bg-decor span:nth-child(2){ width: 260px; height: 260px; bottom: -80px; left: -60px; animation-duration: 20s; animation-delay: 2s; }
-    @keyframes floatBlob{ 0%,100%{ transform: translate(0,0) scale(1); } 50%{ transform: translate(20px,-30px) scale(1.08); } }
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-    /* ================= SITE NAVBAR (sama seperti Dashboard) ================= */
-    .site-navbar{
-        background: linear-gradient(120deg, var(--primary-darker), var(--primary-dark) 60%, var(--primary));
-        position: sticky; top: 0; z-index: 1030;
-        box-shadow: 0 10px 30px rgba(20,34,92,0.18);
-    }
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e3a8a;
+            --primary-darker: #14225c;
+            --primary-light: #eff6ff;
+            --primary-soft: #dbeafe;
 
-    .navbar-top{
-        display: flex; align-items: center; gap: 18px;
-        padding: 12px 28px;
-        max-width: 1440px; margin: 0 auto;
-    }
+            --coral: #ff7a59;
+            --coral-dark: #f0623f;
 
-    .brand{ display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .brand-icon{ width: 40px; height: 40px; background: var(--white); color: var(--primary); border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 700; }
-    .brand-text h5{ margin: 0; font-weight: 700; font-size: 15.5px; color: var(--white); line-height: 1.1; }
-    .brand-text small{ color: rgba(255,255,255,0.6); font-size: 10.5px; }
+            --white: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
 
-    .mobile-toggle{
-        width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.12);
-        border: none; color: #fff; display: none; align-items: center; justify-content: center; flex-shrink: 0;
-        transition: background .2s ease;
-    }
-    .mobile-toggle:hover{ background: rgba(255,255,255,0.22); }
+            --border-color: #e5edff;
 
-    .nav-menu{ display: flex; align-items: center; gap: 2px; flex: 1; }
-    .nav-menu .nav-link{
-        position: relative; display: flex; align-items: center; gap: 8px;
-        color: rgba(255,255,255,0.78); padding: 9px 14px; border-radius: 10px;
-        font-size: 13.5px; font-weight: 500; white-space: nowrap; transition: all .2s ease;
-    }
-    .nav-menu .nav-link i{ font-size: 16px; }
-    .nav-menu .nav-link:hover{ background: rgba(255,255,255,0.1); color: var(--white); }
-    .nav-menu .nav-link.active{ background: rgba(255,255,255,0.16); color: var(--white); font-weight: 600; }
-    .nav-menu .nav-link.active::after{
-        content: ""; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 2.5px;
-        background: var(--coral); border-radius: 4px;
-    }
-    .nav-menu .badge-count{
-        background: var(--coral); color: #fff; font-size: 10.5px; font-weight: 700;
-        min-width: 17px; height: 17px; border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 0 4px;
-    }
+            --shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+            --shadow-hover: 0 16px 34px rgba(37, 99, 235, 0.16);
+        }
 
-    .navbar-right{ display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        * {
+            box-sizing: border-box;
+        }
 
-    .btn-jual{
-        display: inline-flex; align-items: center; gap: 8px;
-        background: var(--coral); color: #fff; border: none;
-        padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 13px;
-        white-space: nowrap; transition: all .2s ease;
-    }
-    .btn-jual:hover{ background: var(--coral-dark); color: #fff; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255,122,89,0.35); }
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: #f5f8ff;
+            color: var(--text-dark);
+        }
 
-    .icon-btn-light{
-        width: 40px; height: 40px; border-radius: 12px;
-        background: rgba(255,255,255,0.12); border: none;
-        display: flex; align-items: center; justify-content: center;
-        color: #fff; position: relative; font-size: 17px;
-        transition: all .2s ease; flex-shrink: 0;
-    }
-    .icon-btn-light:hover{ background: rgba(255,255,255,0.22); color: #fff; }
-    .icon-btn-light .dot{
-        position: absolute; top: 4px; right: 4px; min-width: 16px; height: 16px; padding: 0 3px;
-        background: var(--coral); border-radius: 20px; border: 2px solid var(--primary-dark);
-        font-size: 9.5px; font-weight: 700; display: flex; align-items: center; justify-content: center;
-    }
+        a {
+            text-decoration: none;
+        }
 
-    .user-menu{ position: relative; flex-shrink: 0; }
-    .user-chip{
-        display: flex; align-items: center; gap: 9px;
-        background: rgba(255,255,255,0.12); padding: 5px 12px 5px 5px; border-radius: 30px;
-        transition: background .2s ease; border: none; cursor: pointer;
-    }
-    .user-chip:hover{ background: rgba(255,255,255,0.2); }
-    .user-chip img{ width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
-    .user-chip .name{ font-size: 12.5px; font-weight: 600; line-height: 1.1; color: #fff; text-align: left; }
-    .user-chip .role{ font-size: 10.5px; color: rgba(255,255,255,0.65); }
-    .user-chip .bi-chevron-down{ font-size: 11px; color: rgba(255,255,255,0.7); margin-left: 2px; transition: transform .2s ease; }
-    .user-menu.open .user-chip .bi-chevron-down{ transform: rotate(180deg); }
+        /* =====================================================
+           NAVBAR
+        ===================================================== */
 
-    .user-dropdown{
-        position: absolute; right: 0; top: calc(100% + 10px); width: 220px;
-        background: #fff; border-radius: 14px; box-shadow: var(--shadow-hover);
-        padding: 8px; opacity: 0; visibility: hidden; transform: translateY(-8px);
-        transition: all .18s ease; z-index: 1040;
-    }
-    .user-menu.open .user-dropdown{ opacity: 1; visibility: visible; transform: translateY(0); }
-    .user-dropdown a{
-        display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px;
-        font-size: 13.5px; font-weight: 500; color: var(--text-dark); transition: background .15s ease;
-    }
-    .user-dropdown a:hover{ background: var(--primary-light); color: var(--primary-dark); }
-    .user-dropdown a.text-danger:hover{ background: #fef2f2; }
-    .user-dropdown hr{ margin: 6px 4px; border-color: var(--border-color); }
-    .dropdown-logout-btn{
-        display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
-        padding: 10px 12px; border-radius: 10px; border: none; background: transparent;
-        font-size: 13.5px; font-weight: 500; font-family: 'Poppins', sans-serif; transition: background .15s ease;
-    }
-    .dropdown-logout-btn:hover{ background: #fef2f2; }
-    .mobile-logout-btn{
-        width: 100%; text-align: left; border: none; font-family: 'Poppins', sans-serif; cursor: pointer;
-    }
+        .site-navbar {
+            background: linear-gradient(
+                120deg,
+                var(--primary-darker),
+                var(--primary-dark) 60%,
+                var(--primary)
+            );
 
-    /* ---- mobile dropdown menu ---- */
-    .mobile-menu-panel{
-        display: none;
-        max-height: 0; overflow: hidden;
-        background: var(--primary-darker);
-        transition: max-height .28s ease;
-    }
-    .mobile-menu-panel.show{ max-height: 640px; }
-    .mobile-menu-panel .nav-link{
-        display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.82);
-        padding: 13px 22px; font-size: 14px; font-weight: 500; border-top: 1px solid rgba(255,255,255,0.08);
-    }
-    .mobile-menu-panel .nav-link i{ font-size: 17px; width: 20px; }
-    .mobile-menu-panel .nav-link.active{ color: #fff; background: rgba(255,255,255,0.08); font-weight: 600; }
-    .mobile-menu-panel .nav-link .badge-count{
-        margin-left: auto; background: var(--coral); color: #fff; font-size: 10.5px; font-weight: 700;
-        min-width: 18px; height: 18px; border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 0 5px;
-    }
-    .mobile-menu-panel .logout-link{ color: #fecaca; }
+            position: sticky;
+            top: 0;
+            z-index: 1000;
 
-    @media (max-width: 992px){
-        .mobile-toggle{ display: flex; }
-        .nav-menu{ display: none; }
-        .mobile-menu-panel{ display: block; }
-        .btn-jual span{ display: none; }
-        .user-chip .d-lg-block{ display: none !important; }
-    }
-    @media (max-width: 576px){
-        .navbar-top{ padding: 10px 16px; gap: 10px; }
-        .btn-jual{ padding: 10px 12px; }
-    }
+            box-shadow: 0 10px 30px rgba(20, 34, 92, 0.18);
+        }
 
-    .main-content{ padding: 0 0 50px; }
+        .navbar-top {
+            max-width: 1450px;
+            margin: auto;
 
-    /* ================= PAGE HEADER ================= */
-    .page-header-wrap{ padding: 30px 28px 0; max-width: 1200px; margin: 0 auto; }
-    .page-header{
-        background: linear-gradient(120deg, var(--primary-darker), var(--primary-dark) 60%, var(--primary));
-        border-radius: var(--radius); padding: 26px 32px; color: #fff; box-shadow: var(--shadow);
-        position: relative; overflow: hidden;
-    }
-    .page-header::after{
-        content: ""; position: absolute; width: 220px; height: 220px; border-radius: 50%;
-        background: rgba(255,122,89,0.16); right: -50px; top: -60px;
-    }
-    .page-header .htext{ position: relative; z-index: 1; }
-    .page-header h2{ font-weight: 800; font-size: 24px; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
-    .page-header p{ margin: 0; font-size: 13px; color: rgba(255,255,255,0.8); }
+            padding: 12px 28px;
 
-    /* ================= TABS ================= */
-    .tabs-wrap{ max-width: 1200px; margin: 0 auto; padding: 20px 28px 0; }
-    .status-tabs{
-        display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px;
-    }
-    .status-tabs::-webkit-scrollbar{ display: none; }
-    .status-tab{
-        border: 1px solid var(--border-color); background: #fff; color: var(--text-dark);
-        padding: 9px 18px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer;
-        white-space: nowrap; transition: all .2s ease; flex-shrink: 0;
-    }
-    .status-tab.active, .status-tab:hover{ background: var(--primary); color: #fff; border-color: var(--primary); }
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
 
-    /* ================= ORDER LIST ================= */
-    .order-wrap{ max-width: 1200px; margin: 0 auto; padding: 20px 28px 0; display: flex; flex-direction: column; gap: 16px; }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
 
-    .order-card{
-        background: #fff; border-radius: var(--radius); border: 1px solid var(--border-color);
-        box-shadow: var(--shadow); overflow: hidden; transition: transform .25s ease, box-shadow .25s ease;
-    }
-    .order-card:hover{ transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+        .brand-icon {
+            width: 42px;
+            height: 42px;
 
-    .order-head{
-        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
-        padding: 14px 20px; border-bottom: 1px solid var(--border-color); background: var(--primary-light);
-    }
-    .order-head .order-no{ font-size: 12.5px; font-weight: 700; color: var(--primary-dark); }
-    .order-head .order-date{ font-size: 11.5px; color: var(--text-muted); }
+            display: flex;
+            align-items: center;
+            justify-content: center;
 
-    .badge-status{
-        font-size: 11px; font-weight: 700; padding: 5px 13px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px;
-    }
-    .badge-status.menunggu{ background: #fef3c7; color: #b45309; }
-    .badge-status.diproses{ background: var(--primary-soft); color: var(--primary-dark); }
-    .badge-status.dikirim{ background: #ede9fe; color: #6d28d9; }
-    .badge-status.selesai{ background: #d1fae5; color: #047857; }
-    .badge-status.dibatalkan{ background: #fee2e2; color: #b91c1c; }
+            border-radius: 12px;
 
-    .order-body{ display: flex; align-items: center; gap: 16px; padding: 18px 20px; flex-wrap: wrap; }
-    .order-body img{ width: 74px; height: 74px; border-radius: 12px; object-fit: cover; flex-shrink: 0; }
-    .order-info{ flex: 1; min-width: 200px; }
-    .order-info h6{ font-size: 14px; font-weight: 700; margin: 0 0 4px; }
-    .order-info .seller{ font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-    .order-info .qty{ font-size: 12px; color: var(--text-muted); }
+            background: white;
+            color: var(--primary);
 
-    .order-total{ text-align: right; flex-shrink: 0; }
-    .order-total .lbl{ font-size: 11px; color: var(--text-muted); }
-    .order-total .val{ font-size: 16px; font-weight: 800; color: var(--coral); }
+            font-size: 19px;
+        }
 
-    .order-footer{
-        display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border-color); flex-wrap: wrap;
-    }
-    .btn-order-detail{
-        border: 1px solid var(--primary); background: #fff; color: var(--primary);
-        padding: 9px 18px; border-radius: 10px; font-weight: 700; font-size: 12.5px; transition: all .2s ease;
-        display: inline-flex; align-items: center; gap: 6px;
-    }
-    .btn-order-detail:hover{ background: var(--primary); color: #fff; }
-    .btn-order-again{
-        border: none; background: var(--coral); color: #fff;
-        padding: 9px 18px; border-radius: 10px; font-weight: 700; font-size: 12.5px; transition: all .2s ease;
-        display: inline-flex; align-items: center; gap: 6px;
-    }
-    .btn-order-again:hover{ background: var(--coral-dark); transform: translateY(-2px); box-shadow: 0 8px 18px rgba(255,122,89,.3); }
+        .brand-text h5 {
+            margin: 0;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+        }
 
-    .reveal{ opacity: 0; transform: translateY(20px); transition: opacity .5s ease, transform .5s ease; }
-    .reveal.active{ opacity: 1; transform: translateY(0); }
+        .brand-text small {
+            color: rgba(255,255,255,.6);
+            font-size: 10px;
+        }
 
-    /* ================= EMPTY STATE ================= */
-    .empty-state{ max-width: 1200px; margin: 20px auto 0; padding: 0 28px; }
-    .empty-state .inner{
-        background: #fff; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow);
-        text-align: center; padding: 70px 20px; position: relative; overflow: hidden;
-    }
-    .empty-state .inner::before{
-        content: ""; position: absolute; width: 280px; height: 280px; border-radius: 50%;
-        background: var(--primary-soft); opacity: .5; top: -100px; left: -80px;
-    }
-    .empty-state .inner::after{
-        content: ""; position: absolute; width: 200px; height: 200px; border-radius: 50%;
-        background: rgba(255,122,89,0.12); bottom: -80px; right: -60px;
-    }
-    .empty-state .icon-circle{
-        position: relative; z-index: 1; width: 108px; height: 108px; border-radius: 50%;
-        background: var(--primary-light); display: flex; align-items: center; justify-content: center;
-        margin: 0 auto 20px; font-size: 46px; color: var(--coral);
-        border: 2px dashed var(--primary-soft);
-    }
-    .empty-state h4{ position: relative; z-index: 1; font-weight: 800; font-size: 19px; margin-bottom: 8px; }
-    .empty-state p{ position: relative; z-index: 1; color: var(--text-muted); font-size: 13.5px; max-width: 380px; margin: 0 auto 22px; }
-    .empty-state .btn-belanja{
-        position: relative; z-index: 1;
-        display: inline-flex; align-items: center; gap: 8px;
-        background: var(--coral); color: #fff; border: none;
-        padding: 12px 26px; border-radius: 12px; font-weight: 700; font-size: 14px;
-        transition: all .2s ease;
-    }
-    .empty-state .btn-belanja:hover{ background: var(--coral-dark); color: #fff; transform: translateY(-2px); box-shadow: 0 10px 22px rgba(255,122,89,.35); }
+        .mobile-toggle {
+            display: none;
 
-    @media (max-width: 576px){
-        .order-body{ padding: 16px; }
-        .order-total{ text-align: left; width: 100%; }
-        .order-footer{ justify-content: flex-start; }
-    }
+            width: 40px;
+            height: 40px;
 
-    ::-webkit-scrollbar{ width: 8px; height: 8px; }
-    ::-webkit-scrollbar-thumb{ background: var(--primary-soft); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover{ background: var(--primary); }
-</style>
+            border: 0;
+            border-radius: 10px;
+
+            background: rgba(255,255,255,.12);
+            color: white;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+
+            gap: 3px;
+            flex: 1;
+        }
+
+        .nav-link {
+            position: relative;
+
+            display: flex;
+            align-items: center;
+            gap: 7px;
+
+            color: rgba(255,255,255,.78);
+
+            padding: 9px 13px;
+
+            border-radius: 10px;
+
+            font-size: 13px;
+            font-weight: 500;
+
+            transition: .2s;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,.12);
+        }
+
+        .nav-link.active {
+            font-weight: 600;
+        }
+
+        .badge-count {
+            min-width: 18px;
+            height: 18px;
+
+            padding: 0 5px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            background: var(--coral);
+            color: white;
+
+            border-radius: 20px;
+
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-jual {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+
+            background: var(--coral);
+            color: white;
+
+            padding: 10px 15px;
+
+            border-radius: 10px;
+
+            font-size: 12px;
+            font-weight: 700;
+
+            border: 0;
+
+            transition: .2s;
+        }
+
+        .btn-jual:hover {
+            background: var(--coral-dark);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .icon-btn-light {
+            position: relative;
+
+            width: 40px;
+            height: 40px;
+
+            border: 0;
+            border-radius: 11px;
+
+            background: rgba(255,255,255,.12);
+            color: white;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn-light .dot {
+            position: absolute;
+
+            top: 3px;
+            right: 3px;
+
+            min-width: 16px;
+            height: 16px;
+
+            border-radius: 20px;
+
+            background: var(--coral);
+
+            border: 2px solid var(--primary-dark);
+
+            font-size: 8px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* =====================================================
+           USER
+        ===================================================== */
+
+        .user-menu {
+            position: relative;
+        }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            border: 0;
+            border-radius: 30px;
+
+            background: rgba(255,255,255,.12);
+
+            padding: 5px 11px 5px 5px;
+
+            color: white;
+        }
+
+        .user-chip img {
+            width: 30px;
+            height: 30px;
+
+            border-radius: 50%;
+        }
+
+        .user-name {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .user-role {
+            font-size: 9px;
+            color: rgba(255,255,255,.65);
+        }
+
+        .user-dropdown {
+            position: absolute;
+
+            right: 0;
+            top: 50px;
+
+            width: 210px;
+
+            background: white;
+
+            border-radius: 14px;
+
+            box-shadow: var(--shadow-hover);
+
+            padding: 8px;
+
+            display: none;
+        }
+
+        .user-menu.open .user-dropdown {
+            display: block;
+        }
+
+        .user-dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            padding: 10px 12px;
+
+            color: var(--text-dark);
+
+            border-radius: 9px;
+
+            font-size: 13px;
+        }
+
+        .user-dropdown a:hover {
+            background: var(--primary-light);
+        }
+
+        .user-dropdown hr {
+            margin: 5px 0;
+            border-color: #e2e8f0;
+        }
+
+        /* =====================================================
+           SEARCH
+        ===================================================== */
+
+        .navbar-search {
+            max-width: 1450px;
+            margin: auto;
+
+            padding: 0 28px 14px;
+        }
+
+        .search-combo {
+            display: flex;
+
+            overflow: hidden;
+
+            background: white;
+
+            border-radius: 12px;
+
+            box-shadow: 0 8px 22px rgba(0,0,0,.15);
+        }
+
+        .search-combo select {
+            width: 180px;
+
+            border: 0;
+            outline: 0;
+
+            background: #f1f5ff;
+
+            padding: 0 12px;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            color: var(--text-dark);
+
+            border-right: 1px solid var(--border-color);
+        }
+
+        .search-combo input {
+            flex: 1;
+
+            min-width: 0;
+
+            border: 0;
+            outline: 0;
+
+            padding: 13px 15px;
+
+            font-size: 13px;
+        }
+
+        .search-combo button {
+            width: 90px;
+
+            border: 0;
+
+            background: var(--coral);
+            color: white;
+
+            font-weight: 700;
+        }
+
+        .search-combo button:hover {
+            background: var(--coral-dark);
+        }
+
+        /* =====================================================
+           MAIN
+        ===================================================== */
+
+        .main-content {
+            max-width: 1450px;
+            margin: auto;
+
+            padding: 24px 28px 60px;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-header h2 {
+            margin: 0;
+
+            font-size: 25px;
+            font-weight: 800;
+        }
+
+        .page-header p {
+            margin: 5px 0 0;
+
+            color: var(--text-muted);
+
+            font-size: 13px;
+        }
+
+        /* =====================================================
+           ORDER FILTER
+        ===================================================== */
+
+        .order-tabs {
+            display: flex;
+            gap: 8px;
+
+            flex-wrap: wrap;
+
+            margin-bottom: 20px;
+        }
+
+        .order-tab {
+            border: 1px solid var(--border-color);
+
+            background: white;
+
+            color: var(--text-dark);
+
+            padding: 8px 16px;
+
+            border-radius: 20px;
+
+            font-size: 11px;
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition: .2s;
+        }
+
+        .order-tab:hover,
+        .order-tab.active {
+            background: var(--primary);
+            color: white;
+
+            border-color: var(--primary);
+        }
+
+        /* =====================================================
+           ORDER CARD
+        ===================================================== */
+
+        .orders-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .order-card {
+            background: white;
+
+            border: 1px solid var(--border-color);
+
+            border-radius: 16px;
+
+            box-shadow: var(--shadow);
+
+            overflow: hidden;
+
+            transition: .2s;
+        }
+
+        .order-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .order-header {
+            padding: 14px 18px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 15px;
+
+            border-bottom: 1px solid #edf2ff;
+        }
+
+        .order-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .order-icon {
+            width: 38px;
+            height: 38px;
+
+            border-radius: 10px;
+
+            background: var(--primary-light);
+
+            color: var(--primary);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 16px;
+        }
+
+        .order-number {
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .order-date {
+            color: var(--text-muted);
+            font-size: 9px;
+            margin-top: 2px;
+        }
+
+        .status {
+            padding: 6px 11px;
+
+            border-radius: 20px;
+
+            font-size: 9px;
+            font-weight: 700;
+
+            white-space: nowrap;
+        }
+
+        .status-menunggu {
+            background: #fff7ed;
+            color: #ea580c;
+        }
+
+        .status-diproses {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .status-selesai {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .status-dibatalkan {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        /* =====================================================
+           ORDER BODY
+        ===================================================== */
+
+        .order-body {
+            padding: 16px 18px;
+        }
+
+        .product-item {
+            display: flex;
+            align-items: center;
+
+            gap: 13px;
+        }
+
+        .product-image {
+            width: 68px;
+            height: 68px;
+
+            border-radius: 11px;
+
+            overflow: hidden;
+
+            flex-shrink: 0;
+
+            background: #eaf1ff;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+
+            object-fit: cover;
+        }
+
+        .product-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .product-info h6 {
+            margin: 0 0 4px;
+
+            font-size: 12px;
+            font-weight: 700;
+
+            line-height: 1.5;
+        }
+
+        .product-info p {
+            margin: 0;
+
+            color: var(--text-muted);
+
+            font-size: 9px;
+        }
+
+        .product-price {
+            text-align: right;
+
+            font-size: 13px;
+
+            font-weight: 800;
+
+            color: var(--coral);
+
+            white-space: nowrap;
+        }
+
+        .order-summary {
+            margin-top: 15px;
+
+            padding-top: 13px;
+
+            border-top: 1px dashed #dbe5f7;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 15px;
+        }
+
+        .summary-left {
+            color: var(--text-muted);
+
+            font-size: 10px;
+        }
+
+        .summary-left strong {
+            color: var(--text-dark);
+        }
+
+        .summary-right {
+            display: flex;
+            align-items: center;
+
+            gap: 15px;
+        }
+
+        .total-label {
+            color: var(--text-muted);
+
+            font-size: 10px;
+        }
+
+        .total-price {
+            color: var(--coral);
+
+            font-size: 15px;
+
+            font-weight: 800;
+        }
+
+        .btn-detail {
+            display: inline-flex;
+
+            align-items: center;
+            justify-content: center;
+
+            gap: 6px;
+
+            padding: 8px 13px;
+
+            border-radius: 9px;
+
+            background: var(--primary);
+
+            color: white;
+
+            font-size: 10px;
+
+            font-weight: 700;
+
+            border: 0;
+
+            transition: .2s;
+        }
+
+        .btn-detail:hover {
+            background: var(--primary-dark);
+            color: white;
+        }
+
+        .btn-download {
+            display: inline-flex;
+
+            align-items: center;
+            justify-content: center;
+
+            gap: 6px;
+
+            padding: 8px 13px;
+
+            border-radius: 9px;
+
+            background: var(--primary-light);
+
+            color: var(--primary);
+
+            font-size: 10px;
+
+            font-weight: 700;
+
+            border: 0;
+        }
+
+        .btn-download:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* =====================================================
+           EMPTY
+        ===================================================== */
+
+        .empty-order {
+            background: white;
+
+            border: 1px solid var(--border-color);
+
+            border-radius: 18px;
+
+            padding: 70px 20px;
+
+            text-align: center;
+
+            box-shadow: var(--shadow);
+        }
+
+        .empty-order i {
+            font-size: 48px;
+
+            color: #94a3b8;
+        }
+
+        .empty-order h5 {
+            margin-top: 15px;
+
+            font-size: 17px;
+
+            font-weight: 700;
+        }
+
+        .empty-order p {
+            color: var(--text-muted);
+
+            font-size: 12px;
+
+            margin-bottom: 20px;
+        }
+
+        .btn-marketplace {
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+            background: var(--primary);
+
+            color: white;
+
+            padding: 10px 16px;
+
+            border-radius: 10px;
+
+            font-size: 11px;
+
+            font-weight: 700;
+        }
+
+        .btn-marketplace:hover {
+            background: var(--primary-dark);
+            color: white;
+        }
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media(max-width: 1100px) {
+
+            .nav-menu {
+                gap: 0;
+            }
+
+            .nav-link {
+                padding: 8px 9px;
+                font-size: 11px;
+            }
+
+            .btn-jual {
+                display: none;
+            }
+        }
+
+        @media(max-width: 1000px) {
+
+            .mobile-toggle {
+                display: flex;
+
+                align-items: center;
+                justify-content: center;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .navbar-top {
+                gap: 12px;
+            }
+        }
+
+        @media(max-width: 700px) {
+
+            .navbar-top {
+                padding: 10px 16px;
+            }
+
+            .navbar-search {
+                padding: 0 16px 12px;
+            }
+
+            .main-content {
+                padding: 20px 16px 50px;
+            }
+
+            .search-combo select {
+                width: 110px;
+            }
+
+            .order-header {
+                align-items: flex-start;
+            }
+
+            .order-summary {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .summary-right {
+                width: 100%;
+
+                justify-content: space-between;
+
+                flex-wrap: wrap;
+            }
+        }
+
+        @media(max-width: 550px) {
+
+            .brand-text {
+                display: none;
+            }
+
+            .user-name,
+            .user-role {
+                display: none;
+            }
+
+            .product-item {
+                align-items: flex-start;
+            }
+
+            .product-price {
+                font-size: 11px;
+            }
+
+            .order-info {
+                gap: 8px;
+            }
+
+            .order-icon {
+                width: 34px;
+                height: 34px;
+            }
+
+            .order-number {
+                font-size: 10px;
+            }
+
+            .status {
+                font-size: 8px;
+            }
+        }
+
+        @media(max-width: 430px) {
+
+            .search-combo select {
+                width: 90px;
+                font-size: 10px;
+            }
+
+            .search-combo input {
+                font-size: 11px;
+            }
+
+            .search-combo button {
+                width: 55px;
+            }
+
+            .product-image {
+                width: 58px;
+                height: 58px;
+            }
+
+            .product-info h6 {
+                font-size: 10px;
+            }
+
+            .btn-detail,
+            .btn-download {
+                width: 100%;
+            }
+
+            .summary-right {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-<div class="bg-decor"><span></span><span></span></div>
-
-{{-- ===================== NAVBAR ===================== --}}
 <header class="site-navbar">
+
     <div class="navbar-top">
-        <button class="mobile-toggle" id="btnToggleMenu" aria-label="Buka menu" aria-expanded="false">
-            <i class="bi bi-list fs-5"></i>
+
+        <button class="mobile-toggle" id="mobileToggle" type="button">
+            <i class="bi bi-list"></i>
         </button>
 
         <a href="{{ route('pembeli.dashboard') }}" class="brand">
-            <div class="brand-icon"><i class="bi bi-bag-check-fill"></i></div>
-            <div class="brand-text d-none d-sm-block">
+
+            <div class="brand-icon">
+                <i class="bi bi-bag-check-fill"></i>
+            </div>
+
+            <div class="brand-text">
                 <h5>Karyaku</h5>
                 <small>Marketplace Pembeli</small>
             </div>
+
         </a>
 
         <nav class="nav-menu">
-            <a href="{{ route('pembeli.dashboard') }}" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
-            <a href="{{ route('pembeli.marketplace') }}" class="nav-link"><i class="bi bi-shop"></i> Marketplace</a>
-            <a href="{{ route('pembeli.wishlist') }}" class="nav-link"><i class="bi bi-heart-fill"></i> Wishlist <span class="badge-count">5</span></a>
-            <a href="{{ route('pembeli.keranjang') }}" class="nav-link"><i class="bi bi-cart-fill"></i> Keranjang <span class="badge-count">3</span></a>
-            <a href="{{ route('pembeli.pesanan') }}" class="nav-link active"><i class="bi bi-receipt"></i> Pesanan</a>
-            <a href="{{ route('pembeli.download') }}" class="nav-link"><i class="bi bi-cloud-arrow-down-fill"></i> Download</a>
+
+            <a href="{{ route('pembeli.dashboard') }}" class="nav-link">
+                <i class="bi bi-grid-1x2-fill"></i>
+                Dashboard
+            </a>
+
+            <a href="{{ route('pembeli.marketplace') }}" class="nav-link">
+                <i class="bi bi-shop"></i>
+                Marketplace
+            </a>
+
+            <a href="{{ route('pembeli.wishlist') }}" class="nav-link">
+                <i class="bi bi-heart-fill"></i>
+                Wishlist
+                <span class="badge-count">
+                    {{ $wishlistCount ?? 0 }}
+                </span>
+            </a>
+
+            <a href="{{ route('pembeli.keranjang') }}" class="nav-link">
+                <i class="bi bi-cart-fill"></i>
+                Keranjang
+                <span class="badge-count">
+                    {{ $cartCount ?? 0 }}
+                </span>
+            </a>
+
+            <a href="{{ route('pembeli.pesanan') }}" class="nav-link active">
+                <i class="bi bi-receipt"></i>
+                Pesanan
+            </a>
+
+            <a href="{{ route('pembeli.download') }}" class="nav-link">
+                <i class="bi bi-cloud-arrow-down-fill"></i>
+                Download
+            </a>
+
         </nav>
 
         <div class="navbar-right">
-            <a href="#" class="btn-jual d-none d-md-inline-flex">
-                <i class="bi bi-shop-window"></i> <span>Daftar Sebagai Penjual</span>
+
+            <a href="#" class="btn-jual">
+                <i class="bi bi-shop-window"></i>
+                Daftar Penjual
             </a>
-            <button class="icon-btn-light" title="Notifikasi">
-                <i class="bi bi-bell"></i><span class="dot">2</span>
+
+            <button class="icon-btn-light" type="button">
+                <i class="bi bi-bell"></i>
+
+                <span class="dot">
+                    2
+                </span>
             </button>
 
             <div class="user-menu" id="userMenu">
-                <button class="user-chip" id="btnUserChip">
-                    <img src="https://ui-avatars.com/api/?name=Budi+Santoso&background=ffffff&color=1e3a8a" alt="avatar">
-                    <div class="d-none d-lg-block">
-                        <div class="name">Budi Santoso</div>
-                        <div class="role">Pembeli</div>
+
+                <button class="user-chip" id="userChip" type="button">
+
+                    <img
+                        src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'Pembeli') }}&background=ffffff&color=1e3a8a"
+                        alt="Avatar"
+                    >
+
+                    <div>
+                        <div class="user-name">
+                            {{ Auth::user()->name ?? 'Pembeli' }}
+                        </div>
+
+                        <div class="user-role">
+                            Pembeli
+                        </div>
                     </div>
+
                     <i class="bi bi-chevron-down"></i>
+
                 </button>
+
                 <div class="user-dropdown">
-                    <a href="{{ route('pembeli.profile') }}"><i class="bi bi-person-fill"></i> Profile</a>
-                    <a href="{{ route('pembeli.pesanan') }}"><i class="bi bi-receipt"></i> Pesanan Saya</a>
-                    <a href="{{ route('pembeli.download') }}"><i class="bi bi-cloud-arrow-down-fill"></i> Download Saya</a>
+
+                    <a href="{{ route('pembeli.profile') }}">
+                        <i class="bi bi-person"></i>
+                        Profile
+                    </a>
+
+                    <a href="{{ route('pembeli.pesanan') }}">
+                        <i class="bi bi-receipt"></i>
+                        Pesanan Saya
+                    </a>
+
+                    <a href="{{ route('pembeli.download') }}">
+                        <i class="bi bi-download"></i>
+                        Download Saya
+                    </a>
+
                     <hr>
-                    <form action="{{ route('logout') }}" method="POST" class="m-0">
+
+                    <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="dropdown-logout-btn text-danger"><i class="bi bi-box-arrow-right"></i> Keluar</button>
+
+                        <button
+                            type="submit"
+                            style="
+                                border:0;
+                                background:none;
+                                width:100%;
+                                text-align:left;
+                                padding:10px 12px;
+                                border-radius:9px;
+                                color:#dc2626;
+                                font-size:13px;
+                            "
+                        >
+                            <i class="bi bi-box-arrow-right"></i>
+                            Keluar
+                        </button>
                     </form>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
 
-    <div class="mobile-menu-panel" id="mobileMenuPanel">
-        <a href="{{ route('pembeli.dashboard') }}" class="nav-link"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
-        <a href="{{ route('pembeli.marketplace') }}" class="nav-link"><i class="bi bi-shop"></i> Marketplace</a>
-        <a href="{{ route('pembeli.wishlist') }}" class="nav-link"><i class="bi bi-heart-fill"></i> Wishlist <span class="badge-count">5</span></a>
-        <a href="{{ route('pembeli.keranjang') }}" class="nav-link"><i class="bi bi-cart-fill"></i> Keranjang <span class="badge-count">3</span></a>
-        <a href="{{ route('pembeli.pesanan') }}" class="nav-link active"><i class="bi bi-receipt"></i> Pesanan Saya</a>
-        <a href="{{ route('pembeli.download') }}" class="nav-link"><i class="bi bi-cloud-arrow-down-fill"></i> Download Saya</a>
-        <a href="{{ route('pembeli.profile') }}" class="nav-link"><i class="bi bi-person-fill"></i> Profile</a>
-        <a href="#" class="nav-link"><i class="bi bi-shop-window"></i> Daftar Sebagai Penjual</a>
-        <form action="{{ route('logout') }}" method="POST" class="m-0">
-            @csrf
-            <button type="submit" class="nav-link logout-link mobile-logout-btn"><i class="bi bi-box-arrow-right"></i> Keluar</button>
+    {{-- SEARCH --}}
+
+    <div class="navbar-search">
+
+        <form class="search-combo" id="searchForm">
+
+            <select id="categoryFilter">
+
+                <option value="">Semua Kategori</option>
+
+                <option value="desain">
+                    Desain
+                </option>
+
+                <option value="logo">
+                    Logo & Branding
+                </option>
+
+                <option value="uiux">
+                    UI/UX
+                </option>
+
+                <option value="website">
+                    Website
+                </option>
+
+                <option value="3d">
+                    3D & Blender
+                </option>
+
+                <option value="video">
+                    Video & Editing
+                </option>
+
+                <option value="ilustrasi">
+                    Ilustrasi
+                </option>
+
+                <option value="sosmed">
+                    Social Media
+                </option>
+
+            </select>
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Cari barang, jasa, kreator..."
+                autocomplete="off"
+            >
+
+            <button type="submit">
+                <i class="bi bi-search"></i>
+
+                <span class="d-none d-sm-inline">
+                    Cari
+                </span>
+            </button>
+
         </form>
+
     </div>
+
 </header>
 
-{{-- ===================== MAIN CONTENT ===================== --}}
+
+{{-- =====================================================
+     MAIN CONTENT
+===================================================== --}}
+
 <main class="main-content">
 
-    <div class="page-header-wrap">
-        <div class="page-header">
-            <div class="htext">
-                <h2><i class="bi bi-receipt"></i> Pesanan Saya</h2>
-                <p>Pantau status pesanan jasa dan produk digital yang sudah kamu beli</p>
-            </div>
-        </div>
-    </div>
+    <div class="page-header">
 
-    {{-- ============= TAB FILTER ============= --}}
-    <div class="tabs-wrap">
-        <div class="status-tabs" id="statusTabs">
-            <button class="status-tab active" data-status="semua">Semua</button>
-            <button class="status-tab" data-status="menunggu">Menunggu</button>
-            <button class="status-tab" data-status="diproses">Diproses</button>
-            <button class="status-tab" data-status="dikirim">Dikirim</button>
-            <button class="status-tab" data-status="selesai">Selesai</button>
-            <button class="status-tab" data-status="dibatalkan">Dibatalkan</button>
-        </div>
-    </div>
+        <h2>
+            Pesanan Saya
+        </h2>
 
-    {{-- ============= LIST PESANAN ============= --}}
-    <div class="order-wrap" id="orderList">
-
-        <!-- Pesanan 1 - Menunggu -->
-        <div class="order-card reveal" data-status="menunggu">
-            <div class="order-head">
-                <div>
-                    <div class="order-no">#ORD-20260801-001</div>
-                    <div class="order-date">1 Agustus 2026, 10:24</div>
-                </div>
-                <span class="badge-status menunggu"><i class="bi bi-hourglass-split"></i> Menunggu Pembayaran</span>
-            </div>
-            <div class="order-body">
-                <img src="https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=200&q=80" alt="">
-                <div class="order-info">
-                    <h6>Desain Poster Promosi Kafe & Resto</h6>
-                    <div class="seller"><i class="bi bi-shop"></i> Dinda Studio</div>
-                    <div class="qty">Jumlah: 1 paket</div>
-                </div>
-                <div class="order-total">
-                    <div class="lbl">Total Pembayaran</div>
-                    <div class="val">Rp75.000</div>
-                </div>
-            </div>
-            <div class="order-footer">
-                <a href="{{ route('pembeli.pesanan.detail', 1) }}" class="btn-order-detail"><i class="bi bi-eye"></i> Lihat Detail</a>
-            </div>
-        </div>
-
-        <!-- Pesanan 2 - Diproses -->
-        <div class="order-card reveal" data-status="diproses">
-            <div class="order-head">
-                <div>
-                    <div class="order-no">#ORD-20260728-014</div>
-                    <div class="order-date">28 Juli 2026, 15:02</div>
-                </div>
-                <span class="badge-status diproses"><i class="bi bi-gear-fill"></i> Diproses</span>
-            </div>
-            <div class="order-body">
-                <img src="https://images.unsplash.com/photo-1618172193622-ae2d025f4032?auto=format&fit=crop&w=200&q=80" alt="">
-                <div class="order-info">
-                    <h6>Model 3D Karakter Game Low-Poly</h6>
-                    <div class="seller"><i class="bi bi-shop"></i> Rangga.blend</div>
-                    <div class="qty">Jumlah: 1 paket</div>
-                </div>
-                <div class="order-total">
-                    <div class="lbl">Total Pembayaran</div>
-                    <div class="val">Rp480.000</div>
-                </div>
-            </div>
-            <div class="order-footer">
-                <a href="{{ route('pembeli.pesanan.detail', 2) }}" class="btn-order-detail"><i class="bi bi-eye"></i> Lihat Detail</a>
-            </div>
-        </div>
-
-        <!-- Pesanan 3 - Dikirim -->
-        <div class="order-card reveal" data-status="dikirim">
-            <div class="order-head">
-                <div>
-                    <div class="order-no">#ORD-20260722-009</div>
-                    <div class="order-date">22 Juli 2026, 09:40</div>
-                </div>
-                <span class="badge-status dikirim"><i class="bi bi-truck"></i> Dikirim</span>
-            </div>
-            <div class="order-body">
-                <img src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=200&q=80" alt="">
-                <div class="order-info">
-                    <h6>Paket Logo & Brand Identity Kit</h6>
-                    <div class="seller"><i class="bi bi-shop"></i> Kirana Design</div>
-                    <div class="qty">Jumlah: 1 paket</div>
-                </div>
-                <div class="order-total">
-                    <div class="lbl">Total Pembayaran</div>
-                    <div class="val">Rp150.000</div>
-                </div>
-            </div>
-            <div class="order-footer">
-                <a href="{{ route('pembeli.pesanan.detail', 3) }}" class="btn-order-detail"><i class="bi bi-eye"></i> Lihat Detail</a>
-            </div>
-        </div>
-
-        <!-- Pesanan 4 - Selesai -->
-        <div class="order-card reveal" data-status="selesai">
-            <div class="order-head">
-                <div>
-                    <div class="order-no">#ORD-20260710-002</div>
-                    <div class="order-date">10 Juli 2026, 13:15</div>
-                </div>
-                <span class="badge-status selesai"><i class="bi bi-check-circle-fill"></i> Selesai</span>
-            </div>
-            <div class="order-body">
-                <img src="https://images.unsplash.com/photo-1611926653458-09294b3142bf?auto=format&fit=crop&w=200&q=80" alt="">
-                <div class="order-info">
-                    <h6>Paket 15 Feed & Story Instagram</h6>
-                    <div class="seller"><i class="bi bi-shop"></i> Sasi Creative</div>
-                    <div class="qty">Jumlah: 1 paket</div>
-                </div>
-                <div class="order-total">
-                    <div class="lbl">Total Pembayaran</div>
-                    <div class="val">Rp120.000</div>
-                </div>
-            </div>
-            <div class="order-footer">
-                <a href="{{ route('pembeli.pesanan.detail', 4) }}" class="btn-order-detail"><i class="bi bi-eye"></i> Lihat Detail</a>
-                <button class="btn-order-again"><i class="bi bi-arrow-repeat"></i> Beli Lagi</button>
-            </div>
-        </div>
-
-        <!-- Pesanan 5 - Dibatalkan -->
-        <div class="order-card reveal" data-status="dibatalkan">
-            <div class="order-head">
-                <div>
-                    <div class="order-no">#ORD-20260705-018</div>
-                    <div class="order-date">5 Juli 2026, 08:51</div>
-                </div>
-                <span class="badge-status dibatalkan"><i class="bi bi-x-circle-fill"></i> Dibatalkan</span>
-            </div>
-            <div class="order-body">
-                <img src="https://images.unsplash.com/photo-1559028012-481c04fa702d?auto=format&fit=crop&w=200&q=80" alt="">
-                <div class="order-info">
-                    <h6>Desain UI Aplikasi Mobile Lengkap</h6>
-                    <div class="seller"><i class="bi bi-shop"></i> Nadia UX</div>
-                    <div class="qty">Jumlah: 1 paket</div>
-                </div>
-                <div class="order-total">
-                    <div class="lbl">Total Pembayaran</div>
-                    <div class="val">Rp650.000</div>
-                </div>
-            </div>
-            <div class="order-footer">
-                <a href="{{ route('pembeli.pesanan.detail', 5) }}" class="btn-order-detail"><i class="bi bi-eye"></i> Lihat Detail</a>
-            </div>
-        </div>
-
-        <!-- Pesanan 6 - Selesai -->
-        <div class="order-card reveal" data-status="selesai">
-            <div class="order-head">
-                <div>
-                    <div class="order-no">#ORD-20260628-006</div>
-                    <div class="order-date">28 Juni 2026, 19:30</div>
-                </div>
-                <span class="badge-status selesai"><i class="bi bi-check-circle-fill"></i> Selesai</span>
-            </div>
-            <div class="order-body">
-                <img src="https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?auto=format&fit=crop&w=200&q=80" alt="">
-                <div class="order-info">
-                    <h6>Ilustrasi Vektor Karakter Custom</h6>
-                    <div class="seller"><i class="bi bi-shop"></i> Ilma.art</div>
-                    <div class="qty">Jumlah: 2 paket</div>
-                </div>
-                <div class="order-total">
-                    <div class="lbl">Total Pembayaran</div>
-                    <div class="val">Rp190.000</div>
-                </div>
-            </div>
-            <div class="order-footer">
-                <a href="{{ route('pembeli.pesanan.detail', 6) }}" class="btn-order-detail"><i class="bi bi-eye"></i> Lihat Detail</a>
-                <button class="btn-order-again"><i class="bi bi-arrow-repeat"></i> Beli Lagi</button>
-            </div>
-        </div>
+        <p>
+            Lihat dan kelola semua pesanan yang pernah kamu lakukan di Karyaku.
+        </p>
 
     </div>
 
-    {{-- ============= EMPTY STATE (disembunyikan, muncul jika hasil filter kosong) ============= --}}
-    <div class="empty-state d-none" id="emptyOrder">
-        <div class="inner">
-            <div class="icon-circle"><i class="bi bi-receipt"></i></div>
-            <h4>Belum Ada Pesanan</h4>
-            <p>Kamu belum memiliki pesanan pada status ini. Yuk mulai belanja karya digital dari kreator terbaik!</p>
-            <a href="{{ route('pembeli.marketplace') }}" class="btn-belanja"><i class="bi bi-shop"></i> Belanja Sekarang</a>
-        </div>
+
+    {{-- FILTER STATUS --}}
+
+    <div class="order-tabs">
+
+        <button
+            class="order-tab active"
+            data-status="all"
+        >
+            Semua
+        </button>
+
+        <button
+            class="order-tab"
+            data-status="menunggu"
+        >
+            Menunggu
+        </button>
+
+        <button
+            class="order-tab"
+            data-status="diproses"
+        >
+            Diproses
+        </button>
+
+        <button
+            class="order-tab"
+            data-status="selesai"
+        >
+            Selesai
+        </button>
+
+        <button
+            class="order-tab"
+            data-status="dibatalkan"
+        >
+            Dibatalkan
+        </button>
+
+    </div>
+
+
+    {{-- =====================================================
+         ORDERS
+    ===================================================== --}}
+
+    <div class="orders-wrapper" id="ordersWrapper">
+
+        @forelse($orders ?? [] as $order)
+
+            @php
+
+                $status = strtolower($order->status ?? 'menunggu');
+
+                $statusClass = match($status) {
+
+                    'menunggu',
+                    'pending',
+                    'menunggu pembayaran'
+                        => 'status-menunggu',
+
+                    'diproses',
+                    'processing'
+                        => 'status-diproses',
+
+                    'selesai',
+                    'completed'
+                        => 'status-selesai',
+
+                    'dibatalkan',
+                    'cancelled',
+                    'canceled'
+                        => 'status-dibatalkan',
+
+                    default
+                        => 'status-menunggu',
+
+                };
+
+                $statusText = match($status) {
+
+                    'pending'
+                        => 'Menunggu',
+
+                    'processing'
+                        => 'Diproses',
+
+                    'completed'
+                        => 'Selesai',
+
+                    'cancelled',
+                    'canceled'
+                        => 'Dibatalkan',
+
+                    default
+                        => ucfirst($status),
+
+                };
+
+            @endphp
+
+
+            <div
+                class="order-card"
+                data-status="{{ $status }}"
+            >
+
+                {{-- ORDER HEADER --}}
+
+                <div class="order-header">
+
+                    <div class="order-info">
+
+                        <div class="order-icon">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+
+                        <div>
+
+                            <div class="order-number">
+                                Pesanan #{{ $order->id_order ?? $order->order_number ?? '-' }}
+                            </div>
+
+                            <div class="order-date">
+
+                                @if(isset($order->created_at))
+
+                                    {{ $order->created_at->format('d M Y, H:i') }}
+
+                                @else
+
+                                    Tanggal tidak tersedia
+
+                                @endif
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <span class="status {{ $statusClass }}">
+
+                        {{ $statusText }}
+
+                    </span>
+
+                </div>
+
+
+                {{-- ORDER BODY --}}
+
+                <div class="order-body">
+
+                    @php
+                        $items = $order->orderItems ?? $order->items ?? collect();
+                    @endphp
+
+
+                    @forelse($items as $item)
+
+                        @php
+
+                            $product = $item->product ?? null;
+
+                            $productName =
+                                $product->name_product ??
+                                $product->nama_product ??
+                                $product->name ??
+                                $item->nama_produk ??
+                                $item->product_name ??
+                                'Produk';
+
+                            $productImage =
+                                $product->image ??
+                                $product->gambar ??
+                                null;
+
+                            $quantity =
+                                $item->quantity ??
+                                $item->jumlah ??
+                                1;
+
+                            $price =
+                                $item->price ??
+                                $item->harga ??
+                                0;
+
+                        @endphp
+
+
+                        <div class="product-item mb-3">
+
+                            <div class="product-image">
+
+                                @if($productImage)
+
+                                    <img
+                                        src="{{ asset('storage/' . $productImage) }}"
+                                        alt="{{ $productName }}"
+                                    >
+
+                                @else
+
+                                    <img
+                                        src="https://via.placeholder.com/150/eaf1ff/2563eb?text=Karyaku"
+                                        alt="{{ $productName }}"
+                                    >
+
+                                @endif
+
+                            </div>
+
+
+                            <div class="product-info">
+
+                                <h6>
+                                    {{ $productName }}
+                                </h6>
+
+                                <p>
+                                    Jumlah:
+                                    {{ $quantity }}
+                                </p>
+
+                            </div>
+
+
+                            <div class="product-price">
+
+                                Rp{{ number_format(
+                                    $price,
+                                    0,
+                                    ',',
+                                    '.'
+                                ) }}
+
+                            </div>
+
+                        </div>
+
+                    @empty
+
+                        <div class="text-center py-3">
+
+                            <small class="text-muted">
+                                Detail produk tidak tersedia.
+                            </small>
+
+                        </div>
+
+                    @endforelse
+
+
+                    {{-- SUMMARY --}}
+
+                    <div class="order-summary">
+
+                        <div class="summary-left">
+
+                            <strong>
+                                {{ $items->count() }}
+                            </strong>
+
+                            produk dalam pesanan
+
+                        </div>
+
+
+                        <div class="summary-right">
+
+                            <div>
+
+                                <span class="total-label">
+                                    Total:
+                                </span>
+
+                                <span class="total-price">
+
+                                    Rp{{ number_format(
+                                        $order->total_amount ??
+                                        $order->total ??
+                                        0,
+                                        0,
+                                        ',',
+                                        '.'
+                                    ) }}
+
+                                </span>
+
+                            </div>
+
+
+                            @if(
+                                Route::has('pembeli.pesanan.detail') &&
+                                isset($order->id_order)
+                            )
+
+                                <a
+                                    href="{{ route(
+                                        'pembeli.pesanan.detail',
+                                        $order->id_order
+                                    ) }}"
+                                    class="btn-detail"
+                                >
+                                    <i class="bi bi-eye"></i>
+                                    Lihat Detail
+                                </a>
+
+                            @endif
+
+
+                            @if(
+                                $status === 'selesai' ||
+                                $status === 'completed'
+                            )
+
+                                <a
+                                    href="{{ route('pembeli.download') }}"
+                                    class="btn-download"
+                                >
+                                    <i class="bi bi-download"></i>
+                                    Download
+                                </a>
+
+                            @endif
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        @empty
+
+            {{-- EMPTY ORDER --}}
+
+            <div class="empty-order">
+
+                <i class="bi bi-receipt"></i>
+
+                <h5>
+                    Belum Ada Pesanan
+                </h5>
+
+                <p>
+                    Kamu belum melakukan pembelian.
+                    Yuk cari produk menarik di Marketplace.
+                </p>
+
+                <a
+                    href="{{ route('pembeli.marketplace') }}"
+                    class="btn-marketplace"
+                >
+                    <i class="bi bi-shop"></i>
+                    Jelajahi Marketplace
+                </a>
+
+            </div>
+
+        @endforelse
+
+    </div>
+
+
+    {{-- NO FILTER RESULT --}}
+
+    <div
+        class="empty-order"
+        id="noOrderResult"
+        style="display:none; margin-top:16px;"
+    >
+
+        <i class="bi bi-search"></i>
+
+        <h5>
+            Pesanan Tidak Ditemukan
+        </h5>
+
+        <p>
+            Tidak ada pesanan dengan status tersebut.
+        </p>
+
     </div>
 
 </main>
 
+
 <script>
-    // ---- Toggle mobile menu ----
-    const btnToggleMenu   = document.getElementById('btnToggleMenu');
-    const mobileMenuPanel = document.getElementById('mobileMenuPanel');
-    if (btnToggleMenu && mobileMenuPanel) {
-        btnToggleMenu.addEventListener('click', () => {
-            const isOpen = mobileMenuPanel.classList.toggle('show');
-            btnToggleMenu.setAttribute('aria-expanded', isOpen);
-            btnToggleMenu.querySelector('i').className = isOpen ? 'bi bi-x-lg fs-5' : 'bi bi-list fs-5';
-        });
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 992 && mobileMenuPanel.classList.contains('show')) {
-                mobileMenuPanel.classList.remove('show');
-                btnToggleMenu.setAttribute('aria-expanded', false);
-                btnToggleMenu.querySelector('i').className = 'bi bi-list fs-5';
-            }
-        });
-    }
 
-    // ---- Dropdown user chip ----
-    const userMenu    = document.getElementById('userMenu');
-    const btnUserChip = document.getElementById('btnUserChip');
-    if (btnUserChip && userMenu) {
-        btnUserChip.addEventListener('click', (e) => {
-            e.stopPropagation();
+    /* =====================================================
+       USER DROPDOWN
+    ===================================================== */
+
+    const userMenu =
+        document.getElementById('userMenu');
+
+    const userChip =
+        document.getElementById('userChip');
+
+
+    userChip.addEventListener(
+        'click',
+        function(event) {
+
+            event.stopPropagation();
+
             userMenu.classList.toggle('open');
-        });
-        document.addEventListener('click', (e) => {
-            if (!userMenu.contains(e.target)) userMenu.classList.remove('open');
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') userMenu.classList.remove('open');
-        });
-    }
 
-    // ---- Scroll reveal ----
-    const revealEls = document.querySelectorAll('.reveal');
-    const observer = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('active');
-                observer.unobserve(entry.target);
+        }
+    );
+
+
+    document.addEventListener(
+        'click',
+        function(event) {
+
+            if (
+                !userMenu.contains(event.target)
+            ) {
+
+                userMenu.classList.remove('open');
+
             }
-        });
-    }, { threshold: 0.1 });
-    revealEls.forEach(el => observer.observe(el));
 
-    // ---- Filter tab pesanan ----
-    const statusTabs = document.querySelectorAll('.status-tab');
-    const orderCards = document.querySelectorAll('.order-card');
-    const emptyOrder  = document.getElementById('emptyOrder');
-    const orderList   = document.getElementById('orderList');
+        }
+    );
 
-    statusTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            statusTabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
 
-            const status = tab.dataset.status;
-            let visibleCount = 0;
+    /* =====================================================
+       SEARCH
+    ===================================================== */
 
-            orderCards.forEach(card => {
-                const match = status === 'semua' || card.dataset.status === status;
-                card.style.display = match ? '' : 'none';
-                if (match) visibleCount++;
+    const searchForm =
+        document.getElementById('searchForm');
+
+    const searchInput =
+        document.getElementById('searchInput');
+
+
+    searchForm.addEventListener(
+        'submit',
+        function(event) {
+
+            event.preventDefault();
+
+            const keyword =
+                searchInput.value
+                    .toLowerCase()
+                    .trim();
+
+
+            const orders =
+                document.querySelectorAll('.order-card');
+
+
+            orders.forEach(order => {
+
+                const text =
+                    order.innerText.toLowerCase();
+
+
+                if (
+                    keyword === '' ||
+                    text.includes(keyword)
+                ) {
+
+                    order.style.display = '';
+
+                } else {
+
+                    order.style.display = 'none';
+
+                }
+
             });
 
-            if (visibleCount === 0) {
-                orderList.classList.add('d-none');
-                emptyOrder.classList.remove('d-none');
-            } else {
-                orderList.classList.remove('d-none');
-                emptyOrder.classList.add('d-none');
+        }
+    );
+
+
+    searchInput.addEventListener(
+        'input',
+        function() {
+
+            const keyword =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+
+            const orders =
+                document.querySelectorAll('.order-card');
+
+
+            orders.forEach(order => {
+
+                const text =
+                    order.innerText.toLowerCase();
+
+
+                if (
+                    keyword === '' ||
+                    text.includes(keyword)
+                ) {
+
+                    order.style.display = '';
+
+                } else {
+
+                    order.style.display = 'none';
+
+                }
+
+            });
+
+        }
+    );
+
+
+    /* =====================================================
+       ORDER FILTER
+    ===================================================== */
+
+    const orderTabs =
+        document.querySelectorAll('.order-tab');
+
+    const orderCards =
+        document.querySelectorAll('.order-card');
+
+    const noOrderResult =
+        document.getElementById('noOrderResult');
+
+
+    orderTabs.forEach(tab => {
+
+        tab.addEventListener(
+            'click',
+            function() {
+
+                orderTabs.forEach(item => {
+
+                    item.classList.remove(
+                        'active'
+                    );
+
+                });
+
+
+                this.classList.add('active');
+
+
+                const selectedStatus =
+                    this.dataset.status;
+
+
+                let visibleCount = 0;
+
+
+                orderCards.forEach(card => {
+
+                    const cardStatus =
+                        card.dataset.status
+                            .toLowerCase();
+
+
+                    let show = false;
+
+
+                    if (
+                        selectedStatus === 'all'
+                    ) {
+
+                        show = true;
+
+                    } else {
+
+                        if (
+                            selectedStatus ===
+                            cardStatus
+                        ) {
+
+                            show = true;
+
+                        }
+
+
+                        /*
+                         * Support beberapa
+                         * penamaan status Laravel
+                         */
+
+                        if (
+                            selectedStatus ===
+                            'menunggu' &&
+                            (
+                                cardStatus === 'pending' ||
+                                cardStatus === 'menunggu pembayaran'
+                            )
+                        ) {
+
+                            show = true;
+
+                        }
+
+
+                        if (
+                            selectedStatus ===
+                            'diproses' &&
+                            cardStatus === 'processing'
+                        ) {
+
+                            show = true;
+
+                        }
+
+
+                        if (
+                            selectedStatus ===
+                            'selesai' &&
+                            cardStatus === 'completed'
+                        ) {
+
+                            show = true;
+
+                        }
+
+
+                        if (
+                            selectedStatus ===
+                            'dibatalkan' &&
+                            (
+                                cardStatus === 'cancelled' ||
+                                cardStatus === 'canceled'
+                            )
+                        ) {
+
+                            show = true;
+
+                        }
+
+                    }
+
+
+                    if (show) {
+
+                        card.style.display = '';
+
+                        visibleCount++;
+
+                    } else {
+
+                        card.style.display = 'none';
+
+                    }
+
+                });
+
+
+                if (
+                    visibleCount === 0 &&
+                    orderCards.length > 0
+                ) {
+
+                    noOrderResult.style.display =
+                        'block';
+
+                } else {
+
+                    noOrderResult.style.display =
+                        'none';
+
+                }
+
             }
-        });
+        );
+
     });
 
-    // ---- Beli lagi feedback ----
-    document.querySelectorAll('.btn-order-again').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const original = btn.innerHTML;
-            btn.innerHTML = '<i class="bi bi-check2"></i> Ditambahkan ke Keranjang';
-            setTimeout(() => { btn.innerHTML = original; }, 1400);
-        });
-    });
+
+    /* =====================================================
+       MOBILE MENU
+    ===================================================== */
+
+    const mobileToggle =
+        document.getElementById('mobileToggle');
+
+    const navMenu =
+        document.querySelector('.nav-menu');
+
+
+    mobileToggle.addEventListener(
+        'click',
+        function() {
+
+            if (
+                navMenu.style.display ===
+                'flex'
+            ) {
+
+                navMenu.style.display =
+                    'none';
+
+            } else {
+
+                navMenu.style.display =
+                    'flex';
+
+                navMenu.style.flexDirection =
+                    'column';
+
+                navMenu.style.position =
+                    'absolute';
+
+                navMenu.style.top =
+                    '64px';
+
+                navMenu.style.left =
+                    '16px';
+
+                navMenu.style.right =
+                    '16px';
+
+                navMenu.style.padding =
+                    '10px';
+
+                navMenu.style.borderRadius =
+                    '12px';
+
+                navMenu.style.background =
+                    '#14225c';
+
+                navMenu.style.boxShadow =
+                    '0 15px 30px rgba(0,0,0,.2)';
+
+            }
+
+        }
+    );
+
 </script>
+
 </body>
 </html>
