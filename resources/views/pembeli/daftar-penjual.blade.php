@@ -10,7 +10,7 @@
         </div>
         <div>
             <h4 class="fw-bold mb-0">Formulir Pendaftaran Penjual</h4>
-            <p class="text-muted mb-0 small">Lengkapi data diri, pilih paket membership, dan lakukan pembayaran untuk menjadi penjual di Karyaku.</p>
+            <p class="text-muted mb-0 small">Lengkapi data diri, pilih paket membership, dan lakukan pembayaran untuk menjadi penjual di Karyaku</p>
         </div>
     </div>
 </div>
