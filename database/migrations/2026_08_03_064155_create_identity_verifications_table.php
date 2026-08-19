@@ -40,6 +40,22 @@ return new class extends Migration
             $table->timestamp('payment_submitted_at')->nullable();
             $table->timestamp('submitted_at')->nullable();
 
+            // --- TAMBAHAN KOLOM YANG DIBUTUHKAN OLEH CONTROLLER ---
+            
+            // Kolom Status (pending, approved, rejected)
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            
+            // Kolom verifier_id untuk mencatat admin/verifikator mana yang memproses
+            $table->foreignId('verifier_id')->nullable()
+                ->constrained('users', 'id_user')
+                ->onDelete('set null');
+                
+            // Kolom untuk mencatat kapan diverifikasi
+            $table->timestamp('verified_at')->nullable();
+            
+            // Kolom catatan (notes) jika pengajuan ditolak
+            $table->text('notes')->nullable();
+
             $table->timestamps();
         });
     }
