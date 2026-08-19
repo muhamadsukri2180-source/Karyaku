@@ -206,7 +206,7 @@ class PembeliController extends Controller
         $product = Product::find($productId);
 
         if (! $product) {
-            if (request()->wantsJson()) {
+            if (request()->expectsJson() || request()->wantsJson() || request()->ajax()) {
                 return response()->json(['status' => 'error', 'message' => 'Produk tidak ditemukan.'], 404);
             }
             return back()->withErrors(['wishlist' => 'Produk tidak ditemukan.']);
@@ -222,21 +222,23 @@ class PembeliController extends Controller
             $status = 'added';
         }
 
-        if (request()->wantsJson()) {
+        if (request()->expectsJson() || request()->wantsJson() || request()->ajax()) {
             return response()->json(['status' => $status]);
         }
 
-        return back()->with('success', $status === 'added' ? 'Ditambahkan ke wishlist.' : 'Dihapus dari wishlist.');
+        return back()->with('success', $status === 'added' ? 'Produk berhasil ditambahkan ke wishlist.' : 'Produk dihapus dari wishlist.');
     }
 
     public function wishlistIndex()
     {
-        $items = Wishlist::with('product.seller', 'product.category')
+        $wishlists = Wishlist::with(['product.seller', 'product.category'])
             ->where('user_id', Auth::id())
             ->latest('id_wishlist')
-            ->get();
+            ->paginate(12);
 
-        return view('pembeli.wishlist', compact('items'));
+        $items = $wishlists;
+
+        return view('pembeli.wishlist', compact('wishlists', 'items'));
     }
 
     // ================= PESANAN =================
