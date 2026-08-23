@@ -141,34 +141,58 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 });
 
 
-// ==========================================
-// 4. VERIFIKATOR ROUTES
-// ==========================================
+/*
+|--------------------------------------------------------------------------
+| Verifikator Routes (Admin & CS)
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware(['auth', 'role:verifikator'])
     ->prefix('verifikator')
     ->name('verifikator.')
     ->group(function () {
 
-        Route::get(
-            '/dashboard',
-            [VerifikatorController::class, 'dashboard']
-        )->name('dashboard');
+        // ==========================================
+        // 1. DASHBOARD & PENDAFTARAN (READ-ONLY CS & ADMIN)
+        // ==========================================
+        Route::get('/dashboard', [VerifikatorController::class, 'dashboard'])->name('dashboard');
 
-        Route::get(
-            '/pendaftaran/{id}',
-            [VerifikatorController::class, 'show']
-        )->name('pendaftaran.show');
+        // Pendaftaran / Identitas KTP
+        Route::get('/identitas', [VerifikatorController::class, 'identitas'])->name('identitas');
+        Route::get('/pendaftaran/{id}', [VerifikatorController::class, 'show'])->name('pendaftaran.show');
 
-        Route::post(
-            '/pendaftaran/{id}/approve',
-            [VerifikatorController::class, 'approve']
-        )->name('pendaftaran.approve');
+        // Modul Produk & Jasa
+        Route::get('/produk', [VerifikatorController::class, 'produk'])->name('produk');
+        Route::get('/produk/{id}', [VerifikatorController::class, 'showProduk'])->name('produk.show');
 
-        Route::post(
-            '/pendaftaran/{id}/reject',
-            [VerifikatorController::class, 'reject']
-        )->name('pendaftaran.reject');
+        // Modul Transaksi Pembayaran
+        Route::get('/pembayaran', [VerifikatorController::class, 'pembayaran'])->name('pembayaran');
+        Route::get('/pembayaran/{id}', [VerifikatorController::class, 'showPembayaran'])->name('pembayaran.show');
+
+        // Modul Laporan Pelanggaran
+        Route::get('/laporan', [VerifikatorController::class, 'laporan'])->name('laporan');
+        Route::get('/laporan/{id}', [VerifikatorController::class, 'showLaporan'])->name('laporan.show');
+
+        // ==========================================
+        // 2. EKSEKUSI / ACTIONS (KHUSUS ADMIN)
+        // ==========================================
+        
+        // Eksekusi Pendaftaran / Identitas
+        Route::post('/pendaftaran/{id}/approve', [VerifikatorController::class, 'approve'])->name('pendaftaran.approve');
+        Route::post('/pendaftaran/{id}/reject', [VerifikatorController::class, 'reject'])->name('pendaftaran.reject');
+
+        // Eksekusi Produk
+        Route::post('/produk/{id}/approve', [VerifikatorController::class, 'approveProduk'])->name('produk.approve');
+        Route::post('/produk/{id}/reject', [VerifikatorController::class, 'rejectProduk'])->name('produk.reject');
+
+        // Eksekusi Pembayaran
+        Route::post('/pembayaran/{id}/approve', [VerifikatorController::class, 'approvePembayaran'])->name('pembayaran.approve');
+        Route::post('/pembayaran/{id}/reject', [VerifikatorController::class, 'rejectPembayaran'])->name('pembayaran.reject');
+
+        // Eksekusi Action Laporan
+        Route::post('/laporan/{id}/action', [VerifikatorController::class, 'actionLaporan'])->name('laporan.action');
     });
+    
 
 
 // ==========================================
