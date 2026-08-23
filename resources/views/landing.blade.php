@@ -3,35 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Karyaku - Marketplace Jasa Digital Kreator Indonesia</title>
-    <!-- Tailwind CSS CDN -->
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+          rel="stylesheet">
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        // Sesuai dengan Dashboard (Biru Vibrant & Oranye)
-                        primary: '#2563EB',       // Blue 600 (Vibrant Blue)
-                        primaryHover: '#1D4ED8',  // Blue 700
-                        accent: '#F97316',        // Orange 500
-                        accentHover: '#EA580C',   // Orange 600
-                        bgLight: '#F8FAFC',       // Slate 50 (Background utama)
-                        cardWhite: '#FFFFFF',     // White Cards
-                        textMain: '#0F172A',      // Slate 900
-                        textMuted: '#64748B',     // Slate 500
-                        borderSoft: '#E2E8F0'     // Slate 200
+                        primary: '#2563EB',
+                        primaryHover: '#1D4ED8',
+                        accent: '#F97316',
+                        accentHover: '#EA580C',
+
+                        bgLight: '#F8FAFC',
+                        cardWhite: '#FFFFFF',
+
+                        textMain: '#0F172A',
+                        textMuted: '#64748B',
+
+                        borderSoft: '#E2E8F0'
                     },
+
                     fontFamily: {
-                        display: ['"Sora"', 'sans-serif'],
-                        body: ['"Plus Jakarta Sans"', 'sans-serif'],
-                        mono: ['"JetBrains Mono"', 'monospace']
+                        display: ['Sora', 'sans-serif'],
+                        body: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
                     }
                 }
             }
@@ -39,593 +50,2524 @@
     </script>
 
     <style>
-        html { scroll-behavior: smooth; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; color: #0F172A; }
-        h1, h2, h3, h4, h5, .font-display { font-family: 'Sora', sans-serif; }
-        
-        /* Focus State */
-        :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+        html {
+            scroll-behavior: smooth;
+        }
 
-        /* Animasi reveal ringan */
-        .reveal { opacity: 0; transform: translateY(15px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
-        .reveal.in-view { opacity: 1; transform: none; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #F8FAFC;
+            color: #0F172A;
+        }
 
-        /* Mobile menu transisi */
-        #mobileMenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
-        #mobileMenu.open { max-height: 300px; }
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        .font-display {
+            font-family: 'Sora', sans-serif;
+        }
 
-        /* Custom Scrollbar Light */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #F1F5F9; }
-        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+        :focus-visible {
+            outline: 2px solid #F97316;
+            outline-offset: 2px;
+            border-radius: 5px;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition:
+                opacity .6s ease,
+                transform .6s ease;
+        }
+
+        .reveal.in-view {
+            opacity: 1;
+            transform: none;
+        }
+
+        #mobileMenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .3s ease;
+        }
+
+        #mobileMenu.open {
+            max-height: 500px;
+        }
+
+        .benefit-track {
+            transition: transform .5s ease;
+        }
+
+        .package-card {
+            transition:
+                transform .3s ease,
+                box-shadow .3s ease,
+                border-color .3s ease;
+        }
+
+        .package-card:hover {
+            transform: translateY(-7px);
+        }
+
+        .popular-package {
+            box-shadow:
+                0 20px 50px rgba(37, 99, 235, .15);
+        }
+
+        .shine {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shine::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 60%;
+            height: 100%;
+            transform: skewX(-20deg);
+            background: rgba(255,255,255,.12);
+            transition: left .7s ease;
+        }
+
+        .shine:hover::after {
+            left: 150%;
+        }
+
+        .check-icon {
+            width: 21px;
+            height: 21px;
+            min-width: 21px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #F1F5F9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
     </style>
 </head>
+
 <body class="antialiased selection:bg-primary selection:text-white">
 
-    <!-- NAVBAR (Biru Vibrant seperti di Dashboard) -->
-    <header class="sticky top-0 z-50 bg-gradient-to-r from-blue-700 to-primary shadow-md transition-all duration-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-            <!-- Logo -->
-            <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-lg bg-white text-primary flex items-center justify-center shrink-0 shadow-sm">
-                    <i class="fa-solid fa-layer-group text-sm"></i>
-                </div>
-                <div class="flex flex-col">
-                    <h1 class="text-lg font-bold text-white leading-none font-display">Karyaku<span class="text-accent">.</span></h1>
-                </div>
-            </div>
+<!-- ========================================================= -->
+<!-- NAVBAR -->
+<!-- ========================================================= -->
 
-            <!-- Desktop Nav -->
-            <nav class="hidden md:flex space-x-8 text-[14px] font-medium text-blue-100">
-                <a href="#hero" class="hover:text-white transition-colors">Beranda</a>
-                <a href="#kategori" class="hover:text-white transition-colors">Kategori</a>
-                <a href="#cara-kerja" class="hover:text-white transition-colors">Cara Kerja</a>
-                <a href="#karya-pilihan" class="hover:text-white transition-colors">Karya Pilihan</a>
+<header class="sticky top-0 z-50 bg-gradient-to-r from-blue-700 to-primary shadow-md">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+
+        <div class="flex justify-between items-center">
+
+            <!-- LOGO -->
+            <a href="#hero" class="flex items-center gap-2.5">
+
+                <div class="w-9 h-9 rounded-lg bg-white text-primary flex items-center justify-center shadow-sm">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+
+                <div>
+                    <h1 class="text-lg font-bold text-white leading-none font-display">
+                        Karyaku<span class="text-accent">.</span>
+                    </h1>
+
+                    <span class="text-[9px] text-blue-100 font-medium tracking-wide">
+                        DIGITAL MARKETPLACE
+                    </span>
+                </div>
+
+            </a>
+
+            <!-- DESKTOP NAV -->
+            <nav class="hidden lg:flex items-center space-x-7 text-[13px] font-semibold text-blue-100">
+
+                <a href="#hero"
+                   class="hover:text-white transition">
+                    Beranda
+                </a>
+
+                <a href="#kategori"
+                   class="hover:text-white transition">
+                    Kategori
+                </a>
+
+                <a href="#cara-kerja"
+                   class="hover:text-white transition">
+                    Cara Kerja
+                </a>
+
+                <a href="#karya-pilihan"
+                   class="hover:text-white transition">
+                    Karya Pilihan
+                </a>
+
+                <a href="#paket-penjual"
+                   class="hover:text-white transition">
+                    Paket Penjual
+                </a>
+
             </nav>
 
-            <!-- Actions -->
-            <div class="flex items-center gap-3">
-                <a href="auth/login" class="inline-flex items-center justify-center px-6 py-2 text-sm font-bold text-white bg-accent hover:bg-accentHover rounded-lg transition-all shadow-md">
+            <!-- ACTION -->
+            <div class="flex items-center gap-2">
+
+                <!-- MASUK -->
+                <a href="{{ url('/auth/login') }}"
+                   class="hidden sm:inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
+
+                    <i class="fa-solid fa-right-to-bracket"></i>
+
                     Masuk
                 </a>
-                <!-- Mobile Toggle -->
-                <button id="menuToggle" class="md:hidden w-9 h-9 flex items-center justify-center rounded-md border border-blue-400 text-white hover:bg-blue-600 transition-colors">
-                    <i class="fa-solid fa-bars text-sm" id="menuIcon"></i>
-                </button>
-            </div>
-        </div>
 
-        <!-- Mobile Menu -->
-        <div id="mobileMenu" class="md:hidden bg-white border-t border-borderSoft shadow-xl">
-            <nav class="flex flex-col px-4 py-3 space-y-1 text-sm font-medium text-textMuted">
-                <a href="#hero" class="block px-3 py-2 rounded-md hover:bg-bgLight hover:text-primary transition-colors">Beranda</a>
-                <a href="#kategori" class="block px-3 py-2 rounded-md hover:bg-bgLight hover:text-primary transition-colors">Kategori Jasa</a>
-                <a href="#cara-kerja" class="block px-3 py-2 rounded-md hover:bg-bgLight hover:text-primary transition-colors">Cara Kerja</a>
-                <a href="#karya-pilihan" class="block px-3 py-2 rounded-md hover:bg-bgLight hover:text-primary transition-colors">Karya Pilihan</a>
-                <div class="h-px bg-borderSoft my-2"></div>
-                <a href="auth/login" class="block px-3 py-2 text-center rounded-md bg-accent text-white font-bold hover:bg-accentHover transition-colors">Masuk</a>
-            </nav>
-        </div>
-    </header>
+                <!-- MASUK SEBAGAI PENJUAL -->
+                <a href="{{ url('/auth/login?role=penjual') }}"
+                   class="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 text-xs font-bold text-white bg-accent hover:bg-accentHover rounded-lg transition shadow-lg shadow-orange-900/20">
 
-    <!-- SECTION 1: HERO (Light Mesh Gradient) -->
-    <section id="hero" class="relative pt-16 pb-20 lg:pt-24 lg:pb-32 overflow-hidden bg-gradient-to-br from-blue-50 via-white to-orange-50 border-b border-borderSoft">
-        <!-- Dekorasi Background -->
-        <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-            <div class="absolute -top-[10%] -right-[10%] w-[50%] h-[50%] rounded-full bg-blue-100/50 blur-3xl"></div>
-            <div class="absolute top-[40%] -left-[10%] w-[40%] h-[40%] rounded-full bg-orange-100/40 blur-3xl"></div>
-        </div>
+                    <i class="fa-solid fa-store"></i>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-                <!-- Kiri: Tipografi -->
-                <div class="max-w-2xl text-center lg:text-left mx-auto lg:mx-0 reveal">
-                    <span class="inline-flex items-center gap-1.5 py-1.5 px-4 rounded-full bg-blue-100 text-primary text-xs font-bold tracking-wide mb-6 border border-blue-200 shadow-sm">
-                        <i class="fa-solid fa-sparkles text-accent"></i> Ruang Karya Digital Indonesia
+                    <span class="hidden sm:inline">
+                        Masuk sebagai Penjual
                     </span>
-                    <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 text-textMain leading-[1.15] tracking-tight">
-                        Temukan Jasa Digital untuk <span class="text-primary">Kebutuhan Bisnismu.</span>
-                    </h1>
-                    <p class="text-base sm:text-lg text-textMuted mb-8 leading-relaxed">
-                        Dari desain poster, model 3D, hingga UI/UX. Beli karya langsung jadi atau sewa jasa kreator profesional dengan sistem pembayaran yang aman.
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-                        <a href="#kategori" class="inline-flex items-center justify-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl text-sm font-bold hover:bg-primaryHover transition-colors shadow-lg shadow-primary/30">
-                            <i class="fa-solid fa-magnifying-glass"></i> Cari Kreator
-                        </a>
-                    </div>
-                </div>
 
-                <!-- Kanan: Masonry Image Grid -->
-                <div class="hidden lg:grid grid-cols-2 gap-4 reveal">
-                    <div class="space-y-4 pt-12">
-                        <img src="https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=400&q=80" alt="UI Design" class="rounded-2xl object-cover h-48 w-full shadow-lg border border-white">
-                        <img src="https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?auto=format&fit=crop&w=400&q=80" alt="Illustration" class="rounded-2xl object-cover h-64 w-full shadow-lg border border-white">
-                    </div>
-                    <div class="space-y-4">
-                        <img src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=400&q=80" alt="Branding" class="rounded-2xl object-cover h-64 w-full shadow-lg border border-white">
-                        <img src="https://images.unsplash.com/photo-1618172193622-ae2d025f4032?auto=format&fit=crop&w=400&q=80" alt="3D Model" class="rounded-2xl object-cover h-48 w-full shadow-lg border border-white">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+                    <span class="sm:hidden">
+                        Penjual
+                    </span>
 
-    <!-- SECTION 2: KATEGORI JASA (White Background) -->
-    <section id="kategori" class="py-20 lg:py-24 bg-cardWhite">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-4 reveal">
-                <div class="max-w-2xl">
-                    <h2 class="font-display text-2xl sm:text-3xl font-bold text-textMain mb-3">Eksplorasi Kategori Jasa</h2>
-                    <p class="text-textMuted text-sm sm:text-base">Temukan layanan yang sesuai dengan kebutuhan proyek Anda.</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                <!-- Card Kategori 1 -->
-                <div onclick="openModal('canva')" class="reveal group cursor-pointer bg-white border border-borderSoft rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-xl transition-all duration-300 flex flex-col shadow-sm">
-                    <div class="relative h-44 overflow-hidden bg-slate-100">
-                        <img src="https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=600&q=80" alt="Desain Poster Canva" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    </div>
-                    <div class="p-5 flex flex-col flex-grow">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center border border-blue-100">
-                                <i class="fa-solid fa-image"></i>
-                            </div>
-                            <span class="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">Lihat Detail</span>
-                        </div>
-                        <h3 class="font-bold text-textMain mb-2 text-lg group-hover:text-primary transition-colors">Desain Poster Canva</h3>
-                        <p class="text-sm text-textMuted line-clamp-2">Template siap pakai dan jasa desain poster promosi, event, dan menu restoran.</p>
-                    </div>
-                </div>
-
-                <!-- Card Kategori 2 -->
-                <div onclick="openModal('blender')" class="reveal group cursor-pointer bg-white border border-borderSoft rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-xl transition-all duration-300 flex flex-col shadow-sm">
-                    <div class="relative h-44 overflow-hidden bg-slate-100">
-                        <img src="https://images.unsplash.com/photo-1618172193622-ae2d025f4032?auto=format&fit=crop&w=600&q=80" alt="Model 3D Blender" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    </div>
-                    <div class="p-5 flex flex-col flex-grow">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center border border-blue-100">
-                                <i class="fa-solid fa-cube"></i>
-                            </div>
-                            <span class="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">Lihat Detail</span>
-                        </div>
-                        <h3 class="font-bold text-textMain mb-2 text-lg group-hover:text-primary transition-colors">Model 3D Blender</h3>
-                        <p class="text-sm text-textMuted line-clamp-2">Aset karakter, visualisasi arsitektur, dan properti 3D untuk game & animasi.</p>
-                    </div>
-                </div>
-
-                <!-- Card Kategori 3 -->
-                <div onclick="openModal('logo')" class="reveal group cursor-pointer bg-white border border-borderSoft rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-xl transition-all duration-300 flex flex-col shadow-sm">
-                    <div class="relative h-44 overflow-hidden bg-slate-100">
-                        <img src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=600&q=80" alt="Logo & Branding" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    </div>
-                    <div class="p-5 flex flex-col flex-grow">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center border border-blue-100">
-                                <i class="fa-solid fa-signature"></i>
-                            </div>
-                            <span class="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">Lihat Detail</span>
-                        </div>
-                        <h3 class="font-bold text-textMain mb-2 text-lg group-hover:text-primary transition-colors">Logo & Branding</h3>
-                        <p class="text-sm text-textMuted line-clamp-2">Identitas merek profesional, pedoman visual, dan desain kemasan produk.</p>
-                    </div>
-                </div>
-
-                <!-- Card Kategori 4 -->
-                <div onclick="openModal('sosmed')" class="reveal group cursor-pointer bg-white border border-borderSoft rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-xl transition-all duration-300 flex flex-col shadow-sm">
-                    <div class="relative h-44 overflow-hidden bg-slate-100">
-                        <img src="https://images.unsplash.com/photo-1611926653458-09294b3142bf?auto=format&fit=crop&w=600&q=80" alt="Konten Media Sosial" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    </div>
-                    <div class="p-5 flex flex-col flex-grow">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center border border-blue-100">
-                                <i class="fa-solid fa-hashtag"></i>
-                            </div>
-                            <span class="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">Lihat Detail</span>
-                        </div>
-                        <h3 class="font-bold text-textMain mb-2 text-lg group-hover:text-primary transition-colors">Konten Media Sosial</h3>
-                        <p class="text-sm text-textMuted line-clamp-2">Manajemen feed, desain story, dan editing video pendek untuk Instagram & TikTok.</p>
-                    </div>
-                </div>
-
-                <!-- Card Kategori 5 -->
-                <div onclick="openModal('uiux')" class="reveal group cursor-pointer bg-white border border-borderSoft rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-xl transition-all duration-300 flex flex-col shadow-sm">
-                    <div class="relative h-44 overflow-hidden bg-slate-100">
-                        <img src="https://images.unsplash.com/photo-1559028012-481c04fa702d?auto=format&fit=crop&w=600&q=80" alt="UI/UX Design" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    </div>
-                    <div class="p-5 flex flex-col flex-grow">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center border border-blue-100">
-                                <i class="fa-solid fa-pen-ruler"></i>
-                            </div>
-                            <span class="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">Lihat Detail</span>
-                        </div>
-                        <h3 class="font-bold text-textMain mb-2 text-lg group-hover:text-primary transition-colors">UI/UX Design</h3>
-                        <p class="text-sm text-textMuted line-clamp-2">Desain antarmuka aplikasi mobile, website, dan prototipe interaktif figma.</p>
-                    </div>
-                </div>
-
-                <!-- Card Kategori 6 -->
-                <div onclick="openModal('ilustrasi')" class="reveal group cursor-pointer bg-white border border-borderSoft rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-xl transition-all duration-300 flex flex-col shadow-sm">
-                    <div class="relative h-44 overflow-hidden bg-slate-100">
-                        <img src="https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?auto=format&fit=crop&w=600&q=80" alt="Ilustrasi Digital" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    </div>
-                    <div class="p-5 flex flex-col flex-grow">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center border border-blue-100">
-                                <i class="fa-solid fa-paintbrush"></i>
-                            </div>
-                            <span class="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">Lihat Detail</span>
-                        </div>
-                        <h3 class="font-bold text-textMain mb-2 text-lg group-hover:text-primary transition-colors">Ilustrasi Digital</h3>
-                        <p class="text-sm text-textMuted line-clamp-2">Seni vektor, karikatur, gambar buku anak, dan berbagai gaya ilustrasi.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- SECTION 3: CARA KERJA (Light Background) -->
-    <section id="cara-kerja" class="py-20 lg:py-24 bg-bgLight border-y border-borderSoft">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-2xl mx-auto mb-14 reveal">
-                <h2 class="font-display text-2xl sm:text-3xl font-bold text-textMain mb-3">Cara Kerja Karyaku</h2>
-                <p class="text-textMuted text-sm sm:text-base">Sistem yang aman dan mudah bagi pembeli maupun kreator.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-                <!-- Garis penghubung -->
-                <div class="hidden md:block absolute top-6 left-[16%] right-[16%] h-px bg-borderSoft z-0"></div>
-
-                <div class="reveal relative z-10 text-center flex flex-col items-center">
-                    <div class="w-12 h-12 bg-white border-2 border-primary text-primary rounded-full flex items-center justify-center font-bold text-lg mb-5 shadow-sm">1</div>
-                    <h3 class="font-bold text-textMain mb-2">Cari Kreator</h3>
-                    <p class="text-textMuted text-sm leading-relaxed max-w-xs">Jelajahi portofolio, baca ulasan, dan temukan kreator yang gaya kerjanya cocok dengan Anda.</p>
-                </div>
-                
-                <div class="reveal relative z-10 text-center flex flex-col items-center">
-                    <div class="w-12 h-12 bg-white border-2 border-accent text-accent rounded-full flex items-center justify-center font-bold text-lg mb-5 shadow-sm">2</div>
-                    <h3 class="font-bold text-textMain mb-2">Pesan & Bayar Aman</h3>
-                    <p class="text-textMuted text-sm leading-relaxed max-w-xs">Dana ditahan oleh sistem kami (Escrow) hingga Anda menyetujui hasil akhir dari kreator.</p>
-                </div>
-                
-                <div class="reveal relative z-10 text-center flex flex-col items-center">
-                    <div class="w-12 h-12 bg-white border-2 border-primary text-primary rounded-full flex items-center justify-center font-bold text-lg mb-5 shadow-sm">3</div>
-                    <h3 class="font-bold text-textMain mb-2">Terima Hasil</h3>
-                    <p class="text-textMuted text-sm leading-relaxed max-w-xs">Unduh file final berkualitas tinggi, berikan ulasan, dan proyek selesai dengan aman.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- SECTION 4: KARYA PILIHAN (White Background) -->
-    <section id="karya-pilihan" class="py-20 lg:py-24 bg-cardWhite">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4 reveal">
-                <div>
-                    <h2 class="font-display text-2xl sm:text-3xl font-bold text-textMain mb-2">Karya & Jasa Pilihan</h2>
-                    <p class="text-textMuted text-sm sm:text-base">Layanan dengan rating tertinggi dan yang sedang dipromosikan.</p>
-                </div>
-                <a href="#" class="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-borderSoft bg-white text-textMain font-bold text-sm hover:bg-slate-50 transition-colors shadow-sm">
-                    Lihat Semua Karya <i class="fa-solid fa-arrow-right text-xs"></i>
                 </a>
-            </div>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                <!-- Produk 1 -->
-                <div class="reveal group border border-borderSoft rounded-xl overflow-hidden bg-white hover:shadow-lg transition-all duration-200 flex flex-col relative">
-                    <!-- Badge Promosi -->
-                    <div class="absolute top-3 left-3 z-10 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md border border-borderSoft shadow-sm flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
-                        <span class="text-[10px] font-bold text-textMain uppercase tracking-wider">Dipromosikan</span>
-                    </div>
 
-                    <div class="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                        <img src="https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=600&q=80" alt="Karya poster" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    </div>
-                    <div class="p-5 flex flex-col flex-grow">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="w-6 h-6 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[10px] text-primary"><i class="fa-solid fa-user"></i></span>
-                            <span class="text-xs font-bold text-textMuted">Dinda Studio</span>
-                        </div>
-                        <h4 class="font-bold text-textMain text-base mb-3 leading-snug group-hover:text-primary transition-colors">Desain Poster Promosi Kafe Modern (Canva)</h4>
-                        
-                        <div class="mt-auto pt-4 border-t border-borderSoft flex items-center justify-between">
-                            <div class="flex items-center gap-1 text-sm text-textMain font-bold">
-                                <i class="fa-solid fa-star text-yellow-400 text-xs"></i> 4.9 <span class="text-textMuted font-medium text-xs">(120)</span>
-                            </div>
-                            <span class="font-mono text-sm font-bold text-primary">Rp75.000</span>
-                        </div>
-                    </div>
-                </div>
+                <!-- MOBILE -->
+                <button id="menuToggle"
+                        class="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg border border-blue-400 text-white hover:bg-blue-600">
 
-                <!-- Produk 2 -->
-                <div class="reveal group border border-borderSoft rounded-xl overflow-hidden bg-white hover:shadow-lg transition-all duration-200 flex flex-col">
-                    <div class="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                        <img src="https://images.unsplash.com/photo-1618172193622-ae2d025f4032?auto=format&fit=crop&w=600&q=80" alt="Model 3D" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    </div>
-                    <div class="p-5 flex flex-col flex-grow">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="w-6 h-6 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[10px] text-primary"><i class="fa-solid fa-user"></i></span>
-                            <span class="text-xs font-bold text-textMuted">Rangga 3D</span>
-                        </div>
-                        <h4 class="font-bold text-textMain text-base mb-3 leading-snug group-hover:text-primary transition-colors">Model 3D Karakter Game (Siap Rigging)</h4>
-                        
-                        <div class="mt-auto pt-4 border-t border-borderSoft flex items-center justify-between">
-                            <div class="flex items-center gap-1 text-sm text-textMain font-bold">
-                                <i class="fa-solid fa-star text-yellow-400 text-xs"></i> 5.0 <span class="text-textMuted font-medium text-xs">(45)</span>
-                            </div>
-                            <span class="font-mono text-sm font-bold text-primary">Rp480.000</span>
-                        </div>
-                    </div>
-                </div>
+                    <i class="fa-solid fa-bars" id="menuIcon"></i>
 
-                <!-- Produk 3 -->
-                <div class="reveal group border border-borderSoft rounded-xl overflow-hidden bg-white hover:shadow-lg transition-all duration-200 flex flex-col">
-                    <div class="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                        <img src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=600&q=80" alt="Logo" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    </div>
-                    <div class="p-5 flex flex-col flex-grow">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="w-6 h-6 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[10px] text-primary"><i class="fa-solid fa-user"></i></span>
-                            <span class="text-xs font-bold text-textMuted">Kirana Design</span>
-                        </div>
-                        <h4 class="font-bold text-textMain text-base mb-3 leading-snug group-hover:text-primary transition-colors">Paket Pembuatan Logo & Brand Identity</h4>
-                        
-                        <div class="mt-auto pt-4 border-t border-borderSoft flex items-center justify-between">
-                            <div class="flex items-center gap-1 text-sm text-textMain font-bold">
-                                <i class="fa-solid fa-star text-yellow-400 text-xs"></i> 4.8 <span class="text-textMuted font-medium text-xs">(89)</span>
-                            </div>
-                            <span class="font-mono text-sm font-bold text-primary">Rp150.000</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-8 text-center sm:hidden reveal">
-                <a href="#" class="inline-flex items-center justify-center gap-2 w-full px-5 py-3 rounded-lg border border-borderSoft bg-white text-textMain font-bold text-sm hover:bg-slate-50 transition-colors shadow-sm">
-                    Lihat Semua Karya <i class="fa-solid fa-arrow-right text-xs"></i>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- SECTION 5: UNTUK KREATOR (Vibrant Blue - Contrast Section) -->
-    <section id="kreator" class="py-20 lg:py-28 bg-primary text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-                
-                <!-- Kiri: Tipografi -->
-                <div class="w-full lg:w-5/12 reveal">
-                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 border border-blue-500 text-[11px] font-bold tracking-widest uppercase mb-5 text-white shadow-sm">
-                        <i class="fa-solid fa-store text-accent"></i> Fitur Penjual
-                    </div>
-                    <h2 class="font-display text-3xl sm:text-4xl font-bold leading-tight mb-5 text-white">
-                        Ubah Keahlian Jadi Pendapatan.
-                    </h2>
-                    <p class="text-blue-100 text-sm sm:text-base leading-relaxed mb-8">
-                        Daftar sebagai pengguna untuk mencari inspirasi, dan <strong>upgrade ke Paket Kreator</strong> langsung dari dashboard-mu kapan pun kamu siap menawarkan jasa.
-                    </p>
-                    <a href="auth/login" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-white font-bold text-sm hover:bg-accentHover transition-colors shadow-lg shadow-black/20">
-                        Buka Toko Sekarang <i class="fa-solid fa-arrow-right text-xs"></i>
-                    </a>
-                </div>
-
-                <!-- Kanan: Bento Grid Layout -->
-                <div class="w-full lg:w-7/12 grid gap-4 reveal">
-                    <!-- Highlight Card -->
-                    <div class="bg-white/10 backdrop-blur-md border border-white/20 p-6 sm:p-8 rounded-2xl relative overflow-hidden hover:bg-white/15 transition-colors">
-                        <div class="relative z-10">
-                            <h3 class="font-bold text-lg mb-2 text-white">Satu Akun, Multi Peran</h3>
-                            <p class="text-blue-100 text-sm leading-relaxed max-w-sm">
-                                Beli jasa dari desainer lain, lalu buka toko milikmu sendiri menggunakan satu akun yang sama. Tidak perlu repot mendaftar dua kali.
-                            </p>
-                        </div>
-                        <i class="fa-solid fa-user-tie absolute -right-4 -bottom-4 text-[100px] text-white opacity-10 pointer-events-none"></i>
-                    </div>
-
-                    <!-- 2 Grid Bawah -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl hover:bg-white/15 transition-colors">
-                            <div class="w-10 h-10 rounded-lg bg-white text-primary flex items-center justify-center mb-4 shadow-sm">
-                                <i class="fa-solid fa-chart-line"></i>
-                            </div>
-                            <h4 class="font-bold text-white mb-1.5 text-sm">Dashboard Terpusat</h4>
-                            <p class="text-xs text-blue-100 leading-relaxed">Kelola pesanan, chat dengan klien, dan pantau penghasilan di satu tempat.</p>
-                        </div>
-                        
-                        <div class="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl hover:bg-white/15 transition-colors">
-                            <div class="w-10 h-10 rounded-lg bg-accent text-white flex items-center justify-center mb-4 shadow-sm">
-                                <i class="fa-solid fa-shield-check"></i>
-                            </div>
-                            <h4 class="font-bold text-white mb-1.5 text-sm">Keamanan Escrow</h4>
-                            <p class="text-xs text-blue-100 leading-relaxed">Fokus berkarya. Sistem pembayaran kami menjamin dana cair otomatis saat selesai.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FOOTER (Light Background) -->
-    <footer class="bg-white py-10 border-t border-borderSoft">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-lg bg-primary text-white flex items-center justify-center">
-                    <i class="fa-solid fa-layer-group text-[12px]"></i>
-                </div>
-                <span class="font-display font-bold text-base text-textMain">Karyaku<span class="text-accent">.</span></span>
-            </div>
-            
-            <p class="text-xs sm:text-sm text-textMuted text-center md:text-left">
-                &copy; 2026 Karyaku. Hak Cipta Dilindungi.
-            </p>
-            
-            <div class="flex gap-4">
-                <a href="#" class="text-textMuted hover:text-primary transition-colors"><i class="fa-brands fa-instagram"></i></a>
-                <a href="#" class="text-textMuted hover:text-primary transition-colors"><i class="fa-brands fa-twitter"></i></a>
-                <a href="#" class="text-textMuted hover:text-primary transition-colors"><i class="fa-brands fa-linkedin"></i></a>
-            </div>
-        </div>
-    </footer>
-
-    <!-- MODAL POPUP KATEGORI (Light Theme) -->
-    <div id="categoryModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 transition-opacity duration-200 opacity-0" onclick="closeModal()">
-        <div class="bg-white border border-borderSoft w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200 flex flex-col" id="modalContent" onclick="event.stopPropagation()">
-            <!-- Modal Header -->
-            <div class="flex justify-between items-center px-5 py-4 border-b border-borderSoft bg-white">
-                <h3 id="modalTitle" class="font-bold text-base text-textMain">Judul Kategori</h3>
-                <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-textMuted hover:bg-slate-200 hover:text-textMain transition-colors">
-                    <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
+
             </div>
-            
-            <!-- Modal Body -->
-            <div id="modalBody" class="p-5 space-y-3 max-h-[60vh] overflow-y-auto bg-slate-50">
-                <!-- Diisi via JS -->
-            </div>
+
         </div>
+
     </div>
 
-    <script>
-        const categoryData = {
-            'canva': {
-                title: 'Desain Poster Canva',
-                items: [
-                    { title: 'Poster Promosi & Diskon', desc: 'Desain visual kreatif untuk memasarkan produk, jasa, atau mengumumkan diskon spesial toko Anda.' },
-                    { title: 'Poster Event / Webinar', desc: 'Media informasi digital untuk pendaftaran konser, seminar online, atau acara komunitas.' },
-                    { title: 'Menu Restoran / Kafe', desc: 'Pembuatan daftar menu yang estetik dan mudah dibaca oleh pelanggan.' }
-                ]
-            },
-            'blender': {
-                title: 'Model & Animasi 3D Blender',
-                items: [
-                    { title: 'Model Karakter 3D', desc: 'Pembuatan karakter manusia, hewan, atau maskot unik untuk keperluan game dan animasi.' },
-                    { title: 'Visualisasi Arsitektur', desc: 'Render 3D realistis untuk desain interior ruangan maupun eksterior bangunan.' },
-                    { title: 'Aset Prop & Objek', desc: 'Pembuatan model benda mati (senjata, mobil, furniture) dengan resolusi low-poly maupun high-poly.' }
-                ]
-            },
-            'logo': {
-                title: 'Logo & Branding',
-                items: [
-                    { title: 'Logo Minimalis', desc: 'Desain logo yang simpel, modern, dan mudah diingat (memorable) oleh pelanggan.' },
-                    { title: 'Brand Identity Guideline', desc: 'Dokumen lengkap yang berisi aturan penggunaan warna, tipografi, dan gaya visual brand Anda.' },
-                    { title: 'Desain Kemasan (Packaging)', desc: 'Rancangan visual untuk kotak produk atau label botol agar terlihat profesional di pasaran.' }
-                ]
-            },
-            'sosmed': {
-                title: 'Konten Media Sosial',
-                items: [
-                    { title: 'Feed & Story Instagram', desc: 'Templat postingan grid atau carousel edukasi yang berkesinambungan dan estetik.' },
-                    { title: 'Edit Video Reels / TikTok', desc: 'Jasa memotong dan mengedit video pendek vertikal dengan subtitle dinamis yang viral.' },
-                    { title: 'Thumbnail YouTube', desc: 'Desain sampul video yang menarik perhatian (clickbait) namun tetap relevan dengan isi video.' }
-                ]
-            },
-            'uiux': {
-                title: 'UI/UX Design',
-                items: [
-                    { title: 'Desain Aplikasi Mobile', desc: 'Merancang antarmuka pengguna (User Interface) untuk aplikasi iOS atau Android yang mudah digunakan.' },
-                    { title: 'Desain Landing Page', desc: 'Pembuatan layout website satu halaman yang dioptimalkan untuk konversi dan penjualan.' },
-                    { title: 'Wireframing & Prototyping', desc: 'Kerangka dasar aplikasi yang bisa diklik (interaktif) sebelum masuk ke tahap pemrograman.' }
-                ]
-            },
-            'ilustrasi': {
-                title: 'Ilustrasi Digital',
-                items: [
-                    { title: 'Ilustrasi Vektor', desc: 'Gambar digital berbasis garis yang bersih dan rapi, cocok untuk dicetak besar tanpa pecah.' },
-                    { title: 'Karikatur & Wajah', desc: 'Lukisan digital wajah dengan gaya kartun atau semi-realistis, sangat cocok untuk kado.' },
-                    { title: 'Ilustrasi Buku Anak', desc: 'Pembuatan adegan cerita dengan warna-warni ceria yang ramah untuk bacaan anak-anak.' }
-                ]
-            }
-        };
 
-        function openModal(categoryId) {
-            const data = categoryData[categoryId];
-            if(!data) return;
+    <!-- MOBILE MENU -->
 
-            document.getElementById('modalTitle').textContent = data.title;
-            const modalBody = document.getElementById('modalBody');
-            modalBody.innerHTML = '';
+    <div id="mobileMenu"
+         class="lg:hidden bg-white border-t border-slate-200 shadow-xl">
 
-            data.items.forEach(item => {
-                modalBody.innerHTML += `
-                    <div class="border border-borderSoft rounded-xl overflow-hidden bg-white shadow-sm mb-2">
-                        <button onclick="toggleAccordion(this)" class="w-full text-left px-4 py-3.5 flex justify-between items-center font-bold text-sm text-textMain hover:bg-slate-50 transition-colors">
-                            ${item.title}
-                            <i class="fa-solid fa-chevron-down text-primary text-xs transition-transform duration-200 transform"></i>
-                        </button>
-                        <div class="accordion-content px-4 py-3 text-[13px] text-textMuted hidden border-t border-borderSoft bg-slate-50 leading-relaxed">
-                            ${item.desc}
-                        </div>
+        <nav class="flex flex-col px-4 py-4 space-y-1 text-sm font-semibold text-slate-600">
+
+            <a href="#hero"
+               class="px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-primary">
+                <i class="fa-solid fa-house w-5"></i>
+                Beranda
+            </a>
+
+            <a href="#kategori"
+               class="px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-primary">
+                <i class="fa-solid fa-grid-2 w-5"></i>
+                Kategori
+            </a>
+
+            <a href="#cara-kerja"
+               class="px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-primary">
+                <i class="fa-solid fa-list-check w-5"></i>
+                Cara Kerja
+            </a>
+
+            <a href="#karya-pilihan"
+               class="px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-primary">
+                <i class="fa-solid fa-star w-5"></i>
+                Karya Pilihan
+            </a>
+
+            <a href="#benefit-penjual"
+               class="px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-primary">
+                <i class="fa-solid fa-rocket w-5"></i>
+                Benefit Penjual
+            </a>
+
+            <a href="#paket-penjual"
+               class="px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-primary">
+                <i class="fa-solid fa-crown w-5"></i>
+                Paket Penjual
+            </a>
+
+            <div class="h-px bg-slate-200 my-2"></div>
+
+            <a href="{{ url('/auth/login') }}"
+               class="px-4 py-3 rounded-lg bg-slate-100 text-center">
+                Masuk
+            </a>
+
+            <a href="{{ url('/auth/login?role=penjual') }}"
+               class="px-4 py-3 rounded-lg bg-accent text-white text-center">
+                <i class="fa-solid fa-store mr-2"></i>
+                Masuk sebagai Penjual
+            </a>
+
+        </nav>
+
+    </div>
+
+</header>
+
+
+<!-- ========================================================= -->
+<!-- HERO -->
+<!-- ========================================================= -->
+
+<section id="hero"
+         class="relative pt-16 pb-20 lg:pt-24 lg:pb-32 overflow-hidden bg-gradient-to-br from-blue-50 via-white to-orange-50 border-b border-slate-200">
+
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+
+        <div class="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-blue-100/60 blur-3xl"></div>
+
+        <div class="absolute top-[45%] -left-40 w-[450px] h-[450px] rounded-full bg-orange-100/50 blur-3xl"></div>
+
+    </div>
+
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+
+            <!-- LEFT -->
+
+            <div class="max-w-2xl text-center lg:text-left mx-auto lg:mx-0 reveal">
+
+                <span class="inline-flex items-center gap-2 py-2 px-4 rounded-full bg-blue-100 text-primary text-xs font-bold tracking-wide mb-6 border border-blue-200">
+
+                    <i class="fa-solid fa-sparkles text-accent"></i>
+
+                    Ruang Karya Digital Indonesia
+
+                </span>
+
+
+                <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 text-textMain leading-[1.15] tracking-tight">
+
+                    Temukan Jasa Digital untuk
+
+                    <span class="text-primary">
+                        Kebutuhanmu.
+                    </span>
+
+                </h1>
+
+
+                <p class="text-base sm:text-lg text-textMuted mb-8 leading-relaxed">
+
+                    Temukan kreator berbakat, beli karya digital,
+                    atau buka toko sendiri dan mulai menghasilkan
+                    dari keahlianmu di Karyaku.
+
+                </p>
+
+
+                <div class="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+
+                    <a href="#kategori"
+                       class="inline-flex items-center justify-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl text-sm font-bold hover:bg-primaryHover transition shadow-lg shadow-primary/30">
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        Cari Jasa
+
+                    </a>
+
+
+                    <a href="#paket-penjual"
+                       class="inline-flex items-center justify-center gap-2 bg-white text-primary border border-blue-200 px-7 py-3.5 rounded-xl text-sm font-bold hover:bg-blue-50 transition shadow-sm">
+
+                        <i class="fa-solid fa-store"></i>
+
+                        Mulai Jualan
+
+                    </a>
+
+                </div>
+
+
+                <!-- TRUST -->
+
+                <div class="mt-8 flex flex-wrap justify-center lg:justify-start gap-5 text-xs text-textMuted">
+
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-primary"></i>
+                        Pembayaran Aman
                     </div>
-                `;
-            });
 
-            const modal = document.getElementById('categoryModal');
-            const modalBox = document.getElementById('modalContent');
-            
-            modal.classList.remove('hidden');
-            void modal.offsetWidth; 
-            modal.classList.remove('opacity-0');
-            modalBox.classList.remove('scale-95');
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-users text-primary"></i>
+                        Kreator Terpilih
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-bolt text-accent"></i>
+                        Proses Cepat
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- RIGHT IMAGE -->
+
+            <div class="hidden lg:grid grid-cols-2 gap-4 reveal">
+
+                <div class="space-y-4 pt-12">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=600&q=80"
+                        class="rounded-2xl object-cover h-48 w-full shadow-lg border border-white">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?auto=format&fit=crop&w=600&q=80"
+                        class="rounded-2xl object-cover h-64 w-full shadow-lg border border-white">
+
+                </div>
+
+
+                <div class="space-y-4">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=600&q=80"
+                        class="rounded-2xl object-cover h-64 w-full shadow-lg border border-white">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1618172193622-ae2d025f4032?auto=format&fit=crop&w=600&q=80"
+                        class="rounded-2xl object-cover h-48 w-full shadow-lg border border-white">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- KATEGORI -->
+<!-- ========================================================= -->
+
+<section id="kategori" class="py-20 lg:py-24 bg-white">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div class="mb-12 reveal">
+
+            <span class="text-primary text-xs font-bold uppercase tracking-widest">
+                Explore
+            </span>
+
+            <h2 class="font-display text-2xl sm:text-3xl font-bold text-textMain mt-2 mb-3">
+                Eksplorasi Kategori Jasa
+            </h2>
+
+            <p class="text-textMuted text-sm sm:text-base">
+                Temukan layanan digital yang sesuai dengan kebutuhan proyekmu.
+            </p>
+
+        </div>
+
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+
+            <!-- CATEGORY -->
+
+            <div onclick="openModal('canva')"
+                 class="reveal group cursor-pointer bg-white border border-borderSoft rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-xl transition">
+
+                <div class="relative h-44 overflow-hidden bg-slate-100">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=600&q=80"
+                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+
+                </div>
+
+                <div class="p-5">
+
+                    <div class="flex justify-between items-center mb-3">
+
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center">
+                            <i class="fa-solid fa-image"></i>
+                        </div>
+
+                        <span class="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-lg">
+                            Lihat Detail
+                        </span>
+
+                    </div>
+
+                    <h3 class="font-bold text-lg mb-2">
+                        Desain Poster Canva
+                    </h3>
+
+                    <p class="text-sm text-textMuted">
+                        Poster promosi, event, menu restoran dan kebutuhan visual.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- CATEGORY -->
+
+            <div onclick="openModal('blender')"
+                 class="reveal group cursor-pointer bg-white border border-borderSoft rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-xl transition">
+
+                <div class="h-44 overflow-hidden bg-slate-100">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1618172193622-ae2d025f4032?auto=format&fit=crop&w=600&q=80"
+                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+
+                </div>
+
+                <div class="p-5">
+
+                    <div class="flex justify-between items-center mb-3">
+
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center">
+                            <i class="fa-solid fa-cube"></i>
+                        </div>
+
+                        <span class="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-lg">
+                            Lihat Detail
+                        </span>
+
+                    </div>
+
+                    <h3 class="font-bold text-lg mb-2">
+                        Model 3D Blender
+                    </h3>
+
+                    <p class="text-sm text-textMuted">
+                        Karakter, aset game, arsitektur dan objek 3D.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- CATEGORY -->
+
+            <div onclick="openModal('logo')"
+                 class="reveal group cursor-pointer bg-white border border-borderSoft rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-xl transition">
+
+                <div class="h-44 overflow-hidden bg-slate-100">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=600&q=80"
+                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+
+                </div>
+
+                <div class="p-5">
+
+                    <div class="flex justify-between items-center mb-3">
+
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center">
+                            <i class="fa-solid fa-signature"></i>
+                        </div>
+
+                        <span class="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-lg">
+                            Lihat Detail
+                        </span>
+
+                    </div>
+
+                    <h3 class="font-bold text-lg mb-2">
+                        Logo & Branding
+                    </h3>
+
+                    <p class="text-sm text-textMuted">
+                        Logo, brand identity, packaging dan kebutuhan branding.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- CATEGORY -->
+
+            <div onclick="openModal('sosmed')"
+                 class="reveal group cursor-pointer bg-white border border-borderSoft rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-xl transition">
+
+                <div class="h-44 overflow-hidden bg-slate-100">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1611926653458-09294b3142bf?auto=format&fit=crop&w=600&q=80"
+                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+
+                </div>
+
+                <div class="p-5">
+
+                    <div class="flex justify-between items-center mb-3">
+
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center">
+                            <i class="fa-solid fa-hashtag"></i>
+                        </div>
+
+                        <span class="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-lg">
+                            Lihat Detail
+                        </span>
+
+                    </div>
+
+                    <h3 class="font-bold text-lg mb-2">
+                        Konten Media Sosial
+                    </h3>
+
+                    <p class="text-sm text-textMuted">
+                        Feed, story, reels, TikTok dan konten digital lainnya.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- CATEGORY -->
+
+            <div onclick="openModal('uiux')"
+                 class="reveal group cursor-pointer bg-white border border-borderSoft rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-xl transition">
+
+                <div class="h-44 overflow-hidden bg-slate-100">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1559028012-481c04fa702d?auto=format&fit=crop&w=600&q=80"
+                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+
+                </div>
+
+                <div class="p-5">
+
+                    <div class="flex justify-between items-center mb-3">
+
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center">
+                            <i class="fa-solid fa-pen-ruler"></i>
+                        </div>
+
+                        <span class="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-lg">
+                            Lihat Detail
+                        </span>
+
+                    </div>
+
+                    <h3 class="font-bold text-lg mb-2">
+                        UI/UX Design
+                    </h3>
+
+                    <p class="text-sm text-textMuted">
+                        Website, aplikasi mobile, wireframe dan prototype.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- CATEGORY -->
+
+            <div onclick="openModal('ilustrasi')"
+                 class="reveal group cursor-pointer bg-white border border-borderSoft rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-xl transition">
+
+                <div class="h-44 overflow-hidden bg-slate-100">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?auto=format&fit=crop&w=600&q=80"
+                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+
+                </div>
+
+                <div class="p-5">
+
+                    <div class="flex justify-between items-center mb-3">
+
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center">
+                            <i class="fa-solid fa-paintbrush"></i>
+                        </div>
+
+                        <span class="text-xs font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-lg">
+                            Lihat Detail
+                        </span>
+
+                    </div>
+
+                    <h3 class="font-bold text-lg mb-2">
+                        Ilustrasi Digital
+                    </h3>
+
+                    <p class="text-sm text-textMuted">
+                        Vektor, ilustrasi karakter, karikatur dan ilustrasi buku.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- CARA KERJA -->
+<!-- ========================================================= -->
+
+<section id="cara-kerja"
+         class="py-20 lg:py-24 bg-bgLight border-y border-borderSoft">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div class="text-center max-w-2xl mx-auto mb-14 reveal">
+
+            <span class="text-primary text-xs font-bold uppercase tracking-widest">
+                Simple Process
+            </span>
+
+            <h2 class="font-display text-2xl sm:text-3xl font-bold mt-2 mb-3">
+                Cara Kerja Karyaku
+            </h2>
+
+            <p class="text-textMuted text-sm sm:text-base">
+                Mudah untuk pembeli maupun penjual.
+            </p>
+
+        </div>
+
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+
+            <div class="hidden md:block absolute top-6 left-[16%] right-[16%] h-px bg-borderSoft"></div>
+
+
+            <div class="reveal relative z-10 text-center flex flex-col items-center">
+
+                <div class="w-12 h-12 bg-white border-2 border-primary text-primary rounded-full flex items-center justify-center font-bold text-lg mb-5 shadow-sm">
+                    1
+                </div>
+
+                <h3 class="font-bold mb-2">
+                    Cari Kreator
+                </h3>
+
+                <p class="text-textMuted text-sm leading-relaxed max-w-xs">
+                    Temukan jasa atau karya sesuai kebutuhanmu.
+                </p>
+
+            </div>
+
+
+            <div class="reveal relative z-10 text-center flex flex-col items-center">
+
+                <div class="w-12 h-12 bg-white border-2 border-accent text-accent rounded-full flex items-center justify-center font-bold text-lg mb-5 shadow-sm">
+                    2
+                </div>
+
+                <h3 class="font-bold mb-2">
+                    Pesan & Bayar
+                </h3>
+
+                <p class="text-textMuted text-sm leading-relaxed max-w-xs">
+                    Lakukan pemesanan dengan sistem pembayaran yang aman.
+                </p>
+
+            </div>
+
+
+            <div class="reveal relative z-10 text-center flex flex-col items-center">
+
+                <div class="w-12 h-12 bg-white border-2 border-primary text-primary rounded-full flex items-center justify-center font-bold text-lg mb-5 shadow-sm">
+                    3
+                </div>
+
+                <h3 class="font-bold mb-2">
+                    Terima Hasil
+                </h3>
+
+                <p class="text-textMuted text-sm leading-relaxed max-w-xs">
+                    Terima karya dan berikan ulasan kepada kreator.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- KARYA PILIHAN -->
+<!-- ========================================================= -->
+
+<section id="karya-pilihan"
+         class="py-20 lg:py-24 bg-white">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4 reveal">
+
+            <div>
+
+                <span class="text-primary text-xs font-bold uppercase tracking-widest">
+                    Marketplace
+                </span>
+
+                <h2 class="font-display text-2xl sm:text-3xl font-bold mt-2 mb-2">
+                    Karya & Jasa Pilihan
+                </h2>
+
+                <p class="text-textMuted text-sm sm:text-base">
+                    Karya menarik dari kreator Karyaku.
+                </p>
+
+            </div>
+
+            <a href="#"
+               class="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-borderSoft font-bold text-sm hover:bg-slate-50">
+                Lihat Semua
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+            </a>
+
+        </div>
+
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+
+            <!-- PRODUCT 1 -->
+
+            <div class="reveal group border border-borderSoft rounded-xl overflow-hidden bg-white hover:shadow-lg transition">
+
+                <div class="relative aspect-[4/3] overflow-hidden bg-slate-100">
+
+                    <div class="absolute top-3 left-3 z-10 bg-white px-3 py-1.5 rounded-md shadow-sm text-[10px] font-bold">
+                        <i class="fa-solid fa-bolt text-accent mr-1"></i>
+                        DIPROMOSIKAN
+                    </div>
+
+                    <img
+                        src="https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=600&q=80"
+                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+
+                </div>
+
+                <div class="p-5">
+
+                    <div class="flex items-center gap-2 mb-2">
+
+                        <div class="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-primary text-xs">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+
+                        <span class="text-xs font-bold text-textMuted">
+                            Dinda Studio
+                        </span>
+
+                    </div>
+
+                    <h4 class="font-bold mb-4">
+                        Desain Poster Promosi Kafe Modern
+                    </h4>
+
+                    <div class="pt-4 border-t border-borderSoft flex justify-between">
+
+                        <span class="text-sm font-bold">
+                            <i class="fa-solid fa-star text-yellow-400"></i>
+                            4.9
+                            <span class="text-textMuted text-xs">
+                                (120)
+                            </span>
+                        </span>
+
+                        <span class="font-mono font-bold text-primary">
+                            Rp75.000
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PRODUCT 2 -->
+
+            <div class="reveal group border border-borderSoft rounded-xl overflow-hidden bg-white hover:shadow-lg transition">
+
+                <div class="aspect-[4/3] overflow-hidden bg-slate-100">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1618172193622-ae2d025f4032?auto=format&fit=crop&w=600&q=80"
+                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+
+                </div>
+
+                <div class="p-5">
+
+                    <div class="flex items-center gap-2 mb-2">
+
+                        <div class="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-primary text-xs">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+
+                        <span class="text-xs font-bold text-textMuted">
+                            Rangga 3D
+                        </span>
+
+                    </div>
+
+                    <h4 class="font-bold mb-4">
+                        Model 3D Karakter Game
+                    </h4>
+
+                    <div class="pt-4 border-t border-borderSoft flex justify-between">
+
+                        <span class="text-sm font-bold">
+                            <i class="fa-solid fa-star text-yellow-400"></i>
+                            5.0
+                        </span>
+
+                        <span class="font-mono font-bold text-primary">
+                            Rp480.000
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PRODUCT 3 -->
+
+            <div class="reveal group border border-borderSoft rounded-xl overflow-hidden bg-white hover:shadow-lg transition">
+
+                <div class="aspect-[4/3] overflow-hidden bg-slate-100">
+
+                    <img
+                        src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=600&q=80"
+                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+
+                </div>
+
+                <div class="p-5">
+
+                    <div class="flex items-center gap-2 mb-2">
+
+                        <div class="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-primary text-xs">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+
+                        <span class="text-xs font-bold text-textMuted">
+                            Kirana Design
+                        </span>
+
+                    </div>
+
+                    <h4 class="font-bold mb-4">
+                        Paket Logo & Brand Identity
+                    </h4>
+
+                    <div class="pt-4 border-t border-borderSoft flex justify-between">
+
+                        <span class="text-sm font-bold">
+                            <i class="fa-solid fa-star text-yellow-400"></i>
+                            4.8
+                        </span>
+
+                        <span class="font-mono font-bold text-primary">
+                            Rp150.000
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- BENEFIT PENJUAL - SLIDER -->
+<!-- ========================================================= -->
+
+<section id="benefit-penjual"
+         class="py-20 lg:py-28 bg-slate-950 text-white overflow-hidden">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- HEADER -->
+
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10 reveal">
+
+            <div>
+
+                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-300 text-xs font-bold uppercase tracking-widest">
+
+                    <i class="fa-solid fa-store"></i>
+
+                    Untuk Penjual
+
+                </span>
+
+                <h2 class="font-display text-3xl sm:text-4xl font-bold mt-4 mb-3">
+
+                    Kenapa Jualan di
+                    <span class="text-blue-400">
+                        Karyaku?
+                    </span>
+
+                </h2>
+
+                <p class="text-slate-400 max-w-2xl text-sm sm:text-base">
+                    Bukan cuma tempat upload produk. Karyaku membantu
+                    penjual menampilkan karya, mendapatkan pelanggan,
+                    dan mengembangkan toko.
+                </p>
+
+            </div>
+
+
+            <!-- ARROWS -->
+
+            <div class="flex gap-2">
+
+                <button id="benefitPrev"
+                        class="w-11 h-11 rounded-xl border border-slate-700 hover:bg-slate-800 transition">
+
+                    <i class="fa-solid fa-arrow-left"></i>
+
+                </button>
+
+                <button id="benefitNext"
+                        class="w-11 h-11 rounded-xl bg-primary hover:bg-primaryHover transition">
+
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- SLIDER -->
+
+        <div class="overflow-hidden">
+
+            <div id="benefitTrack"
+                 class="benefit-track flex gap-5">
+
+
+                <!-- BENEFIT 1 -->
+
+                <div class="benefit-slide min-w-[85%] sm:min-w-[48%] lg:min-w-[31.5%]">
+
+                    <div class="h-full p-7 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 border border-blue-500 shadow-xl">
+
+                        <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-6">
+
+                            <i class="fa-solid fa-chart-line text-2xl"></i>
+
+                        </div>
+
+                        <h3 class="font-bold text-xl mb-3">
+                            Dashboard Penjual
+                        </h3>
+
+                        <p class="text-blue-100 text-sm leading-relaxed">
+                            Pantau produk, pesanan, pendapatan,
+                            performa toko dan aktivitas pelanggan
+                            dari satu dashboard.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- BENEFIT 2 -->
+
+                <div class="benefit-slide min-w-[85%] sm:min-w-[48%] lg:min-w-[31.5%]">
+
+                    <div class="h-full p-7 rounded-2xl bg-slate-900 border border-slate-700">
+
+                        <div class="w-14 h-14 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center mb-6">
+
+                            <i class="fa-solid fa-bullhorn text-2xl"></i>
+
+                        </div>
+
+                        <h3 class="font-bold text-xl mb-3">
+                            Promosikan Produk
+                        </h3>
+
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Gunakan slot iklan untuk membuat produk
+                            lebih mudah ditemukan oleh calon pembeli.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- BENEFIT 3 -->
+
+                <div class="benefit-slide min-w-[85%] sm:min-w-[48%] lg:min-w-[31.5%]">
+
+                    <div class="h-full p-7 rounded-2xl bg-slate-900 border border-slate-700">
+
+                        <div class="w-14 h-14 rounded-2xl bg-green-500/10 text-green-400 flex items-center justify-center mb-6">
+
+                            <i class="fa-solid fa-shop text-2xl"></i>
+
+                        </div>
+
+                        <h3 class="font-bold text-xl mb-3">
+                            Etalase Toko
+                        </h3>
+
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Bangun toko profesional dengan profil,
+                            katalog produk dan identitas toko sendiri.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- BENEFIT 4 -->
+
+                <div class="benefit-slide min-w-[85%] sm:min-w-[48%] lg:min-w-[31.5%]">
+
+                    <div class="h-full p-7 rounded-2xl bg-slate-900 border border-slate-700">
+
+                        <div class="w-14 h-14 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center mb-6">
+
+                            <i class="fa-solid fa-medal text-2xl"></i>
+
+                        </div>
+
+                        <h3 class="font-bold text-xl mb-3">
+                            Badge Penjual
+                        </h3>
+
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Dapatkan badge sesuai performa dan paket
+                            untuk meningkatkan kepercayaan calon pembeli.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- BENEFIT 5 -->
+
+                <div class="benefit-slide min-w-[85%] sm:min-w-[48%] lg:min-w-[31.5%]">
+
+                    <div class="h-full p-7 rounded-2xl bg-slate-900 border border-slate-700">
+
+                        <div class="w-14 h-14 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-6">
+
+                            <i class="fa-solid fa-magnifying-glass-chart text-2xl"></i>
+
+                        </div>
+
+                        <h3 class="font-bold text-xl mb-3">
+                            Analitik Toko
+                        </h3>
+
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Lihat produk yang paling banyak dilihat,
+                            diminati dan menghasilkan penjualan.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- BENEFIT 6 -->
+
+                <div class="benefit-slide min-w-[85%] sm:min-w-[48%] lg:min-w-[31.5%]">
+
+                    <div class="h-full p-7 rounded-2xl bg-slate-900 border border-slate-700">
+
+                        <div class="w-14 h-14 rounded-2xl bg-yellow-500/10 text-yellow-400 flex items-center justify-center mb-6">
+
+                            <i class="fa-solid fa-headset text-2xl"></i>
+
+                        </div>
+
+                        <h3 class="font-bold text-xl mb-3">
+                            Dukungan Penjual
+                        </h3>
+
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Dapatkan bantuan ketika mengalami masalah
+                            dalam mengelola toko atau pesanan.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+        <!-- DOTS -->
+
+        <div id="benefitDots"
+             class="flex justify-center gap-2 mt-8">
+
+            <button class="benefit-dot w-7 h-2 rounded-full bg-primary"></button>
+            <button class="benefit-dot w-2 h-2 rounded-full bg-slate-700"></button>
+            <button class="benefit-dot w-2 h-2 rounded-full bg-slate-700"></button>
+            <button class="benefit-dot w-2 h-2 rounded-full bg-slate-700"></button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- PAKET PENJUAL -->
+<!-- ========================================================= -->
+
+<section id="paket-penjual"
+         class="py-20 lg:py-28 bg-bgLight border-y border-borderSoft">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- HEADER -->
+
+        <div class="text-center max-w-3xl mx-auto mb-14 reveal">
+
+            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 text-primary text-xs font-bold uppercase tracking-widest">
+
+                <i class="fa-solid fa-crown"></i>
+
+                Seller Plans
+
+            </span>
+
+            <h2 class="font-display text-3xl sm:text-4xl font-bold text-textMain mt-4 mb-4">
+
+                Pilih Paket yang Cocok
+                <span class="text-primary">
+                    untuk Toko Kamu
+                </span>
+
+            </h2>
+
+            <p class="text-textMuted text-sm sm:text-base">
+
+                Mulai dari toko kecil sampai toko dengan banyak produk.
+                Upgrade paket kapan saja sesuai perkembangan tokomu.
+
+            </p>
+
+        </div>
+
+
+        <!-- PACKAGES -->
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-7 items-stretch">
+
+
+            <!-- ================================================= -->
+            <!-- BRONZE -->
+            <!-- ================================================= -->
+
+            <div class="package-card reveal bg-white border border-slate-200 rounded-3xl p-7 shadow-sm flex flex-col">
+
+                <div class="flex justify-between items-start mb-6">
+
+                    <div>
+
+                        <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4">
+
+                            <i class="fa-solid fa-medal text-xl"></i>
+
+                        </div>
+
+                        <h3 class="font-display text-xl font-bold">
+                            Bronze
+                        </h3>
+
+                        <p class="text-sm text-textMuted mt-1">
+                            Cocok untuk penjual pemula
+                        </p>
+
+                    </div>
+
+                    <span class="px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-[10px] font-bold uppercase">
+                        Starter
+                    </span>
+
+                </div>
+
+
+                <div class="mb-7">
+
+                    <span class="text-3xl font-display font-extrabold text-textMain">
+                        15+
+                    </span>
+
+                    <span class="text-textMuted text-sm">
+                        produk
+                    </span>
+
+                </div>
+
+
+                <div class="space-y-4 flex-grow">
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        Maksimal 15 produk
+                    </div>
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        1 slot iklan
+                    </div>
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        Profil toko
+                    </div>
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        Dashboard penjualan
+                    </div>
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        Statistik dasar
+                    </div>
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        Badge Bronze
+                    </div>
+
+                    <div class="flex gap-3 text-sm text-slate-400">
+                        <span class="check-icon bg-slate-100 text-slate-400">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                        </span>
+                        Prioritas pencarian
+                    </div>
+
+                    <div class="flex gap-3 text-sm text-slate-400">
+                        <span class="check-icon bg-slate-100 text-slate-400">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                        </span>
+                        Analitik lanjutan
+                    </div>
+
+                </div>
+
+
+                <a href="{{ url('/auth/login?role=penjual&package=bronze') }}"
+                   class="shine mt-8 w-full text-center py-3.5 rounded-xl border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold text-sm transition">
+
+                    Pilih Bronze
+
+                </a>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- PLATINUM -->
+            <!-- ================================================= -->
+
+            <div class="package-card popular-package reveal bg-white border-2 border-primary rounded-3xl p-7 relative flex flex-col">
+
+                <!-- POPULAR -->
+
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+
+                    <span class="px-5 py-2 rounded-full bg-primary text-white text-xs font-bold shadow-lg">
+
+                        <i class="fa-solid fa-fire mr-1 text-orange-300"></i>
+
+                        PALING POPULER
+
+                    </span>
+
+                </div>
+
+
+                <div class="flex justify-between items-start mb-6 mt-2">
+
+                    <div>
+
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-primary flex items-center justify-center mb-4">
+
+                            <i class="fa-solid fa-gem text-xl"></i>
+
+                        </div>
+
+                        <h3 class="font-display text-xl font-bold">
+                            Platinum
+                        </h3>
+
+                        <p class="text-sm text-textMuted mt-1">
+                            Untuk toko yang berkembang
+                        </p>
+
+                    </div>
+
+                    <span class="px-3 py-1 rounded-full bg-blue-50 text-primary text-[10px] font-bold uppercase">
+                        Pro
+                    </span>
+
+                </div>
+
+
+                <div class="mb-7">
+
+                    <span class="text-3xl font-display font-extrabold text-primary">
+                        35+
+                    </span>
+
+                    <span class="text-textMuted text-sm">
+                        produk
+                    </span>
+
+                </div>
+
+
+                <div class="space-y-4 flex-grow">
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        Minimal hingga 35+ produk
+                    </div>
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        3 slot iklan aktif
+                    </div>
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        Profil toko profesional
+                    </div>
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        Dashboard penjualan
+                    </div>
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        Statistik & analitik
+                    </div>
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        Badge Platinum
+                    </div>
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        Prioritas pencarian
+                    </div>
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        Produk lebih mudah ditemukan
+                    </div>
+
+                    <div class="flex gap-3 text-sm">
+                        <span class="check-icon bg-green-100 text-green-600">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </span>
+                        Dukungan penjual
+                    </div>
+
+                </div>
+
+
+                <a href="{{ url('/auth/login?role=penjual&package=platinum') }}"
+                   class="shine mt-8 w-full text-center py-3.5 rounded-xl bg-primary hover:bg-primaryHover text-white font-bold text-sm transition shadow-lg shadow-primary/20">
+
+                    Pilih Platinum
+
+                </a>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- DIAMOND -->
+            <!-- ================================================= -->
+
+            <div class="package-card reveal bg-slate-950 text-white rounded-3xl p-7 relative flex flex-col overflow-hidden">
+
+                <div class="absolute -right-20 -top-20 w-56 h-56 bg-blue-600/20 rounded-full blur-3xl"></div>
+
+                <div class="relative z-10">
+
+                    <div class="flex justify-between items-start mb-6">
+
+                        <div>
+
+                            <div class="w-12 h-12 rounded-xl bg-yellow-400/10 text-yellow-400 flex items-center justify-center mb-4">
+
+                                <i class="fa-solid fa-crown text-xl"></i>
+
+                            </div>
+
+                            <h3 class="font-display text-xl font-bold">
+                                Diamond
+                            </h3>
+
+                            <p class="text-sm text-slate-400 mt-1">
+                                Untuk toko profesional
+                            </p>
+
+                        </div>
+
+                        <span class="px-3 py-1 rounded-full bg-yellow-400/10 text-yellow-400 text-[10px] font-bold uppercase">
+                            Ultimate
+                        </span>
+
+                    </div>
+
+
+                    <div class="mb-7">
+
+                        <span class="text-3xl font-display font-extrabold">
+                            50+
+                        </span>
+
+                        <span class="text-slate-400 text-sm">
+                            produk
+                        </span>
+
+                    </div>
+
+
+                    <div class="space-y-4 flex-grow">
+
+                        <div class="flex gap-3 text-sm">
+                            <span class="check-icon bg-green-500/10 text-green-400">
+                                <i class="fa-solid fa-check text-xs"></i>
+                            </span>
+                            50+ produk
+                        </div>
+
+                        <div class="flex gap-3 text-sm">
+                            <span class="check-icon bg-green-500/10 text-green-400">
+                                <i class="fa-solid fa-check text-xs"></i>
+                            </span>
+                            10+ slot iklan
+                        </div>
+
+                        <div class="flex gap-3 text-sm">
+                            <span class="check-icon bg-green-500/10 text-green-400">
+                                <i class="fa-solid fa-check text-xs"></i>
+                            </span>
+                            Profil toko premium
+                        </div>
+
+                        <div class="flex gap-3 text-sm">
+                            <span class="check-icon bg-green-500/10 text-green-400">
+                                <i class="fa-solid fa-check text-xs"></i>
+                            </span>
+                            Dashboard profesional
+                        </div>
+
+                        <div class="flex gap-3 text-sm">
+                            <span class="check-icon bg-green-500/10 text-green-400">
+                                <i class="fa-solid fa-check text-xs"></i>
+                            </span>
+                            Analitik penjualan lengkap
+                        </div>
+
+                        <div class="flex gap-3 text-sm">
+                            <span class="check-icon bg-green-500/10 text-green-400">
+                                <i class="fa-solid fa-check text-xs"></i>
+                            </span>
+                            Badge Diamond
+                        </div>
+
+                        <div class="flex gap-3 text-sm">
+                            <span class="check-icon bg-green-500/10 text-green-400">
+                                <i class="fa-solid fa-check text-xs"></i>
+                            </span>
+                            Prioritas pencarian tertinggi
+                        </div>
+
+                        <div class="flex gap-3 text-sm">
+                            <span class="check-icon bg-green-500/10 text-green-400">
+                                <i class="fa-solid fa-check text-xs"></i>
+                            </span>
+                            Prioritas promosi
+                        </div>
+
+                        <div class="flex gap-3 text-sm">
+                            <span class="check-icon bg-green-500/10 text-green-400">
+                                <i class="fa-solid fa-check text-xs"></i>
+                            </span>
+                            Statistik pelanggan
+                        </div>
+
+                        <div class="flex gap-3 text-sm">
+                            <span class="check-icon bg-green-500/10 text-green-400">
+                                <i class="fa-solid fa-check text-xs"></i>
+                            </span>
+                            Dukungan prioritas
+                        </div>
+
+                        <div class="flex gap-3 text-sm">
+                            <span class="check-icon bg-green-500/10 text-green-400">
+                                <i class="fa-solid fa-check text-xs"></i>
+                            </span>
+                            Fitur toko premium
+                        </div>
+
+                    </div>
+
+
+                    <a href="{{ url('/auth/login?role=penjual&package=diamond') }}"
+                       class="shine relative z-10 mt-8 w-full text-center py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white font-bold text-sm transition shadow-lg">
+
+                        Pilih Diamond
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- SMALL NOTE -->
+
+        <div class="text-center mt-8 text-xs text-textMuted reveal">
+
+            <i class="fa-solid fa-circle-info mr-1"></i>
+
+            Batas produk dan slot iklan mengikuti paket aktif penjual.
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- SELLER CTA -->
+<!-- ========================================================= -->
+
+<section id="kreator"
+         class="py-20 lg:py-28 bg-primary text-white">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+
+            <div class="reveal">
+
+                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 border border-blue-400 text-xs font-bold uppercase tracking-widest">
+
+                    <i class="fa-solid fa-store text-orange-300"></i>
+
+                    Seller Center
+
+                </span>
+
+
+                <h2 class="font-display text-3xl sm:text-4xl font-bold leading-tight mt-5 mb-5">
+
+                    Punya Karya?
+
+                    <br>
+
+                    <span class="text-orange-300">
+                        Saatnya Dijual.
+                    </span>
+
+                </h2>
+
+
+                <p class="text-blue-100 leading-relaxed mb-8 max-w-xl">
+
+                    Jadikan keahlianmu sebagai peluang.
+                    Buat toko, upload karya, pasang iklan,
+                    dan mulai menjangkau pembeli di Karyaku.
+
+                </p>
+
+
+                <div class="flex flex-col sm:flex-row gap-3">
+
+                    <a href="{{ url('/auth/login?role=penjual') }}"
+                       class="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-accent hover:bg-accentHover rounded-xl font-bold text-sm transition shadow-lg">
+
+                        <i class="fa-solid fa-store"></i>
+
+                        Masuk sebagai Penjual
+
+                    </a>
+
+
+                    <a href="#paket-penjual"
+                       class="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl font-bold text-sm transition">
+
+                        Lihat Paket
+
+                        <i class="fa-solid fa-arrow-right"></i>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- STATS -->
+
+            <div class="grid grid-cols-2 gap-4 reveal">
+
+                <div class="bg-white/10 border border-white/10 rounded-2xl p-6">
+
+                    <div class="w-11 h-11 rounded-xl bg-white text-primary flex items-center justify-center mb-5">
+
+                        <i class="fa-solid fa-box"></i>
+
+                    </div>
+
+                    <div class="font-display text-2xl font-bold">
+                        50+
+                    </div>
+
+                    <p class="text-blue-200 text-xs mt-1">
+                        Produk Diamond
+                    </p>
+
+                </div>
+
+
+                <div class="bg-white/10 border border-white/10 rounded-2xl p-6">
+
+                    <div class="w-11 h-11 rounded-xl bg-orange-500 text-white flex items-center justify-center mb-5">
+
+                        <i class="fa-solid fa-bullhorn"></i>
+
+                    </div>
+
+                    <div class="font-display text-2xl font-bold">
+                        10+
+                    </div>
+
+                    <p class="text-blue-200 text-xs mt-1">
+                        Slot Iklan
+                    </p>
+
+                </div>
+
+
+                <div class="bg-white/10 border border-white/10 rounded-2xl p-6">
+
+                    <div class="w-11 h-11 rounded-xl bg-white text-primary flex items-center justify-center mb-5">
+
+                        <i class="fa-solid fa-chart-simple"></i>
+
+                    </div>
+
+                    <div class="font-display text-2xl font-bold">
+                        Real-time
+                    </div>
+
+                    <p class="text-blue-200 text-xs mt-1">
+                        Statistik Toko
+                    </p>
+
+                </div>
+
+
+                <div class="bg-white/10 border border-white/10 rounded-2xl p-6">
+
+                    <div class="w-11 h-11 rounded-xl bg-orange-500 text-white flex items-center justify-center mb-5">
+
+                        <i class="fa-solid fa-shield-halved"></i>
+
+                    </div>
+
+                    <div class="font-display text-2xl font-bold">
+                        Aman
+                    </div>
+
+                    <p class="text-blue-200 text-xs mt-1">
+                        Sistem Transaksi
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================================= -->
+<!-- FOOTER -->
+<!-- ========================================================= -->
+
+<footer class="bg-white py-10 border-t border-borderSoft">
+
+    <div class="max-w-7xl mx-auto px-6">
+
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+
+            <div class="flex items-center gap-2">
+
+                <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center">
+
+                    <i class="fa-solid fa-layer-group text-sm"></i>
+
+                </div>
+
+                <div>
+
+                    <span class="font-display font-bold text-base">
+                        Karyaku<span class="text-accent">.</span>
+                    </span>
+
+                    <p class="text-[10px] text-textMuted">
+                        Digital Marketplace Indonesia
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <p class="text-xs sm:text-sm text-textMuted text-center">
+
+                &copy; 2026 Karyaku.
+                Hak Cipta Dilindungi.
+
+            </p>
+
+
+            <div class="flex gap-4">
+
+                <a href="#"
+                   class="w-9 h-9 rounded-lg bg-slate-50 text-textMuted hover:text-primary flex items-center justify-center transition">
+
+                    <i class="fa-brands fa-instagram"></i>
+
+                </a>
+
+                <a href="#"
+                   class="w-9 h-9 rounded-lg bg-slate-50 text-textMuted hover:text-primary flex items-center justify-center transition">
+
+                    <i class="fa-brands fa-twitter"></i>
+
+                </a>
+
+                <a href="#"
+                   class="w-9 h-9 rounded-lg bg-slate-50 text-textMuted hover:text-primary flex items-center justify-center transition">
+
+                    <i class="fa-brands fa-linkedin"></i>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</footer>
+
+
+<!-- ========================================================= -->
+<!-- MODAL KATEGORI -->
+<!-- ========================================================= -->
+
+<div id="categoryModal"
+     class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-200"
+     onclick="closeModal()">
+
+    <div id="modalContent"
+         class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden scale-95 transition-transform duration-200"
+         onclick="event.stopPropagation()">
+
+
+        <div class="flex justify-between items-center px-5 py-4 border-b border-borderSoft">
+
+            <h3 id="modalTitle"
+                class="font-bold text-base">
+                Kategori
+            </h3>
+
+            <button onclick="closeModal()"
+                    class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center">
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <div id="modalBody"
+             class="p-5 space-y-3 max-h-[60vh] overflow-y-auto bg-slate-50">
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- JAVASCRIPT -->
+<!-- ========================================================= -->
+
+<script>
+
+    /* ========================================================
+       CATEGORY DATA
+    ======================================================== */
+
+    const categoryData = {
+
+        canva: {
+            title: 'Desain Poster Canva',
+            items: [
+                {
+                    title: 'Poster Promosi',
+                    desc: 'Desain visual untuk memasarkan produk, jasa atau promo.'
+                },
+                {
+                    title: 'Poster Event',
+                    desc: 'Poster untuk seminar, webinar, konser dan acara komunitas.'
+                },
+                {
+                    title: 'Menu Restoran',
+                    desc: 'Desain menu yang modern, rapi dan mudah dibaca.'
+                }
+            ]
+        },
+
+        blender: {
+            title: 'Model 3D Blender',
+            items: [
+                {
+                    title: 'Model Karakter',
+                    desc: 'Pembuatan karakter 3D untuk game dan animasi.'
+                },
+                {
+                    title: 'Visualisasi Arsitektur',
+                    desc: 'Visualisasi bangunan, interior dan eksterior.'
+                },
+                {
+                    title: 'Aset Game',
+                    desc: 'Pembuatan objek dan properti 3D untuk kebutuhan game.'
+                }
+            ]
+        },
+
+        logo: {
+            title: 'Logo & Branding',
+            items: [
+                {
+                    title: 'Logo Minimalis',
+                    desc: 'Logo modern yang mudah dikenali.'
+                },
+                {
+                    title: 'Brand Identity',
+                    desc: 'Identitas visual lengkap untuk brand.'
+                },
+                {
+                    title: 'Packaging',
+                    desc: 'Desain kemasan produk profesional.'
+                }
+            ]
+        },
+
+        sosmed: {
+            title: 'Konten Media Sosial',
+            items: [
+                {
+                    title: 'Instagram Feed',
+                    desc: 'Desain feed dan carousel Instagram.'
+                },
+                {
+                    title: 'Reels & TikTok',
+                    desc: 'Editing video pendek untuk media sosial.'
+                },
+                {
+                    title: 'Thumbnail',
+                    desc: 'Thumbnail YouTube yang menarik perhatian.'
+                }
+            ]
+        },
+
+        uiux: {
+            title: 'UI/UX Design',
+            items: [
+                {
+                    title: 'Mobile App',
+                    desc: 'Desain aplikasi Android maupun iOS.'
+                },
+                {
+                    title: 'Website',
+                    desc: 'Desain landing page dan website.'
+                },
+                {
+                    title: 'Prototype',
+                    desc: 'Wireframe dan prototype interaktif.'
+                }
+            ]
+        },
+
+        ilustrasi: {
+            title: 'Ilustrasi Digital',
+            items: [
+                {
+                    title: 'Ilustrasi Vektor',
+                    desc: 'Ilustrasi digital dengan format vektor.'
+                },
+                {
+                    title: 'Karikatur',
+                    desc: 'Karikatur dan ilustrasi karakter.'
+                },
+                {
+                    title: 'Ilustrasi Buku',
+                    desc: 'Ilustrasi untuk buku dan cerita anak.'
+                }
+            ]
         }
 
-        function closeModal() {
-            const modal = document.getElementById('categoryModal');
-            const modalBox = document.getElementById('modalContent');
-            
-            modal.classList.add('opacity-0');
-            modalBox.classList.add('scale-95');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 200); 
-        }
+    };
 
-        function toggleAccordion(btn) {
-            const content = btn.nextElementSibling;
-            const icon = btn.querySelector('i');
-            
-            if (content.classList.contains('hidden')) {
-                content.classList.remove('hidden');
-                icon.classList.add('rotate-180');
-            } else {
-                content.classList.add('hidden');
-                icon.classList.remove('rotate-180');
-            }
-        }
 
-        const menuToggle = document.getElementById('menuToggle');
-        const mobileMenu = document.getElementById('mobileMenu');
-        const menuIcon = document.getElementById('menuIcon');
-        
-        menuToggle.addEventListener('click', () => {
-            const isOpen = mobileMenu.classList.toggle('open');
-            menuIcon.classList.toggle('fa-bars', !isOpen);
-            menuIcon.classList.toggle('fa-xmark', isOpen);
+    /* ========================================================
+       MODAL
+    ======================================================== */
+
+    function openModal(categoryId) {
+
+        const data = categoryData[categoryId];
+
+        if (!data) return;
+
+        document.getElementById('modalTitle').textContent =
+            data.title;
+
+        const body =
+            document.getElementById('modalBody');
+
+        body.innerHTML = '';
+
+        data.items.forEach(item => {
+
+            body.innerHTML += `
+
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+
+                    <button
+                        onclick="toggleAccordion(this)"
+                        class="w-full px-4 py-4 text-left flex justify-between items-center font-bold text-sm">
+
+                        ${item.title}
+
+                        <i class="fa-solid fa-chevron-down text-primary transition-transform"></i>
+
+                    </button>
+
+                    <div class="hidden px-4 pb-4 text-xs text-slate-500 leading-relaxed border-t border-slate-100 pt-3">
+
+                        ${item.desc}
+
+                    </div>
+
+                </div>
+
+            `;
+
         });
-        
-        mobileMenu.querySelectorAll('a').forEach(link => {
+
+
+        const modal =
+            document.getElementById('categoryModal');
+
+        const box =
+            document.getElementById('modalContent');
+
+        modal.classList.remove('hidden');
+
+        setTimeout(() => {
+
+            modal.classList.remove('opacity-0');
+            box.classList.remove('scale-95');
+
+        }, 10);
+
+    }
+
+
+    function closeModal() {
+
+        const modal =
+            document.getElementById('categoryModal');
+
+        const box =
+            document.getElementById('modalContent');
+
+        modal.classList.add('opacity-0');
+        box.classList.add('scale-95');
+
+        setTimeout(() => {
+
+            modal.classList.add('hidden');
+
+        }, 200);
+
+    }
+
+
+    function toggleAccordion(button) {
+
+        const content =
+            button.nextElementSibling;
+
+        const icon =
+            button.querySelector('i');
+
+        content.classList.toggle('hidden');
+
+        icon.classList.toggle('rotate-180');
+
+    }
+
+
+    /* ========================================================
+       MOBILE MENU
+    ======================================================== */
+
+    const menuToggle =
+        document.getElementById('menuToggle');
+
+    const mobileMenu =
+        document.getElementById('mobileMenu');
+
+    const menuIcon =
+        document.getElementById('menuIcon');
+
+
+    menuToggle.addEventListener('click', () => {
+
+        const open =
+            mobileMenu.classList.toggle('open');
+
+        menuIcon.classList.toggle(
+            'fa-bars',
+            !open
+        );
+
+        menuIcon.classList.toggle(
+            'fa-xmark',
+            open
+        );
+
+    });
+
+
+    mobileMenu.querySelectorAll('a')
+        .forEach(link => {
+
             link.addEventListener('click', () => {
+
                 mobileMenu.classList.remove('open');
+
                 menuIcon.classList.add('fa-bars');
                 menuIcon.classList.remove('fa-xmark');
+
             });
+
         });
 
-        const revealEls = document.querySelectorAll('.reveal');
-        const revealObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('in-view');
-                    revealObserver.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.1 });
-        revealEls.forEach(el => revealObserver.observe(el));
-    </script>
+
+    /* ========================================================
+       REVEAL ANIMATION
+    ======================================================== */
+
+    const revealElements =
+        document.querySelectorAll('.reveal');
+
+
+    const revealObserver =
+        new IntersectionObserver(
+
+            entries => {
+
+                entries.forEach(entry => {
+
+                    if (entry.isIntersecting) {
+
+                        entry.target.classList.add('in-view');
+
+                        revealObserver.unobserve(
+                            entry.target
+                        );
+
+                    }
+
+                });
+
+            },
+
+            {
+                threshold: 0.1
+            }
+
+        );
+
+
+    revealElements.forEach(element => {
+
+        revealObserver.observe(element);
+
+    });
+
+
+    /* ========================================================
+       BENEFIT SLIDER
+    ======================================================== */
+
+    const track =
+        document.getElementById('benefitTrack');
+
+    const prevButton =
+        document.getElementById('benefitPrev');
+
+    const nextButton =
+        document.getElementById('benefitNext');
+
+    const dots =
+        document.querySelectorAll('.benefit-dot');
+
+
+    let benefitIndex = 0;
+
+
+    function getSlidesPerView() {
+
+        if (window.innerWidth >= 1024) {
+
+            return 3;
+
+        }
+
+        if (window.innerWidth >= 640) {
+
+            return 2;
+
+        }
+
+        return 1;
+
+    }
+
+
+    function updateSlider() {
+
+        const slides =
+            document.querySelectorAll('.benefit-slide');
+
+        const perView =
+            getSlidesPerView();
+
+        const maxIndex =
+            Math.max(
+                0,
+                slides.length - perView
+            );
+
+        if (benefitIndex > maxIndex) {
+
+            benefitIndex = maxIndex;
+
+        }
+
+        const slide =
+            slides[0];
+
+        if (!slide) return;
+
+        const slideWidth =
+            slide.getBoundingClientRect().width;
+
+        const gap = 20;
+
+        track.style.transform =
+            `translateX(-${benefitIndex * (slideWidth + gap)}px)`;
+
+
+        dots.forEach((dot, index) => {
+
+            dot.classList.remove(
+                'bg-primary',
+                'w-7'
+            );
+
+            dot.classList.add(
+                'bg-slate-700',
+                'w-2'
+            );
+
+            if (
+                index ===
+                Math.min(
+                    benefitIndex,
+                    dots.length - 1
+                )
+            ) {
+
+                dot.classList.remove(
+                    'bg-slate-700',
+                    'w-2'
+                );
+
+                dot.classList.add(
+                    'bg-primary',
+                    'w-7'
+                );
+
+            }
+
+        });
+
+    }
+
+
+    nextButton.addEventListener('click', () => {
+
+        const slides =
+            document.querySelectorAll('.benefit-slide');
+
+        const perView =
+            getSlidesPerView();
+
+        const maxIndex =
+            Math.max(
+                0,
+                slides.length - perView
+            );
+
+        benefitIndex++;
+
+        if (benefitIndex > maxIndex) {
+
+            benefitIndex = 0;
+
+        }
+
+        updateSlider();
+
+    });
+
+
+    prevButton.addEventListener('click', () => {
+
+        const slides =
+            document.querySelectorAll('.benefit-slide');
+
+        const perView =
+            getSlidesPerView();
+
+        const maxIndex =
+            Math.max(
+                0,
+                slides.length - perView
+            );
+
+        benefitIndex--;
+
+        if (benefitIndex < 0) {
+
+            benefitIndex = maxIndex;
+
+        }
+
+        updateSlider();
+
+    });
+
+
+    dots.forEach((dot, index) => {
+
+        dot.addEventListener('click', () => {
+
+            benefitIndex = index;
+
+            updateSlider();
+
+        });
+
+    });
+
+
+    /* AUTO SLIDE */
+
+    let autoSlide =
+        setInterval(() => {
+
+            nextButton.click();
+
+        }, 5000);
+
+
+    const benefitSection =
+        document.getElementById('benefit-penjual');
+
+
+    benefitSection.addEventListener(
+        'mouseenter',
+        () => clearInterval(autoSlide)
+    );
+
+
+    benefitSection.addEventListener(
+        'mouseleave',
+        () => {
+
+            autoSlide =
+                setInterval(() => {
+
+                    nextButton.click();
+
+                }, 5000);
+
+        }
+    );
+
+
+    window.addEventListener(
+        'resize',
+        updateSlider
+    );
+
+
+    updateSlider();
+
+
+    /* ========================================================
+       ESC CLOSE MODAL
+    ======================================================== */
+
+    document.addEventListener(
+        'keydown',
+        event => {
+
+            if (event.key === 'Escape') {
+
+                closeModal();
+
+            }
+
+        }
+    );
+
+</script>
+
 </body>
 </html>
