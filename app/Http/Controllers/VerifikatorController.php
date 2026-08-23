@@ -19,8 +19,8 @@ class VerifikatorController extends Controller
      */
     private function isAdmin()
     {
-        $roleName = strtolower(Auth::user()->role->name ?? '');
-        return $roleName === 'admin';
+        $roleName = strtolower(Auth::user()->role->role_name ?? Auth::user()->role->name ?? '');
+        return in_array($roleName, ['admin', 'verifikator']);
     }
 
     /**
@@ -28,6 +28,11 @@ class VerifikatorController extends Controller
      */
     public function dashboard()
     {
+        $pending = IdentityVerification::with(['user', 'membership'])
+            ->where('status', 'pending')
+            ->latest()
+            ->paginate(10);
+
         $pendingKtp = IdentityVerification::where('status', 'pending')->count();
         $pendingProduk = Product::where('status', 'pending')->count();
         
@@ -41,6 +46,7 @@ class VerifikatorController extends Controller
         $rejectedCount = IdentityVerification::where('status', 'rejected')->count() + Product::where('status', 'rejected')->count();
 
         return view('verifikator.dashboard', compact(
+            'pending',
             'pendingKtp',
             'pendingProduk',
             'pendingPembayaran',
@@ -77,17 +83,18 @@ class VerifikatorController extends Controller
      */
     public function show($id)
     {
-        $verification = IdentityVerification::with(['user', 'membership', 'verifier'])->findOrFail($id);
-        return view('verifikator.detail-pendaftaran', compact('verification'));
+        $registration = IdentityVerification::with(['user', 'membership', 'verifier'])->findOrFail($id);
+        $verification = $registration;
+        return view('verifikator.detail-pendaftaran', compact('registration', 'verification'));
     }
 
     /**
-     * Approve Pendaftaran / Identitas (Khusus Admin)
+     * Approve Pendaftaran / Identitas (Khusus Admin / Verifikator)
      */
     public function approve($id)
     {
         if (!$this->isAdmin()) {
-            return redirect()->back()->with('error', 'Akses ditolak! Customer Service (CS) hanya dapat melihat data. Persetujuan hanya dapat dilakukan oleh Admin.');
+            return redirect()->back()->with('error', 'Akses ditolak!');
         }
 
         DB::beginTransaction();
@@ -99,11 +106,11 @@ class VerifikatorController extends Controller
             $verification->save();
 
             // Ubah role user dari Pembeli menjadi Penjual
-            $sellerRole = Role::where('name', 'penjual')->orWhere('name', 'seller')->first();
+            $sellerRole = Role::where('role_name', 'penjual')->orWhere('name', 'penjual')->orWhere('name', 'seller')->first();
             $user = User::where('id_user', $verification->user_id)->first();
             
             if ($sellerRole && $user) {
-                $user->role_id = $sellerRole->id_role ?? $sellerRole->id;
+                $user->id_role = $sellerRole->id_role ?? $sellerRole->id;
                 $user->save();
             }
 
@@ -116,7 +123,7 @@ class VerifikatorController extends Controller
             ]);
 
             DB::commit();
-            return redirect()->route('verifikator.identitas')->with('success', 'Pendaftaran berhasil disetujui.');
+            return redirect()->route('verifikator.dashboard')->with('success', 'Pendaftaran berhasil disetujui.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal memproses verifikasi: ' . $e->getMessage());
@@ -124,23 +131,24 @@ class VerifikatorController extends Controller
     }
 
     /**
-     * Reject Pendaftaran / Identitas (Khusus Admin)
+     * Reject Pendaftaran / Identitas (Khusus Admin / Verifikator)
      */
     public function reject(Request $request, $id)
     {
         if (!$this->isAdmin()) {
-            return redirect()->back()->with('error', 'Akses ditolak! Customer Service (CS) hanya dapat melihat data. Penolakan hanya dapat dilakukan oleh Admin.');
+            return redirect()->back()->with('error', 'Akses ditolak!');
         }
 
-        $request->validate([
-            'rejection_note' => 'required|string|max:500',
-        ]);
+        $note = $request->input('notes') ?? $request->input('rejection_note');
+        if (!$note) {
+            return redirect()->back()->with('error', 'Catatan / alasan penolakan wajib diisi.');
+        }
 
         DB::beginTransaction();
         try {
             $verification = IdentityVerification::findOrFail($id);
             $verification->status = 'rejected';
-            $verification->notes = $request->rejection_note;
+            $verification->notes = $note;
             $verification->verifier_id = Auth::id();
             $verification->verified_at = now();
             $verification->save();
@@ -148,13 +156,13 @@ class VerifikatorController extends Controller
             Notification::create([
                 'user_id' => $verification->user_id,
                 'title' => 'Verifikasi Ditolak',
-                'message' => 'Pendaftaran penjual Anda ditolak. Catatan: ' . $request->rejection_note,
+                'message' => 'Pendaftaran penjual Anda ditolak. Catatan: ' . $note,
                 'type' => 'warning',
                 'is_read' => false,
             ]);
 
             DB::commit();
-            return redirect()->route('verifikator.identitas')->with('success', 'Pendaftaran berhasil ditolak.');
+            return redirect()->route('verifikator.dashboard')->with('success', 'Pendaftaran berhasil ditolak.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal menolak verifikasi: ' . $e->getMessage());

@@ -241,7 +241,7 @@ Route::middleware(['auth', 'role:pembeli'])->prefix('pembeli')->name('pembeli.')
     // Notifikasi dari Admin
     Route::get('/notifikasi', [PembeliController::class, 'notificationsIndex'])->name('notifications');
 
-    // Pendaftaran Menjadi Penjual
+    // Pendaftaran Menjadi Penjual (Diakses setelah login sebagai Pembeli)
     Route::get('/daftar-penjual', [SellerRegistrationController::class, 'create'])->name('seller.registration.create');
     Route::get('/daftar-penjual-alias', [SellerRegistrationController::class, 'create'])->name('daftar.penjual');
     Route::post('/daftar-penjual', [SellerRegistrationController::class, 'store'])->name('seller.registration.store');

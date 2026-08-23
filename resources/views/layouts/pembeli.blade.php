@@ -149,6 +149,8 @@
     $navCartCount = $navUser ? \App\Models\Cart::where('user_id', $navUser->id_user)->count() : 0;
     $navWishlistCount = $navUser ? \App\Models\Wishlist::where('user_id', $navUser->id_user)->count() : 0;
     $navCategories = \App\Models\Category::orderBy('name')->get();
+    $hasSellerReg = $navUser ? \App\Models\IdentityVerification::where('user_id', $navUser->id_user)->exists() : false;
+    $isPenjualNav = ($navUser->role->role_name ?? null) === 'penjual';
 @endphp
 
 <header class="site-navbar">
@@ -175,14 +177,18 @@
         </nav>
 
        <div class="navbar-right">
-            @php
-                $isPenjualNav = ($navUser->role->role_name ?? null) === 'penjual';
-            @endphp
-
-            @if (! $isPenjualNav)
-            <a href="{{ route('pembeli.seller.registration.create') }}" class="btn-jual d-none d-md-inline-flex">
-                <i class="bi bi-shop-window"></i> <span>Daftar Sebagai Penjual</span>
-            </a>
+            @if ($isPenjualNav)
+                <a href="{{ route('penjual.dashboard') }}" class="btn-jual d-none d-md-inline-flex">
+                    <i class="bi bi-speedometer2"></i> <span>Dashboard Penjual</span>
+                </a>
+            @elseif ($hasSellerReg)
+                <a href="{{ route('pembeli.seller.registration.status') }}" class="btn-jual d-none d-md-inline-flex" style="background: var(--primary);">
+                    <i class="bi bi-person-check-fill"></i> <span>Cek Status Penjual</span>
+                </a>
+            @else
+                <a href="{{ route('pembeli.seller.registration.create') }}" class="btn-jual d-none d-md-inline-flex">
+                    <i class="bi bi-shop-window"></i> <span>Daftar Sebagai Penjual</span>
+                </a>
             @endif
 
             @php

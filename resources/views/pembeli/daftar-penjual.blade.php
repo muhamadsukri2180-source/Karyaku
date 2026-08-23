@@ -2,7 +2,6 @@
 @section('title', 'Daftar Sebagai Penjual')
 
 @push('styles')
-<!-- Tambahkan CDN SweetAlert jika di layout belum ada -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
     /* Styling untuk Kotak Upload File */
@@ -315,7 +314,6 @@
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                // Sembunyikan placeholder, tampilkan preview dan tombol batalkan
                 document.getElementById(placeholderId).style.display = 'none';
                 const previewContainer = document.getElementById(previewId);
                 previewContainer.style.display = 'block';
@@ -324,17 +322,12 @@
             }
             reader.readAsDataURL(file);
         } else {
-            // Jika user batal milih file di dialog box, kembalikan ke awal
             cancelUpload(input.id, previewId, placeholderId, cancelBtnId);
         }
     }
 
-    // --- FUNGSI BATALKAN/HAPUS GAMBAR ---
     function cancelUpload(inputId, previewId, placeholderId, cancelBtnId) {
-        // Kosongkan nilai input file
         document.getElementById(inputId).value = "";
-        
-        // Sembunyikan preview dan tombol batal, tampilkan ulang placeholder
         document.getElementById(previewId).style.display = 'none';
         document.getElementById(cancelBtnId).style.display = 'none';
         document.getElementById(placeholderId).style.display = 'block';
@@ -370,7 +363,7 @@
 
     // --- NOTIFIKASI SWEETALERT SAAT TOMBOL KIRIM DITEKAN ---
     document.getElementById('formPendaftaran').addEventListener('submit', function(e) {
-        e.preventDefault(); // Mencegah submit langsung
+        e.preventDefault();
         
         Swal.fire({
             title: 'Kirim Pendaftaran?',
@@ -383,7 +376,6 @@
             cancelButtonText: 'Batal Periksa Lagi'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Tampilkan loading
                 Swal.fire({
                     title: 'Memproses Pendaftaran...',
                     text: 'Mohon tunggu sebentar',
@@ -394,12 +386,11 @@
                     }
                 });
                 
-                this.submit(); // Lanjutkan submit form
+                this.submit();
             }
         });
     });
 
-    // --- NOTIFIKASI SWEETALERT SESSION FLASH (HASIL SUBMIT) ---
     @if (session('success'))
         Swal.fire({ 
             icon: 'success', 
@@ -415,14 +406,6 @@
             title: 'Gagal!', 
             text: "{{ session('error') }}", 
             confirmButtonColor: '#dc3545' 
-        });
-    @endif
-    @if (session('warning'))
-        Swal.fire({ 
-            icon: 'warning', 
-            title: 'Perhatian!', 
-            text: "{{ session('warning') }}", 
-            confirmButtonColor: '#ffc107' 
         });
     @endif
     @if ($errors->any())

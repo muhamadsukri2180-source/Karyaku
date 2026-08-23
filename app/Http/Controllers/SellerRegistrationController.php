@@ -16,7 +16,7 @@ class SellerRegistrationController extends Controller
         $user = Auth::user();
 
         // Jika sudah penjual, arahkan ke status / dashboard
-        if ($user->role?->role_name === 'penjual') {
+        if (($user->role?->role_name ?? null) === 'penjual') {
             return redirect()->route('pembeli.seller.registration.status');
         }
 
@@ -81,10 +81,10 @@ class SellerRegistrationController extends Controller
             'payment_method'    => 'required|string|max:100',
             'payment_proof'     => 'required|image|mimes:jpg,jpeg,png,webp|max:3072',
         ], [
-            'nik.digits'               => 'NIK harus berupa 16 digit angka.',
-            'identity_document.image'  => 'File KTP harus berupa gambar (jpg/jpeg/png/webp).',
-            'payment_proof.image'      => 'Bukti pembayaran harus berupa gambar (jpg/jpeg/png/webp).',
-            'payment_method.required'  => 'Silakan pilih metode pembayaran terlebih dahulu.',
+            'nik.digits'              => 'NIK harus berupa 16 digit angka.',
+            'identity_document.image' => 'File KTP harus berupa gambar (jpg/jpeg/png/webp).',
+            'payment_proof.image'     => 'Bukti pembayaran harus berupa gambar (jpg/jpeg/png/webp).',
+            'payment_method.required' => 'Silakan pilih metode pembayaran terlebih dahulu.',
         ]);
 
         // Cegah submit ganda jika masih pending

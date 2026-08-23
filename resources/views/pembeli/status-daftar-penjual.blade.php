@@ -3,9 +3,14 @@
 
 @section('content')
 
-<div class="mb-4">
-    <h4 class="fw-bold mb-1">Status Pendaftaran Penjual</h4>
-    <p class="text-muted mb-0 small">Pantau progres dan hasil verifikasi pendaftaran akun penjual Anda.</p>
+<div class="mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+    <div>
+        <h4 class="fw-bold mb-1">Status Pendaftaran Penjual</h4>
+        <p class="text-muted mb-0 small">Pantau progres dan hasil verifikasi pendaftaran akun penjual Anda.</p>
+    </div>
+    <a href="{{ route('pembeli.dashboard') }}" class="btn btn-outline-primary btn-sm fw-bold rounded-3">
+        <i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard Pembeli
+    </a>
 </div>
 
 @php

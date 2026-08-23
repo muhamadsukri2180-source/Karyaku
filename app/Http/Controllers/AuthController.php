@@ -76,6 +76,14 @@ class AuthController extends Controller
             ]);
         }
 
+        if ($request->query('role') === 'penjual' && ($user->role->role_name ?? null) === 'pembeli') {
+            return redirect()->route('pembeli.seller.registration.create');
+        }
+
+        if ($request->session()->has('url.intended')) {
+            return redirect()->intended();
+        }
+
         return $this->redirectByRole($user);
     }
 
