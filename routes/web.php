@@ -173,6 +173,9 @@ Route::middleware(['auth', 'role:verifikator'])
         Route::get('/laporan', [VerifikatorController::class, 'laporan'])->name('laporan');
         Route::get('/laporan/{id}', [VerifikatorController::class, 'showLaporan'])->name('laporan.show');
 
+        
+
+
         // ==========================================
         // 2. EKSEKUSI / ACTIONS (KHUSUS ADMIN)
         // ==========================================

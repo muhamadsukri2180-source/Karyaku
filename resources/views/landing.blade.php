@@ -113,11 +113,6 @@
             transform: translateY(-7px);
         }
 
-        .popular-package {
-            box-shadow:
-                0 20px 50px rgba(37, 99, 235, .15);
-        }
-
         .shine {
             position: relative;
             overflow: hidden;
@@ -131,7 +126,7 @@
             width: 60%;
             height: 100%;
             transform: skewX(-20deg);
-            background: rgba(255,255,255,.12);
+            background: rgba(255,255,255,.15);
             transition: left .7s ease;
         }
 
@@ -1205,6 +1200,7 @@
         </div>
     </div>
 </section>
+
 <section id="kreator"
          class="py-20 lg:py-28 bg-primary text-white">
 
@@ -1345,193 +1341,193 @@
         <!-- PACKAGES -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-7 items-stretch">
             <!-- ================================================= -->
-            <!-- BRONZE -->
+            <!-- BRONZE (Tema Cokelat / Bronze) -->
             <!-- ================================================= -->
-            <div class="package-card reveal bg-white border border-slate-200 rounded-3xl p-7 shadow-sm flex flex-col">
+            <div class="package-card reveal bg-gradient-to-b from-amber-900 via-amber-950 to-stone-900 text-amber-50 border-2 border-amber-600/60 rounded-3xl p-7 shadow-xl flex flex-col relative overflow-hidden">
                 <div class="flex justify-between items-start mb-6">
                     <div>
-                        <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-4 border border-amber-500/30">
                             <i class="fa-solid fa-medal text-xl"></i>
                         </div>
-                        <h3 class="font-display text-xl font-bold">Bronze</h3>
-                        <p class="text-sm text-textMuted mt-1">Cocok untuk penjual pemula</p>
+                        <h3 class="font-display text-xl font-bold text-amber-100">Bronze</h3>
+                        <p class="text-sm text-amber-200/70 mt-1">Cocok untuk penjual pemula</p>
                     </div>
-                    <span class="px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-[10px] font-bold uppercase">Starter</span>
+                    <span class="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-bold uppercase">Starter</span>
                 </div>
                 <div class="mb-7">
-                    <span class="text-3xl font-display font-extrabold text-textMain">15+</span>
-                    <span class="text-textMuted text-sm">produk</span>
+                    <span class="text-3xl font-display font-extrabold text-amber-400">15+</span>
+                    <span class="text-amber-200/70 text-sm">produk</span>
                 </div>
                 <div class="space-y-4 flex-grow">
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-amber-500/20 text-amber-400"><i class="fa-solid fa-check text-xs"></i></span>
                         Maksimal 15 produk
                     </div>
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-amber-500/20 text-amber-400"><i class="fa-solid fa-check text-xs"></i></span>
                         1 slot iklan
                     </div>
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-amber-500/20 text-amber-400"><i class="fa-solid fa-check text-xs"></i></span>
                         Profil toko
                     </div>
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-amber-500/20 text-amber-400"><i class="fa-solid fa-check text-xs"></i></span>
                         Dashboard penjualan
                     </div>
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-amber-500/20 text-amber-400"><i class="fa-solid fa-check text-xs"></i></span>
                         Statistik dasar
                     </div>
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-amber-500/20 text-amber-400"><i class="fa-solid fa-check text-xs"></i></span>
                         Badge Bronze
                     </div>
-                    <div class="flex gap-3 text-sm text-slate-400">
-                        <span class="check-icon bg-slate-100 text-slate-400"><i class="fa-solid fa-xmark text-xs"></i></span>
+                    <div class="flex gap-3 text-sm text-amber-200/30">
+                        <span class="check-icon bg-amber-900/40 text-amber-200/30"><i class="fa-solid fa-xmark text-xs"></i></span>
                         Prioritas pencarian
                     </div>
-                    <div class="flex gap-3 text-sm text-slate-400">
-                        <span class="check-icon bg-slate-100 text-slate-400"><i class="fa-solid fa-xmark text-xs"></i></span>
+                    <div class="flex gap-3 text-sm text-amber-200/30">
+                        <span class="check-icon bg-amber-900/40 text-amber-200/30"><i class="fa-solid fa-xmark text-xs"></i></span>
                         Analitik lanjutan
                     </div>
                 </div>
-                <a href="{{ url('/auth/login?role=penjual&package=bronze') }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl border-2 border-primary text-primary hover:bg-primary hover:text-white focus:ring-4 focus:ring-primary/20 font-bold text-sm transition-all duration-200">Pilih Bronze</a>
+                <a href="{{ url('/auth/login?role=penjual&package=bronze') }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-extrabold text-sm transition-all duration-200 shadow-lg shadow-amber-500/20 focus:ring-4 focus:ring-amber-500/30">Pilih Bronze</a>
             </div>
 
             <!-- ================================================= -->
-            <!-- PLATINUM -->
+            <!-- PLATINUM (Tema Silver / Platinum Slate) -->
             <!-- ================================================= -->
-            <div class="package-card popular-package reveal bg-white border-2 border-primary rounded-3xl p-7 relative flex flex-col">
-                <!-- POPULAR -->
+            <div class="package-card popular-package reveal bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 text-slate-100 border-2 border-slate-400/80 rounded-3xl p-7 relative flex flex-col shadow-2xl">
+                <!-- POPULAR BADGE -->
                 <div class="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span class="px-5 py-2 rounded-full bg-primary text-white text-xs font-bold shadow-lg flex items-center gap-1">
-                        <i class="fa-solid fa-fire text-orange-300"></i>
+                    <span class="px-5 py-2 rounded-full bg-slate-200 text-slate-950 text-xs font-bold shadow-lg flex items-center gap-1">
+                        <i class="fa-solid fa-fire text-amber-600"></i>
                         PALING POPULER
                     </span>
                 </div>
                 <div class="flex justify-between items-start mb-6 mt-2">
                     <div>
-                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-primary flex items-center justify-center mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-slate-700/60 text-slate-200 flex items-center justify-center mb-4 border border-slate-500/40">
                             <i class="fa-solid fa-gem text-xl"></i>
                         </div>
-                        <h3 class="font-display text-xl font-bold">Platinum</h3>
-                        <p class="text-sm text-textMuted mt-1">Untuk toko yang berkembang</p>
+                        <h3 class="font-display text-xl font-bold text-slate-100">Platinum</h3>
+                        <p class="text-sm text-slate-300/80 mt-1">Untuk toko yang berkembang</p>
                     </div>
-                    <span class="px-3 py-1 rounded-full bg-blue-50 text-primary text-[10px] font-bold uppercase">Pro</span>
+                    <span class="px-3 py-1 rounded-full bg-slate-700/60 border border-slate-500/40 text-slate-200 text-[10px] font-bold uppercase">Pro</span>
                 </div>
                 <div class="mb-7">
-                    <span class="text-3xl font-display font-extrabold text-primary">35+</span>
-                    <span class="text-textMuted text-sm">produk</span>
+                    <span class="text-3xl font-display font-extrabold text-slate-200">35+</span>
+                    <span class="text-slate-300/80 text-sm">produk</span>
                 </div>
                 <div class="space-y-4 flex-grow">
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
                         Minimal hingga 35+ produk
                     </div>
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
                         3 slot iklan aktif
                     </div>
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
                         Profil toko profesional
                     </div>
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
                         Dashboard penjualan
                     </div>
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
                         Statistik & analitik
                     </div>
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
                         Badge Platinum
                     </div>
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
                         Prioritas pencarian
                     </div>
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
                         Produk lebih mudah ditemukan
                     </div>
                     <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-green-100 text-green-600"><i class="fa-solid fa-check text-xs"></i></span>
+                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
                         Dukungan penjual
                     </div>
                 </div>
-                <a href="{{ url('/auth/login?role=penjual&package=platinum') }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-primary hover:bg-primaryHover text-white font-bold text-sm transition-all duration-200 shadow-lg shadow-primary/20 focus:ring-4 focus:ring-primary/30">Pilih Platinum</a>
+                <a href="{{ url('/auth/login?role=penjual&package=platinum') }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-slate-200 hover:bg-white text-slate-950 font-extrabold text-sm transition-all duration-200 shadow-lg shadow-slate-200/20 focus:ring-4 focus:ring-slate-300/30">Pilih Platinum</a>
             </div>
 
             <!-- ================================================= -->
-            <!-- DIAMOND -->
+            <!-- DIAMOND (Tema Biru Gelap / Navy) -->
             <!-- ================================================= -->
-            <div class="package-card reveal bg-slate-950 text-white rounded-3xl p-7 relative flex flex-col overflow-hidden">
-                <div class="absolute -right-20 -top-20 w-56 h-56 bg-blue-600/20 rounded-full blur-3xl"></div>
+            <div class="package-card reveal bg-gradient-to-b from-blue-950 via-slate-950 to-blue-950 text-white border-2 border-sky-400/70 rounded-3xl p-7 relative flex flex-col overflow-hidden shadow-2xl">
+                <div class="absolute -right-20 -top-20 w-56 h-56 bg-sky-500/20 rounded-full blur-3xl"></div>
                 <div class="relative z-10 flex flex-col h-full">
                     <div class="flex justify-between items-start mb-6">
                         <div>
-                            <div class="w-12 h-12 rounded-xl bg-yellow-400/10 text-yellow-400 flex items-center justify-center mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center mb-4 border border-sky-500/30">
                                 <i class="fa-solid fa-crown text-xl"></i>
                             </div>
-                            <h3 class="font-display text-xl font-bold">Diamond</h3>
+                            <h3 class="font-display text-xl font-bold text-sky-100">Diamond</h3>
                             <p class="text-sm text-slate-400 mt-1">Untuk toko profesional</p>
                         </div>
-                        <span class="px-3 py-1 rounded-full bg-yellow-400/10 text-yellow-400 text-[10px] font-bold uppercase">Ultimate</span>
+                        <span class="px-3 py-1 rounded-full bg-sky-500/20 border border-sky-500/30 text-sky-300 text-[10px] font-bold uppercase">Ultimate</span>
                     </div>
                     <div class="mb-7">
-                        <span class="text-3xl font-display font-extrabold">50+</span>
+                        <span class="text-3xl font-display font-extrabold text-sky-400">50+</span>
                         <span class="text-slate-400 text-sm">produk</span>
                     </div>
                     <div class="space-y-4 flex-grow">
                         <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-green-500/10 text-green-400"><i class="fa-solid fa-check text-xs"></i></span>
+                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
                             50+ produk
                         </div>
                         <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-green-500/10 text-green-400"><i class="fa-solid fa-check text-xs"></i></span>
+                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
                             10+ slot iklan
                         </div>
                         <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-green-500/10 text-green-400"><i class="fa-solid fa-check text-xs"></i></span>
+                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
                             Profil toko premium
                         </div>
                         <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-green-500/10 text-green-400"><i class="fa-solid fa-check text-xs"></i></span>
+                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
                             Dashboard profesional
                         </div>
                         <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-green-500/10 text-green-400"><i class="fa-solid fa-check text-xs"></i></span>
+                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
                             Analitik penjualan lengkap
                         </div>
                         <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-green-500/10 text-green-400"><i class="fa-solid fa-check text-xs"></i></span>
+                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
                             Badge Diamond
                         </div>
                         <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-green-500/10 text-green-400"><i class="fa-solid fa-check text-xs"></i></span>
+                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
                             Prioritas pencarian tertinggi
                         </div>
                         <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-green-500/10 text-green-400"><i class="fa-solid fa-check text-xs"></i></span>
+                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
                             Prioritas promosi
                         </div>
                         <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-green-500/10 text-green-400"><i class="fa-solid fa-check text-xs"></i></span>
+                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
                             Statistik pelanggan
                         </div>
                         <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-green-500/10 text-green-400"><i class="fa-solid fa-check text-xs"></i></span>
+                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
                             Dukungan prioritas
                         </div>
                         <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-green-500/10 text-green-400"><i class="fa-solid fa-check text-xs"></i></span>
+                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
                             Fitur toko premium
                         </div>
                     </div>
-                    <a href="{{ url('/auth/login?role=penjual&package=diamond') }}" class="shine inline-block relative z-10 mt-8 w-full text-center py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white font-bold text-sm transition-all duration-200 shadow-lg focus:ring-4 focus:ring-blue-500/30">Pilih Diamond</a>
+                    <a href="{{ url('/auth/login?role=penjual&package=diamond') }}" class="shine inline-block relative z-10 mt-8 w-full text-center py-3.5 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-extrabold text-sm transition-all duration-200 shadow-lg shadow-sky-400/30 focus:ring-4 focus:ring-sky-400/30">Pilih Diamond</a>
                 </div>
             </div>
         </div>
