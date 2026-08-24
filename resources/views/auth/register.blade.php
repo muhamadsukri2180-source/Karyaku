@@ -161,6 +161,27 @@
                 </div>
             </div>
 
+            <!-- NO. TELEPON -->
+            <div class="group">
+                <label for="phone" class="block text-[9.5px] font-bold text-slate-700 mb-0.5 ml-1 transition-colors group-focus-within:text-sky">
+                    No. Telepon
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-phone text-slate-400 text-[10px] group-focus-within:text-sky transition-colors"></i>
+                    </div>
+                    <input type="tel" id="phone" name="phone" value="{{ old('phone') }}"
+                        placeholder="08xxxxxxxxxx atau +62xxxxxxxxxx"
+                        pattern="^(\+62|08)[0-9]{8,13}$"
+                        title="No. telepon harus diawali 08 atau +62"
+                        autocomplete="off" required
+                        class="w-full pl-6 pr-2.5 py-1.5 rounded-lg bg-skyPale border border-slate-200 text-[10px] font-medium focus:bg-white focus:outline-none focus:border-sky focus:ring-2 focus:ring-sky/20 transition-all duration-300">
+                </div>
+                @error('phone')
+                    <p class="text-[8px] text-red-500 mt-0.5 ml-1">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- PASSWORD GRID -->
             <div class="grid grid-cols-2 gap-1.5">
                 <!-- PASSWORD -->

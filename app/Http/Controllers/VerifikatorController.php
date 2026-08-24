@@ -296,11 +296,13 @@ class VerifikatorController extends Controller
             $verification->verified_at = now();
             $verification->save();
 
-            $sellerRole = Role::where('name', 'penjual')->orWhere('name', 'seller')->first();
+            // Gunakan kolom role_name (bukan 'name') sesuai struktur tabel roles
+            $sellerRole = Role::where('role_name', 'penjual')->first();
             $user = User::where('id_user', $verification->user_id)->first();
-            
+
             if ($sellerRole && $user) {
-                $user->role_id = $sellerRole->id_role ?? $sellerRole->id;
+                // Gunakan id_role (bukan role_id) sesuai struktur tabel users
+                $user->id_role = $sellerRole->id_role;
                 $user->save();
             }
 
@@ -444,5 +446,51 @@ class VerifikatorController extends Controller
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal memproses tindakan laporan: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * 6. PROFIL VERIFIKATOR
+     */
+    public function profile()
+    {
+        $user = Auth::user();
+        return view('verifikator.profile', compact('user'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'name'   => 'required|string|max:255',
+            'email'  => 'required|email|max:255|unique:users,email,' . $user->id_user . ',id_user',
+            'phone'  => ['nullable', 'string', 'max:20', 'regex:/^(\+62|08)[0-9]{8,13}$/'],
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ], [
+            'phone.regex' => 'No. telepon harus diawali 08 atau +62 dan minimal 10 digit.',
+        ]);
+
+        $data = [
+            'name'  => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+        ];
+
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $data['avatar'] = $avatarPath;
+        }
+
+        if ($request->filled('password')) {
+            $request->validate([
+                'password' => 'required|string|min:6|confirmed',
+            ]);
+            $data['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+        }
+
+        $user->update($data);
+
+        return redirect()->route('verifikator.profile')
+            ->with('success', 'Profil berhasil diperbarui.');
     }
 }

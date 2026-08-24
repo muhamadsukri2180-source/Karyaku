@@ -194,6 +194,10 @@ Route::middleware(['auth', 'role:verifikator'])
 
         // Eksekusi Action Laporan
         Route::post('/laporan/{id}/action', [VerifikatorController::class, 'actionLaporan'])->name('laporan.action');
+
+        // Profile Verifikator
+        Route::get('/profile', [VerifikatorController::class, 'profile'])->name('profile');
+        Route::put('/profile', [VerifikatorController::class, 'updateProfile'])->name('profile.update');
     });
     
 

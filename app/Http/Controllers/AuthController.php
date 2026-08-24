@@ -31,8 +31,12 @@ class AuthController extends Controller
         $validated = $request->validate([
             'username' => 'required|string|max:255|unique:users,name',
             'email'    => 'required|string|email|max:255|unique:users,email',
+            'phone'    => ['required', 'string', 'max:20', 'regex:/^(\+62|08)[0-9]{8,13}$/'],
             'password' => 'required|string|min:6|confirmed',
             'terms'    => 'required',
+        ], [
+            'phone.required' => 'No. telepon wajib diisi.',
+            'phone.regex'    => 'No. telepon harus diawali 08 atau +62 dan minimal 10 digit.',
         ]);
 
         $role = Role::where('role_name', 'pembeli')->firstOrFail();
@@ -41,6 +45,7 @@ class AuthController extends Controller
             'id_role'  => $role->id_role,
             'name'     => $validated['username'],
             'email'    => $validated['email'],
+            'phone'    => $validated['phone'],
             'password' => Hash::make($validated['password']),
             'status'   => 'active',
         ]);
