@@ -67,6 +67,10 @@
                 <i class="fa-solid fa-chart-pie w-4 text-center"></i><span>Dashboard</span>
             </a>
 
+            <a href="{{ route('cs.tiket') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
+                <i class="fa-solid fa-headset w-4 text-center group-hover:text-white transition-colors"></i><span>Tiket Bantuan</span>
+            </a>
+
             <a href="{{ route('cs.laporan') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
                 <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-white transition-colors"></i><span>Laporan & Moderasi</span>
             </a>
@@ -98,7 +102,7 @@
                 <button id="sidebarToggleBtn" class="lg:hidden w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition border border-sky-300 shadow-sm"><i class="fa-solid fa-bars text-base"></i></button>
                 <div>
                     <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900">Dashboard Customer Service</h2>
-                    <p class="text-[11px] sm:text-xs text-slate-700 font-semibold mt-0.5">Pantau laporan masuk, aktivitas moderasi, dan transaksi pengguna.</p>
+                    <p class="text-[11px] sm:text-xs text-slate-700 font-semibold mt-0.5">Pantau laporan masuk, tiket bantuan, dan transaksi pengguna.</p>
                 </div>
             </div>
         </header>
@@ -108,43 +112,70 @@
             @if(session('success'))
                 <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold px-4 py-3 rounded-xl shadow-sm"><i class="fa-solid fa-circle-check mr-1"></i> {{ session('success') }}</div>
             @endif
-            @if(session('error'))
-                <div class="bg-red-50 border border-red-200 text-red-800 text-sm font-semibold px-4 py-3 rounded-xl shadow-sm"><i class="fa-solid fa-circle-xmark mr-1"></i> {{ session('error') }}</div>
-            @endif
 
             <!-- TOP METRICS CARDS -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+
+                <div class="bg-gradient-to-br from-amber-50 via-amber-100/70 to-amber-200/60 border-l-4 border-amber-500 border border-amber-300 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-md">
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <div>
+                            <span class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Tiket Bantuan</span>
+                            <div class="text-3xl font-black text-slate-900 mt-1">{{ number_format($totalTiketPending, 0, ',', '.') }}</div>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold shadow-md">
+                            <i class="fa-solid fa-headset text-lg"></i>
+                        </div>
+                    </div>
+                    <span class="text-[10px] text-slate-600 font-medium">Perlu ditanggapi</span>
+                </div>
 
                 <div class="bg-gradient-to-br from-sky-100 via-sky-200 to-blue-300/70 border-l-4 border-sky-500 border border-sky-300 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-md">
                     <div class="flex justify-between items-start mb-4 relative z-10">
                         <div>
-                            <span class="text-[11px] font-bold text-sky-900 uppercase tracking-wider group-hover:text-sky-600 transition-colors">Laporan Masuk</span>
+                            <span class="text-[11px] font-bold text-sky-900 uppercase tracking-wider">Laporan Masuk</span>
                             <div class="text-3xl font-black text-slate-900 mt-1">{{ number_format($totalLaporanMasuk, 0, ',', '.') }}</div>
                         </div>
-                        <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold shadow-md shadow-sky-500/40">
-                            <i class="fa-solid fa-flag text-lg group-hover:scale-110 transition-transform duration-300"></i>
+                        <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold shadow-md">
+                            <i class="fa-solid fa-flag text-lg"></i>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 relative z-10">
-                        <span class="text-[10px] text-slate-600 font-medium">Menunggu ditangani</span>
-                    </div>
+                    <span class="text-[10px] text-slate-600 font-medium">Menunggu ditangani</span>
                 </div>
 
                 <div class="bg-gradient-to-br from-emerald-50 via-emerald-100/60 to-teal-200/50 border-l-4 border-emerald-500 border border-emerald-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-md">
                     <div class="flex justify-between items-start mb-4 relative z-10">
                         <div>
-                            <span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider group-hover:text-emerald-600 transition-colors">Laporan Selesai</span>
+                            <span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Laporan Selesai</span>
                             <div class="text-3xl font-black text-slate-900 mt-1">{{ number_format($laporanSelesai, 0, ',', '.') }}</div>
                         </div>
-                        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/40">
-                            <i class="fa-solid fa-check-double text-lg group-hover:scale-110 transition-transform duration-300"></i>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md">
+                            <i class="fa-solid fa-check-double text-lg"></i>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 relative z-10">
-                        <span class="text-[10px] text-slate-700 font-medium bg-white/80 border border-emerald-200 shadow-sm px-2 py-0.5 rounded-md">Sudah ditindak</span>
-                    </div>
+                    <span class="text-[10px] text-slate-700 font-medium bg-white/80 border border-emerald-200 px-2 py-0.5 rounded-md">Sudah ditindak</span>
                 </div>
 
+            </div>
+
+            <!-- SECTION TIKET TERBARU -->
+            <div class="bg-gradient-to-br from-white via-sky-50/50 to-blue-100/50 border border-sky-200/80 p-6 rounded-2xl card-hover shadow-md">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="font-extrabold text-slate-900 text-lg font-display flex items-center gap-2"><i class="fa-solid fa-headset text-sky-600"></i> Tiket Bantuan Terbaru</h3>
+                    <a href="{{ route('cs.tiket') }}" class="text-[11px] font-bold text-sky-700 hover:underline">Lihat Semua</a>
+                </div>
+                <div class="space-y-3">
+                    @forelse($recentTickets as $ticket)
+                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-white/70 border border-sky-100 shadow-sm hover:bg-white transition-all">
+                        <div>
+                            <p class="text-xs font-bold text-slate-800">{{ $ticket->user->name ?? 'Pengguna' }} — <span class="text-sky-700">{{ $ticket->subject }}</span></p>
+                            <p class="text-[11px] text-slate-500 mt-0.5 truncate max-w-md">{{ $ticket->message }}</p>
+                        </div>
+                        <span class="text-[9px] font-bold px-2 py-1 rounded-md border {{ $ticket->status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200' }}">{{ strtoupper($ticket->status) }}</span>
+                    </div>
+                    @empty
+                    <p class="text-xs text-slate-500 italic py-2">Belum ada tiket bantuan masuk.</p>
+                    @endforelse
+                </div>
             </div>
 
             <!-- SECTION LAPORAN TERBARU -->
@@ -178,9 +209,9 @@
     const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
     function toggleSidebar() { sidebar.classList.toggle('open'); sidebar.classList.toggle('closed'); sidebarOverlay.classList.toggle('hidden'); }
-    sidebarToggleBtn.addEventListener('click', toggleSidebar);
-    sidebarCloseBtn.addEventListener('click', toggleSidebar);
-    sidebarOverlay.addEventListener('click', toggleSidebar);
+    sidebarToggleBtn?.addEventListener('click', toggleSidebar);
+    sidebarCloseBtn?.addEventListener('click', toggleSidebar);
+    sidebarOverlay?.addEventListener('click', toggleSidebar);
 </script>
 </body>
 </html>

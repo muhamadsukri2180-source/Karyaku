@@ -13,6 +13,7 @@ use App\Models\IdentityVerification;
 use App\Models\Withdrawal;
 use App\Models\Report;
 use App\Models\CustomerService;
+use App\Models\Notification;
 use App\Models\IpLog;
 use App\Models\AllowedIp;
 use Illuminate\Http\Request;
@@ -28,7 +29,7 @@ class AdminController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
-    | 1. DASHBOARD -> GET /admin/dashboard
+    | 1. DASHBOARD SYSTEM
     |--------------------------------------------------------------------------
     */
     public function dashboard(Request $request)
@@ -47,7 +48,9 @@ class AdminController extends Controller
         $totalRevenue       = (float) Order::where('payment_status', 'paid')->sum('total_price');
         $platformCommission = $totalRevenue * 0.05;
 
-        $totalUsers = User::whereHas('role', fn ($q) => $q->whereIn('role_name', ['pembeli', 'penjual']))->count();
+        $totalUsers = User::whereHas('role', function ($q) {
+            $q->whereIn('role_name', ['pembeli', 'penjual']);
+        })->count();
 
         $pendingIdentityCount = IdentityVerification::where('status', 'pending')->count();
         $pendingReportsCount  = Report::where('status', 'pending')->count();
@@ -63,7 +66,9 @@ class AdminController extends Controller
         }
 
         $topCategories = Category::all()->map(function ($cat) {
-            $cat->order_count = OrderItem::whereHas('product', fn ($q) => $q->where('category_id', $cat->id_category))->count();
+            $cat->order_count = OrderItem::whereHas('product', function ($q) use ($cat) {
+                $q->where('category_id', $cat->id_category);
+            })->count();
             return $cat;
         })->sortByDesc('order_count')->take(4)->values();
 
@@ -73,26 +78,32 @@ class AdminController extends Controller
             return $cat;
         });
 
-        $recentOrders = Order::with('buyer')->latest()->take(3)->get()->map(fn ($o) => [
-            'title' => 'Order Baru #' . $o->kode_order,
-            'desc'  => 'Pembeli "' . ($o->buyer->name ?? '-') . '" membuat pesanan baru.',
-            'time'  => $o->created_at,
-            'color' => 'emerald',
-        ]);
+        $recentOrders = Order::with('buyer')->latest()->take(3)->get()->map(function ($o) {
+            return [
+                'title' => 'Order Baru #' . $o->kode_order,
+                'desc'  => 'Pembeli "' . ($o->buyer->name ?? '-') . '" membuat pesanan baru.',
+                'time'  => $o->created_at,
+                'color' => 'emerald',
+            ];
+        });
 
-        $recentProducts = Product::where('status', 'active')->latest('updated_at')->take(3)->get()->map(fn ($p) => [
-            'title' => 'Produk Diverifikasi',
-            'desc'  => 'Produk "' . $p->title . '" telah disetujui.',
-            'time'  => $p->updated_at,
-            'color' => 'sky',
-        ]);
+        $recentProducts = Product::where('status', 'active')->latest('updated_at')->take(3)->get()->map(function ($p) {
+            return [
+                'title' => 'Produk Diverifikasi',
+                'desc'  => 'Produk "' . $p->title . '" telah disetujui.',
+                'time'  => $p->updated_at,
+                'color' => 'sky',
+            ];
+        });
 
-        $recentIdentities = IdentityVerification::with('user')->latest()->take(3)->get()->map(fn ($iv) => [
-            'title' => 'Pengajuan Identitas',
-            'desc'  => 'Kreator "' . ($iv->user->name ?? '-') . '" mengunggah identitas.',
-            'time'  => $iv->created_at,
-            'color' => 'amber',
-        ]);
+        $recentIdentities = IdentityVerification::with('user')->latest()->take(3)->get()->map(function ($iv) {
+            return [
+                'title' => 'Pengajuan Identitas',
+                'desc'  => 'Kreator "' . ($iv->user->name ?? '-') . '" mengunggah identitas.',
+                'time'  => $iv->created_at,
+                'color' => 'amber',
+            ];
+        });
 
         $recentActivities = $recentOrders->concat($recentProducts)->concat($recentIdentities)
             ->sortByDesc('time')->take(5)->values();
@@ -136,7 +147,7 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 2. MAINTENANCE MODE + BACKUP DATABASE (GOOGLE DRIVE)
+    | 2. MAINTENANCE MODE & BACKUP DATABASE
     |--------------------------------------------------------------------------
     */
     public function maintenance()
@@ -180,12 +191,16 @@ class AdminController extends Controller
         Storage::disk('local')->makeDirectory('backups');
 
         $backups = collect(Storage::disk('local')->files('backups'))
-            ->filter(fn ($f) => str_ends_with($f, '.sql') || str_ends_with($f, '.zip'))
-            ->map(fn ($file) => [
-                'name'       => basename($file),
-                'size'       => $this->formatBytes(Storage::disk('local')->size($file)),
-                'created_at' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file)),
-            ])
+            ->filter(function ($f) {
+                return str_ends_with($f, '.sql') || str_ends_with($f, '.zip');
+            })
+            ->map(function ($file) {
+                return [
+                    'name'       => basename($file),
+                    'size'       => $this->formatBytes(Storage::disk('local')->size($file)),
+                    'created_at' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file)),
+                ];
+            })
             ->sortByDesc('created_at')
             ->values();
 
@@ -315,7 +330,7 @@ class AdminController extends Controller
 
             if (filesize($localZipPath) === 0) {
                 @unlink($localZipPath);
-                throw new \Exception('Proses kompresi ZIP menghasilkan file kosong (0 byte). Backup dibatalkan.');
+                throw new \Exception('Proses kompresi ZIP menghasilkan file kosong. Backup dibatalkan.');
             }
 
             $driveUploaded     = false;
@@ -366,26 +381,40 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 3. MANAJEMEN PENGGUNA (Akun Pengguna)
+    | 3. MANAJEMEN PENGGUNA (AKUN PENGGUNA)
     |--------------------------------------------------------------------------
     */
     public function users(Request $request)
     {
         $search = $request->query('search');
 
-        /** @var \Illuminate\Pagination\LengthAwarePaginator $users */
         $users = User::with(['role', 'membership'])
-            ->whereHas('role', fn ($q) => $q->whereIn('role_name', ['pembeli', 'penjual']))
-            ->when($search, fn ($q) => $q->where(fn ($qq) => $qq->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%")))
+            ->whereHas('role', function ($q) {
+                $q->whereIn('role_name', ['pembeli', 'penjual']);
+            })
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($qq) use ($search) {
+                    $qq->where('name', 'like', "%{$search}%")
+                       ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
             ->latest()
             ->paginate(15);
 
         $users->withQueryString();
 
-        $totalUsers   = User::whereHas('role', fn ($q) => $q->whereIn('role_name', ['pembeli', 'penjual']))->count();
-        $activeCreators = User::whereHas('role', fn ($q) => $q->where('role_name', 'penjual'))->whereHas('products')->count();
-        $newThisMonth   = User::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
+        $totalUsers    = User::whereHas('role', function ($q) {
+            $q->whereIn('role_name', ['pembeli', 'penjual']);
+        })->count();
+
+        $activeCreators = User::whereHas('role', function ($q) {
+            $q->where('role_name', 'penjual');
+        })->whereHas('products')->count();
+
+        $newThisMonth   = User::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+
         $blockedUsers   = User::where('status', 'blocked')->count();
 
         $roles = Role::whereIn('role_name', ['pembeli', 'penjual'])->get();
@@ -432,7 +461,7 @@ class AdminController extends Controller
         ]);
 
         $data = collect($validated)->except('password')->toArray();
-        if (! empty($validated['password'])) {
+        if (!empty($validated['password'])) {
             $data['password'] = Hash::make($validated['password']);
         }
 
@@ -454,9 +483,36 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Pengguna berhasil dihapus.');
     }
 
+    public function suspendUser(string|int $id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->role?->role_name === 'admin') {
+            return redirect()->back()->with('error', 'Akun Admin tidak dapat disuspend.');
+        }
+
+        $user->status = $user->status === 'blocked' ? 'active' : 'blocked';
+        $user->save();
+
+        if ($user->status === 'blocked') {
+            Notification::create([
+                'user_id'     => $user->id_user,
+                'name'        => '⚠️ Status Akun Ditangguhkan',
+                'description' => 'Akun Anda telah dinonaktifkan sementara/diblokir oleh Admin.',
+                'is_read'     => false,
+            ]);
+        }
+
+        $message = $user->status === 'blocked'
+            ? 'Pengguna berhasil disuspend.'
+            : 'Pengguna berhasil diaktifkan kembali.';
+
+        return redirect()->back()->with('success', $message);
+    }
+
     /*
     |--------------------------------------------------------------------------
-    | 4. AKUN VERIFIKATOR & ANTREAN VERIFIKASI IDENTITAS
+    | 4. AKUN VERIFIKATOR & VERIFIKASI IDENTITAS
     |--------------------------------------------------------------------------
     */
     public function verifikator()
@@ -529,7 +585,7 @@ class AdminController extends Controller
         ]);
 
         $data = collect($validated)->except('password')->toArray();
-        if (! empty($validated['password'])) {
+        if (!empty($validated['password'])) {
             $data['password'] = Hash::make($validated['password']);
         }
 
@@ -587,6 +643,13 @@ class AdminController extends Controller
                 'status'        => 'active',
             ]);
 
+            Notification::create([
+                'user_id'     => $user->id_user,
+                'name'        => '🎉 Pendaftaran Penjual Disetujui',
+                'description' => 'Selamat! Verifikasi identitas Anda telah disetujui. Akun Anda kini beralih menjadi Penjual.',
+                'is_read'     => false,
+            ]);
+
             DB::commit();
 
             return redirect()->back()->with('success', 'Pengajuan identitas berhasil disetujui. Akun user sekarang menjadi penjual.');
@@ -626,6 +689,13 @@ class AdminController extends Controller
                 'verified_at' => now(),
             ]);
 
+            Notification::create([
+                'user_id'     => $verification->user_id,
+                'name'        => '❌ Pendaftaran Penjual Ditolak',
+                'description' => 'Pengajuan identitas Anda ditolak. Alasan: ' . ($validated['notes'] ?? 'Dokumen tidak sesuai syarat.'),
+                'is_read'     => false,
+            ]);
+
             return redirect()->back()->with('success', 'Pengajuan identitas berhasil ditolak.');
 
         } catch (\Throwable $e) {
@@ -647,9 +717,9 @@ class AdminController extends Controller
         $tickets = CustomerService::with('user')->latest()->get();
 
         $stats = [
-            'selesai' => $tickets->where('status', 'selesai')->count(),
-            'proses'  => $tickets->where('status', 'proses')->count(),
-            'belum'   => $tickets->where('status', 'belum')->count(),
+            'selesai' => $tickets->whereIn('status', ['selesai', 'resolved', 'closed'])->count(),
+            'proses'  => $tickets->whereIn('status', ['proses', 'in_progress'])->count(),
+            'belum'   => $tickets->whereIn('status', ['belum', 'pending'])->count(),
         ];
 
         return view('admin.manajemen.akun_service', compact('csUsers', 'tickets', 'stats'));
@@ -692,21 +762,31 @@ class AdminController extends Controller
             'admin_note' => $request->admin_note,
         ]);
 
+        if ($ticket->user_id) {
+            Notification::create([
+                'user_id'     => $ticket->user_id,
+                'name'        => 'Pembaharuan Tiket Pengaduan',
+                'description' => 'Status tiket ' . $ticket->subject . ' diperbarui menjadi: ' . strtoupper($request->status),
+                'is_read'     => false,
+            ]);
+        }
+
         return back()->with('success', 'Status keluhan / masukan berhasil diperbarui!');
     }
 
     /*
     |--------------------------------------------------------------------------
-    | 6. KATALOG: DAFTAR JASA (Product)
+    | 6. KATALOG: DAFTAR JASA (PRODUCT)
     |--------------------------------------------------------------------------
     */
     public function products(Request $request)
     {
         $search = $request->query('search');
 
-        /** @var \Illuminate\Pagination\LengthAwarePaginator $products */
         $products = Product::with(['category', 'seller'])
-            ->when($search, fn ($q) => $q->where('title', 'like', "%{$search}%"))
+            ->when($search, function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%");
+            })
             ->latest()
             ->paginate(15);
 
@@ -720,13 +800,35 @@ class AdminController extends Controller
 
     public function approveProduct(string|int $id)
     {
-        Product::where('id_product', $id)->update(['status' => 'active']);
+        $product = Product::findOrFail($id);
+        $product->update(['status' => 'active']);
+
+        if ($product->user_id) {
+            Notification::create([
+                'user_id'     => $product->user_id,
+                'name'        => '✅ Produk/Jasa Disetujui',
+                'description' => 'Produk "' . $product->title . '" Anda telah disetujui dan aktif di marketplace.',
+                'is_read'     => false,
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Produk berhasil disetujui.');
     }
 
     public function takedownProduct(string|int $id)
     {
-        Product::where('id_product', $id)->update(['status' => 'inactive']);
+        $product = Product::findOrFail($id);
+        $product->update(['status' => 'inactive']);
+
+        if ($product->user_id) {
+            Notification::create([
+                'user_id'     => $product->user_id,
+                'name'        => '⚠️ Produk Disembunyikan',
+                'description' => 'Produk "' . $product->title . '" telah dinonaktifkan dari katalog oleh Admin.',
+                'is_read'     => false,
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Produk berhasil di-takedown.');
     }
 
@@ -804,10 +906,11 @@ class AdminController extends Controller
     {
         $search = $request->query('search');
 
-        /** @var \Illuminate\Pagination\LengthAwarePaginator $orders */
         $orders = Order::with(['buyer', 'items.product.seller'])
             ->when($search, function ($q) use ($search) {
-                $q->whereHas('buyer', fn ($qq) => $qq->where('name', 'like', "%{$search}%"));
+                $q->whereHas('buyer', function ($qq) use ($search) {
+                    $qq->where('name', 'like', "%{$search}%");
+                });
             })
             ->latest()
             ->paginate(15);
@@ -871,11 +974,11 @@ class AdminController extends Controller
     {
         $search = $request->query('search');
 
-        /** @var \Illuminate\Pagination\LengthAwarePaginator $withdrawals */
         $withdrawals = Withdrawal::with('user')
             ->when($search, function ($q) use ($search) {
-                $q->whereHas('user', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
-                  ->orWhere('id_withdrawal', 'like', "%{$search}%");
+                $q->whereHas('user', function ($qq) use ($search) {
+                    $qq->where('name', 'like', "%{$search}%");
+                })->orWhere('id_withdrawal', 'like', "%{$search}%");
             })
             ->latest()
             ->paginate(15);
@@ -887,14 +990,12 @@ class AdminController extends Controller
             ->whereMonth('processed_at', now()->month)
             ->whereYear('processed_at', now()->year)
             ->sum('amount');
+
         $gagalDitolak = Withdrawal::where('status', 'rejected')->count();
 
-        return view('admin.keuangan.penarikan_saldo', [
-            'withdrawals'      => $withdrawals,
-            'menungguDiproses' => $menungguDiproses,
-            'selesaiBulanIni'  => $selesaiBulanIni,
-            'gagalDitolak'     => $gagalDitolak,
-        ]);
+        return view('admin.keuangan.penarikan_saldo', compact(
+            'withdrawals', 'menungguDiproses', 'selesaiBulanIni', 'gagalDitolak'
+        ));
     }
 
     public function processWithdrawal(string|int $id)
@@ -904,6 +1005,13 @@ class AdminController extends Controller
             'status'       => 'processed',
             'processed_by' => auth()->id(),
             'processed_at' => now(),
+        ]);
+
+        Notification::create([
+            'user_id'     => $withdrawal->user_id,
+            'name'        => '💸 Penarikan Saldo Berhasil',
+            'description' => 'Penarikan saldo sebesar Rp' . number_format($withdrawal->amount, 0, ',', '.') . ' telah berhasil diproses.',
+            'is_read'     => false,
         ]);
 
         return redirect()->back()->with('success', 'Penarikan saldo berhasil diproses.');
@@ -921,6 +1029,13 @@ class AdminController extends Controller
             'processed_at' => now(),
         ]);
 
+        Notification::create([
+            'user_id'     => $withdrawal->user_id,
+            'name'        => '❌ Penarikan Saldo Ditolak',
+            'description' => 'Penarikan saldo ditolak oleh Admin. Catatan: ' . ($request->notes ?? 'Data pencairan tidak sesuai.'),
+            'is_read'     => false,
+        ]);
+
         return redirect()->back()->with('success', 'Penarikan saldo ditolak.');
     }
 
@@ -934,10 +1049,21 @@ class AdminController extends Controller
         $memberships = Membership::withCount('users')->get();
         $totalPelangganAktif = User::whereNotNull('id_membership')->count();
 
-        $diamondCount = User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Diamond%'))->count();
-        $goldCount    = User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Gold%'))->count();
-        $silverCount  = User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Silver%'))->count();
-        $bronzeCount  = User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Bronze%'))->count();
+        $diamondCount = User::whereHas('membership', function ($q) {
+            $q->where('name', 'LIKE', '%Diamond%');
+        })->count();
+
+        $goldCount = User::whereHas('membership', function ($q) {
+            $q->where('name', 'LIKE', '%Gold%');
+        })->count();
+
+        $silverCount = User::whereHas('membership', function ($q) {
+            $q->where('name', 'LIKE', '%Silver%');
+        })->count();
+
+        $bronzeCount = User::whereHas('membership', function ($q) {
+            $q->where('name', 'LIKE', '%Bronze%');
+        })->count();
 
         return view('admin.membership.paket_membership', compact(
             'memberships',
@@ -1029,6 +1155,10 @@ class AdminController extends Controller
             'reviewed_by' => auth()->id(),
         ]);
 
+        if ($request->action === 'suspend' && $report->reported_user_id) {
+            User::where('id_user', $report->reported_user_id)->update(['status' => 'blocked']);
+        }
+
         return redirect()->back()->with('success', 'Tindakan laporan pengguna berhasil diproses.');
     }
 
@@ -1047,6 +1177,10 @@ class AdminController extends Controller
             'reviewed_at' => now(),
             'reviewed_by' => auth()->id(),
         ]);
+
+        if ($request->action === 'suspend' && $report->product_id) {
+            Product::where('id_product', $report->product_id)->update(['status' => 'inactive']);
+        }
 
         return redirect()->back()->with('success', 'Tindakan laporan produk berhasil diproses.');
     }
@@ -1090,7 +1224,6 @@ class AdminController extends Controller
     */
     public function securityVerifyPage()
     {
-        // Jika sudah terverifikasi sebelumnya, langsung arahkan ke index keamanan
         if (session()->has('security_verified_at')) {
             return redirect()->route('admin.security.index');
         }
@@ -1114,7 +1247,6 @@ class AdminController extends Controller
             return back()->with('error', 'Kode PIN Keamanan Salah! Akses Ditolak.');
         }
 
-        // Simpan tanda verifikasi ke dalam session
         session(['security_verified_at' => now()]);
 
         return redirect()->route('admin.security.index')->with('success', 'Akses Keamanan Diberikan.');
@@ -1122,7 +1254,6 @@ class AdminController extends Controller
 
     public function securityIndex(Request $request)
     {
-        // 🔒 PROTEKSI VERIFIKASI: Wajib Lolos PIN & Password Dulu
         if (!session()->has('security_verified_at')) {
             return redirect()->route('admin.security.verify')->with('warning', 'Silakan verifikasi kata sandi & PIN keamanan terlebih dahulu.');
         }
@@ -1194,21 +1325,4 @@ class AdminController extends Controller
         IpLog::findOrFail($id)->delete();
         return back()->with('success', 'Log IP dihapus.');
     }
-    public function suspendUser(string|int $id)
-{
-    $user = User::findOrFail($id);
-
-    if ($user->role?->role_name === 'admin') {
-        return redirect()->back()->with('error', 'Akun Admin tidak dapat disuspend.');
-    }
-
-    $user->status = $user->status === 'blocked' ? 'active' : 'blocked';
-    $user->save();
-
-    $message = $user->status === 'blocked'
-        ? 'Pengguna berhasil disuspend.'
-        : 'Pengguna berhasil diaktifkan kembali.';
-
-    return redirect()->back()->with('success', $message);
-}
 }

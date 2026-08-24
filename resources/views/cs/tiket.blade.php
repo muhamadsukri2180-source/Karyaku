@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>Karyaku - Cek Transaksi</title>
+<title>Karyaku - Tiket Bantuan Pengguna</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -66,16 +66,16 @@
                 <i class="fa-solid fa-chart-pie w-4 text-center group-hover:text-white transition-colors"></i><span>Dashboard</span>
             </a>
 
-            <a href="{{ route('cs.tiket') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                <i class="fa-solid fa-headset w-4 text-center group-hover:text-white transition-colors"></i><span>Tiket Bantuan</span>
+            <a href="{{ route('cs.tiket') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl active-menu transition-all duration-200">
+                <i class="fa-solid fa-headset w-4 text-center"></i><span>Tiket Bantuan</span>
             </a>
 
             <a href="{{ route('cs.laporan') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
                 <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-white transition-colors"></i><span>Laporan & Moderasi</span>
             </a>
 
-            <a href="{{ route('cs.transaksi') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl active-menu transition-all duration-200">
-                <i class="fa-solid fa-receipt w-4 text-center"></i><span>Cek Transaksi</span>
+            <a href="{{ route('cs.transaksi') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
+                <i class="fa-solid fa-receipt w-4 text-center group-hover:text-white transition-colors"></i><span>Cek Transaksi</span>
             </a>
 
             <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-6">Sistem</p>
@@ -100,58 +100,96 @@
             <div class="flex items-center gap-4">
                 <button id="sidebarToggleBtn" class="lg:hidden w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition border border-sky-300 shadow-sm"><i class="fa-solid fa-bars text-base"></i></button>
                 <div>
-                    <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900">Cek Transaksi</h2>
-                    <p class="text-[11px] sm:text-xs text-slate-700 font-semibold mt-0.5">Mode baca saja — untuk verifikasi aduan & sengketa pengguna.</p>
+                    <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900">Tiket Bantuan Pengguna</h2>
+                    <p class="text-[11px] sm:text-xs text-slate-700 font-semibold mt-0.5">Kelola pertanyaan dan bantuan langsung dari pembeli/pengguna.</p>
                 </div>
             </div>
         </header>
 
         <div class="p-6 sm:p-8 space-y-6 overflow-y-auto no-scrollbar">
+            @if(session('success'))
+                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold px-4 py-3 rounded-xl shadow-sm"><i class="fa-solid fa-circle-check mr-1"></i> {{ session('success') }}</div>
+            @endif
+
             <div class="bg-white border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
-                <div class="p-5 border-b">
-                    <form action="{{ route('cs.transaksi') }}" method="GET" class="relative w-full sm:w-72">
+                <div class="p-5 border-b flex flex-wrap items-center justify-between gap-4">
+                    <form action="{{ route('cs.tiket') }}" method="GET" class="relative w-full sm:w-72">
                         <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari ID Order / Nama Pembeli..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-500/30">
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Subjek / Pengirim..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium focus:outline-none">
                     </form>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead><tr class="bg-slate-50 border-b text-slate-500 text-[11px] uppercase font-bold">
-                            <th class="py-3 px-5">ID Order</th><th class="py-3 px-5">Pembeli</th><th class="py-3 px-5">Total</th><th class="py-3 px-5">Pembayaran</th><th class="py-3 px-5">Status</th><th class="py-3 px-5 text-center">Detail</th>
-                        </tr></thead>
+                        <thead>
+                            <tr class="bg-slate-50 border-b text-slate-500 text-[11px] uppercase font-bold">
+                                <th class="py-3 px-5">Pengirim</th>
+                                <th class="py-3 px-5">Subjek</th>
+                                <th class="py-3 px-5">Pesan</th>
+                                <th class="py-3 px-5">Status</th>
+                                <th class="py-3 px-5 text-center">Aksi</th>
+                            </tr>
+                        </thead>
                         <tbody class="text-sm divide-y divide-slate-100">
-                            @forelse($orders as $order)
+                            @forelse($tickets as $ticket)
                             <tr class="hover:bg-slate-50">
-                                <td class="py-3 px-5 text-xs font-semibold text-sky-700">{{ $order->kode_order }}</td>
-                                <td class="py-3 px-5 text-xs">{{ $order->buyer->name ?? '-' }}</td>
-                                <td class="py-3 px-5 text-xs font-bold" style="color:#FF7A59;">Rp{{ number_format($order->total_price, 0, ',', '.') }}</td>
-                                <td class="py-3 px-5"><span class="text-[10px] font-bold px-2 py-1 rounded-md {{ $order->payment_status === 'paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}">{{ ucfirst($order->payment_status) }}</span></td>
-                                <td class="py-3 px-5"><span class="text-[10px] font-bold px-2 py-1 rounded-md bg-sky-50 text-sky-700 border border-sky-200">{{ ucfirst($order->status) }}</span></td>
+                                <td class="py-3 px-5 text-xs font-semibold">{{ $ticket->user->name ?? '-' }}</td>
+                                <td class="py-3 px-5 text-xs font-bold text-slate-800">{{ $ticket->subject }}</td>
+                                <td class="py-3 px-5 text-xs text-slate-600 max-w-xs truncate">{{ $ticket->message }}</td>
+                                <td class="py-3 px-5">
+                                    @php
+                                        $statusClasses = [
+                                            'pending' => 'bg-amber-50 text-amber-700 border-amber-200',
+                                            'in_progress' => 'bg-blue-50 text-blue-700 border-blue-200',
+                                            'resolved' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                            'closed' => 'bg-slate-100 text-slate-600 border-slate-200'
+                                        ];
+                                    @endphp
+                                    <span class="text-[10px] font-bold px-2 py-1 rounded-md border {{ $statusClasses[$ticket->status] ?? 'bg-slate-50' }}">{{ strtoupper($ticket->status) }}</span>
+                                </td>
                                 <td class="py-3 px-5 text-center">
-                                    <button type="button" onclick="showDetail({{ $order->id_order }})" class="px-3 py-1.5 rounded-lg bg-sky-50 text-sky-600 border border-sky-200 hover:bg-sky-600 hover:text-white text-xs font-bold"><i class="fa-solid fa-eye"></i> Lihat</button>
+                                    <button type="button" onclick="openBalasModal('{{ $ticket->id }}')" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold"><i class="fa-solid fa-reply"></i> Respon</button>
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="6" class="text-center py-10 text-slate-400 text-xs font-semibold">Belum ada data transaksi.</td></tr>
+                            <tr><td colspan="5" class="text-center py-10 text-slate-400 text-xs font-semibold">Belum ada tiket bantuan masuk.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
-                @if($orders->hasPages())<div class="p-4 border-t">{{ $orders->appends(request()->query())->links() }}</div>@endif
+                @if($tickets->hasPages())<div class="p-4 border-t">{{ $tickets->appends(request()->query())->links() }}</div>@endif
             </div>
         </div>
     </main>
 </div>
 
-<div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop-custom p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
+<!-- MODAL BALAS TIKET -->
+<div id="balasModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop-custom p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
         <div class="p-5 border-b flex items-center justify-between">
-            <h3 class="font-extrabold text-slate-900">Detail Pesanan</h3>
-            <button type="button" onclick="closeDetail()" class="text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="font-extrabold text-slate-900">Tanggapi Tiket Bantuan</h3>
+            <button type="button" onclick="closeBalasModal()" class="text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
-        <div id="detailContent" class="p-5 text-xs text-slate-700 space-y-2">
-            <p class="text-center text-slate-400 py-6">Memuat data...</p>
-        </div>
+        <form id="balasForm" method="POST" class="p-5 space-y-4">
+            @csrf
+            <div id="ticketDetailBody" class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1">
+                <p><strong>Pengirim:</strong> <span id="mUser">-</span></p>
+                <p><strong>Subjek:</strong> <span id="mSubject">-</span></p>
+                <p><strong>Pesan Pengguna:</strong> <span id="mMessage">-</span></p>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-600 uppercase">Ubah Status Tiket</label>
+                <select name="status" id="mStatus" required class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                    <option value="in_progress">Dalam Proses (In Progress)</option>
+                    <option value="resolved">Selesai (Resolved)</option>
+                    <option value="closed">Ditutup (Closed)</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-600 uppercase">Pesan / Balasan CS</label>
+                <textarea name="admin_note" id="mAdminNote" rows="4" required class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="Tuliskan jawaban atau penyelesaian masalah untuk pengguna..."></textarea>
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl">Kirim Balasan</button>
+        </form>
     </div>
 </div>
 
@@ -165,35 +203,25 @@
     sidebarCloseBtn?.addEventListener('click', toggleSidebar);
     sidebarOverlay?.addEventListener('click', toggleSidebar);
 
-    const baseUrl = "{{ url('cs/transaksi') }}";
-    function showDetail(id) {
-        const modal = document.getElementById('detailModal');
-        const content = document.getElementById('detailContent');
-        modal.classList.remove('hidden'); modal.classList.add('flex');
-        content.innerHTML = '<p class="text-center text-slate-400 py-6">Memuat data...</p>';
+    const baseUrl = "{{ url('cs/tiket') }}";
+    function openBalasModal(id) {
+        const modal = document.getElementById('balasModal');
+        const form = document.getElementById('balasForm');
+        form.action = `${baseUrl}/${id}/balas`;
 
-        fetch(`${baseUrl}/${id}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        fetch(`${baseUrl}/${id}`)
             .then(res => res.json())
             .then(data => {
-                let itemsHtml = (data.items || []).map(item => `
-                    <div class="flex justify-between border-b border-slate-100 py-2">
-                        <span>${item.product?.title ?? '-'}</span>
-                        <span class="font-bold">Rp ${Number(item.subtotal ?? 0).toLocaleString('id-ID')}</span>
-                    </div>
-                `).join('');
-                content.innerHTML = `
-                    <p><span class="font-bold">Kode Order:</span> ${data.kode_order}</p>
-                    <p><span class="font-bold">Pembeli:</span> ${data.buyer?.name ?? '-'}</p>
-                    <p><span class="font-bold">Status:</span> ${data.status}</p>
-                    <p><span class="font-bold">Pembayaran:</span> ${data.payment_status}</p>
-                    <p><span class="font-bold">Total:</span> Rp ${Number(data.total_price ?? 0).toLocaleString('id-ID')}</p>
-                    <div class="mt-3"><p class="font-bold mb-1">Item Pesanan:</p>${itemsHtml}</div>
-                `;
-            })
-            .catch(() => { content.innerHTML = '<p class="text-center text-red-500 py-6">Gagal memuat detail.</p>'; });
+                document.getElementById('mUser').innerText = data.user?.name || '-';
+                document.getElementById('mSubject').innerText = data.subject || '-';
+                document.getElementById('mMessage').innerText = data.message || '-';
+                document.getElementById('mStatus').value = data.status || 'in_progress';
+                document.getElementById('mAdminNote').value = data.admin_note || '';
+                modal.classList.remove('hidden'); modal.classList.add('flex');
+            });
     }
-    function closeDetail() {
-        const modal = document.getElementById('detailModal');
+    function closeBalasModal() {
+        const modal = document.getElementById('balasModal');
         modal.classList.add('hidden'); modal.classList.remove('flex');
     }
 </script>

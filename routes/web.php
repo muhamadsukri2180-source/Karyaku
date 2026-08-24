@@ -271,11 +271,19 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'role:customer_service'])->prefix('cs')->name('cs.')->group(function () {
     Route::get('/dashboard', [CsController::class, 'dashboard'])->name('dashboard');
 
+    // Modul Tiket Bantuan Pengguna
+    Route::get('/tiket', [CsController::class, 'tiket'])->name('tiket');
+    Route::get('/tiket/{id}', [CsController::class, 'tiketDetail'])->name('tiket.detail');
+    Route::post('/tiket/{id}/balas', [CsController::class, 'balasTiket'])->name('tiket.balas');
+
+    // Modul Laporan Pelanggaran
     Route::get('/laporan', [CsController::class, 'laporan'])->name('laporan');
     Route::post('/laporan/{id}/tindak', [CsController::class, 'tindakLaporan'])->name('laporan.tindak');
 
+    // Modul Cek Transaksi
     Route::get('/transaksi', [CsController::class, 'transaksi'])->name('transaksi');
     Route::get('/transaksi/{id}', [CsController::class, 'transaksiDetail'])->name('transaksi.detail');
 
+    // Modul Notifikasi CS
     Route::get('/notifikasi', [CsController::class, 'notifikasi'])->name('notifikasi');
 });
