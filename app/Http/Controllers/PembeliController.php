@@ -11,9 +11,11 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\Wishlist;
+use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PembeliController extends Controller
 {
@@ -22,11 +24,12 @@ class PembeliController extends Controller
     {
         $userId = Auth::id();
 
-        $totalPesanan   = Order::where('buyer_id', $userId)->count();
-        $totalSelesai   = Order::where('buyer_id', $userId)->where('status', 'selesai')->count();
-        $totalBelanja   = Order::where('buyer_id', $userId)->where('payment_status', 'paid')->sum('total_price');
-        $totalWishlist  = Wishlist::where('user_id', $userId)->count();
-        $totalKeranjang = Cart::where('user_id', $userId)->count();
+        $totalPesanan    = Order::where('buyer_id', $userId)->count();
+        $totalSelesai    = Order::where('buyer_id', $userId)->where('status', 'selesai')->count();
+        $totalBelumBayar = Order::where('buyer_id', $userId)->where('payment_status', 'unpaid')->where('status', '!=', 'dibatalkan')->count();
+        $totalBelanja    = Order::where('buyer_id', $userId)->where('payment_status', 'paid')->sum('total_price');
+        $totalWishlist   = Wishlist::where('user_id', $userId)->count();
+        $totalKeranjang  = Cart::where('user_id', $userId)->count();
 
         $recentOrders = Order::with('items.product')
             ->where('buyer_id', $userId)
@@ -34,21 +37,25 @@ class PembeliController extends Controller
             ->take(5)
             ->get();
 
-        $rekomendasi = Product::with(['category', 'seller'])
+        $rekomendasi = Product::with(['category', 'seller', 'reviews'])
             ->where('status', 'active')
             ->orderByDesc('sold_count')
-            ->take(4)
+            ->take(8)
             ->get();
 
+        $categories = Category::where('status', 'aktif')->orderBy('name')->take(8)->get();
+        $wishlistIds = Wishlist::where('user_id', $userId)->pluck('product_id')->toArray();
+
         return view('pembeli.dashboard', compact(
-            'totalPesanan', 'totalSelesai', 'totalBelanja', 'totalWishlist', 'totalKeranjang', 'recentOrders', 'rekomendasi'
+            'totalPesanan', 'totalSelesai', 'totalBelumBayar', 'totalBelanja', 
+            'totalWishlist', 'totalKeranjang', 'recentOrders', 'rekomendasi', 'categories', 'wishlistIds'
         ));
     }
 
     // ================= MARKETPLACE =================
     public function marketplace(Request $request)
     {
-        $query = Product::with(['category', 'seller'])->where('status', 'active');
+        $query = Product::with(['category', 'seller', 'reviews'])->where('status', 'active');
 
         if ($request->filled('q')) {
             $query->where('title', 'like', '%' . $request->q . '%');
@@ -63,10 +70,10 @@ class PembeliController extends Controller
                 $query->orderByDesc('id_product');
                 break;
             case 'termurah':
-                $query->orderBy('price');
+                $query->orderBy('price', 'asc');
                 break;
             case 'termahal':
-                $query->orderByDesc('price');
+                $query->orderBy('price', 'desc');
                 break;
             case 'terlaris':
                 $query->orderByDesc('sold_count');
@@ -76,7 +83,7 @@ class PembeliController extends Controller
         }
 
         $products   = $query->paginate(12)->withQueryString();
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::where('status', 'aktif')->orderBy('name')->get();
 
         $wishlistIds = Wishlist::where('user_id', Auth::id())->pluck('product_id')->toArray();
 
@@ -86,7 +93,7 @@ class PembeliController extends Controller
     // ================= DETAIL PRODUK =================
     public function produkDetail($id)
     {
-        $product = Product::with(['category', 'seller'])->findOrFail($id);
+        $product = Product::with(['category', 'seller', 'reviews.user'])->findOrFail($id);
 
         $product->increment('view_count');
 
@@ -100,7 +107,59 @@ class PembeliController extends Controller
             ->where('product_id', $product->id_product)
             ->exists();
 
-        return view('pembeli.produk', compact('product', 'produkLain', 'isWishlisted'));
+        $reviews = $product->reviews()->with('user')->latest('id_review')->get();
+        $avgRating = round($reviews->avg('rating') ?: 5, 1);
+        $totalReviews = $reviews->count();
+
+        // Cek apakah user pernah membeli produk ini dan pesanan sudah lunas/selesai
+        $hasBought = OrderItem::where('product_id', $product->id_product)
+            ->whereHas('order', function ($q) {
+                $q->where('buyer_id', Auth::id())->where('payment_status', 'paid');
+            })
+            ->exists();
+
+        $userReview = Review::where('product_id', $product->id_product)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        return view('pembeli.produk', compact(
+            'product', 'produkLain', 'isWishlisted', 'reviews', 'avgRating', 'totalReviews', 'hasBought', 'userReview'
+        ));
+    }
+
+    // ================= REVIEW / RATING & KOMENTAR =================
+    public function reviewStore(Request $request, $id)
+    {
+        $request->validate([
+            'rating'  => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        $product = Product::findOrFail($id);
+
+        // Validasi apakah pembeli pernah membeli produk ini
+        $hasBought = OrderItem::where('product_id', $id)
+            ->whereHas('order', function ($q) {
+                $q->where('buyer_id', Auth::id())->where('payment_status', 'paid');
+            })
+            ->exists();
+
+        if (! $hasBought) {
+            return back()->with('error', 'Anda hanya dapat memberikan ulasan untuk produk yang sudah Anda beli dan bayar.');
+        }
+
+        Review::updateOrCreate(
+            [
+                'product_id' => $id,
+                'user_id'    => Auth::id(),
+            ],
+            [
+                'rating'     => $request->rating,
+                'comment'    => $request->comment,
+            ]
+        );
+
+        return back()->with('success', 'Terima kasih! Ulasan dan rating Anda berhasil disimpan.');
     }
 
     // ================= KERANJANG =================
@@ -242,19 +301,35 @@ class PembeliController extends Controller
     }
 
     // ================= PESANAN =================
-    public function pesananIndex()
+    public function pesananIndex(Request $request)
     {
-        $orders = Order::with('items.product')
-            ->where('buyer_id', Auth::id())
-            ->latest('id_order')
-            ->paginate(10);
+        $tab = $request->get('tab', 'semua');
+        $query = Order::with(['items.product.seller'])
+            ->where('buyer_id', Auth::id());
 
-        return view('pembeli.pesanan', compact('orders'));
+        if ($tab === 'diproses') {
+            $query->whereIn('status', ['diproses', 'pending']);
+        } elseif ($tab === 'selesai') {
+            $query->where('status', 'selesai');
+        } elseif ($tab === 'dibatalkan') {
+            $query->where('status', 'dibatalkan');
+        }
+
+        $orders = $query->latest('id_order')->paginate(10)->withQueryString();
+
+        $counts = [
+            'semua'      => Order::where('buyer_id', Auth::id())->count(),
+            'diproses'   => Order::where('buyer_id', Auth::id())->whereIn('status', ['diproses', 'pending'])->count(),
+            'selesai'    => Order::where('buyer_id', Auth::id())->where('status', 'selesai')->count(),
+            'dibatalkan' => Order::where('buyer_id', Auth::id())->where('status', 'dibatalkan')->count(),
+        ];
+
+        return view('pembeli.pesanan', compact('orders', 'tab', 'counts'));
     }
 
     public function pesananDetail($id)
     {
-        $order = Order::with('items.product.seller')
+        $order = Order::with(['items.product.seller', 'items.product.category'])
             ->where('buyer_id', Auth::id())
             ->findOrFail($id);
 
@@ -264,14 +339,39 @@ class PembeliController extends Controller
     // ================= DOWNLOAD =================
     public function downloadIndex()
     {
-        $orderItems = OrderItem::with('product.seller', 'order')
+        $orderItems = OrderItem::with(['product.seller', 'product.category', 'order'])
             ->whereHas('order', function ($q) {
                 $q->where('buyer_id', Auth::id())->where('payment_status', 'paid');
             })
             ->latest('id_order_item')
-            ->get();
+            ->paginate(12);
 
         return view('pembeli.download', compact('orderItems'));
+    }
+
+    public function downloadFile($id_order_item)
+    {
+        $orderItem = OrderItem::with(['order', 'product'])
+            ->where('id_order_item', $id_order_item)
+            ->whereHas('order', function ($q) {
+                $q->where('buyer_id', Auth::id())->where('payment_status', 'paid');
+            })
+            ->firstOrFail();
+
+        if (! $orderItem->product || ! $orderItem->product->file) {
+            return back()->with('error', 'File karya digital belum diunggah atau tidak ditemukan.');
+        }
+
+        $filePath = storage_path('app/public/' . $orderItem->product->file);
+        if (! file_exists($filePath)) {
+            // Cek di public disk langsung
+            if (Storage::disk('public')->exists($orderItem->product->file)) {
+                return Storage::disk('public')->download($orderItem->product->file);
+            }
+            return back()->with('error', 'File berkas tidak ditemukan di server penyimpanan.');
+        }
+
+        return response()->download($filePath);
     }
 
     // ================= PROFILE =================
@@ -309,33 +409,30 @@ class PembeliController extends Controller
         return view('pembeli.membership', compact('memberships', 'user', 'isPenjual', 'pending'));
     }
 
-
-
-
-
     public function membershipPurchase(Request $request, $id)
     {
-    $membership = Membership::findOrFail($id);
+        $membership = Membership::findOrFail($id);
 
-    return redirect()->route(
-        'pembeli.seller.registration.create',
-        [
-            'membership' => $membership->id_membership,
-        ]
-    );
+        return redirect()->route(
+            'pembeli.seller.registration.create',
+            [
+                'membership' => $membership->id_membership,
+            ]
+        );
     }
-
-
-
 
     // ================= NOTIFIKASI (dari Admin) =================
     public function notificationsIndex()
     {
-        $notifications = Notification::latest()->paginate(10);
+        $notifications = Notification::where(function ($q) {
+                $q->where('user_id', Auth::id())
+                  ->orWhereNull('user_id');
+            })
+            ->latest()
+            ->paginate(10);
 
         return view('pembeli.notifications', compact('notifications'));
     }
-
 
     // ================= PERINGATAN DITERIMA (dari Admin/CS) =================
     public function peringatanIndex()
@@ -348,9 +445,4 @@ class PembeliController extends Controller
 
         return view('pembeli.peringatan', compact('peringatan'));
     }
-
-
-
-}
-
-
+}   

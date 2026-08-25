@@ -107,6 +107,14 @@
     <!-- Login Card -->
     <div class="w-full max-w-[360px] bg-white/95 backdrop-blur-xl p-6 sm:p-7 rounded-[1.5rem] shadow-card border border-white/40 relative z-10 opacity-0 animate-fade-in-up">
 
+        <!-- Tombol Kembali ke Landing Page -->
+        <div class="mb-4">
+            <a href="{{ route('landing') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-sky transition-colors group">
+                <i class="fa-solid fa-arrow-left text-[11px] group-hover:-translate-x-1 transition-transform"></i>
+                <span>Kembali ke Landing Page</span>
+            </a>
+        </div>
+
         <div class="text-center mb-6">
             <div class="w-12 h-12 mx-auto bg-gradient-to-br from-skyDeep to-sky rounded-xl flex items-center justify-center mb-3 shadow-md shadow-skyDeep/20 transform transition hover:scale-105 duration-300">
                 <i class="fa-solid fa-layer-group text-white text-xl"></i>

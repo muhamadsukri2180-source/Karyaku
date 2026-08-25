@@ -147,7 +147,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:verifikator'])
+Route::middleware(['auth', 'role:verifikator,admin'])
     ->prefix('verifikator')
     ->name('verifikator.')
     ->group(function () {
@@ -207,17 +207,43 @@ Route::middleware(['auth', 'role:verifikator'])
 // ==========================================
 Route::middleware(['auth', 'role:penjual'])->prefix('penjual')->name('penjual.')->group(function () {
     Route::get('/dashboard', [PenjualController::class, 'dashboard'])->name('dashboard');
+
+    // Manajemen Produk
+    Route::get('/produk', [PenjualController::class, 'produkIndex'])->name('produk.index');
+    Route::get('/produk/create', [PenjualController::class, 'produkCreate'])->name('produk.create');
+    Route::post('/produk', [PenjualController::class, 'produkStore'])->name('produk.store');
+    Route::get('/produk/{id}/edit', [PenjualController::class, 'produkEdit'])->name('produk.edit');
+    Route::put('/produk/{id}', [PenjualController::class, 'produkUpdate'])->name('produk.update');
+    Route::delete('/produk/{id}', [PenjualController::class, 'produkDestroy'])->name('produk.destroy');
+
+    // Fitur Iklan & Promosi Produk
+    Route::get('/iklan', [PenjualController::class, 'iklanIndex'])->name('iklan.index');
+    Route::post('/iklan/{id}/promote', [PenjualController::class, 'iklanStore'])->name('iklan.promote');
+    Route::delete('/iklan/{id}/cancel', [PenjualController::class, 'iklanCancel'])->name('iklan.cancel');
+
+    // Paket Membership & Pembelian / Perpanjangan
+    Route::get('/membership', [PenjualController::class, 'membershipIndex'])->name('membership.index');
+    Route::post('/membership/{id}/purchase', [PenjualController::class, 'membershipPurchase'])->name('membership.purchase');
+
+    // Pesanan Masuk (Penjualan)
+    Route::get('/pesanan', [PenjualController::class, 'pesananIndex'])->name('pesanan.index');
+    Route::get('/pesanan/{id}', [PenjualController::class, 'pesananDetail'])->name('pesanan.detail');
+
+    // Keuangan & Penarikan Saldo
+    Route::get('/keuangan', [PenjualController::class, 'keuanganIndex'])->name('keuangan.index');
+    Route::post('/keuangan/tarik', [PenjualController::class, 'penarikanStore'])->name('keuangan.tarik');
 });
 
 
 // ==========================================
-// 6. PEMBELI ROUTES
+// 6. PEMBELI ROUTES (Bisa Diakses Pembeli & Penjual)
 // ==========================================
-Route::middleware(['auth', 'role:pembeli'])->prefix('pembeli')->name('pembeli.')->group(function () {
+Route::middleware(['auth', 'role:pembeli,penjual'])->prefix('pembeli')->name('pembeli.')->group(function () {
     Route::get('/dashboard', [PembeliController::class, 'dashboard'])->name('dashboard');
 
     Route::get('/marketplace', [PembeliController::class, 'marketplace'])->name('marketplace');
     Route::get('/produk/{id}', [PembeliController::class, 'produkDetail'])->name('produk.detail');
+    Route::post('/produk/{id}/review', [PembeliController::class, 'reviewStore'])->name('produk.review');
 
     Route::get('/keranjang', [PembeliController::class, 'keranjangIndex'])->name('keranjang');
     Route::post('/keranjang', [PembeliController::class, 'keranjangStore'])->name('keranjang.store');
@@ -233,6 +259,7 @@ Route::middleware(['auth', 'role:pembeli'])->prefix('pembeli')->name('pembeli.')
     Route::get('/pesanan/{id}', [PembeliController::class, 'pesananDetail'])->name('pesanan.detail');
 
     Route::get('/download', [PembeliController::class, 'downloadIndex'])->name('download');
+    Route::get('/download/{id_order_item}/file', [PembeliController::class, 'downloadFile'])->name('download.file');
 
     Route::get('/profile', [PembeliController::class, 'profile'])->name('profile');
     Route::put('/profile', [PembeliController::class, 'updateProfile'])->name('profile.update');

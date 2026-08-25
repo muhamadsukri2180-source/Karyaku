@@ -5,19 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Notification extends Model
+class Review extends Model
 {
-    use HasFactory;
-
-    protected $table = 'notifications';
+    protected $table = 'reviews';
+    protected $primaryKey = 'id_review';
 
     protected $fillable = [
+        'product_id',
         'user_id',
-        'id_user',
-        'name',
-        'description',
-        'is_read',
+        'rating',
+        'comment',
     ];
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id', 'id_product');
+    }
 
     public function user()
     {

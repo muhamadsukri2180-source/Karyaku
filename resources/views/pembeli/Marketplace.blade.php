@@ -1102,7 +1102,7 @@
                 <div class="product-thumb">
 
                     <img
-                        src="{{ $product->image_url ?? asset('storage/' . $product->image) }}"
+                        src="{{ $product->thumbnail ? asset('storage/' . $product->thumbnail) : ($product->image_url ?? asset('storage/' . ($product->image ?? ''))) }}"
                         alt="{{ $product->title }}"
                         onerror="this.src='https://placehold.co/600x400/eaf1ff/2563eb?text=Produk+Karyaku'"
                     >
@@ -1191,7 +1191,7 @@
 
                             <i class="bi bi-star-fill text-warning me-1"></i>
 
-                            {{ $product->rating ?? '0.0' }}
+                            {{ $product->avg_rating }}
 
                         </span>
 

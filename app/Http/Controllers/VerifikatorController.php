@@ -19,7 +19,7 @@ class VerifikatorController extends Controller
      */
     private function isAdmin()
     {
-        $roleName = strtolower(Auth::user()->role->role_name ?? Auth::user()->role->name ?? '');
+        $roleName = strtolower(Auth::user()->role->role_name ?? '');
         return in_array($roleName, ['admin', 'verifikator']);
     }
 
@@ -91,6 +91,9 @@ class VerifikatorController extends Controller
     /**
      * Approve Pendaftaran / Identitas (Khusus Admin / Verifikator)
      */
+    /**
+     * Approve Pendaftaran / Identitas (Khusus Admin / Verifikator)
+     */
     public function approve($id)
     {
         if (!$this->isAdmin()) {
@@ -106,24 +109,31 @@ class VerifikatorController extends Controller
             $verification->save();
 
             // Ubah role user dari Pembeli menjadi Penjual
-            $sellerRole = Role::where('role_name', 'penjual')->orWhere('name', 'penjual')->orWhere('name', 'seller')->first();
+            $sellerRole = Role::where('role_name', 'penjual')->first();
             $user = User::where('id_user', $verification->user_id)->first();
             
             if ($sellerRole && $user) {
-                $user->id_role = $sellerRole->id_role ?? $sellerRole->id;
+                $user->id_role = $sellerRole->id_role;
+                if ($verification->membership_id) {
+                    $user->id_membership = $verification->membership_id;
+                    $membership = \App\Models\Membership::find($verification->membership_id);
+                    if ($membership) {
+                        $user->membership_expires_at = now()->addDays($membership->duration_days ?? 30);
+                    }
+                }
+                $user->status = 'active';
                 $user->save();
             }
 
             Notification::create([
-                'user_id' => $verification->user_id,
-                'title' => 'Verifikasi Disetujui',
-                'message' => 'Selamat! Pendaftaran akun penjual Anda telah disetujui. Sekarang Anda dapat mulai berjualan.',
-                'type' => 'info',
-                'is_read' => false,
+                'user_id'     => $verification->user_id,
+                'name'        => '🎉 Verifikasi Disetujui',
+                'description' => 'Selamat! Pendaftaran akun penjual Anda telah disetujui. Sekarang Anda dapat mulai berjualan.',
+                'is_read'     => false,
             ]);
 
             DB::commit();
-            return redirect()->route('verifikator.dashboard')->with('success', 'Pendaftaran berhasil disetujui.');
+            return redirect()->route('verifikator.identitas')->with('success', 'Pendaftaran berhasil disetujui. Pengguna kini resmi menjadi Penjual.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal memproses verifikasi: ' . $e->getMessage());
@@ -154,15 +164,14 @@ class VerifikatorController extends Controller
             $verification->save();
 
             Notification::create([
-                'user_id' => $verification->user_id,
-                'title' => 'Verifikasi Ditolak',
-                'message' => 'Pendaftaran penjual Anda ditolak. Catatan: ' . $note,
-                'type' => 'warning',
-                'is_read' => false,
+                'user_id'     => $verification->user_id,
+                'name'        => '❌ Verifikasi Ditolak',
+                'description' => 'Pendaftaran penjual Anda ditolak. Catatan: ' . $note,
+                'is_read'     => false,
             ]);
 
             DB::commit();
-            return redirect()->route('verifikator.dashboard')->with('success', 'Pendaftaran berhasil ditolak.');
+            return redirect()->route('verifikator.identitas')->with('success', 'Pendaftaran berhasil ditolak.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal menolak verifikasi: ' . $e->getMessage());
@@ -177,12 +186,12 @@ class VerifikatorController extends Controller
         $tab = $request->get('tab', 'pending');
 
         if ($tab === 'history') {
-            $products = Product::with(['user', 'category'])
+            $products = Product::with(['seller', 'category'])
                 ->whereIn('status', ['approved', 'rejected', 'active', 'inactive'])
                 ->latest()
                 ->paginate(10);
         } else {
-            $products = Product::with(['user', 'category'])
+            $products = Product::with(['seller', 'category'])
                 ->where('status', 'pending')
                 ->latest()
                 ->paginate(10);
@@ -193,28 +202,28 @@ class VerifikatorController extends Controller
 
     public function showProduk($id)
     {
-        $product = Product::with(['user', 'category'])->findOrFail($id);
+        $product = Product::with(['seller', 'category'])->findOrFail($id);
         return view('verifikator.detail-produk', compact('product'));
     }
 
     public function approveProduk($id)
     {
         if (!$this->isAdmin()) {
-            return redirect()->back()->with('error', 'Akses ditolak! Hanya Admin yang berhak menyetujui produk.');
+            return redirect()->back()->with('error', 'Akses ditolak! Hanya Admin/Verifikator yang berhak menyetujui produk.');
         }
 
         DB::beginTransaction();
         try {
             $product = Product::findOrFail($id);
-            $product->status = 'approved';
+            $product->status = 'active';
+            $product->rejection_note = null;
             $product->save();
 
             Notification::create([
-                'user_id' => $product->user_id,
-                'title' => 'Produk Disetujui',
-                'message' => 'Produk "' . $product->name . '" Anda telah diverifikasi dan diterbitkan.',
-                'type' => 'info',
-                'is_read' => false,
+                'user_id'     => $product->seller_id ?? $product->user_id,
+                'name'        => '✅ Produk Disetujui',
+                'description' => 'Produk "' . ($product->title ?? $product->name) . '" Anda telah diverifikasi dan diterbitkan.',
+                'is_read'     => false,
             ]);
 
             DB::commit();
@@ -228,7 +237,7 @@ class VerifikatorController extends Controller
     public function rejectProduk(Request $request, $id)
     {
         if (!$this->isAdmin()) {
-            return redirect()->back()->with('error', 'Akses ditolak! Hanya Admin yang berhak menolak produk.');
+            return redirect()->back()->with('error', 'Akses ditolak! Hanya Admin/Verifikator yang berhak menolak produk.');
         }
 
         $request->validate([
@@ -239,14 +248,14 @@ class VerifikatorController extends Controller
         try {
             $product = Product::findOrFail($id);
             $product->status = 'rejected';
+            $product->rejection_note = $request->rejection_note;
             $product->save();
 
             Notification::create([
-                'user_id' => $product->user_id,
-                'title' => 'Produk Ditolak',
-                'message' => 'Produk "' . $product->name . '" ditolak. Catatan: ' . $request->rejection_note,
-                'type' => 'warning',
-                'is_read' => false,
+                'user_id'     => $product->seller_id ?? $product->user_id,
+                'name'        => '❌ Produk Ditolak',
+                'description' => 'Produk "' . ($product->title ?? $product->name) . '" ditolak. Catatan: ' . $request->rejection_note,
+                'is_read'     => false,
             ]);
 
             DB::commit();
@@ -285,7 +294,7 @@ class VerifikatorController extends Controller
     public function approvePembayaran($id)
     {
         if (!$this->isAdmin()) {
-            return redirect()->back()->with('error', 'Akses ditolak! CS hanya dapat memeriksa transaksi. Konfirmasi pembayaran hanya dapat dilakukan oleh Admin.');
+            return redirect()->back()->with('error', 'Akses ditolak! Konfirmasi pembayaran hanya dapat dilakukan oleh Admin/Verifikator.');
         }
 
         DB::beginTransaction();
@@ -296,22 +305,28 @@ class VerifikatorController extends Controller
             $verification->verified_at = now();
             $verification->save();
 
-            // Gunakan kolom role_name (bukan 'name') sesuai struktur tabel roles
+            // Gunakan kolom role_name sesuai struktur tabel roles
             $sellerRole = Role::where('role_name', 'penjual')->first();
             $user = User::where('id_user', $verification->user_id)->first();
 
             if ($sellerRole && $user) {
-                // Gunakan id_role (bukan role_id) sesuai struktur tabel users
                 $user->id_role = $sellerRole->id_role;
+                if ($verification->membership_id) {
+                    $user->id_membership = $verification->membership_id;
+                    $membership = \App\Models\Membership::find($verification->membership_id);
+                    if ($membership) {
+                        $user->membership_expires_at = now()->addDays($membership->duration_days ?? 30);
+                    }
+                }
+                $user->status = 'active';
                 $user->save();
             }
 
             Notification::create([
-                'user_id' => $verification->user_id,
-                'title' => 'Pembayaran Dikonfirmasi',
-                'message' => 'Pembayaran paket membership Anda berhasil dikonfirmasi lunas.',
-                'type' => 'info',
-                'is_read' => false,
+                'user_id'     => $verification->user_id,
+                'name'        => '💳 Pembayaran Dikonfirmasi',
+                'description' => 'Pembayaran paket membership Anda berhasil dikonfirmasi lunas. Akun Anda telah aktif sebagai Penjual.',
+                'is_read'     => false,
             ]);
 
             DB::commit();
@@ -325,7 +340,7 @@ class VerifikatorController extends Controller
     public function rejectPembayaran(Request $request, $id)
     {
         if (!$this->isAdmin()) {
-            return redirect()->back()->with('error', 'Akses ditolak! CS hanya dapat memeriksa transaksi. Penolakan pembayaran hanya dapat dilakukan oleh Admin.');
+            return redirect()->back()->with('error', 'Akses ditolak! Penolakan pembayaran hanya dapat dilakukan oleh Admin/Verifikator.');
         }
 
         $request->validate([
@@ -342,11 +357,10 @@ class VerifikatorController extends Controller
             $verification->save();
 
             Notification::create([
-                'user_id' => $verification->user_id,
-                'title' => 'Pembayaran Ditolak',
-                'message' => 'Pembayaran paket membership Anda ditolak. Catatan: ' . $request->rejection_note,
-                'type' => 'danger',
-                'is_read' => false,
+                'user_id'     => $verification->user_id,
+                'name'        => '❌ Pembayaran Ditolak',
+                'description' => 'Pembayaran paket membership Anda ditolak. Catatan: ' . $request->rejection_note,
+                'is_read'     => false,
             ]);
 
             DB::commit();
@@ -388,7 +402,7 @@ class VerifikatorController extends Controller
     public function actionLaporan(Request $request, $id)
     {
         if (!$this->isAdmin()) {
-            return redirect()->back()->with('error', 'Akses ditolak! Penanganan tindakan disiplin laporan hanya dapat dilakukan oleh Admin.');
+            return redirect()->back()->with('error', 'Akses ditolak! Penanganan tindakan disiplin laporan hanya dapat dilakukan oleh Admin/Verifikator.');
         }
 
         $request->validate([
@@ -405,11 +419,10 @@ class VerifikatorController extends Controller
                 
                 if ($report->reported_user_id) {
                     Notification::create([
-                        'user_id' => $report->reported_user_id,
-                        'title' => 'Peringatan Pelanggaran',
-                        'message' => 'Akun Anda mendapatkan teguran terkait laporan pengaduan: ' . ($request->note ?? 'Pelanggaran ketentuan platform.'),
-                        'type' => 'warning',
-                        'is_read' => false,
+                        'user_id'     => $report->reported_user_id,
+                        'name'        => '⚠️ Peringatan Pelanggaran',
+                        'description' => 'Akun Anda mendapatkan teguran terkait laporan pengaduan: ' . ($request->note ?? 'Pelanggaran ketentuan platform.'),
+                        'is_read'     => false,
                     ]);
                 }
             } elseif ($request->action === 'takedown') {
@@ -425,11 +438,10 @@ class VerifikatorController extends Controller
 
                 if ($report->reported_user_id) {
                     Notification::create([
-                        'user_id' => $report->reported_user_id,
-                        'title' => 'Tindakan Disiplin (Takedown)',
-                        'message' => 'Produk/Konten Anda telah diturunkan karena terbukti melanggar aturan.',
-                        'type' => 'danger',
-                        'is_read' => false,
+                        'user_id'     => $report->reported_user_id,
+                        'name'        => '⛔ Tindakan Disiplin (Takedown)',
+                        'description' => 'Produk/Konten Anda telah diturunkan karena terbukti melanggar aturan.',
+                        'is_read'     => false,
                     ]);
                 }
             } else {

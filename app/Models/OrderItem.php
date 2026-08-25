@@ -13,7 +13,6 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_id',
-        'product_title', // snapshot judul, terisi otomatis saat order dibuat
         'price',
         'quantity',
         'subtotal',
@@ -35,8 +34,6 @@ class OrderItem extends Model
     }
 
     // Tidak ada kolom seller_id terpisah -> ambil dari relasi product->seller
-    // Tetap aman dipakai walau produk sudah dihapus (product_id null),
-    // karena product_title sudah tersimpan sebagai snapshot.
     public function getSellerNameAttribute(): string
     {
         return $this->product?->seller?->name ?? '-';
@@ -44,6 +41,6 @@ class OrderItem extends Model
 
     public function getProductNameAttribute(): string
     {
-        return $this->product_title ?? ($this->product?->title ?? 'Produk telah dihapus');
+        return $this->product?->title ?? 'Produk telah dihapus';
     }
 }

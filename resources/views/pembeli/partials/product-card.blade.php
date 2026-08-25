@@ -15,7 +15,7 @@
         <h6><a href="{{ route('pembeli.produk.detail', $product->id_product) }}">{{ $product->title }}</a></h6>
         <div class="product-price">Rp{{ number_format($product->price, 0, ',', '.') }}</div>
         <div class="product-meta">
-            <span class="rating"><i class="bi bi-eye"></i> {{ $product->view_count }} dilihat</span>
+            <span class="rating text-warning fw-semibold"><i class="bi bi-star-fill text-warning"></i> {{ $product->avg_rating }}</span>
             <span>Terjual {{ $product->sold_count }}</span>
         </div>
         <div class="product-seller">

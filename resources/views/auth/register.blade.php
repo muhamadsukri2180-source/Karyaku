@@ -171,7 +171,7 @@
                         <i class="fa-solid fa-phone text-slate-400 text-[10px] group-focus-within:text-sky transition-colors"></i>
                     </div>
                     <input type="tel" id="phone" name="phone" value="{{ old('phone') }}"
-                        placeholder="08xxxxxxxxxx atau +62xxxxxxxxxx"
+                        placeholder="08xxxxxxxxxx/+62xxxxxxxxxx"
                         pattern="^(\+62|08)[0-9]{8,13}$"
                         title="No. telepon harus diawali 08 atau +62"
                         autocomplete="off" required

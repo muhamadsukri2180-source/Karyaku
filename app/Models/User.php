@@ -22,6 +22,7 @@ class User extends Authenticatable
     protected $fillable = [
         'id_role',
         'id_membership',
+        'membership_expires_at',
         'name',
         'email',
         'password',
@@ -36,8 +37,46 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'password' => 'hashed',
+        'password'              => 'hashed',
+        'membership_expires_at' => 'datetime',
     ];
+
+    public function isMembershipActive(): bool
+    {
+        if (!$this->id_membership) {
+            return false;
+        }
+        if (!$this->membership_expires_at) {
+            return true; // default active if no expiry set
+        }
+        return $this->membership_expires_at->isFuture();
+    }
+
+    public function getRemainingDaysAttribute(): int
+    {
+        if (!$this->membership_expires_at) {
+            return 0;
+        }
+        return max(0, (int) now()->diffInDays($this->membership_expires_at, false));
+    }
+
+    public function getMaxUploadLimit(): int
+    {
+        return $this->membership ? ($this->membership->max_upload ?? 5) : 5;
+    }
+
+    public function canUploadProduct(): bool
+    {
+        $max = $this->getMaxUploadLimit();
+        $current = Product::where('seller_id', $this->id_user)->count();
+        return $current < $max;
+    }
+
+    public function canUseAds(): bool
+    {
+        $name = strtolower($this->membership?->name ?? '');
+        return str_contains($name, 'diamond') || str_contains($name, 'gold') || str_contains($name, 'platinum');
+    }
 
     public function role()
     {
