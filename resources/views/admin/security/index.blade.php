@@ -189,7 +189,7 @@
                 </div>
 
                 <div>
-                    <a href="{{ route('admin.security.verify') }}" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-blue-700 active:translate-y-[4px] transition-all cursor-pointer">
+                    <a href="{{ route('admin.security.verify', ['reset' => 1]) }}" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-blue-700 active:translate-y-[4px] transition-all cursor-pointer">
                         <i class="fa-solid fa-lock"></i> Kunci Kembali
                     </a>
                 </div>

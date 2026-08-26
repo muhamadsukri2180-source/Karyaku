@@ -1222,8 +1222,12 @@ class AdminController extends Controller
     | 13. KEAMANAN SYSTEM & MONITORING IP
     |--------------------------------------------------------------------------
     */
-    public function securityVerifyPage()
+    public function securityVerifyPage(Request $request)
     {
+        if ($request->has('reset') && session()->has('security_verified_at')) {
+            session()->forget('security_verified_at');
+        }
+
         if (session()->has('security_verified_at')) {
             return redirect()->route('admin.security.index');
         }
