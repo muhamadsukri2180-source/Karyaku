@@ -49,6 +49,9 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
 
+// Pengajuan Banding Akun Terblokir (Public/Guest)
+Route::post('/appeal/submit', [AuthController::class, 'submitAppeal'])->name('appeal.submit');
+
 
 // ==========================================
 // 3. ADMIN ROUTES (AUTH + ROLE: ADMIN)
@@ -71,7 +74,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');
     Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('users.update');
     Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('users.delete');
-    Route::put('admin/users/{id}/suspend', [AdminController::class, 'suspendUser'])->name('admin.users.suspend');
+    Route::put('/users/{id}/suspend', [AdminController::class, 'suspendUser'])->name('users.suspend');
 
     Route::get('/users/verifikator', [AdminController::class, 'verifikator'])->name('users.verifikator');
     Route::post('/users/add-verifier', [AdminController::class, 'addVerifier'])->name('users.addVerifier');
@@ -114,10 +117,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/memberships/{id}', [AdminController::class, 'updateMembership'])->name('memberships.update');
     Route::delete('/memberships/{id}', [AdminController::class, 'deleteMembership'])->name('memberships.delete');
 
-    // 9. Laporan Pelanggaran (Sistem)
+    // 9. Laporan Pelanggaran (Sistem) & Banding Akun
     Route::get('/pelanggaran', [AdminController::class, 'pelanggaran'])->name('pelanggaran');
     Route::post('/pelanggaran/user/{id}', [AdminController::class, 'tindakUserPelanggaran'])->name('pelanggaran.user');
     Route::post('/pelanggaran/produk/{id}', [AdminController::class, 'tindakProdukPelanggaran'])->name('pelanggaran.produk');
+    Route::post('/pelanggaran/appeal/{id}', [AdminController::class, 'tindakAppeal'])->name('pelanggaran.appeal');
 
     // 10. Profile Admin
     Route::get('/profile', [AdminController::class, 'profile'])->name('profile');

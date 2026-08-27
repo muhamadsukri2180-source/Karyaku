@@ -28,8 +28,6 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(14, 165, 233, 0.3); border-radius: 10px; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         @media (max-width: 1023px) { #sidebar.closed { transform: translateX(-100%); } #sidebar.open { transform: translateX(0); } }
         .submenu { max-height: 0; overflow: hidden; transition: max-height .3s ease-in-out; }
@@ -133,14 +131,13 @@
                 <a href="{{ route('admin.security.index') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1">
                     <i class="fa-solid fa-shield-halved w-4 text-center text-white"></i><span>Keamanan System</span>
                 </a>
-                <!-- MENU NOTIFIKASI -->
-               <a href="{{ route('admin.notifications.index') }}"
-                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifikasi') ? 'bg-white/20 text-white font-bold' : '' }}">
+                
+                <a href="{{ route('admin.notifications.index') }}"
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifications.*') ? 'bg-white/20 text-white font-bold' : '' }}">
                     <div class="flex items-center gap-3">
                         <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
                         <span>Notifikasi</span>
                     </div>
-                    
                     @php
                         $unreadNotificationsCount = 0;
                         if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
@@ -149,7 +146,6 @@
                             $unreadNotificationsCount = \App\Models\Notification::count();
                         }
                     @endphp
-
                     @if($unreadNotificationsCount > 0)
                         <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
                             {{ $unreadNotificationsCount }}
@@ -182,14 +178,29 @@
             <div class="p-6 sm:p-8 space-y-6">
                 
                 @if (session('success'))
-                    <script>Swal.fire({icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", timer: 2500, showConfirmButton: false});</script>
+                    <script>
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: "{{ session('success') }}",
+                            timer: 2500,
+                            showConfirmButton: false
+                        });
+                    </script>
                 @endif
                 @if (session('error'))
-                    <script>Swal.fire({icon: 'error', title: 'Gagal!', text: "{{ session('error') }}", confirmButtonColor: '#ef4444'});</script>
+                    <script>
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal!',
+                            text: "{{ session('error') }}",
+                            confirmButtonColor: '#ef4444'
+                        });
+                    </script>
                 @endif
 
-                <!-- SUMMARY CARDS (DIHUBUNGKAN KE DATABASE) -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                <!-- SUMMARY CARDS -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 p-4 rounded-2xl shadow-sm">
                         <span class="text-[10px] font-extrabold text-emerald-800 uppercase tracking-widest">Total Pelanggan Aktif</span>
                         <div class="flex items-end justify-between mt-2">
@@ -203,14 +214,6 @@
                         <div class="flex items-end justify-between mt-2">
                             <div class="text-3xl font-black text-slate-900">{{ $diamondCount ?? 0 }}</div>
                             <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold"><i class="fa-regular fa-gem text-sm"></i></div>
-                        </div>
-                    </div>
-
-                    <div class="bg-gradient-to-br from-amber-50 to-white border border-amber-200 p-4 rounded-2xl shadow-sm">
-                        <span class="text-[10px] font-extrabold text-amber-800 uppercase tracking-widest">Gold Plan</span>
-                        <div class="flex items-end justify-between mt-2">
-                            <div class="text-3xl font-black text-slate-900">{{ $goldCount ?? 0 }}</div>
-                            <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold"><i class="fa-solid fa-crown text-sm"></i></div>
                         </div>
                     </div>
 
@@ -231,14 +234,13 @@
                     </div>
                 </div>
 
-                <!-- TABEL UTAMA -->
+                <!-- TABEL PAKET -->
                 <div class="bg-white border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <h3 class="font-extrabold text-slate-900 text-lg font-display">Daftar Paket Membership</h3>
                         
-                        <!-- TOMBOL 3D STABIL -->
-                        <button type="button" onclick="openAddModal()" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-blue-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#cbd5e1] transition-all cursor-pointer">
-                            <i class="fa-solid fa-plus"></i> Tambah Paket Baru
+                        <button type="button" onclick="triggerAddNewCardAlert()" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-blue-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#cbd5e1] transition-all cursor-pointer">
+                            <i class="fa-solid fa-plus"></i> Tambah Kartu / Paket Baru
                         </button>
                     </div>
 
@@ -248,7 +250,7 @@
                                 <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-[11px] uppercase tracking-wider font-bold">
                                     <th class="py-4 px-6 w-1/4">Nama Paket & Ikon</th>
                                     <th class="py-4 px-6 w-1/6">Harga / Siklus</th>
-                                    <th class="py-4 px-6 w-1/5">Fitur Unggulan</th>
+                                    <th class="py-4 px-6 w-1/4">Fitur / Benefit Kartu</th>
                                     <th class="py-4 px-6 w-1/6">Maksimal Upload</th>
                                     <th class="py-4 px-6 w-1/6">Pelanggan</th>
                                     <th class="py-4 px-6 text-center w-28">Aksi</th>
@@ -267,17 +269,23 @@
                                         </div>
                                     </td>
                                     <td class="py-3 px-6"><p class="text-xs font-bold text-sky-700">Rp {{ number_format($membership->price, 0, ',', '.') }}</p></td>
-                                    <td class="py-3 px-6"><p class="text-[11px] text-slate-600 pr-4">{{ $membership->benefit }}</p></td>
-                                    <td class="py-3 px-6"><span class="text-xs font-bold text-slate-700">{{ $membership->max_upload ?? '-' }}</span></td>
+                                    <td class="py-3 px-6">
+                                        <div class="text-[11px] text-slate-600 space-y-1">
+                                            @foreach(explode(' | ', $membership->benefit) as $benefitItem)
+                                                <div class="flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-emerald-500 text-[10px]"></i> <span>{{ $benefitItem }}</span></div>
+                                            @endforeach
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-6"><span class="text-xs font-bold text-slate-700">{{ $membership->max_upload ?? '-' }} karya</span></td>
                                     <td class="py-3 px-6"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">{{ $membership->users_count ?? 0 }} pengguna</span></td>
                                     <td class="py-3 px-6">
                                         <div class="flex items-center justify-center gap-2">
-                                            <button type="button" onclick='openEditModal(@json($membership))' class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                                            <button type="button" onclick='openEditModal(@json($membership))' class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Edit Kartu"><i class="fa-solid fa-pen-to-square"></i></button>
                                             
                                             <form action="{{ route('admin.memberships.delete', $membership->id_membership) }}" method="POST" class="inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="button" onclick="confirmDelete(this)" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                                <button type="button" onclick="confirmDelete(this)" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm" title="Hapus Kartu"><i class="fa-solid fa-trash"></i></button>
                                             </form>
                                         </div>
                                     </td>
@@ -296,48 +304,207 @@
         </main>
     </div>
 
-    <!-- MODAL 1: TAMBAH PAKET -->
+    <!-- MODAL 1: TAMBAH PAKET / KARTU -->
     <div id="addModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0 w-screen h-screen">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4" id="addModalContent">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300 mx-4 my-6 overflow-hidden max-h-[90vh] flex flex-col" id="addModalContent">
             
-            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-2xl">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-plus text-sm"></i></div>
+                    <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm"><i class="fa-solid fa-plus text-sm"></i></div>
                     <div>
-                        <h3 class="font-extrabold text-slate-900 text-base font-display">Tambah Paket Baru</h3>
-                        <p class="text-[10px] font-semibold text-slate-500">Lengkapi data paket membership.</p>
+                        <h3 class="font-extrabold text-slate-900 text-base font-display">Tambah Kartu Baru</h3>
+                        <p class="text-[10px] font-semibold text-slate-500">Konfigurasi detail & pilihan fitur kartu membership.</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeAddModal()" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
-            <form id="addForm" method="POST" action="{{ route('admin.memberships.store') }}" class="p-5 space-y-4">
+            <form id="addForm" method="POST" action="{{ route('admin.memberships.store') }}" class="p-5 space-y-4 overflow-y-auto">
                 @csrf
-                <div>
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Nama Paket</label>
-                    <input type="text" name="name" id="add_name" placeholder="Contoh: Platinum Plan" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all">
+                
+                <!-- DROPDOWN NAMA PAKET -->
+                <div class="relative custom-dropdown" id="dropdown_add_name">
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Nama Paket / Kartu</label>
+                    <div class="relative mt-1">
+                        <input type="text" id="add_name" name="name" readonly onclick="toggleDropdown('dropdown_add_name')" placeholder="Pilih Nama Paket" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white transition-all">
+                        <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                    </div>
+                    <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+                        <div class="options-list max-h-36 overflow-y-auto">
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_name', 'Diamond Plan')">
+                                <span>Diamond Plan</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_name', 'Silver Plan')">
+                                <span>Silver Plan</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_name', 'Bronze Plan')">
+                                <span>Bronze Plan</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
+                        <div class="p-1.5 bg-slate-50">
+                            <button type="button" onclick="promptAddNewOption('add_name', 'Nama Paket', 'Nama paket...', 'Gold Plan')" class="w-full text-left px-2.5 py-1.5 text-xs font-bold text-emerald-600 hover:bg-emerald-100/60 rounded-lg transition">+ Tambah Nama Paket Baru...</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- DROPDOWN HARGA -->
+                    <div class="relative custom-dropdown" id="dropdown_add_price">
                         <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Harga (Rp)</label>
-                        <input type="number" name="price" id="add_price" min="0" placeholder="150000" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all">
+                        <div class="relative mt-1">
+                            <input type="text" id="add_price" name="price" readonly onclick="toggleDropdown('dropdown_add_price')" placeholder="Pilih Harga" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 pr-8 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white transition-all">
+                            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                        </div>
+                        <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+                            <div class="options-list max-h-36 overflow-y-auto">
+                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_price', '150.000', true)">
+                                    <span>150.000</span>
+                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_price', '50.000', true)">
+                                    <span>50.000</span>
+                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_price', '25.000', true)">
+                                    <span>25.000</span>
+                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                            <div class="p-1.5 bg-slate-50">
+                                <button type="button" onclick="promptAddNewOption('add_price', 'Harga', '100.000', '100.000', true)" class="w-full text-left px-2 py-1.5 text-xs font-bold text-emerald-600 hover:bg-emerald-100/60 rounded-lg transition">+ Tambah Harga Baru...</button>
+                            </div>
+                        </div>
                     </div>
-                    <div>
+
+                    <!-- DROPDOWN DURASI -->
+                    <div class="relative custom-dropdown" id="dropdown_add_duration">
                         <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Durasi (Hari)</label>
-                        <input type="number" name="duration_days" id="add_duration" min="1" placeholder="30" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all">
+                        <div class="relative mt-1">
+                            <input type="text" id="add_duration" name="duration_days" readonly onclick="toggleDropdown('dropdown_add_duration')" placeholder="Pilih Durasi" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 pr-8 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white transition-all">
+                            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                        </div>
+                        <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+                            <div class="options-list max-h-36 overflow-y-auto">
+                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_duration', '30')">
+                                    <span>30 Hari</span>
+                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_duration', '60')">
+                                    <span>60 Hari</span>
+                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_duration', '365')">
+                                    <span>365 Hari</span>
+                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                            <div class="p-1.5 bg-slate-50">
+                                <button type="button" onclick="promptAddNewOption('add_duration', 'Durasi Hari', '90', '90')" class="w-full text-left px-2 py-1.5 text-xs font-bold text-emerald-600 hover:bg-emerald-100/60 rounded-lg transition">+ Tambah Durasi Hari Baru...</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Maksimal Upload</label>
-                    <input type="number" name="max_upload" id="add_max_upload" min="0" placeholder="999 untuk tanpa batas" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all">
+
+                <!-- DROPDOWN MAKSIMAL UPLOAD UTAMA -->
+                <div class="relative custom-dropdown" id="dropdown_add_max_upload">
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Maksimal Upload Karya</label>
+                    <div class="relative mt-1">
+                        <input type="text" id="add_max_upload" name="max_upload" readonly onclick="toggleDropdown('dropdown_add_max_upload')" placeholder="Pilih Limit Upload" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white transition-all">
+                        <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                    </div>
+                    <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+                        <div class="options-list max-h-36 overflow-y-auto">
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_max_upload', '999')">
+                                <span>999 (Tanpa Batas)</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_max_upload', '50')">
+                                <span>50 Karya</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_max_upload', '20')">
+                                <span>20 Karya</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_max_upload', '5')">
+                                <span>5 Karya</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
+                        <div class="p-1.5 bg-slate-50">
+                            <button type="button" onclick="promptAddNewOption('add_max_upload', 'Jumlah Upload', '100', '100')" class="w-full text-left px-2.5 py-1.5 text-xs font-bold text-emerald-600 hover:bg-emerald-100/60 rounded-lg transition">+ Tambah Limit Upload Baru...</button>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Fitur / Benefit</label>
-                    <textarea name="benefit" id="add_benefit" rows="2" placeholder="Sebutkan fitur unggulan..." class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all"></textarea>
+
+                <!-- SECTION CHECKBOX FITUR INTERAKTIF -->
+                <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[11px] font-extrabold text-slate-800 uppercase tracking-wide block">Pilihan Fitur / Benefit Kartu</label>
+                    </div>
+                    
+                    <!-- FITUR 1: JUMLAH JASA / BARANG -->
+                    <div class="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none flex-1">
+                            <input type="checkbox" name="feat_max_products" value="1" onchange="toggleFeatureInput(this, 'add_val_max_products')" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+                            <span>Batas Jumlah Jasa / Barang</span>
+                        </label>
+                        <div class="w-32 shrink-0">
+                            <input type="number" id="add_val_max_products" name="val_max_products" placeholder="Misal: 50" disabled class="w-full text-xs font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-40 transition">
+                        </div>
+                    </div>
+
+                    <!-- FITUR 2: SLOT IKLAN PROMOSI -->
+                    <div class="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none flex-1">
+                            <input type="checkbox" name="feat_max_ads" value="1" onchange="toggleFeatureInput(this, 'add_val_max_ads')" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+                            <span>Batas Jumlah Iklan Promosi</span>
+                        </label>
+                        <div class="w-32 shrink-0">
+                            <input type="number" id="add_val_max_ads" name="val_max_ads" placeholder="Misal: 5" disabled class="w-full text-xs font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-40 transition">
+                        </div>
+                    </div>
+
+                    <!-- FITUR 3: LENCANA VERIFIKASI -->
+                    <div class="flex items-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none w-full">
+                            <input type="checkbox" name="feat_verified_badge" value="1" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+                            <span>Lencana Kreator Terverifikasi</span>
+                        </label>
+                    </div>
+
+                    <!-- FITUR 4: PRIORITAS CUSTOMER SERVICE -->
+                    <div class="flex items-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none w-full">
+                            <input type="checkbox" name="feat_priority_cs" value="1" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+                            <span>Dukungan Prioritas CS 24/7</span>
+                        </label>
+                    </div>
+
+                    <!-- CONTAINER CHECKBOX CUSTOM TAMBAHAN -->
+                    <div id="custom_features_container_add" class="space-y-3"></div>
+
+                    <!-- TOMBOL TAMBAH CHECKBOX DINAMIS -->
+                    <div>
+                        <button type="button" onclick="promptAddNewCheckbox('add')" class="w-full py-2.5 px-3 border-2 border-dashed border-emerald-300 hover:border-emerald-500 rounded-xl text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100/70 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                            <i class="fa-solid fa-plus-circle text-sm"></i>
+                            <span>+ Tambah Fitur / Checkbox Baru</span>
+                        </button>
+                    </div>
+
+                    <!-- BENEFIT TAMBAHAN MANUAL -->
+                    <div class="pt-1">
+                        <label class="text-[10px] font-extrabold text-slate-600 uppercase tracking-wide">Benefit Tambahan Lainnya (Opsional)</label>
+                        <input type="text" name="custom_benefit" placeholder="Misal: Bebas biaya penarikan saldo" class="mt-1 w-full text-xs font-semibold border border-slate-200 bg-white rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm">
+                    </div>
                 </div>
+
                 <div class="pt-2">
                     <button type="button" onclick="submitAdd()" class="w-full py-3 bg-emerald-600 text-white text-sm font-bold rounded-xl shadow-[0_4px_0_0_#065f46] hover:bg-emerald-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#065f46] transition-all cursor-pointer">
-                        Simpan Paket Baru
+                        Simpan Kartu / Paket Baru
                     </button>
                 </div>
             </form>
@@ -346,55 +513,208 @@
 
     <!-- MODAL 2: EDIT PAKET -->
     <div id="editModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0 w-screen h-screen">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 border-t-4 border-blue-500" id="editModalContent">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300 mx-4 my-6 overflow-hidden max-h-[90vh] flex flex-col border-t-4 border-blue-500" id="editModalContent">
             
-            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-blue-50/50 rounded-t-xl">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-blue-50/50">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-pen-to-square text-sm"></i></div>
+                    <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shadow-sm"><i class="fa-solid fa-pen-to-square text-sm"></i></div>
                     <div>
-                        <h3 class="font-extrabold text-slate-900 text-base font-display">Edit Paket</h3>
-                        <p class="text-[10px] font-semibold text-blue-600">Ubah detail data membership.</p>
+                        <h3 class="font-extrabold text-slate-900 text-base font-display">Edit Kartu Membership</h3>
+                        <p class="text-[10px] font-semibold text-blue-600">Perbarui informasi dan daftar fitur kartu.</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeEditModal()" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
-            <form id="editForm" method="POST" action="" class="p-5 space-y-4">
+            <form id="editForm" method="POST" action="" class="p-5 space-y-4 overflow-y-auto">
                 @csrf
                 @method('PUT')
                 
-                <div>
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Nama Paket</label>
-                    <input type="text" name="name" id="edit_name" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all">
+                <!-- EDIT NAMA -->
+                <div class="relative custom-dropdown" id="dropdown_edit_name">
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Nama Paket / Kartu</label>
+                    <div class="relative mt-1">
+                        <input type="text" id="edit_name" name="name" readonly onclick="toggleDropdown('dropdown_edit_name')" placeholder="Pilih Nama Paket" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:bg-white transition-all">
+                        <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                    </div>
+                    <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+                        <div class="options-list max-h-36 overflow-y-auto">
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-blue-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('edit_name', 'Diamond Plan')">
+                                <span>Diamond Plan</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-blue-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('edit_name', 'Silver Plan')">
+                                <span>Silver Plan</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-blue-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('edit_name', 'Bronze Plan')">
+                                <span>Bronze Plan</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
+                        <div class="p-1.5 bg-slate-50">
+                            <button type="button" onclick="promptAddNewOption('edit_name', 'Nama Paket', 'Nama paket...', 'VIP Plan')" class="w-full text-left px-2.5 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-100/60 rounded-lg transition">+ Tambah Nama Paket Baru...</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- EDIT HARGA -->
+                    <div class="relative custom-dropdown" id="dropdown_edit_price">
                         <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Harga (Rp)</label>
-                        <input type="number" name="price" id="edit_price" min="0" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all">
+                        <div class="relative mt-1">
+                            <input type="text" id="edit_price" name="price" readonly onclick="toggleDropdown('dropdown_edit_price')" placeholder="Pilih Harga" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 pr-8 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:bg-white transition-all">
+                            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                        </div>
+                        <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+                            <div class="options-list max-h-36 overflow-y-auto">
+                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-blue-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('edit_price', '150.000', true)">
+                                    <span>150.000</span>
+                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-blue-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('edit_price', '50.000', true)">
+                                    <span>50.000</span>
+                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-blue-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('edit_price', '25.000', true)">
+                                    <span>25.000</span>
+                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                            <div class="p-1.5 bg-slate-50">
+                                <button type="button" onclick="promptAddNewOption('edit_price', 'Harga', '200.000', '200.000', true)" class="w-full text-left px-2 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-100/60 rounded-lg transition">+ Tambah Harga Baru...</button>
+                            </div>
+                        </div>
                     </div>
-                    <div>
+
+                    <!-- EDIT DURASI -->
+                    <div class="relative custom-dropdown" id="dropdown_edit_duration">
                         <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Durasi (Hari)</label>
-                        <input type="number" name="duration_days" id="edit_duration" min="1" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all">
+                        <div class="relative mt-1">
+                            <input type="text" id="edit_duration" name="duration_days" readonly onclick="toggleDropdown('dropdown_edit_duration')" placeholder="Pilih Durasi" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 pr-8 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:bg-white transition-all">
+                            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                        </div>
+                        <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+                            <div class="options-list max-h-36 overflow-y-auto">
+                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-blue-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('edit_duration', '30')">
+                                    <span>30 Hari</span>
+                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-blue-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('edit_duration', '60')">
+                                    <span>60 Hari</span>
+                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-blue-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('edit_duration', '365')">
+                                    <span>365 Hari</span>
+                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                            <div class="p-1.5 bg-slate-50">
+                                <button type="button" onclick="promptAddNewOption('edit_duration', 'Durasi Hari', '180', '180')" class="w-full text-left px-2 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-100/60 rounded-lg transition">+ Tambah Durasi Hari Baru...</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Maksimal Upload</label>
-                    <input type="number" name="max_upload" id="edit_max_upload" min="0" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all">
+
+                <!-- EDIT MAKSIMAL UPLOAD -->
+                <div class="relative custom-dropdown" id="dropdown_edit_max_upload">
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Maksimal Upload Karya</label>
+                    <div class="relative mt-1">
+                        <input type="text" id="edit_max_upload" name="max_upload" readonly onclick="toggleDropdown('dropdown_edit_max_upload')" placeholder="Pilih Limit Upload" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:bg-white transition-all">
+                        <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                    </div>
+                    <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+                        <div class="options-list max-h-36 overflow-y-auto">
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-blue-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('edit_max_upload', '999')">
+                                <span>999 (Tanpa Batas)</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-blue-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('edit_max_upload', '50')">
+                                <span>50 Karya</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-blue-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('edit_max_upload', '20')">
+                                <span>20 Karya</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-blue-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('edit_max_upload', '5')">
+                                <span>5 Karya</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
+                        <div class="p-1.5 bg-slate-50">
+                            <button type="button" onclick="promptAddNewOption('edit_max_upload', 'Jumlah Upload', '150', '150')" class="w-full text-left px-2.5 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-100/60 rounded-lg transition">+ Tambah Limit Upload Baru...</button>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Fitur / Benefit</label>
-                    <textarea name="benefit" id="edit_benefit" rows="2" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white transition-all"></textarea>
+
+                <!-- EDIT SECTION CHECKBOX FITUR INTERAKTIF -->
+                <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[11px] font-extrabold text-slate-800 uppercase tracking-wide block">Pilihan Fitur / Benefit Kartu</label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none flex-1">
+                            <input type="checkbox" id="edit_feat_max_products" name="feat_max_products" value="1" onchange="toggleFeatureInput(this, 'edit_val_max_products')" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                            <span>Batas Jumlah Jasa / Barang</span>
+                        </label>
+                        <div class="w-32 shrink-0">
+                            <input type="number" id="edit_val_max_products" name="val_max_products" placeholder="Misal: 50" disabled class="w-full text-xs font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-40 transition">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none flex-1">
+                            <input type="checkbox" id="edit_feat_max_ads" name="feat_max_ads" value="1" onchange="toggleFeatureInput(this, 'edit_val_max_ads')" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                            <span>Batas Jumlah Iklan Promosi</span>
+                        </label>
+                        <div class="w-32 shrink-0">
+                            <input type="number" id="edit_val_max_ads" name="val_max_ads" placeholder="Misal: 5" disabled class="w-full text-xs font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-40 transition">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none w-full">
+                            <input type="checkbox" id="edit_feat_verified_badge" name="feat_verified_badge" value="1" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                            <span>Lencana Kreator Terverifikasi</span>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none w-full">
+                            <input type="checkbox" id="edit_feat_priority_cs" name="feat_priority_cs" value="1" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                            <span>Dukungan Prioritas CS 24/7</span>
+                        </label>
+                    </div>
+
+                    <!-- CONTAINER CHECKBOX CUSTOM TAMBAHAN (EDIT) -->
+                    <div id="custom_features_container_edit" class="space-y-3"></div>
+
+                    <!-- TOMBOL TAMBAH CHECKBOX DINAMIS (EDIT) -->
+                    <div>
+                        <button type="button" onclick="promptAddNewCheckbox('edit')" class="w-full py-2.5 px-3 border-2 border-dashed border-blue-300 hover:border-blue-500 rounded-xl text-blue-700 bg-blue-50/50 hover:bg-blue-100/70 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                            <i class="fa-solid fa-plus-circle text-sm"></i>
+                            <span>+ Tambah Fitur / Checkbox Baru</span>
+                        </button>
+                    </div>
+
+                    <div class="pt-1">
+                        <label class="text-[10px] font-extrabold text-slate-600 uppercase tracking-wide">Benefit Tambahan Lainnya</label>
+                        <input type="text" id="edit_custom_benefit" name="custom_benefit" placeholder="Benefit khusus..." class="mt-1 w-full text-xs font-semibold border border-slate-200 bg-white rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
+                    </div>
                 </div>
+
                 <div class="pt-2">
                     <button type="button" onclick="submitEdit()" class="w-full py-3 bg-blue-600 text-white text-sm font-bold rounded-xl shadow-[0_4px_0_0_#1e40af] hover:bg-blue-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#1e40af] transition-all cursor-pointer">
-                        Update Perubahan
+                        Update Perubahan Kartu
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- JAVASCRIPT & VALIDASI -->
+    <!-- JAVASCRIPT & HANDLING MODAL -->
     <script>
         const sidebar = document.getElementById('sidebar');
         const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
@@ -418,8 +738,8 @@
 
         function confirmDelete(button) {
             Swal.fire({
-                title: 'Hapus Paket?',
-                text: "Data yang dihapus tidak dapat dikembalikan!",
+                title: 'Hapus Kartu / Paket?',
+                text: "Data kartu ini akan dihapus permanen!",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
@@ -434,11 +754,283 @@
             });
         }
 
+        function formatRibuan(val) {
+            if (!val) return '';
+            let number_string = val.toString().replace(/[^,\d]/g, '');
+            let split = number_string.split(',');
+            let sisa = split[0].length % 3;
+            let rupiah = split[0].substr(0, sisa);
+            let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+            if (ribuan) {
+                let separator = sisa ? '.' : '';
+                rupiah += separator + ribuan.join('.');
+            }
+            return split[1] !== undefined ? rupiah + ',' + split[1] : rupiah;
+        }
+
+        function toggleDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            const menu = dropdown.querySelector('.dropdown-menu');
+            const isHidden = menu.classList.contains('hidden');
+            
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+            if (isHidden) {
+                menu.classList.remove('hidden');
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.custom-dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+            }
+        });
+
+        function selectOption(inputId, value, isPrice = false) {
+            const input = document.getElementById(inputId);
+            input.value = isPrice ? formatRibuan(value) : value;
+            input.setAttribute('readonly', 'readonly');
+            
+            const dropdown = input.closest('.custom-dropdown');
+            if (dropdown) {
+                dropdown.querySelector('.dropdown-menu').classList.add('hidden');
+            }
+        }
+
+        /* FITUR 1: PROMPT INPUT PRESET BARU UNTUK NAMA, HARGA, HARI, DAN UPLOAD */
+        function promptAddNewOption(inputId, labelName, placeholderText, exampleText, isPrice = false) {
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+
+            Swal.fire({
+                title: `<span class="font-display font-extrabold text-slate-800 text-xl">Tambah ${labelName} Baru</span>`,
+                html: `<p class="text-xs font-semibold text-slate-500 mb-4">Masukkan ${labelName.toLowerCase()} baru ${exampleText ? '(contoh: ' + exampleText + ')' : ''}:</p>`,
+                input: 'text',
+                inputPlaceholder: placeholderText || `Masukkan ${labelName.toLowerCase()}...`,
+                inputAttributes: {
+                    autocapitalize: 'off',
+                    autocorrect: 'off'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Tambah',
+                cancelButtonText: 'Batal',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'rounded-3xl p-6 shadow-2xl border border-slate-100 max-w-md bg-white',
+                    input: 'w-full border-2 border-sky-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:border-emerald-500 focus:outline-none transition-all my-2 text-center',
+                    confirmButton: 'px-6 py-2.5 bg-emerald-500 text-white font-bold text-sm rounded-xl hover:bg-emerald-600 transition-all shadow-md mx-1 cursor-pointer',
+                    cancelButton: 'px-6 py-2.5 bg-slate-500 text-white font-bold text-sm rounded-xl hover:bg-slate-600 transition-all shadow-md mx-1 cursor-pointer'
+                },
+                preConfirm: (value) => {
+                    if (!value || !value.trim()) {
+                        Swal.showValidationMessage(`Harap isi ${labelName.toLowerCase()} terlebih dahulu!`);
+                        return false;
+                    }
+                    return value.trim();
+                }
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    let newValue = result.value;
+                    let rawValue = newValue;
+                    if (isPrice) {
+                        newValue = formatRibuan(newValue);
+                        rawValue = newValue.replace(/\./g, '');
+                    }
+
+                    // Tambahkan item baru ke dalam options-list dropdown secara dinamis
+                    const dropdown = document.getElementById(inputId).closest('.custom-dropdown');
+                    if (dropdown) {
+                        const optionsList = dropdown.querySelector('.options-list');
+                        if (optionsList) {
+                            const hoverBg = inputId.startsWith('edit_') ? 'hover:bg-blue-50' : 'hover:bg-emerald-50';
+                            
+                            const newItem = document.createElement('div');
+                            newItem.className = `dropdown-item flex items-center justify-between px-3.5 py-2 ${hoverBg} cursor-pointer text-xs font-semibold text-slate-700`;
+                            
+                            let displayVal = newValue;
+                            if (inputId.includes('duration') && !displayVal.toLowerCase().includes('hari')) {
+                                displayVal += ' Hari';
+                            }
+                            if (inputId.includes('max_upload') && !displayVal.toLowerCase().includes('karya') && displayVal !== '999') {
+                                displayVal += ' Karya';
+                            }
+
+                            newItem.setAttribute('onclick', `selectOption('${inputId}', '${rawValue}', ${isPrice})`);
+                            newItem.innerHTML = `
+                                <span>${displayVal}</span>
+                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                            `;
+                            optionsList.appendChild(newItem);
+                        }
+                    }
+
+                    // Set pilihan aktif
+                    selectOption(inputId, rawValue, isPrice);
+
+                    // Notifikasi sukses
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: `${labelName} "${newValue}" berhasil ditambahkan dan dipilih.`,
+                        timer: 1600,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        function removeDropdownItem(btnEl) {
+            const item = btnEl.closest('.dropdown-item');
+            if (item) {
+                item.remove();
+            }
+        }
+
+        function toggleFeatureInput(checkboxEl, targetInputId) {
+            const inputEl = document.getElementById(targetInputId);
+            if (checkboxEl.checked) {
+                inputEl.removeAttribute('disabled');
+                inputEl.focus();
+            } else {
+                inputEl.value = '';
+                inputEl.setAttribute('disabled', 'disabled');
+            }
+        }
+
+        /* FITUR 2: MODAL SWEETALERT UNTUK MENAMBAH CHECKBOX FITUR / BENEFIT KUSTOM */
+        let customFeatureIndex = 100;
+        function promptAddNewCheckbox(mode = 'add') {
+            const themeColor = mode === 'edit' ? 'blue' : 'emerald';
+
+            Swal.fire({
+                title: `<span class="font-display font-extrabold text-slate-800 text-xl">Tambah Fitur / Checkbox Baru</span>`,
+                html: `
+                    <p class="text-xs font-semibold text-slate-500 mb-3 text-left">Masukkan detail nama fitur benefit baru yang ingin Anda cantumkan pada kartu:</p>
+                    <div class="space-y-3 text-left">
+                        <div>
+                            <label class="text-[11px] font-bold text-slate-700 block mb-1">Nama Fitur / Benefit</label>
+                            <input id="swal_feat_name" type="text" placeholder="Misal: Bebas Biaya Layanan" class="w-full border-2 border-sky-200 rounded-xl px-3.5 py-2 text-sm font-semibold text-slate-800 focus:border-${themeColor}-500 focus:outline-none transition">
+                        </div>
+                        <div class="flex items-center gap-2 pt-1 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            <input id="swal_feat_has_value" type="checkbox" class="w-4 h-4 text-${themeColor}-600 rounded border-slate-300 focus:ring-${themeColor}-500">
+                            <label for="swal_feat_has_value" class="text-xs font-bold text-slate-700 cursor-pointer select-none">Sertakan kolom input jumlah/nilai (Opsional)</label>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Tambah Checkbox',
+                cancelButtonText: 'Batal',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'rounded-3xl p-6 shadow-2xl border border-slate-100 max-w-md bg-white',
+                    confirmButton: `px-6 py-2.5 bg-${themeColor}-600 text-white font-bold text-sm rounded-xl hover:bg-${themeColor}-700 transition-all shadow-md mx-1 cursor-pointer`,
+                    cancelButton: 'px-6 py-2.5 bg-slate-500 text-white font-bold text-sm rounded-xl hover:bg-slate-600 transition-all shadow-md mx-1 cursor-pointer'
+                },
+                preConfirm: () => {
+                    const name = document.getElementById('swal_feat_name').value.trim();
+                    const hasValue = document.getElementById('swal_feat_has_value').checked;
+                    if (!name) {
+                        Swal.showValidationMessage('Nama fitur benefit wajib diisi!');
+                        return false;
+                    }
+                    return { name, hasValue };
+                }
+            }).then((res) => {
+                if (res.isConfirmed && res.value) {
+                    addCustomCheckboxToContainer(mode, res.value.name, res.value.hasValue, '', true);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Checkbox Ditambahkan!',
+                        text: `Fitur "${res.value.name}" siap digunakan pada kartu.`,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        function addCustomCheckboxToContainer(mode, name, hasValue = false, defaultVal = '', isChecked = true) {
+            customFeatureIndex++;
+            const containerId = mode === 'edit' ? 'custom_features_container_edit' : 'custom_features_container_add';
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const themeColor = mode === 'edit' ? 'blue' : 'emerald';
+            const itemDiv = document.createElement('div');
+            itemDiv.className = `custom-feat-item flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all`;
+
+            const checkAttr = isChecked ? 'checked' : '';
+            const disableAttr = (!isChecked && hasValue) ? 'disabled' : '';
+
+            let valueHtml = '';
+            if (hasValue) {
+                valueHtml = `
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <input type="text" name="custom_features[${customFeatureIndex}][val]" value="${defaultVal}" placeholder="Nilai/Jml" ${disableAttr} class="custom-val-input w-28 text-xs font-bold border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-${themeColor}-500 transition">
+                        <button type="button" onclick="this.closest('.custom-feat-item').remove()" class="w-7 h-7 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition" title="Hapus Fitur"><i class="fa-solid fa-trash text-xs"></i></button>
+                    </div>
+                `;
+            } else {
+                valueHtml = `
+                    <button type="button" onclick="this.closest('.custom-feat-item').remove()" class="w-7 h-7 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition shrink-0" title="Hapus Fitur"><i class="fa-solid fa-trash text-xs"></i></button>
+                `;
+            }
+
+            itemDiv.innerHTML = `
+                <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none flex-1">
+                    <input type="checkbox" name="custom_features[${customFeatureIndex}][checked]" value="1" ${checkAttr} onchange="toggleCustomFeatVal(this)" class="w-4 h-4 text-${themeColor}-600 rounded border-slate-300 focus:ring-${themeColor}-500">
+                    <input type="hidden" name="custom_features[${customFeatureIndex}][name]" value="${name}">
+                    <span class="truncate">${name}</span>
+                </label>
+                ${valueHtml}
+            `;
+
+            container.appendChild(itemDiv);
+        }
+
+        function toggleCustomFeatVal(checkboxEl) {
+            const row = checkboxEl.closest('.custom-feat-item');
+            if (row) {
+                const valInput = row.querySelector('.custom-val-input');
+                if (valInput) {
+                    if (checkboxEl.checked) {
+                        valInput.removeAttribute('disabled');
+                        valInput.focus();
+                    } else {
+                        valInput.setAttribute('disabled', 'disabled');
+                    }
+                }
+            }
+        }
+
+        function triggerAddNewCardAlert() {
+            Swal.fire({
+                title: 'Tambah Kartu Paket Baru?',
+                text: 'Silakan isi konfigurasi kartu membership pada form berikut.',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#0EA5E9',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Lanjutkan',
+                cancelButtonText: 'Batal'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    openAddModal();
+                }
+            });
+        }
+
         const addModal = document.getElementById('addModal');
         const addModalContent = document.getElementById('addModalContent');
 
         function openAddModal() {
             document.getElementById('addForm').reset();
+            document.getElementById('custom_features_container_add').innerHTML = '';
+            ['add_name', 'add_price', 'add_duration', 'add_max_upload'].forEach(id => {
+                document.getElementById(id).setAttribute('readonly', 'readonly');
+            });
+            ['add_val_max_products', 'add_val_max_ads'].forEach(id => {
+                document.getElementById(id).setAttribute('disabled', 'disabled');
+            });
             addModal.classList.remove('hidden');
             setTimeout(() => {
                 addModal.classList.remove('opacity-0');
@@ -459,13 +1051,12 @@
             const price = document.getElementById('add_price').value.trim();
             const duration = document.getElementById('add_duration').value.trim();
             const maxUpload = document.getElementById('add_max_upload').value.trim();
-            const benefit = document.getElementById('add_benefit').value.trim();
 
-            if (!name || !price || !duration || !maxUpload || !benefit) {
+            if (!name || !price || !duration || !maxUpload) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Peringatan',
-                    text: 'Silahkan isi semua form input',
+                    text: 'Silahkan isi bidang Nama, Harga, Durasi, dan Maksimal Upload.',
                     confirmButtonColor: '#0EA5E9'
                 });
                 return;
@@ -476,25 +1067,73 @@
 
         const editModal = document.getElementById('editModal');
         const editModalContent = document.getElementById('editModalContent');
-        let originalEditData = {};
 
         function openEditModal(membership) {
             if(membership) {
-                originalEditData = {
-                    name: String(membership.name || ''),
-                    price: String(membership.price || ''),
-                    duration_days: String(membership.duration_days || ''),
-                    max_upload: String(membership.max_upload || ''),
-                    benefit: String(membership.benefit || '')
-                };
+                document.getElementById('editForm').reset();
+                document.getElementById('custom_features_container_edit').innerHTML = '';
 
-                document.getElementById('edit_name').value = originalEditData.name;
-                document.getElementById('edit_price').value = originalEditData.price;
-                document.getElementById('edit_duration').value = originalEditData.duration_days;
-                document.getElementById('edit_max_upload').value = originalEditData.max_upload;
-                document.getElementById('edit_benefit').value = originalEditData.benefit;
-
+                document.getElementById('edit_name').value = membership.name || '';
+                document.getElementById('edit_price').value = formatRibuan(membership.price || '');
+                document.getElementById('edit_duration').value = membership.duration_days || '';
+                document.getElementById('edit_max_upload').value = membership.max_upload || '';
                 document.getElementById('editForm').action = "/admin/memberships/" + membership.id_membership;
+
+                // Reset standard checkboxes
+                ['edit_feat_max_products', 'edit_feat_max_ads', 'edit_feat_verified_badge', 'edit_feat_priority_cs'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.checked = false;
+                });
+                ['edit_val_max_products', 'edit_val_max_ads'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) { el.value = ''; el.setAttribute('disabled', 'disabled'); }
+                });
+                document.getElementById('edit_custom_benefit').value = '';
+
+                // PARSE BENEFIT STRING
+                if (membership.benefit) {
+                    const benefitItems = membership.benefit.split(' | ');
+                    benefitItems.forEach(item => {
+                        const trimmed = item.trim();
+                        if (trimmed.startsWith('Maksimal Upload:')) {
+                            // Already handled by max_upload
+                        } else if (trimmed.startsWith('Batas Jasa/Barang:') || trimmed.startsWith('Batas Jumlah Jasa:')) {
+                            const valMatch = trimmed.match(/\d+/);
+                            const checkbox = document.getElementById('edit_feat_max_products');
+                            const inputVal = document.getElementById('edit_val_max_products');
+                            if (checkbox && inputVal) {
+                                checkbox.checked = true;
+                                inputVal.removeAttribute('disabled');
+                                inputVal.value = valMatch ? valMatch[0] : '';
+                            }
+                        } else if (trimmed.startsWith('Iklan Promosi:') || trimmed.startsWith('Batas Jumlah Iklan:')) {
+                            const valMatch = trimmed.match(/\d+/);
+                            const checkbox = document.getElementById('edit_feat_max_ads');
+                            const inputVal = document.getElementById('edit_val_max_ads');
+                            if (checkbox && inputVal) {
+                                checkbox.checked = true;
+                                inputVal.removeAttribute('disabled');
+                                inputVal.value = valMatch ? valMatch[0] : '';
+                            }
+                        } else if (trimmed === 'Lencana Kreator Terverifikasi') {
+                            const checkbox = document.getElementById('edit_feat_verified_badge');
+                            if (checkbox) checkbox.checked = true;
+                        } else if (trimmed === 'Dukungan CS Prioritas 24/7' || trimmed === 'Dukungan Prioritas CS 24/7') {
+                            const checkbox = document.getElementById('edit_feat_priority_cs');
+                            if (checkbox) checkbox.checked = true;
+                        } else if (trimmed !== 'Fitur standar keanggotaan') {
+                            // Check if it has key-value pair
+                            if (trimmed.includes(':')) {
+                                const parts = trimmed.split(':');
+                                const fName = parts[0].trim();
+                                const fVal = parts.slice(1).join(':').trim();
+                                addCustomCheckboxToContainer('edit', fName, true, fVal, true);
+                            } else {
+                                addCustomCheckboxToContainer('edit', trimmed, false, '', true);
+                            }
+                        }
+                    });
+                }
             }
             
             editModal.classList.remove('hidden');
@@ -513,35 +1152,16 @@
         }
 
         function submitEdit() {
-            const currentData = {
-                name: document.getElementById('edit_name').value.trim(),
-                price: document.getElementById('edit_price').value.trim(),
-                duration_days: document.getElementById('edit_duration').value.trim(),
-                max_upload: document.getElementById('edit_max_upload').value.trim(),
-                benefit: document.getElementById('edit_benefit').value.trim()
-            };
+            const name = document.getElementById('edit_name').value.trim();
+            const price = document.getElementById('edit_price').value.trim();
+            const duration = document.getElementById('edit_duration').value.trim();
+            const maxUpload = document.getElementById('edit_max_upload').value.trim();
 
-            if (!currentData.name || !currentData.price || !currentData.duration_days || !currentData.max_upload || !currentData.benefit) {
+            if (!name || !price || !duration || !maxUpload) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Peringatan',
-                    text: 'Silahkan isi semua form input',
-                    confirmButtonColor: '#0EA5E9'
-                });
-                return;
-            }
-
-            if (
-                currentData.name === originalEditData.name &&
-                currentData.price === originalEditData.price &&
-                currentData.duration_days === originalEditData.duration_days &&
-                currentData.max_upload === originalEditData.max_upload &&
-                currentData.benefit === originalEditData.benefit
-            ) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Peringatan',
-                    text: 'Silahkan ubah input yang diperlukan',
+                    text: 'Silahkan isi bidang yang diperlukan.',
                     confirmButtonColor: '#0EA5E9'
                 });
                 return;

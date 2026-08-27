@@ -41,7 +41,6 @@
         .card-hover:hover { transform: scale(1.015) translateY(-3px); box-shadow: 0 15px 30px -10px rgba(14, 165, 233, 0.25); border-color: rgba(14, 165, 233, 0.5); }
         .tab-btn.active-tab { background: #0EA5E9; color: #fff; box-shadow: 0 8px 15px -5px rgba(14,165,233,0.4); }
 
-        /* Menghilangkan ikon bawaan browser (reveal password) */
         input[type="password"]::-ms-reveal,
         input[type="password"]::-ms-clear {
             display: none !important;
@@ -146,35 +145,32 @@
                     <span>Pelanggaran</span>
                 </a>
 
-                 <a href="{{ route('admin.security.index') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl {{ request()->routeIs('admin.security.*') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }} transition-all group mt-1">
+                <a href="{{ route('admin.security.index') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl {{ request()->routeIs('admin.security.*') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }} transition-all group mt-1">
                     <i class="fa-solid fa-shield-halved w-4 text-center text-white"></i><span>Keamanan System</span>
                 </a>
 
-                        <!-- MENU NOTIFIKASI -->
-                        <a href="{{ route('admin.notifications.index') }}"
-                        class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifikasi.*') ? 'bg-white/20 text-white font-bold' : '' }}">
-                            <div class="flex items-center gap-3">
-                                <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
-                                <span>Notifikasi</span>
-                            </div>
-                            @php
-                                $unreadNotificationsCount = 0;
-                                if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
-                                    $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
-                                } else {
-                                    $unreadNotificationsCount = \App\Models\Notification::count();
-                                }
-                            @endphp
+                <!-- MENU NOTIFIKASI -->
+                <a href="{{ route('admin.notifications.index') }}"
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifications.*') ? 'bg-white/20 text-white font-bold' : '' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
+                        <span>Notifikasi</span>
+                    </div>
+                    @php
+                        $unreadNotificationsCount = 0;
+                        if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
+                            $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
+                        } else {
+                            $unreadNotificationsCount = \App\Models\Notification::count();
+                        }
+                    @endphp
 
-                            @if($unreadNotificationsCount > 0)
-                                <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
-                                    {{ $unreadNotificationsCount }}
-                                </span>
-                            @endif
-                        </a>
-
-
-
+                    @if($unreadNotificationsCount > 0)
+                        <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
+                            {{ $unreadNotificationsCount }}
+                        </span>
+                    @endif
+                </a>
             </nav>
             <div class="p-4 border-t border-white/15">
                 <form method="POST" action="{{ route('logout') }}">
@@ -199,6 +195,13 @@
             </header>
 
             <div class="p-6 sm:p-8 space-y-6 overflow-y-auto no-scrollbar">
+
+                @if (session('success'))
+                    <script>Swal.fire({icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", timer: 2500, showConfirmButton: false});</script>
+                @endif
+                @if (session('error'))
+                    <script>Swal.fire({icon: 'error', title: 'Gagal!', text: "{{ session('error') }}", confirmButtonColor: '#ef4444'});</script>
+                @endif
 
                 <!-- SUMMARY CARDS -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -253,7 +256,6 @@
                             <input type="text" id="verifSearch" onkeyup="filterVerifikator()" placeholder="Cari nama verifikator..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
                         </div>
                         
-                        <!-- TOMBOL 3D BIRU KOKOH -->
                         <button type="button" onclick="openModal('addVerifierModal')" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-blue-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#cbd5e1] transition-all cursor-pointer w-full sm:w-auto">
                             <i class="fa-solid fa-user-shield"></i> Tambah Verifikator Baru
                         </button>
@@ -320,140 +322,120 @@
                 </div>
 
                 <!-- TAB 2: ANTREAN VERIFIKASI -->
-<div id="tabAntrean"
-     class="hidden bg-gradient-to-b from-white to-amber-50/30 border border-amber-200 rounded-2xl shadow-sm overflow-hidden">
+                <div id="tabAntrean" class="hidden bg-gradient-to-b from-white to-amber-50/30 border border-amber-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-amber-100 bg-white/50 backdrop-blur-sm">
+                        <h3 class="font-extrabold text-slate-900 text-sm font-display">Antrean Verifikasi Identitas Kreator</h3>
+                        <p class="text-[11px] text-slate-600 mt-0.5">Tinjau dan putuskan status pengajuan identitas kreator baru.</p>
+                    </div>
 
-    <div class="p-5 border-b border-amber-100 bg-white/50 backdrop-blur-sm">
-        <h3 class="font-extrabold text-slate-900 text-sm font-display">
-            Antrean Verifikasi Identitas Kreator
-        </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-amber-50/80 border-b border-amber-100 text-amber-900 text-[11px] uppercase tracking-wider font-bold">
+                                    <th class="py-4 px-6">Pemohon & NIK</th>
+                                    <th class="py-4 px-6">Paket & Pembayaran</th>
+                                    <th class="py-4 px-6">Rekening Pencairan</th>
+                                    <th class="py-4 px-6">KTP & Bukti Transfer</th>
+                                    <th class="py-4 px-6">Tgl Pengajuan</th>
+                                    <th class="py-4 px-6 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-amber-100/70">
+                                @forelse($pendingQueue as $item)
+                                    @php
+                                        $userName = $item->user->name ?? '-';
+                                        $userEmail = $item->user->email ?? '-';
+                                        $iInitials = collect(explode(' ', trim($userName)))->filter()->map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)))->take(2)->implode('');
+                                        $verificationId = $item->id_identity_verification;
+                                    @endphp
+                                    <tr class="hover:bg-amber-50/40 transition-colors bg-white">
+                                        <!-- PEMOHON -->
+                                        <td class="py-3 px-6">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 text-white flex items-center justify-center font-bold text-xs shadow-sm shrink-0">
+                                                    {{ $iInitials ?: '??' }}
+                                                </div>
+                                                <div>
+                                                    <p class="font-bold text-slate-800 text-xs">{{ $userName }}</p>
+                                                    <p class="text-[10px] text-slate-500 font-medium">{{ $userEmail }}</p>
+                                                    <p class="text-[10px] text-indigo-600 font-semibold mt-0.5"><i class="fa-solid fa-id-card text-[9px] mr-1"></i> NIK: {{ $item->nik ?? '-' }}</p>
+                                                </div>
+                                            </div>
+                                        </td>
 
-        <p class="text-[11px] text-slate-600 mt-0.5">
-            Tinjau dan putuskan status pengajuan identitas kreator baru.
-        </p>
+                                        <!-- PAKET & PEMBAYARAN -->
+                                        <td class="py-3 px-6">
+                                            <p class="font-bold text-sky-700 text-xs">{{ $item->membership->name ?? '-' }}</p>
+                                            <p class="text-[11px] font-bold text-amber-800 mt-0.5">Rp {{ number_format($item->payment_amount, 0, ',', '.') }}</p>
+                                            <span class="inline-block mt-1 text-[9px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                                                {{ $item->payment_method ?? 'Transfer Bank' }}
+                                            </span>
+                                        </td>
+
+                                        <!-- REKENING -->
+                                        <td class="py-3 px-6">
+                                            <p class="font-semibold text-slate-800 text-xs">{{ $item->bank_name ?? '-' }}</p>
+                                            <p class="text-[11px] font-mono text-slate-600">{{ $item->account_number ?? '-' }}</p>
+                                            <p class="text-[10px] text-slate-500">a.n {{ $item->account_name ?? '-' }}</p>
+                                        </td>
+
+                                        <!-- KTP & BUKTI -->
+                                        <td class="py-3 px-6">
+                                            <div class="flex items-center gap-2">
+                                                @if($item->identity_document)
+                                                    <a href="{{ asset('storage/' . $item->identity_document) }}" target="_blank" class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-1 rounded hover:bg-blue-600 hover:text-white transition-all">
+                                                        <i class="fa-solid fa-image"></i> KTP
+                                                    </a>
+                                                @endif
+                                                @if($item->payment_proof)
+                                                    <a href="{{ asset('storage/' . $item->payment_proof) }}" target="_blank" class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded hover:bg-emerald-600 hover:text-white transition-all">
+                                                        <i class="fa-solid fa-receipt"></i> Bukti Transfer
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </td>
+
+                                        <!-- TANGGAL -->
+                                        <td class="py-3 px-6">
+                                            <p class="text-xs font-semibold text-slate-700">
+                                                {{ optional($item->created_at)->translatedFormat('d M Y, H:i') ?? '-' }}
+                                            </p>
+                                        </td>
+
+                                        <!-- AKSI -->
+                                        <td class="py-3 px-6">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <button type="button" onclick="confirmApprove('{{ route('admin.users.approveSeller', ['id' => $verificationId]) }}', '{{ addslashes($userName) }}')" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold shadow-sm flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-check"></i> Setujui
+                                                </button>
+
+                                                <button type="button" onclick="openRejectModal('{{ $verificationId }}', '{{ addslashes($userName) }}')" class="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all text-xs font-bold shadow-sm flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-xmark"></i> Tolak
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="py-10 text-center text-sm text-slate-500">
+                                            Tidak ada antrean verifikasi saat ini. 🎉
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if($pendingQueue->hasPages())
+                        <div class="p-5 border-t border-amber-100 bg-white/50">
+                            {{ $pendingQueue->links() }}
+                        </div>
+                    @endif
+                </div>
+
+            </div>
+        </main>
     </div>
-
-    <div class="overflow-x-auto">
-
-        <table class="w-full text-left border-collapse">
-
-            <thead>
-                <tr class="bg-amber-50/80 border-b border-amber-100 text-amber-900 text-[11px] uppercase tracking-wider font-bold">
-                    <th class="py-4 px-6">Pemohon & NIK</th>
-                    <th class="py-4 px-6">Paket & Pembayaran</th>
-                    <th class="py-4 px-6">Rekening Pencairan</th>
-                    <th class="py-4 px-6">KTP & Bukti Transfer</th>
-                    <th class="py-4 px-6">Tgl Pengajuan</th>
-                    <th class="py-4 px-6 text-center">Aksi</th>
-                </tr>
-            </thead>
-
-            <tbody class="text-sm divide-y divide-amber-100/70">
-                @forelse($pendingQueue as $item)
-                    @php
-                        $userName = $item->user->name ?? '-';
-                        $userEmail = $item->user->email ?? '-';
-                        $iInitials = collect(explode(' ', trim($userName)))->filter()->map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)))->take(2)->implode('');
-                        $verificationId = $item->id_identity_verification;
-                    @endphp
-                    <tr class="hover:bg-amber-50/40 transition-colors bg-white">
-                        <!-- PEMOHON -->
-                        <td class="py-3 px-6">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 text-white flex items-center justify-center font-bold text-xs shadow-sm shrink-0">
-                                    {{ $iInitials ?: '??' }}
-                                </div>
-                                <div>
-                                    <p class="font-bold text-slate-800 text-xs">{{ $userName }}</p>
-                                    <p class="text-[10px] text-slate-500 font-medium">{{ $userEmail }}</p>
-                                    <p class="text-[10px] text-indigo-600 font-semibold mt-0.5"><i class="fa-solid fa-id-card text-[9px] mr-1"></i> NIK: {{ $item->nik ?? '-' }}</p>
-                                </div>
-                            </div>
-                        </td>
-
-                        <!-- PAKET & PEMBAYARAN -->
-                        <td class="py-3 px-6">
-                            <p class="font-bold text-sky-700 text-xs">{{ $item->membership->name ?? '-' }}</p>
-                            <p class="text-[11px] font-bold text-amber-800 mt-0.5">Rp {{ number_format($item->payment_amount, 0, ',', '.') }}</p>
-                            <span class="inline-block mt-1 text-[9px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                                {{ $item->payment_method ?? 'Transfer Bank' }}
-                            </span>
-                        </td>
-
-                        <!-- REKENING -->
-                        <td class="py-3 px-6">
-                            <p class="font-semibold text-slate-800 text-xs">{{ $item->bank_name ?? '-' }}</p>
-                            <p class="text-[11px] font-mono text-slate-600">{{ $item->account_number ?? '-' }}</p>
-                            <p class="text-[10px] text-slate-500">a.n {{ $item->account_name ?? '-' }}</p>
-                        </td>
-
-                        <!-- KTP & BUKTI -->
-                        <td class="py-3 px-6">
-                            <div class="flex items-center gap-2">
-                                @if($item->identity_document)
-                                    <a href="{{ asset('storage/' . $item->identity_document) }}" target="_blank" class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-1 rounded hover:bg-blue-600 hover:text-white transition-all">
-                                        <i class="fa-solid fa-image"></i> KTP
-                                    </a>
-                                @endif
-                                @if($item->payment_proof)
-                                    <a href="{{ asset('storage/' . $item->payment_proof) }}" target="_blank" class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded hover:bg-emerald-600 hover:text-white transition-all">
-                                        <i class="fa-solid fa-receipt"></i> Bukti Transfer
-                                    </a>
-                                @endif
-                            </div>
-                        </td>
-
-                        <!-- TANGGAL -->
-                        <td class="py-3 px-6">
-                            <p class="text-xs font-semibold text-slate-700">
-                                {{ optional($item->created_at)->translatedFormat('d M Y, H:i') ?? '-' }}
-                            </p>
-                        </td>
-
-                        <!-- AKSI -->
-                        <td class="py-3 px-6">
-                            <div class="flex items-center justify-center gap-2">
-                                <form method="POST" action="{{ route('admin.users.approveSeller', ['id' => $verificationId]) }}" onsubmit="return confirm('Apakah kamu yakin ingin menyetujui pendaftaran ini?')">
-                                    @csrf
-                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold shadow-sm flex items-center gap-1.5">
-                                        <i class="fa-solid fa-check"></i> Setujui
-                                    </button>
-                                </form>
-
-                                <button type="button" onclick="openRejectModal('{{ $verificationId }}', '{{ addslashes($userName) }}')" class="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all text-xs font-bold shadow-sm flex items-center gap-1.5">
-                                    <i class="fa-solid fa-xmark"></i> Tolak
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="py-10 text-center text-sm text-slate-500">
-                            Tidak ada antrean verifikasi saat ini. 🎉
-                        </td>
-                    </tr>
-                @endforelse
-
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-
-    @if($pendingQueue->hasPages())
-
-        <div class="p-5 border-t border-amber-100 bg-white/50">
-
-            {{ $pendingQueue->links() }}
-
-        </div>
-
-    @endif
-
-</div>
-
 
     <!-- MODAL: TAMBAH VERIFIKATOR -->
     <div id="addVerifierModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
@@ -677,56 +659,40 @@
             });
         }
 
-     function confirmApprove(actionUrl, name) {
-    Swal.fire({
-        title: 'Setujui Pengajuan?',
-        text: `Setujui pengajuan identitas dari ${name}?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#10b981',
-        cancelButtonColor: '#94a3b8',
-        confirmButtonText: 'Ya, Setujui!',
-        cancelButtonText: 'Batal'
-    }).then((result) => {
+        function confirmApprove(actionUrl, name) {
+            Swal.fire({
+                title: 'Setujui Pengajuan?',
+                text: `Setujui pengajuan identitas dari ${name}?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Setujui!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = actionUrl;
 
-        if (result.isConfirmed) {
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = '{{ csrf_token() }}';
+                    form.appendChild(csrfInput);
 
-            const form = document.createElement('form');
-
-            form.method = 'POST';
-
-            form.action = actionUrl;
-
-            const csrfInput = document.createElement('input');
-
-            csrfInput.type = 'hidden';
-
-            csrfInput.name = '_token';
-
-            csrfInput.value = '{{ csrf_token() }}';
-
-            form.appendChild(csrfInput);
-
-            document.body.appendChild(form);
-
-            form.submit();
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
         }
 
-    });
-    }
-
-
-       function openRejectModal(id, name) {
-
-    const form = document.getElementById('rejectForm');
-
-    form.action = `{{ url('admin/users/reject-seller') }}/${id}`;
-
-    document.getElementById('rejectUserName').textContent = name;
-
-    openModal('rejectModal');
-    }
-
+        function openRejectModal(id, name) {
+            const form = document.getElementById('rejectForm');
+            form.action = `{{ url('admin/users/reject-seller') }}/${id}`;
+            document.getElementById('rejectUserName').textContent = name;
+            openModal('rejectModal');
+        }
     </script>
 </body>
 </html>

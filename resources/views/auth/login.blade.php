@@ -94,6 +94,8 @@
             100% { box-shadow: 0 0 0 0 rgb(218 103 68 / 0%); }
         }
     </style>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gradient-to-br from-blue-600 via-blue-500 to-yellow-400 text-ink antialiased min-h-screen w-full flex items-center justify-center relative p-4 overflow-hidden">
 
@@ -106,7 +108,6 @@
 
     <!-- Login Card -->
     <div class="w-full max-w-[360px] bg-white/95 backdrop-blur-xl p-6 sm:p-7 rounded-[1.5rem] shadow-card border border-white/40 relative z-10 opacity-0 animate-fade-in-up">
-
         
         <div class="text-center mb-6">
             <div class="w-12 h-12 mx-auto bg-gradient-to-br from-skyDeep to-sky rounded-xl flex items-center justify-center mb-3 shadow-md shadow-skyDeep/20 transform transition hover:scale-105 duration-300">
@@ -116,11 +117,18 @@
             <p class="text-slate-500 text-[13px] mt-1 font-medium">Masuk ke akun Karyaku kamu</p>
         </div>
 
-        {{-- Pesan sukses setelah registrasi --}}
+        {{-- Pesan sukses setelah registrasi / banding --}}
         @if (session('success'))
             <div class="mb-4 rounded-xl bg-green-50 border border-green-200 text-green-600 text-[11px] font-medium p-2.5 flex items-center gap-2">
                 <i class="fa-solid fa-circle-check text-green-500"></i>
                 <span>{{ session('success') }}</span>
+            </div>
+        @endif
+
+        @if (session('success_appeal'))
+            <div class="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-medium p-2.5 flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-circle-check text-emerald-500 text-sm shrink-0"></i>
+                <span>{{ session('success_appeal') }}</span>
             </div>
         @endif
 
@@ -191,7 +199,170 @@
         </div>
     </div>
 
-    <!-- Script Tampil/Sembunyi Password -->
+    <!-- MODAL POPUP USER TERBLOKIR / DISUSPEND & FORM BANDING -->
+    @if (session('suspended_info'))
+    @php $info = session('suspended_info'); @endphp
+    <div id="suspendedModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 transform transition-all duration-300 scale-100 my-4 max-h-[92vh] flex flex-col">
+            
+            <!-- VIEW 1: INFORMASI SUSPEND -->
+            <div id="suspendInfoView" class="p-6 sm:p-7 overflow-y-auto space-y-5">
+                <div class="text-center">
+                    <div class="w-16 h-16 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl mx-auto mb-3 shadow-inner border border-amber-200">
+                        <i class="fa-solid fa-user-lock animate-bounce"></i>
+                    </div>
+                    <h2 class="font-display text-xl sm:text-2xl font-black text-slate-900">Akun Anda Dinonaktifkan</h2>
+                    <p class="text-xs font-semibold text-slate-500 mt-1">Halo <span class="text-slate-800 font-bold">{{ $info['username'] }}</span>, akun Anda telah dinonaktifkan sementara oleh Admin.</p>
+                </div>
+
+                <!-- BOX DURASI WAKTU -->
+                <div class="bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-200/80 rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center gap-2 text-amber-900 font-bold text-xs uppercase tracking-wider mb-1.5">
+                        <i class="fa-solid fa-clock text-amber-500"></i>
+                        <span>Masa Penangguhan (Sanksi)</span>
+                    </div>
+                    <p class="text-sm font-black text-slate-800" id="suspendDurationText">{{ $info['duration_text'] }}</p>
+                    
+                    @if (!empty($info['target_timestamp']))
+                    <div class="mt-2.5 pt-2.5 border-t border-amber-200/60 flex items-center justify-between text-xs">
+                        <span class="text-slate-500 font-semibold text-[11px]">Hitung Mundur:</span>
+                        <div id="countdownBadge" class="font-black text-amber-700 font-mono bg-white px-2.5 py-1 rounded-lg border border-amber-200 shadow-xs">
+                            Memuat hitungan...
+                        </div>
+                    </div>
+                    @endif
+                </div>
+
+                <!-- BOX ALASAN PEMBLOKIRAN -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wider mb-1.5">
+                        <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
+                        <span>Alasan Pemblokiran</span>
+                    </div>
+                    <p class="text-xs font-semibold text-slate-700 leading-relaxed italic bg-white p-3 rounded-xl border border-slate-200">
+                        "{{ $info['reason'] }}"
+                    </p>
+                </div>
+
+                <!-- STATUS BANDING SEBELUMNYA JIKA ADA -->
+                @if (!empty($info['appeal_status']))
+                    @if ($info['appeal_status'] === 'pending')
+                    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-blue-800">
+                        <i class="fa-solid fa-hourglass-half text-blue-500 text-sm mt-0.5 shrink-0"></i>
+                        <div>
+                            <p class="font-bold">Banding Sedang Ditinjau</p>
+                            <p class="text-[11px] text-blue-600 mt-0.5">Anda telah mengirim banding pada {{ $info['appeal_date'] }}. Mohon menunggu keputusan Admin.</p>
+                        </div>
+                    </div>
+                    @elseif ($info['appeal_status'] === 'rejected')
+                    <div class="bg-red-50 border border-red-200 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-red-800">
+                        <i class="fa-solid fa-circle-xmark text-red-500 text-sm mt-0.5 shrink-0"></i>
+                        <div>
+                            <p class="font-bold">Banding Sebelumnya Ditolak</p>
+                            <p class="text-[11px] text-red-600 mt-0.5">{{ $info['appeal_admin_note'] ?? 'Alasan dan bukti tidak mencukupi.' }} Anda dapat mengajukan banding baru dengan bukti tambahan.</p>
+                        </div>
+                    </div>
+                    @endif
+                @endif
+
+                <!-- TOMBOL AKSI -->
+                <div class="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button type="button" onclick="closeSuspendedModal()" class="w-full py-3 px-4 rounded-xl border-2 border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-arrow-left"></i> Kembali ke Login
+                    </button>
+                    
+                    <button type="button" onclick="showAppealView()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold shadow-md shadow-amber-500/20 transition flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-shield-halved"></i> Ajukan Banding
+                    </button>
+                </div>
+            </div>
+
+            <!-- VIEW 2: FORMULIR PENGAJUAN BANDING -->
+            <div id="appealFormView" class="p-6 sm:p-7 overflow-y-auto space-y-5 hidden">
+                <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+                    <button type="button" onclick="showSuspendInfoView()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center transition"><i class="fa-solid fa-arrow-left text-xs"></i></button>
+                    <div>
+                        <h3 class="font-display font-extrabold text-slate-900 text-base">Formulir Pengajuan Banding</h3>
+                        <p class="text-[10px] text-slate-500 font-semibold">Jelaskan mengapa Anda tidak bersalah beserta bukti pendukung.</p>
+                    </div>
+                </div>
+
+                <form action="{{ route('appeal.submit') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    @csrf
+                    <input type="hidden" name="user_id" value="{{ $info['user_id'] }}">
+
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-700 mb-1">Alasan Mengapa Anda Tidak Bersalah <span class="text-red-500">*</span></label>
+                        <textarea name="reason" rows="4" required placeholder="Jelaskan secara jelas kronologi, pembelaan, atau sanggahan Anda..." class="w-full border-2 border-slate-200 rounded-2xl p-3.5 text-xs font-semibold text-slate-800 focus:border-amber-500 focus:outline-none transition"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-700 mb-1">Unggah Bukti Gambar / Screenshot (Opsional)</label>
+                        <div class="border-2 border-dashed border-slate-300 hover:border-amber-500 rounded-2xl p-4 text-center transition bg-slate-50 relative group cursor-pointer">
+                            <input type="file" name="proof_image" id="proof_image_input" accept="image/*" onchange="previewProofImage(event)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10">
+                            <div id="uploadPlaceholder">
+                                <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 group-hover:text-amber-500 transition mb-1.5 block"></i>
+                                <span class="text-xs font-bold text-slate-700 block">Klik untuk pilih gambar bukti</span>
+                                <span class="text-[10px] text-slate-400">Format: JPG, PNG, WEBP (Maks 5MB)</span>
+                            </div>
+                            <div id="imagePreviewContainer" class="hidden mt-2">
+                                <img id="imagePreview" src="" alt="Preview Bukti" class="max-h-36 mx-auto rounded-xl shadow-md object-contain">
+                                <span class="text-[10px] text-emerald-600 font-bold mt-1 block">Gambar dipilih ✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 grid grid-cols-2 gap-3">
+                        <button type="button" onclick="showSuspendInfoView()" class="w-full py-3 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition">
+                            Batal
+                        </button>
+                        <button type="submit" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-md shadow-amber-500/20 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> Kirim Banding
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    @if (!empty($info['target_timestamp']))
+    <script>
+        (function() {
+            const targetTime = {{ $info['target_timestamp'] }};
+            const badge = document.getElementById('countdownBadge');
+            
+            function updateCountdown() {
+                const now = new Date().getTime();
+                const distance = targetTime - now;
+
+                if (distance <= 0) {
+                    if (badge) badge.innerHTML = "Waktu suspend telah berakhir. Silakan login kembali!";
+                    return;
+                }
+
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                let text = "";
+                if (days > 0) text += days + "h ";
+                if (hours > 0 || days > 0) text += hours + "j ";
+                text += minutes + "m " + seconds + "d tersisa";
+
+                if (badge) badge.innerHTML = text;
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        })();
+    </script>
+    @endif
+
+    @endif
+
+    <!-- Script Tampil/Sembunyi Password & Modal Handling -->
     <script>
         function togglePassword(inputId, iconId) {
             const input = document.getElementById(inputId);
@@ -202,6 +373,34 @@
             } else {
                 input.type = 'password';
                 icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        function closeSuspendedModal() {
+            const modal = document.getElementById('suspendedModal');
+            if (modal) modal.remove();
+        }
+
+        function showAppealView() {
+            document.getElementById('suspendInfoView').classList.add('hidden');
+            document.getElementById('appealFormView').classList.remove('hidden');
+        }
+
+        function showSuspendInfoView() {
+            document.getElementById('appealFormView').classList.add('hidden');
+            document.getElementById('suspendInfoView').classList.remove('hidden');
+        }
+
+        function previewProofImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imagePreview').src = e.target.result;
+                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                    document.getElementById('uploadPlaceholder').classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
             }
         }
     </script>

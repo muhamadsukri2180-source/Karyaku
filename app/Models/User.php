@@ -30,6 +30,8 @@ class User extends Authenticatable
         'phone',
         'avatar',
         'status',
+        'suspended_until',
+        'suspend_reason',
     ];
 
     protected $hidden = [
@@ -40,7 +42,74 @@ class User extends Authenticatable
     protected $casts = [
         'password'              => 'hashed',
         'membership_expires_at' => 'datetime',
+        'suspended_until'       => 'datetime',
     ];
+
+    public function accountAppeals()
+    {
+        return $this->hasMany(AccountAppeal::class, 'user_id', 'id_user');
+    }
+
+    public function isCurrentlySuspended(): bool
+    {
+        if ($this->status !== 'blocked') {
+            return false;
+        }
+        if (!$this->suspended_until) {
+            return true; // Permanent suspend
+        }
+        return $this->suspended_until->isFuture();
+    }
+
+    public function getSuspendCountdownAttribute(): array
+    {
+        if (!$this->suspended_until) {
+            return [
+                'is_permanent' => true,
+                'is_expired'   => false,
+                'days'         => 0,
+                'hours'        => 0,
+                'minutes'      => 0,
+                'seconds'      => 0,
+                'formatted'    => 'Permanen (Sampai diaktifkan kembali oleh Admin)',
+            ];
+        }
+
+        if ($this->suspended_until->isPast()) {
+            return [
+                'is_permanent' => false,
+                'is_expired'   => true,
+                'days'         => 0,
+                'hours'        => 0,
+                'minutes'      => 0,
+                'seconds'      => 0,
+                'formatted'    => 'Masa sanksi telah berakhir',
+            ];
+        }
+
+        $now = now();
+        $days = (int) $now->diffInDays($this->suspended_until);
+        $hours = (int) $now->diffInHours($this->suspended_until) % 24;
+        $minutes = (int) $now->diffInMinutes($this->suspended_until) % 60;
+        $seconds = (int) $now->diffInSeconds($this->suspended_until) % 60;
+
+        $parts = [];
+        if ($days > 0) $parts[] = $days . ' Hari';
+        if ($hours > 0) $parts[] = $hours . ' Jam';
+        if ($minutes > 0) $parts[] = $minutes . ' Menit';
+        if (empty($parts)) $parts[] = $seconds . ' Detik';
+
+        return [
+            'is_permanent'     => false,
+            'is_expired'       => false,
+            'days'             => $days,
+            'hours'            => $hours,
+            'minutes'          => $minutes,
+            'seconds'          => $seconds,
+            'target_timestamp' => $this->suspended_until->timestamp * 1000,
+            'formatted'        => implode(' ', $parts) . ' (Hingga ' . $this->suspended_until->translatedFormat('d M Y, H:i') . ' WIB)',
+        ];
+    }
 
     /* =========================================================================
      | HELPER MEMBERSHIP & COUNTDOWN

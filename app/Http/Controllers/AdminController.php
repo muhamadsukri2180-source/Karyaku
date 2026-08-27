@@ -16,6 +16,7 @@ use App\Models\CustomerService;
 use App\Models\Notification;
 use App\Models\IpLog;
 use App\Models\AllowedIp;
+use App\Models\AccountAppeal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
@@ -483,7 +484,7 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Pengguna berhasil dihapus.');
     }
 
-    public function suspendUser(string|int $id)
+    public function suspendUser(Request $request, string|int $id)
     {
         $user = User::findOrFail($id);
 
@@ -491,23 +492,58 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'Akun Admin tidak dapat disuspend.');
         }
 
-        $user->status = $user->status === 'blocked' ? 'active' : 'blocked';
-        $user->save();
-
+        // Jika saat ini berstatus 'blocked', aksi ini adalah AKTIFKAN KEMBALI (Unsuspend)
         if ($user->status === 'blocked') {
+            $user->status = 'active';
+            $user->suspended_until = null;
+            $user->suspend_reason = null;
+            $user->save();
+
             Notification::create([
                 'user_id'     => $user->id_user,
-                'name'        => '⚠️ Status Akun Ditangguhkan',
-                'description' => 'Akun Anda telah dinonaktifkan sementara/diblokir oleh Admin.',
+                'name'        => '✅ Akun Diaktifkan Kembali',
+                'description' => 'Akun Anda telah diaktifkan kembali oleh Admin. Anda kini dapat login dan beraktivitas seperti biasa.',
                 'is_read'     => false,
             ]);
+
+            return redirect()->back()->with('success', 'Akun pengguna "' . $user->name . '" berhasil diaktifkan kembali.');
         }
 
-        $message = $user->status === 'blocked'
-            ? 'Pengguna berhasil disuspend.'
-            : 'Pengguna berhasil diaktifkan kembali.';
+        // AKSI SUSPEND DENGAN DURASI WAKTU & ALASAN
+        $days = (int) $request->input('suspend_days', 0);
+        $hours = (int) $request->input('suspend_hours', 0);
+        $minutes = (int) $request->input('suspend_minutes', 0);
+        $reason = $request->input('suspend_reason', 'Pelanggaran syarat dan ketentuan komunitas Karyaku');
 
-        return redirect()->back()->with('success', $message);
+        if (empty(trim($reason))) {
+            $reason = 'Pelanggaran syarat dan ketentuan komunitas Karyaku';
+        }
+
+        $user->status = 'blocked';
+        $user->suspend_reason = $reason;
+
+        $totalMinutes = ($days * 24 * 60) + ($hours * 60) + $minutes;
+        if ($totalMinutes > 0) {
+            $user->suspended_until = now()->addDays($days)->addHours($hours)->addMinutes($minutes);
+            $parts = [];
+            if ($days > 0) $parts[] = $days . ' Hari';
+            if ($hours > 0) $parts[] = $hours . ' Jam';
+            if ($minutes > 0) $parts[] = $minutes . ' Menit';
+            $durationText = implode(' ', $parts);
+        } else {
+            $user->suspended_until = null; // Permanen
+            $durationText = 'Permanen (Tanpa batas waktu)';
+        }
+        $user->save();
+
+        Notification::create([
+            'user_id'     => $user->id_user,
+            'name'        => '⚠️ Status Akun Ditangguhkan',
+            'description' => 'Akun Anda dinonaktifkan sementara (' . $durationText . '). Alasan: ' . $reason,
+            'is_read'     => false,
+        ]);
+
+        return redirect()->back()->with('success', 'Akun "' . $user->name . '" berhasil disuspend (' . $durationText . ').');
     }
 
     /*
@@ -616,7 +652,8 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'Pengajuan ini sudah diproses sebelumnya.');
         }
 
-        $user = User::where('id_user', $verification->user_id)->first();
+        $targetUserId = $verification->user_id ?? $verification->id_user ?? null;
+        $user = User::where('id_user', $targetUserId)->first();
 
         if (!$user) {
             return redirect()->back()->with('error', 'User pemohon tidak ditemukan.');
@@ -681,6 +718,8 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'Pengajuan ini sudah diproses sebelumnya.');
         }
 
+        $targetUserId = $verification->user_id ?? $verification->id_user ?? null;
+
         try {
             $verification->update([
                 'status'      => 'rejected',
@@ -689,12 +728,14 @@ class AdminController extends Controller
                 'verified_at' => now(),
             ]);
 
-            Notification::create([
-                'user_id'     => $verification->user_id,
-                'name'        => '❌ Pendaftaran Penjual Ditolak',
-                'description' => 'Pengajuan identitas Anda ditolak. Alasan: ' . ($validated['notes'] ?? 'Dokumen tidak sesuai syarat.'),
-                'is_read'     => false,
-            ]);
+            if ($targetUserId) {
+                Notification::create([
+                    'user_id'     => $targetUserId,
+                    'name'        => '❌ Pendaftaran Penjual Ditolak',
+                    'description' => 'Pengajuan identitas Anda ditolak. Alasan: ' . ($validated['notes'] ?? 'Dokumen tidak sesuai syarat.'),
+                    'is_read'     => false,
+                ]);
+            }
 
             return redirect()->back()->with('success', 'Pengajuan identitas berhasil ditolak.');
 
@@ -762,9 +803,10 @@ class AdminController extends Controller
             'admin_note' => $request->admin_note,
         ]);
 
-        if ($ticket->user_id) {
+        $targetUserId = $ticket->user_id ?? $ticket->id_user ?? null;
+        if ($targetUserId) {
             Notification::create([
-                'user_id'     => $ticket->user_id,
+                'user_id'     => $targetUserId,
                 'name'        => 'Pembaharuan Tiket Pengaduan',
                 'description' => 'Status tiket ' . $ticket->subject . ' diperbarui menjadi: ' . strtoupper($request->status),
                 'is_read'     => false,
@@ -803,9 +845,10 @@ class AdminController extends Controller
         $product = Product::findOrFail($id);
         $product->update(['status' => 'active']);
 
-        if ($product->user_id) {
+        $targetUserId = $product->user_id ?? $product->id_user ?? null;
+        if ($targetUserId) {
             Notification::create([
-                'user_id'     => $product->user_id,
+                'user_id'     => $targetUserId,
                 'name'        => '✅ Produk/Jasa Disetujui',
                 'description' => 'Produk "' . $product->title . '" Anda telah disetujui dan aktif di marketplace.',
                 'is_read'     => false,
@@ -820,9 +863,10 @@ class AdminController extends Controller
         $product = Product::findOrFail($id);
         $product->update(['status' => 'inactive']);
 
-        if ($product->user_id) {
+        $targetUserId = $product->user_id ?? $product->id_user ?? null;
+        if ($targetUserId) {
             Notification::create([
-                'user_id'     => $product->user_id,
+                'user_id'     => $targetUserId,
                 'name'        => '⚠️ Produk Disembunyikan',
                 'description' => 'Produk "' . $product->title . '" telah dinonaktifkan dari katalog oleh Admin.',
                 'is_read'     => false,
@@ -1007,12 +1051,15 @@ class AdminController extends Controller
             'processed_at' => now(),
         ]);
 
-        Notification::create([
-            'user_id'     => $withdrawal->user_id,
-            'name'        => '💸 Penarikan Saldo Berhasil',
-            'description' => 'Penarikan saldo sebesar Rp' . number_format($withdrawal->amount, 0, ',', '.') . ' telah berhasil diproses.',
-            'is_read'     => false,
-        ]);
+        $targetUserId = $withdrawal->user_id ?? $withdrawal->id_user ?? null;
+        if ($targetUserId) {
+            Notification::create([
+                'user_id'     => $targetUserId,
+                'name'        => '💸 Penarikan Saldo Berhasil',
+                'description' => 'Penarikan saldo sebesar Rp' . number_format($withdrawal->amount, 0, ',', '.') . ' telah berhasil diproses.',
+                'is_read'     => false,
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Penarikan saldo berhasil diproses.');
     }
@@ -1029,12 +1076,15 @@ class AdminController extends Controller
             'processed_at' => now(),
         ]);
 
-        Notification::create([
-            'user_id'     => $withdrawal->user_id,
-            'name'        => '❌ Penarikan Saldo Ditolak',
-            'description' => 'Penarikan saldo ditolak oleh Admin. Catatan: ' . ($request->notes ?? 'Data pencairan tidak sesuai.'),
-            'is_read'     => false,
-        ]);
+        $targetUserId = $withdrawal->user_id ?? $withdrawal->id_user ?? null;
+        if ($targetUserId) {
+            Notification::create([
+                'user_id'     => $targetUserId,
+                'name'        => '❌ Penarikan Saldo Ditolak',
+                'description' => 'Penarikan saldo ditolak oleh Admin. Catatan: ' . ($request->notes ?? 'Data pencairan tidak sesuai.'),
+                'is_read'     => false,
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Penarikan saldo ditolak.');
     }
@@ -1053,10 +1103,6 @@ class AdminController extends Controller
             $q->where('name', 'LIKE', '%Diamond%');
         })->count();
 
-        $goldCount = User::whereHas('membership', function ($q) {
-            $q->where('name', 'LIKE', '%Gold%');
-        })->count();
-
         $silverCount = User::whereHas('membership', function ($q) {
             $q->where('name', 'LIKE', '%Silver%');
         })->count();
@@ -1069,7 +1115,6 @@ class AdminController extends Controller
             'memberships',
             'totalPelangganAktif',
             'diamondCount',
-            'goldCount',
             'silverCount',
             'bronzeCount'
         ));
@@ -1077,6 +1122,53 @@ class AdminController extends Controller
 
     public function storeMembership(Request $request)
     {
+        // 1. Bersihkan format titik ribuan pada harga
+        if ($request->has('price')) {
+            $request->merge(['price' => str_replace('.', '', $request->price)]);
+        }
+
+        // 2. Olah daftar Checkbox Fitur menjadi teks terstruktur
+        $benefitsList = [];
+        
+        if ($request->filled('max_upload')) {
+            $benefitsList[] = 'Maksimal Upload: ' . $request->max_upload . ' karya';
+        }
+
+        if ($request->boolean('feat_max_products') && $request->filled('val_max_products')) {
+            $benefitsList[] = 'Batas Jasa/Barang: ' . $request->val_max_products . ' item';
+        }
+
+        if ($request->boolean('feat_max_ads') && $request->filled('val_max_ads')) {
+            $benefitsList[] = 'Iklan Promosi: ' . $request->val_max_ads . ' slot';
+        }
+
+        if ($request->boolean('feat_verified_badge')) {
+            $benefitsList[] = 'Lencana Kreator Terverifikasi';
+        }
+
+        if ($request->boolean('feat_priority_cs')) {
+            $benefitsList[] = 'Dukungan CS Prioritas 24/7';
+        }
+
+        if ($request->filled('custom_benefit')) {
+            $benefitsList[] = $request->custom_benefit;
+        }
+
+        if ($request->has('custom_features') && is_array($request->custom_features)) {
+            foreach ($request->custom_features as $feat) {
+                if (!empty($feat['name']) && (!isset($feat['checked']) || $feat['checked'] == '1' || $feat['checked'] === true)) {
+                    $featText = trim($feat['name']);
+                    if (!empty($feat['val'])) {
+                        $featText .= ': ' . trim($feat['val']);
+                    }
+                    $benefitsList[] = $featText;
+                }
+            }
+        }
+
+        $benefitText = !empty($benefitsList) ? implode(' | ', array_unique($benefitsList)) : 'Fitur standar keanggotaan';
+        $request->merge(['benefit' => $benefitText]);
+
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
             'price'         => 'required|numeric|min:0',
@@ -1087,13 +1179,60 @@ class AdminController extends Controller
 
         Membership::create($validated);
 
-        return redirect()->back()->with('success', 'Paket membership baru berhasil ditambahkan.');
+        return redirect()->back()->with('success', 'Kartu paket membership baru berhasil ditambahkan.');
     }
 
     public function updateMembership(Request $request, string|int $id)
     {
+        // 1. Bersihkan format titik ribuan pada harga
+        if ($request->has('price')) {
+            $request->merge(['price' => str_replace('.', '', $request->price)]);
+        }
+
+        // 2. Olah daftar Checkbox Fitur menjadi teks terstruktur
+        $benefitsList = [];
+
+        if ($request->filled('max_upload')) {
+            $benefitsList[] = 'Maksimal Upload: ' . $request->max_upload . ' karya';
+        }
+
+        if ($request->boolean('feat_max_products') && $request->filled('val_max_products')) {
+            $benefitsList[] = 'Batas Jasa/Barang: ' . $request->val_max_products . ' item';
+        }
+
+        if ($request->boolean('feat_max_ads') && $request->filled('val_max_ads')) {
+            $benefitsList[] = 'Iklan Promosi: ' . $request->val_max_ads . ' slot';
+        }
+
+        if ($request->boolean('feat_verified_badge')) {
+            $benefitsList[] = 'Lencana Kreator Terverifikasi';
+        }
+
+        if ($request->boolean('feat_priority_cs')) {
+            $benefitsList[] = 'Dukungan CS Prioritas 24/7';
+        }
+
+        if ($request->filled('custom_benefit')) {
+            $benefitsList[] = $request->custom_benefit;
+        }
+
+        if ($request->has('custom_features') && is_array($request->custom_features)) {
+            foreach ($request->custom_features as $feat) {
+                if (!empty($feat['name']) && (!isset($feat['checked']) || $feat['checked'] == '1' || $feat['checked'] === true)) {
+                    $featText = trim($feat['name']);
+                    if (!empty($feat['val'])) {
+                        $featText .= ': ' . trim($feat['val']);
+                    }
+                    $benefitsList[] = $featText;
+                }
+            }
+        }
+
+        $benefitText = !empty($benefitsList) ? implode(' | ', array_unique($benefitsList)) : 'Fitur standar keanggotaan';
+        $request->merge(['benefit' => $benefitText]);
+
         $validated = $request->validate([
-            'name'          => 'required|string',
+            'name'          => 'required|string|max:255',
             'price'         => 'required|numeric|min:0',
             'duration_days' => 'required|integer|min:1',
             'max_upload'    => 'required|integer|min:0',
@@ -1136,7 +1275,13 @@ class AdminController extends Controller
             ->latest()
             ->paginate(10, ['*'], 'page_produk');
 
-        return view('admin.sistem.pelanggaran', compact('reportsUser', 'reportsProduk'));
+        $reportsAppeal = AccountAppeal::with(['user.role', 'reviewer'])
+            ->latest()
+            ->paginate(10, ['*'], 'page_banding');
+
+        $pendingAppealCount = AccountAppeal::where('status', 'pending')->count();
+
+        return view('admin.sistem.pelanggaran', compact('reportsUser', 'reportsProduk', 'reportsAppeal', 'pendingAppealCount'));
     }
 
     public function tindakUserPelanggaran(Request $request, string|int $id)
@@ -1183,6 +1328,61 @@ class AdminController extends Controller
         }
 
         return redirect()->back()->with('success', 'Tindakan laporan produk berhasil diproses.');
+    }
+
+    public function tindakAppeal(Request $request, string|int $id)
+    {
+        $request->validate([
+            'action'      => 'required|string|in:setujui,tolak',
+            'admin_notes' => 'nullable|string|max:500',
+        ]);
+
+        $appeal = AccountAppeal::findOrFail($id);
+        $user = $appeal->user;
+
+        if ($request->action === 'setujui') {
+            $appeal->update([
+                'status'      => 'approved',
+                'admin_note'  => $request->admin_notes ?: 'Banding disetujui. Akun telah diaktifkan kembali.',
+                'reviewed_at' => now(),
+                'reviewed_by' => auth()->id(),
+            ]);
+
+            if ($user) {
+                $user->update([
+                    'status'          => 'active',
+                    'suspended_until' => null,
+                    'suspend_reason'  => null,
+                ]);
+
+                Notification::create([
+                    'user_id'     => $user->id_user,
+                    'name'        => '🎉 Banding Disetujui & Akun Aktif',
+                    'description' => 'Pengajuan banding Anda telah disetujui oleh Admin. Akun Anda telah diaktifkan kembali. ' . ($request->admin_notes ? 'Catatan Admin: ' . $request->admin_notes : ''),
+                    'is_read'     => false,
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Banding disetujui dan akun pengguna "' . ($user->name ?? 'User') . '" berhasil diaktifkan kembali.');
+        } else {
+            $appeal->update([
+                'status'      => 'rejected',
+                'admin_note'  => $request->admin_notes ?: 'Banding ditolak oleh admin.',
+                'reviewed_at' => now(),
+                'reviewed_by' => auth()->id(),
+            ]);
+
+            if ($user) {
+                Notification::create([
+                    'user_id'     => $user->id_user,
+                    'name'        => '❌ Pengajuan Banding Ditolak',
+                    'description' => 'Pengajuan banding akun Anda ditolak oleh Admin. Catatan Admin: ' . ($request->admin_notes ?: 'Alasan pembelaan atau bukti tidak mencukupi.'),
+                    'is_read'     => false,
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Pengajuan banding telah ditolak.');
+        }
     }
 
     /*
