@@ -396,7 +396,7 @@ class AdminController extends Controller
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($qq) use ($search) {
                     $qq->where('name', 'like', "%{$search}%")
-                       ->orWhere('email', 'like', "%{$search}%");
+                        ->orWhere('email', 'like', "%{$search}%");
                 });
             })
             ->latest()
@@ -492,7 +492,6 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'Akun Admin tidak dapat disuspend.');
         }
 
-        // Jika saat ini berstatus 'blocked', aksi ini adalah AKTIFKAN KEMBALI (Unsuspend)
         if ($user->status === 'blocked') {
             $user->status = 'active';
             $user->suspended_until = null;
@@ -509,7 +508,6 @@ class AdminController extends Controller
             return redirect()->back()->with('success', 'Akun pengguna "' . $user->name . '" berhasil diaktifkan kembali.');
         }
 
-        // AKSI SUSPEND DENGAN DURASI WAKTU & ALASAN
         $days = (int) $request->input('suspend_days', 0);
         $hours = (int) $request->input('suspend_hours', 0);
         $minutes = (int) $request->input('suspend_minutes', 0);
@@ -531,7 +529,7 @@ class AdminController extends Controller
             if ($minutes > 0) $parts[] = $minutes . ' Menit';
             $durationText = implode(' ', $parts);
         } else {
-            $user->suspended_until = null; // Permanen
+            $user->suspended_until = null;
             $durationText = 'Permanen (Tanpa batas waktu)';
         }
         $user->save();
@@ -1122,12 +1120,10 @@ class AdminController extends Controller
 
     public function storeMembership(Request $request)
     {
-        // 1. Bersihkan format titik ribuan pada harga
         if ($request->has('price')) {
             $request->merge(['price' => str_replace('.', '', $request->price)]);
         }
 
-        // 2. Olah daftar Checkbox Fitur menjadi teks terstruktur
         $benefitsList = [];
         
         if ($request->filled('max_upload')) {
@@ -1184,12 +1180,10 @@ class AdminController extends Controller
 
     public function updateMembership(Request $request, string|int $id)
     {
-        // 1. Bersihkan format titik ribuan pada harga
         if ($request->has('price')) {
             $request->merge(['price' => str_replace('.', '', $request->price)]);
         }
 
-        // 2. Olah daftar Checkbox Fitur menjadi teks terstruktur
         $benefitsList = [];
 
         if ($request->filled('max_upload')) {
@@ -1260,7 +1254,7 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 11. LAPORAN PELANGGARAN (SISTEM)
+    | 11. LAPORAN PELANGGARAN (SISTEM) & BANDING AKUN
     |--------------------------------------------------------------------------
     */
     public function pelanggaran()
@@ -1268,16 +1262,19 @@ class AdminController extends Controller
         $reportsUser = Report::with(['reporter', 'reportedUser'])
             ->whereNull('product_id')
             ->latest()
-            ->paginate(10, ['*'], 'page_user');
+            ->paginate(10, ['*'], 'page_user')
+            ->withQueryString();
 
         $reportsProduk = Report::with(['reporter', 'product.seller'])
             ->whereNotNull('product_id')
             ->latest()
-            ->paginate(10, ['*'], 'page_produk');
+            ->paginate(10, ['*'], 'page_produk')
+            ->withQueryString();
 
         $reportsAppeal = AccountAppeal::with(['user.role', 'reviewer'])
             ->latest()
-            ->paginate(10, ['*'], 'page_banding');
+            ->paginate(10, ['*'], 'page_banding')
+            ->withQueryString();
 
         $pendingAppealCount = AccountAppeal::where('status', 'pending')->count();
 
@@ -1304,6 +1301,27 @@ class AdminController extends Controller
             User::where('id_user', $report->reported_user_id)->update(['status' => 'blocked']);
         }
 
+        // Kirim Notifikasi Peringatan ke User yang dilaporkan
+        if ($request->action === 'peringatan' && $report->reported_user_id) {
+            Notification::create([
+                'user_id'     => $report->reported_user_id,
+                'name'        => '⚠️ Peringatan Laporan Pelanggaran',
+                'description' => 'Akun Anda menerima peringatan dari Admin: ' . $request->admin_notes,
+                'is_read'     => false,
+            ]);
+        }
+
+        // Kirim Notifikasi Balik ke Pelapor
+        $reporterId = $report->user_id ?? $report->id_user ?? null;
+        if ($reporterId) {
+            Notification::create([
+                'user_id'     => $reporterId,
+                'name'        => 'Status Laporan Anda',
+                'description' => 'Laporan Anda telah ditindaklanjuti Admin. Catatan: ' . $request->admin_notes,
+                'is_read'     => false,
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Tindakan laporan pengguna berhasil diproses.');
     }
 
@@ -1325,6 +1343,28 @@ class AdminController extends Controller
 
         if ($request->action === 'suspend' && $report->product_id) {
             Product::where('id_product', $report->product_id)->update(['status' => 'inactive']);
+        }
+
+        // Kirim Notifikasi ke Pemilik Produk
+        $sellerId = $report->product->user_id ?? $report->product->id_user ?? null;
+        if ($request->action === 'peringatan' && $sellerId) {
+            Notification::create([
+                'user_id'     => $sellerId,
+                'name'        => '⚠️ Peringatan Laporan Jasa/Produk',
+                'description' => 'Jasa/Produk Anda menerima peringatan dari Admin: ' . $request->admin_notes,
+                'is_read'     => false,
+            ]);
+        }
+
+        // Kirim Notifikasi Balik ke Pelapor
+        $reporterId = $report->user_id ?? $report->id_user ?? null;
+        if ($reporterId) {
+            Notification::create([
+                'user_id'     => $reporterId,
+                'name'        => 'Status Laporan Anda',
+                'description' => 'Laporan produk Anda telah ditindaklanjuti Admin. Catatan: ' . $request->admin_notes,
+                'is_read'     => false,
+            ]);
         }
 
         return redirect()->back()->with('success', 'Tindakan laporan produk berhasil diproses.');
@@ -1383,6 +1423,19 @@ class AdminController extends Controller
 
             return redirect()->back()->with('success', 'Pengajuan banding telah ditolak.');
         }
+    }
+
+    public function hapusAppeal(string|int $id)
+    {
+        $appeal = AccountAppeal::findOrFail($id);
+
+        if ($appeal->proof_image && Storage::disk('public')->exists($appeal->proof_image)) {
+            Storage::disk('public')->delete($appeal->proof_image);
+        }
+
+        $appeal->delete();
+
+        return redirect()->back()->with('success', 'Riwayat pengajuan banding berhasil dihapus dari sistem.');
     }
 
     /*

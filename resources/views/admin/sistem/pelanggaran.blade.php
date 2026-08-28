@@ -416,13 +416,24 @@
                                         {{ optional($appeal->created_at)->format('d M Y - H:i') }}
                                     </td>
                                     <td class="py-3.5 px-6 text-center">
-                                        @if($appeal->status === 'pending')
-                                        <button type="button" onclick='openAppealModal(@json($appeal))' class="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5 mx-auto cursor-pointer">
-                                            <i class="fa-solid fa-gavel"></i> Tindak Banding
-                                        </button>
-                                        @else
-                                        <span class="text-[10px] text-slate-400 font-semibold">Telah Diproses</span>
-                                        @endif
+                                        <div class="flex items-center justify-center gap-2">
+                                            @if($appeal->status === 'pending')
+                                            <button type="button" onclick='openAppealModal(@json($appeal))' class="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                                                <i class="fa-solid fa-gavel"></i> Tindak Banding
+                                            </button>
+                                            @else
+                                            <span class="text-[10px] text-slate-400 font-semibold">Telah Dipproses</span>
+                                            @endif
+
+                                            <!-- Tombol Hapus Riwayat Banding dengan SweetAlert2 -->
+                                            <form id="delete-appeal-{{ $appeal->id_appeal }}" action="{{ route('admin.pelanggaran.appeal.delete', $appeal->id_appeal) }}" method="POST">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="button" onclick="confirmDeleteAppeal('delete-appeal-{{ $appeal->id_appeal }}')" class="w-9 h-9 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition border border-red-200 shadow-sm cursor-pointer" title="Hapus Riwayat Banding">
+                                                    <i class="fa-solid fa-trash text-xs"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 @empty
@@ -622,6 +633,24 @@
             const modal = document.getElementById('imagePreviewModal');
             modal.classList.add('opacity-0');
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        // Konfirmasi Hapus Banding dengan SweetAlert2
+        function confirmDeleteAppeal(formId) {
+            Swal.fire({
+                title: 'Hapus Riwayat Banding?',
+                text: "Data riwayat banding ini akan dihapus secara permanen dari sistem!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(formId).submit();
+                }
+            });
         }
 
         @if (session('success'))

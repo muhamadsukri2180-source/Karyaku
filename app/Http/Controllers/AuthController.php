@@ -26,6 +26,16 @@ class AuthController extends Controller
         return view('auth.register');
     }
 
+    // Tampilkan Halaman Khusus Penangguhan (Ban)
+    public function showSuspendedNotice()
+    {
+        if (! session()->has('suspended_info') && ! old('user_id')) {
+            return redirect()->route('auth.login');
+        }
+
+        return view('disband.ban');
+    }
+
     // Proses register
     public function register(Request $request)
     {
@@ -73,7 +83,7 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        // 1. Cek apakah user diblokir / disuspend
+        // Cek apakah user diblokir / disuspend
         if ($user->status === 'blocked') {
             // Jika masa suspend sudah lewat waktu, aktifkan kembali otomatis
             if ($user->suspended_until && $user->suspended_until->isPast()) {
@@ -104,7 +114,7 @@ class AuthController extends Controller
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                return redirect()->route('auth.login')->with('suspended_info', $suspendedInfo);
+                return redirect()->route('suspended.notice')->with('suspended_info', $suspendedInfo);
             }
         }
 
@@ -154,7 +164,24 @@ class AuthController extends Controller
             'status'      => 'pending',
         ]);
 
-        return redirect()->route('auth.login')->with('success_appeal', 'Pengajuan banding Anda berhasil dikirim! Tim Admin akan segera meninjau laporan dan bukti Anda.');
+        $user = User::find($request->user_id);
+        $countdown = $user ? $user->suspend_countdown : ['formatted' => '-'];
+        $appeal = AccountAppeal::where('user_id', $request->user_id)->latest()->first();
+
+        $suspendedInfo = [
+            'user_id'          => $user->id_user ?? $request->user_id,
+            'username'         => $user->name ?? '',
+            'email'            => $user->email ?? '',
+            'reason'           => $user->suspend_reason ?? 'Pelanggaran syarat dan ketentuan komunitas Karyaku',
+            'duration_text'    => $countdown['formatted'],
+            'appeal_status'    => $appeal ? $appeal->status : 'pending',
+            'appeal_date'      => $appeal ? $appeal->created_at->translatedFormat('d M Y H:i') : now()->translatedFormat('d M Y H:i'),
+            'appeal_admin_note'=> $appeal ? $appeal->admin_note : null,
+        ];
+
+        return redirect()->route('suspended.notice')
+            ->with('suspended_info', $suspendedInfo)
+            ->with('success_appeal', 'Pengajuan banding Anda berhasil dikirim! Tim Admin akan segera meninjau laporan dan bukti Anda.');
     }
 
     // Logout
@@ -233,12 +260,12 @@ class AuthController extends Controller
         $roleName = $user->role->role_name ?? null;
 
         return match ($roleName) {
-            'admin'       => redirect()->route('admin.dashboard'),
-            'verifikator' => redirect()->route('verifikator.dashboard'),
-            'penjual'     => redirect()->route('penjual.dashboard'),
-            'pembeli'     => redirect()->route('pembeli.dashboard'),
+            'admin'            => redirect()->route('admin.dashboard'),
+            'verifikator'      => redirect()->route('verifikator.dashboard'),
+            'penjual'          => redirect()->route('penjual.dashboard'),
+            'pembeli'          => redirect()->route('pembeli.dashboard'),
             'customer_service' => redirect()->route('cs.dashboard'),
-            default       => redirect()->route('landing'),
+            default            => redirect()->route('landing'),
         };
     }
 }
