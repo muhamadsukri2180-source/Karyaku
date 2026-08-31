@@ -469,7 +469,7 @@
                     <label class="text-xs font-bold text-slate-700 uppercase tracking-wide">Pilih Aksi</label>
                     <select name="action" id="actionSelect" required class="mt-2 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 focus:outline-none transition-all">
                         <option value="">-- Pilih Tindakan --</option>
-                        <option value="peringatan">Kirim Peringatan</option>
+                        <option value="peringatan">Kirim sebuah Peringatan</option>
                         <option value="suspend">Suspend Akun / Takedown</option>
                         <option value="abaikan">Abaikan Laporan</option>
                     </select>
