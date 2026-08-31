@@ -22,6 +22,7 @@ class Report extends Model
         'description',
         'status',
         'admin_note',
+        'action_taken',
         'reviewed_by',
         'reviewed_at',
     ];
@@ -67,5 +68,13 @@ class Report extends Model
     public function reportedUser()
     {
         return $this->belongsTo(User::class, 'reported_user_id', 'id_user');
+    }
+
+    /**
+     * Relasi ke reviewer (Admin/Verifikator yang meninjau laporan)
+     */
+    public function reviewer()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by', 'id_user');
     }
 }

@@ -13,10 +13,23 @@ class Product extends Model
 
     protected $fillable = [
         'seller_id', 'category_id', 'title', 'description',
-        'price', 'file', 'thumbnail', 'status', 'view_count', 'sold_count'
+        'price', 'stock', 'file', 'thumbnail', 'status', 'rejection_note',
+        'is_promoted', 'promoted_until', 'view_count', 'sold_count'
+    ];
+
+    protected $casts = [
+        'is_promoted'     => 'boolean',
+        'promoted_until'  => 'datetime',
+        'price'           => 'float',
+        'stock'           => 'integer',
     ];
 
     public function seller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'seller_id', 'id_user');
+    }
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'seller_id', 'id_user');
     }
@@ -49,5 +62,20 @@ class Product extends Model
     public function reports(): HasMany
     {
         return $this->hasMany(Report::class, 'product_id', 'id_product');
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class, 'product_id', 'id_product');
+    }
+
+    public function getAvgRatingAttribute(): float
+    {
+        return round($this->reviews()->avg('rating') ?? 5.0, 1);
+    }
+
+    public function getReviewsCountAttribute(): int
+    {
+        return $this->reviews()->count();
     }
 }

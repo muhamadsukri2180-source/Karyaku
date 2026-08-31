@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Masuk - Karyaku</title>
 
     <!-- Tailwind CSS CDN -->
@@ -198,8 +199,12 @@
 
         </div>
 
+<<<<<<< HEAD
 
         {{-- Pesan sukses setelah registrasi --}}
+=======
+        {{-- Pesan sukses --}}
+>>>>>>> 77e27dabdadcbb5f9a6714b2276ef7c0c08ee566
         @if (session('success'))
 
             <div
@@ -215,8 +220,20 @@
 
         @endif
 
+<<<<<<< HEAD
 
         {{-- Pesan error validasi --}}
+=======
+        {{-- Pesan error umum --}}
+        @if (session('error'))
+            <div class="mb-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-[11px] font-medium p-2.5 flex items-center gap-2">
+                <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+                <span>{{ session('error') }}</span>
+            </div>
+        @endif
+
+        {{-- Pesan error validasi (login gagal, dll) --}}
+>>>>>>> 77e27dabdadcbb5f9a6714b2276ef7c0c08ee566
         @if ($errors->any())
 
             <div
@@ -310,6 +327,7 @@
                         </i>
 
                     </div>
+<<<<<<< HEAD
 
 
                     <input
@@ -335,12 +353,21 @@
                             id="eye-icon-login">
                         </i>
 
+=======
+                    <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required
+                        class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-skyPale border border-slate-200 text-xs font-medium focus:bg-white focus:outline-none focus:border-sky focus:ring-2 focus:ring-sky/20 transition-all duration-300">
+
+                    <!-- Icon Mata Toggle Password -->
+                    <button type="button" onclick="togglePassword('password', 'eye-icon-login')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none">
+                        <i class="fa-solid fa-eye text-sm" id="eye-icon-login"></i>
+>>>>>>> 77e27dabdadcbb5f9a6714b2276ef7c0c08ee566
                     </button>
 
                 </div>
 
             </div>
 
+<<<<<<< HEAD
 
             <!-- Lupa Password -->
             <div class="flex justify-end -mt-1">
@@ -390,6 +417,28 @@
                     Daftar di sini
 
                 </a>
+
+            <div class="flex justify-end -mt-1">
+                <a href="{{ route('password.request') }}" class="text-[11px] font-bold text-sky hover:text-skyDeep transition-colors">Lupa password?</a>
+            </div>
+
+            <button type="submit" class="btn-premium group w-full flex items-center justify-center gap-2 mt-3 font-bold shadow-md cursor-pointer">
+                <span>Masuk Sekarang</span>
+                <i class="fa-solid fa-arrow-right text-xs opacity-80 group-hover:translate-x-1 group-hover:opacity-100 transition-all duration-300"></i>
+            </button>
+
+            <!-- Tombol Kembali ke Landing Page -->
+            <div class="text-center mb-2 pt-1">
+                <a href="{{ route('landing') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-sky transition-colors group">
+                    <i class="fa-solid fa-arrow-left text-[11px] group-hover:-translate-x-1 transition-transform"></i>
+                    <span>Kembali ke Landing Page</span>
+                </a>
+            </div>
+        </form>
+
+        <div class="mt-2 pt-5 border-t border-slate-100 text-center">
+            <p class="text-[12px] text-slate-500 font-medium">
+                Belum punya akun? <a href="{{ route('auth.register') }}" class="font-bold text-sky hover:text-skyDeep transition-colors">Daftar di sini</a>
 
             </p>
 

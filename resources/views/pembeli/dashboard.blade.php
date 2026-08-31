@@ -151,14 +151,47 @@
             <a href="{{ route('pembeli.marketplace') }}" class="see-all">Lihat Semua <i class="bi bi-chevron-right"></i></a>
         </div>
         <div class="category-grid">
-            <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-palette"></i></div><span>Desain</span></a>
-            <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-vector-pen"></i></div><span>Logo & Branding</span></a>
-            <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-phone"></i></div><span>UI/UX</span></a>
-            <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-code-slash"></i></div><span>Website</span></a>
-            <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-box"></i></div><span>3D & Blender</span></a>
-            <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-camera-video"></i></div><span>Video</span></a>
-            <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-image"></i></div><span>Ilustrasi</span></a>
-            <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-share"></i></div><span>Social Media</span></a>
+            @php
+                $catIcons = [
+                    'desain' => 'bi-palette',
+                    'logo' => 'bi-vector-pen',
+                    'ui/ux' => 'bi-phone',
+                    'website' => 'bi-code-slash',
+                    'web' => 'bi-code-slash',
+                    '3d' => 'bi-box',
+                    'video' => 'bi-camera-video',
+                    'ilustrasi' => 'bi-image',
+                    'social' => 'bi-share',
+                    'jasa' => 'bi-briefcase',
+                ];
+            @endphp
+            @if(isset($categories) && $categories->count() > 0)
+                @foreach($categories as $cat)
+                    @php
+                        $iconClass = 'bi-grid';
+                        $catNameLower = strtolower($cat->name);
+                        foreach($catIcons as $key => $icon) {
+                            if(str_contains($catNameLower, $key)) {
+                                $iconClass = $icon;
+                                break;
+                            }
+                        }
+                    @endphp
+                    <a href="{{ route('pembeli.marketplace', ['category' => $cat->id_category]) }}" class="category-card">
+                        <div class="category-icon"><i class="bi {{ $cat->icon ?: $iconClass }}"></i></div>
+                        <span>{{ $cat->name }}</span>
+                    </a>
+                @endforeach
+            @else
+                <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-palette"></i></div><span>Desain</span></a>
+                <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-vector-pen"></i></div><span>Logo & Branding</span></a>
+                <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-phone"></i></div><span>UI/UX</span></a>
+                <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-code-slash"></i></div><span>Website</span></a>
+                <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-box"></i></div><span>3D & Blender</span></a>
+                <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-camera-video"></i></div><span>Video</span></a>
+                <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-image"></i></div><span>Ilustrasi</span></a>
+                <a href="{{ route('pembeli.marketplace') }}" class="category-card"><div class="category-icon"><i class="bi bi-share"></i></div><span>Social Media</span></a>
+            @endif
         </div>
     </section>
 

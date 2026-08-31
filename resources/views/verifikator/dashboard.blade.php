@@ -268,7 +268,7 @@
                                             <td class="py-3.5 px-6 text-center">
                                                 <a href="{{ route('verifikator.pendaftaran.show', $registration->id_identity_verification) }}"
                                                    class="inline-flex items-center gap-1 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-[11px] shadow-sm transition-all">
-                                                    <i class="fa-solid fa-[magnifying-glass] text-[10px]"></i> Periksa
+                                                    <i class="fa-solid fa-magnifying-glass text-[10px]"></i> Periksa
                                                 </a>
                                             </td>
                                         </tr>

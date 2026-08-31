@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountAppeal;
 use App\Models\CustomerService;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Report;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -119,19 +121,26 @@ class CsController extends Controller
             ->paginate(10, ['*'], 'page_produk')
             ->withQueryString();
 
+        $reportsAppeal = AccountAppeal::with(['user.role', 'reviewer'])
+            ->latest()
+            ->paginate(10, ['*'], 'page_banding')
+            ->withQueryString();
+
+        $pendingAppealCount = AccountAppeal::where('status', 'pending')->count();
+
         $riwayat = Report::with(['reporter', 'reportedUser', 'product'])
             ->whereIn('status', ['reviewed', 'dismissed'])
             ->latest()
             ->paginate(10, ['*'], 'page_riwayat')
             ->withQueryString();
 
-        return view('cs.laporan', compact('reportsUser', 'reportsProduk', 'riwayat'));
+        return view('cs.laporan', compact('reportsUser', 'reportsProduk', 'reportsAppeal', 'pendingAppealCount', 'riwayat'));
     }
 
     public function tindakLaporan(Request $request, string|int $id)
     {
         $request->validate([
-            'action'      => 'required|string|in:abaikan,teguran,sembunyikan,eskalasi',
+            'action'      => 'required|string|in:abaikan,peringatan,teguran,suspend,sembunyikan,eskalasi',
             'admin_notes' => 'required|string|max:500',
         ]);
 
@@ -150,12 +159,18 @@ class CsController extends Controller
             'reviewed_at' => now(),
         ]);
 
-        if ($request->action === 'sembunyikan' && $report->product_id) {
+        // Jika Suspend Akun Pengguna yang dilaporkan
+        if (in_array($request->action, ['suspend']) && $report->reported_user_id) {
+            User::where('id_user', $report->reported_user_id)->update(['status' => 'blocked']);
+        }
+
+        // Sembunyikan Jasa / Produk
+        if (in_array($request->action, ['sembunyikan', 'suspend']) && $report->product_id) {
             Product::where('id_product', $report->product_id)->update(['status' => 'inactive']);
         }
 
-        // Send Notification to Reported User if Warning
-        if ($request->action === 'teguran') {
+        // Notifikasi ke Pengguna yang Dilaporkan jika Peringatan / Teguran
+        if (in_array($request->action, ['peringatan', 'teguran'])) {
             $targetUserId = $report->reported_user_id ?? ($report->product->user_id ?? $report->product->id_user ?? null);
             if ($targetUserId) {
                 Notification::create([
@@ -167,7 +182,7 @@ class CsController extends Controller
             }
         }
 
-        // Send Notification back to Reporter
+        // Notifikasi balik ke Pelapor
         $reporterId = $report->user_id ?? $report->id_user ?? null;
         if ($reporterId) {
             Notification::create([
@@ -180,12 +195,77 @@ class CsController extends Controller
 
         $message = match ($request->action) {
             'abaikan'     => 'Laporan telah diabaikan.',
-            'teguran'     => 'Peringatan berhasil dikirim ke pengguna.',
-            'sembunyikan' => 'Jasa berhasil disembunyikan dari katalog.',
+            'peringatan', 'teguran' => 'Peringatan berhasil dikirim ke pengguna.',
+            'sembunyikan', 'suspend' => 'Tindakan penangguhan / penyembunyian berhasil diproses.',
             'eskalasi'    => 'Laporan berhasil dieskalasi ke Admin.',
         };
 
         return redirect()->back()->with('success', $message);
+    }
+
+    public function tindakUserLaporan(Request $request, string|int $id)
+    {
+        return $this->tindakLaporan($request, $id);
+    }
+
+    public function tindakProdukLaporan(Request $request, string|int $id)
+    {
+        return $this->tindakLaporan($request, $id);
+    }
+
+    public function tindakAppeal(Request $request, string|int $id)
+    {
+        $request->validate([
+            'action'      => 'required|string|in:setujui,tolak',
+            'admin_notes' => 'nullable|string|max:500',
+        ]);
+
+        $appeal = AccountAppeal::findOrFail($id);
+        $user = $appeal->user;
+
+        if ($request->action === 'setujui') {
+            $appeal->update([
+                'status'      => 'approved',
+                'admin_note'  => $request->admin_notes ?: 'Banding disetujui. Akun telah diaktifkan kembali.',
+                'reviewed_at' => now(),
+                'reviewed_by' => Auth::id(),
+            ]);
+
+            if ($user) {
+                $user->update([
+                    'status'          => 'active',
+                    'suspended_until' => null,
+                    'suspend_reason'  => null,
+                ]);
+
+                Notification::create([
+                    'user_id'     => $user->id_user,
+                    'name'        => '🎉 Banding Disetujui & Akun Aktif',
+                    'description' => 'Pengajuan banding Anda telah disetujui oleh CS. Akun Anda telah diaktifkan kembali. ' . ($request->admin_notes ? 'Catatan CS: ' . $request->admin_notes : ''),
+                    'is_read'     => false,
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Banding disetujui dan akun pengguna "' . ($user->name ?? 'User') . '" berhasil diaktifkan kembali.');
+        } else {
+            $appeal->update([
+                'status'      => 'rejected',
+                'admin_note'  => $request->admin_notes ?: 'Banding ditolak oleh CS.',
+                'reviewed_at' => now(),
+                'reviewed_by' => Auth::id(),
+            ]);
+
+            if ($user) {
+                Notification::create([
+                    'user_id'     => $user->id_user,
+                    'name'        => '❌ Pengajuan Banding Ditolak',
+                    'description' => 'Pengajuan banding akun Anda ditolak oleh CS. Catatan CS: ' . ($request->admin_notes ?: 'Alasan pembelaan atau bukti tidak mencukupi.'),
+                    'is_read'     => false,
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Pengajuan banding telah ditolak.');
+        }
     }
 
     /* ===================== 4. PANTAU TRANSAKSI (READ-ONLY) ===================== */

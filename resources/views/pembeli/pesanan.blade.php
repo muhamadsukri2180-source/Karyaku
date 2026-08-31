@@ -29,6 +29,40 @@
     </div>
 
 
+    {{-- TAB FILTER STATUS --}}
+    <div class="card-box p-2 mb-4">
+        <ul class="nav nav-pills gap-2">
+            <li class="nav-item">
+                <a class="nav-link {{ ($tab ?? 'semua') === 'semua' ? 'active fw-bold' : 'text-secondary' }}" 
+                   href="{{ route('pembeli.pesanan', ['tab' => 'semua']) }}">
+                    <i class="bi bi-collection me-1"></i> Semua
+                    <span class="badge {{ ($tab ?? 'semua') === 'semua' ? 'bg-white text-primary' : 'bg-light text-dark border' }} ms-1">{{ $counts['semua'] ?? 0 }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ ($tab ?? '') === 'diproses' ? 'active fw-bold' : 'text-secondary' }}" 
+                   href="{{ route('pembeli.pesanan', ['tab' => 'diproses']) }}">
+                    <i class="bi bi-hourglass-split me-1"></i> Diproses
+                    <span class="badge {{ ($tab ?? '') === 'diproses' ? 'bg-white text-primary' : 'bg-light text-dark border' }} ms-1">{{ $counts['diproses'] ?? 0 }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ ($tab ?? '') === 'selesai' ? 'active fw-bold' : 'text-secondary' }}" 
+                   href="{{ route('pembeli.pesanan', ['tab' => 'selesai']) }}">
+                    <i class="bi bi-check2-circle me-1"></i> Selesai
+                    <span class="badge {{ ($tab ?? '') === 'selesai' ? 'bg-white text-primary' : 'bg-light text-dark border' }} ms-1">{{ $counts['selesai'] ?? 0 }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ ($tab ?? '') === 'dibatalkan' ? 'active fw-bold' : 'text-secondary' }}" 
+                   href="{{ route('pembeli.pesanan', ['tab' => 'dibatalkan']) }}">
+                    <i class="bi bi-x-circle me-1"></i> Dibatalkan
+                    <span class="badge {{ ($tab ?? '') === 'dibatalkan' ? 'bg-white text-primary' : 'bg-light text-dark border' }} ms-1">{{ $counts['dibatalkan'] ?? 0 }}</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
     {{-- DAFTAR PESANAN --}}
     @forelse ($orders as $order)
 
