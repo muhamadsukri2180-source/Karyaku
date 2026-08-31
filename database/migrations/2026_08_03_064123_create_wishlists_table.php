@@ -11,10 +11,23 @@ return new class extends Migration
         Schema::create('wishlists', function (Blueprint $table) {
             $table->id('id_wishlist');
 
-            $table->foreignId('user_id')->constrained('users', 'id_user')->onDelete('cascade');
-            $table->foreignId('product_id')->constrained('products', 'id_product')->onDelete('cascade');
+            $table->foreignId('user_id')
+                ->constrained('users', 'id_user')
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
+
+            $table->foreignId('product_id')
+                ->constrained('products', 'id_product')
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
 
             $table->timestamps();
+
+            // Mencegah duplikasi produk yang sama di wishlist user
+            $table->unique(['user_id', 'product_id']);
+
+            // Index untuk mempercepat pencarian item wishlist milik user
+            $table->index('user_id');
         });
     }
 

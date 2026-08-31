@@ -14,49 +14,54 @@ return new class extends Migration
         Schema::create('identity_verifications', function (Blueprint $table) {
             $table->id('id_identity_verification');
 
-            // Foreign Key ke tabel users (Primary Key: id_user)
+            // Foreign Key ke tabel users (Satu pengajuan aktif per user)
             $table->foreignId('user_id')
+                ->unique()
                 ->constrained('users', 'id_user')
-                ->onDelete('cascade');
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
 
             // Dokumen Identitas & Biodata
             $table->string('identity_document')->nullable();
-            $table->string('nik', 20)->nullable();
+            $table->string('nik', 20)->nullable()->unique();
             $table->text('address')->nullable();
 
             // Informasi Bank
-            $table->string('bank_name')->nullable();
-            $table->string('account_name')->nullable();
-            $table->string('account_number')->nullable();
+            $table->string('bank_name', 100)->nullable();
+            $table->string('account_name', 150)->nullable();
+            $table->string('account_number', 50)->nullable();
 
-            // Foreign Key ke tabel memberships (Primary Key: id_membership)
-            $table->foreignId('membership_id')->nullable()
+            // Foreign Key ke tabel memberships
+            $table->foreignId('membership_id')
+                ->nullable()
                 ->constrained('memberships', 'id_membership')
-                ->onDelete('set null');
+                ->cascadeOnUpdate()
+                ->nullOnDelete();
 
             // Informasi Pembayaran & Timestamp
             $table->string('payment_proof')->nullable();
-            $table->decimal('payment_amount', 12, 2)->nullable();
+            $table->unsignedDecimal('payment_amount', 12, 2)->nullable();
             $table->timestamp('payment_submitted_at')->nullable();
             $table->timestamp('submitted_at')->nullable();
 
-            // --- TAMBAHAN KOLOM YANG DIBUTUHKAN OLEH CONTROLLER ---
-            
             // Kolom Status (pending, approved, rejected)
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
-            
-            // Kolom verifier_id untuk mencatat admin/verifikator mana yang memproses
-            $table->foreignId('verifier_id')->nullable()
+
+            // Admin/Verifikator yang memproses
+            $table->foreignId('verifier_id')
+                ->nullable()
                 ->constrained('users', 'id_user')
-                ->onDelete('set null');
-                
-            // Kolom untuk mencatat kapan diverifikasi
+                ->cascadeOnUpdate()
+                ->nullOnDelete();
+
+            // Timestamp verifikasi & catatan penolakan
             $table->timestamp('verified_at')->nullable();
-            
-            // Kolom catatan (notes) jika pengajuan ditolak
             $table->text('notes')->nullable();
 
             $table->timestamps();
+
+            // Indexing untuk antrean verifikasi di Dashboard Admin
+            $table->index('status');
         });
     }
 

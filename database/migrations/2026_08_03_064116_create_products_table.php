@@ -11,19 +11,31 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id('id_product');
 
-            $table->foreignId('seller_id')->constrained('users', 'id_user')->onDelete('cascade');
-            $table->foreignId('category_id')->constrained('categories', 'id_category')->onDelete('cascade');
+            $table->foreignId('seller_id')
+                ->constrained('users', 'id_user')
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
 
-            $table->string('title');
+            $table->foreignId('category_id')
+                ->constrained('categories', 'id_category')
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
+
+            $table->string('title', 255);
             $table->text('description')->nullable();
-            $table->decimal('price', 12, 2);
+            $table->unsignedDecimal('price', 12, 2);
             $table->string('file');
             $table->string('thumbnail')->nullable();
-            $table->string('status')->default('pending');
-            $table->integer('view_count')->default(0);
-            $table->integer('sold_count')->default(0);
+            $table->string('status', 20)->default('pending');
+            $table->unsignedInteger('view_count')->default(0);
+            $table->unsignedInteger('sold_count')->default(0);
 
             $table->timestamps();
+
+            // Indexing untuk Performa Query Filtering & Katalog
+            $table->index('status');
+            $table->index(['seller_id', 'status']);
+            $table->index(['category_id', 'status']);
         });
     }
 
