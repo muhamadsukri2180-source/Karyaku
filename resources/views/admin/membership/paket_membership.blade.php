@@ -304,163 +304,314 @@
         </main>
     </div>
 
-    <!-- MODAL 1: TAMBAH PAKET / KARTU -->
-    <div id="addModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0 w-screen h-screen">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300 mx-4 my-6 overflow-hidden max-h-[90vh] flex flex-col" id="addModalContent">
-            
-            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm"><i class="fa-solid fa-plus text-sm"></i></div>
-                    <div>
-                        <h3 class="font-extrabold text-slate-900 text-base font-display">Tambah Kartu Baru</h3>
-                        <p class="text-[10px] font-semibold text-slate-500">Konfigurasi detail & pilihan fitur kartu membership.</p>
+<!-- MODAL 1: TAMBAH PAKET / KARTU -->
+<div id="addModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-all duration-300 opacity-0 w-screen h-screen">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform scale-95 transition-all duration-300 mx-4 my-6 overflow-hidden max-h-[90vh] flex flex-col ring-1 ring-slate-900/5" id="addModalContent">
+
+        <!-- HEADER MODAL -->
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-b from-slate-50/80 to-white">
+            <div class="flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-200/50">
+                    <i class="fa-solid fa-plus text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-slate-900 text-base font-display">Tambah Kartu Baru</h3>
+                    <p class="text-[11px] font-medium text-slate-500 mt-0.5">Konfigurasi detail & pilihan fitur kartu membership.</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeAddModal()" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-500/20">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form id="addForm" method="POST" action="{{ route('admin.memberships.store') }}" class="p-5 space-y-5 overflow-y-auto custom-scrollbar flex-1 bg-white">
+            @csrf
+
+            <!-- DROPDOWN NAMA PAKET -->
+            <div class="relative custom-dropdown" id="dropdown_add_name">
+                <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                    <i class="fa-solid fa-crown text-emerald-500"></i> Nama Paket / Kartu
+                </label>
+                <div class="relative">
+                    <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                        <i class="fa-regular fa-id-card"></i>
+                    </div>
+                    <input type="text" id="add_name" name="name" readonly onclick="toggleDropdown('dropdown_add_name')" placeholder="Pilih Nama Paket" class="w-full border border-slate-200 bg-slate-50/50 hover:bg-white rounded-xl pl-10 pr-10 py-2.5 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white transition-all shadow-sm">
+                    <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                </div>
+                <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100 ring-1 ring-black/5">
+                    <div class="options-list max-h-48 overflow-y-auto">
+                        <!-- Diamond Plan -->
+                        <div class="dropdown-item flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50 cursor-pointer group transition-colors" onclick="selectOption('add_name', 'Diamond Plan')">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-cyan-50 flex items-center justify-center text-cyan-500 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-gem text-[11px]"></i>
+                                </div>
+                                <span class="text-xs font-bold text-slate-700">Diamond Plan</span>
+                            </div>
+                            <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1.5 rounded-md hover:bg-red-50 transition-colors">
+                                <i class="fa-solid fa-xmark text-xs"></i>
+                            </button>
+                        </div>
+                        <!-- Silver Plan -->
+                        <div class="dropdown-item flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50 cursor-pointer group transition-colors" onclick="selectOption('add_name', 'Silver Plan')">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-shield-halved text-[11px]"></i>
+                                </div>
+                                <span class="text-xs font-bold text-slate-700">Silver Plan</span>
+                            </div>
+                            <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1.5 rounded-md hover:bg-red-50 transition-colors">
+                                <i class="fa-solid fa-xmark text-xs"></i>
+                            </button>
+                        </div>
+                        <!-- Bronze Plan -->
+                        <div class="dropdown-item flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50 cursor-pointer group transition-colors" onclick="selectOption('add_name', 'Bronze Plan')">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-award text-[11px]"></i>
+                                </div>
+                                <span class="text-xs font-bold text-slate-700">Bronze Plan</span>
+                            </div>
+                            <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1.5 rounded-md hover:bg-red-50 transition-colors">
+                                <i class="fa-solid fa-xmark text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-2 bg-slate-50 border-t border-slate-100">
+                        <button type="button" onclick="promptAddNewOption('add_name', 'Nama Paket', 'Nama paket...', 'Gold Plan')" class="w-full text-left px-3 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-plus text-[10px]"></i> Tambah Nama Paket Baru...
+                        </button>
                     </div>
                 </div>
-                <button type="button" onclick="closeAddModal()" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
-            <form id="addForm" method="POST" action="{{ route('admin.memberships.store') }}" class="p-5 space-y-4 overflow-y-auto">
-                @csrf
-                
-                <!-- DROPDOWN NAMA PAKET -->
-                <div class="relative custom-dropdown" id="dropdown_add_name">
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Nama Paket / Kartu</label>
-                    <div class="relative mt-1">
-                        <input type="text" id="add_name" name="name" readonly onclick="toggleDropdown('dropdown_add_name')" placeholder="Pilih Nama Paket" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white transition-all">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- DROPDOWN HARGA -->
+                <div class="relative custom-dropdown" id="dropdown_add_price">
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                        <i class="fa-solid fa-tag text-emerald-500"></i> Harga (Rp)
+                    </label>
+                    <div class="relative">
+                        <input type="text" id="add_price" name="price" readonly onclick="toggleDropdown('dropdown_add_price')" placeholder="Pilih Harga" class="w-full border border-slate-200 bg-slate-50/50 hover:bg-white rounded-xl px-4 py-2.5 pr-8 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white transition-all shadow-sm">
                         <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                     </div>
-                    <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+                    <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100 ring-1 ring-black/5">
                         <div class="options-list max-h-36 overflow-y-auto">
-                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_name', 'Diamond Plan')">
-                                <span>Diamond Plan</span>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700 transition-colors" onclick="selectOption('add_price', '150.000', true)">
+                                <span>150.000</span>
                                 <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
                             </div>
-                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_name', 'Silver Plan')">
-                                <span>Silver Plan</span>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700 transition-colors" onclick="selectOption('add_price', '50.000', true)">
+                                <span>50.000</span>
                                 <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
                             </div>
-                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_name', 'Bronze Plan')">
-                                <span>Bronze Plan</span>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700 transition-colors" onclick="selectOption('add_price', '25.000', true)">
+                                <span>25.000</span>
                                 <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                         </div>
-                        <div class="p-1.5 bg-slate-50">
-                            <button type="button" onclick="promptAddNewOption('add_name', 'Nama Paket', 'Nama paket...', 'Gold Plan')" class="w-full text-left px-2.5 py-1.5 text-xs font-bold text-emerald-600 hover:bg-emerald-100/60 rounded-lg transition">+ Tambah Nama Paket Baru...</button>
+                        <div class="p-2 bg-slate-50 border-t border-slate-100">
+                            <button type="button" onclick="promptAddNewOption('add_price', 'Harga', '100.000', '100.000', true)" class="w-full text-left px-3 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-100 rounded-lg transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-plus text-[10px]"></i> Tambah Harga Baru...
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <!-- DROPDOWN HARGA -->
-                    <div class="relative custom-dropdown" id="dropdown_add_price">
-                        <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Harga (Rp)</label>
-                        <div class="relative mt-1">
-                            <input type="text" id="add_price" name="price" readonly onclick="toggleDropdown('dropdown_add_price')" placeholder="Pilih Harga" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 pr-8 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white transition-all">
-                            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                        </div>
-                        <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
-                            <div class="options-list max-h-36 overflow-y-auto">
-                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_price', '150.000', true)">
-                                    <span>150.000</span>
-                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
-                                </div>
-                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_price', '50.000', true)">
-                                    <span>50.000</span>
-                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
-                                </div>
-                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_price', '25.000', true)">
-                                    <span>25.000</span>
-                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
-                                </div>
-                            </div>
-                            <div class="p-1.5 bg-slate-50">
-                                <button type="button" onclick="promptAddNewOption('add_price', 'Harga', '100.000', '100.000', true)" class="w-full text-left px-2 py-1.5 text-xs font-bold text-emerald-600 hover:bg-emerald-100/60 rounded-lg transition">+ Tambah Harga Baru...</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- DROPDOWN DURASI -->
-                    <div class="relative custom-dropdown" id="dropdown_add_duration">
-                        <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Durasi (Hari)</label>
-                        <div class="relative mt-1">
-                            <input type="text" id="add_duration" name="duration_days" readonly onclick="toggleDropdown('dropdown_add_duration')" placeholder="Pilih Durasi" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 pr-8 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white transition-all">
-                            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                        </div>
-                        <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
-                            <div class="options-list max-h-36 overflow-y-auto">
-                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_duration', '30')">
-                                    <span>30 Hari</span>
-                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
-                                </div>
-                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_duration', '60')">
-                                    <span>60 Hari</span>
-                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
-                                </div>
-                                <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_duration', '365')">
-                                    <span>365 Hari</span>
-                                    <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
-                                </div>
-                            </div>
-                            <div class="p-1.5 bg-slate-50">
-                                <button type="button" onclick="promptAddNewOption('add_duration', 'Durasi Hari', '90', '90')" class="w-full text-left px-2 py-1.5 text-xs font-bold text-emerald-600 hover:bg-emerald-100/60 rounded-lg transition">+ Tambah Durasi Hari Baru...</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- DROPDOWN MAKSIMAL UPLOAD UTAMA -->
-                <div class="relative custom-dropdown" id="dropdown_add_max_upload">
-                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Maksimal Upload Karya</label>
-                    <div class="relative mt-1">
-                        <input type="text" id="add_max_upload" name="max_upload" readonly onclick="toggleDropdown('dropdown_add_max_upload')" placeholder="Pilih Limit Upload" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white transition-all">
+                <!-- DROPDOWN DURASI -->
+                <div class="relative custom-dropdown" id="dropdown_add_duration">
+                    <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                        <i class="fa-regular fa-calendar-check text-emerald-500"></i> Durasi (Hari)
+                    </label>
+                    <div class="relative">
+                        <input type="text" id="add_duration" name="duration_days" readonly onclick="toggleDropdown('dropdown_add_duration')" placeholder="Pilih Durasi" class="w-full border border-slate-200 bg-slate-50/50 hover:bg-white rounded-xl px-4 py-2.5 pr-8 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white transition-all shadow-sm">
                         <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                     </div>
-                    <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100">
+                    <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100 ring-1 ring-black/5">
                         <div class="options-list max-h-36 overflow-y-auto">
-                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_max_upload', '999')">
-                                <span>999 (Tanpa Batas)</span>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700 transition-colors" onclick="selectOption('add_duration', '30')">
+                                <span>30 Hari</span>
                                 <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
                             </div>
-                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_max_upload', '50')">
-                                <span>50 Karya</span>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700 transition-colors" onclick="selectOption('add_duration', '60')">
+                                <span>60 Hari</span>
                                 <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
                             </div>
-                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_max_upload', '20')">
-                                <span>20 Karya</span>
-                                <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
-                            </div>
-                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700" onclick="selectOption('add_max_upload', '5')">
-                                <span>5 Karya</span>
+                            <div class="dropdown-item flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700 transition-colors" onclick="selectOption('add_duration', '365')">
+                                <span>365 Hari</span>
                                 <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                         </div>
-                        <div class="p-1.5 bg-slate-50">
-                            <button type="button" onclick="promptAddNewOption('add_max_upload', 'Jumlah Upload', '100', '100')" class="w-full text-left px-2.5 py-1.5 text-xs font-bold text-emerald-600 hover:bg-emerald-100/60 rounded-lg transition">+ Tambah Limit Upload Baru...</button>
+                        <div class="p-2 bg-slate-50 border-t border-slate-100">
+                            <button type="button" onclick="promptAddNewOption('add_duration', 'Durasi Hari', '90', '90')" class="w-full text-left px-3 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-100 rounded-lg transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-plus text-[10px]"></i> Tambah Durasi Baru...
+                            </button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- SECTION CHECKBOX FITUR INTERAKTIF -->
-                <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <label class="text-[11px] font-extrabold text-slate-800 uppercase tracking-wide block">Pilihan Fitur / Benefit Kartu</label>
+            <!-- DROPDOWN MAKSIMAL UPLOAD UTAMA -->
+            <div class="relative custom-dropdown" id="dropdown_add_max_upload">
+                <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1.5">
+                    <i class="fa-solid fa-cloud-arrow-up text-emerald-500"></i> Maksimal Upload Karya
+                </label>
+                <div class="relative">
+                    <input type="text" id="add_max_upload" name="max_upload" readonly onclick="toggleDropdown('dropdown_add_max_upload')" placeholder="Pilih Limit Upload" class="w-full border border-slate-200 bg-slate-50/50 hover:bg-white rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white transition-all shadow-sm">
+                    <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                </div>
+                <div class="dropdown-menu hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-slate-100 ring-1 ring-black/5">
+                    <div class="options-list max-h-36 overflow-y-auto">
+                        <div class="dropdown-item flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700 transition-colors" onclick="selectOption('add_max_upload', '999')">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-infinity text-emerald-500"></i> 999 (Tanpa Batas)</span>
+                            <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="dropdown-item flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700 transition-colors" onclick="selectOption('add_max_upload', '50')">
+                            <span>50 Karya</span>
+                            <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="dropdown-item flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700 transition-colors" onclick="selectOption('add_max_upload', '20')">
+                            <span>20 Karya</span>
+                            <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="dropdown-item flex items-center justify-between px-3.5 py-2.5 hover:bg-emerald-50 cursor-pointer text-xs font-semibold text-slate-700 transition-colors" onclick="selectOption('add_max_upload', '5')">
+                            <span>5 Karya</span>
+                            <button type="button" onclick="event.stopPropagation(); removeDropdownItem(this)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
                     </div>
-                    
-                    <!-- FITUR 1: JUMLAH JASA / BARANG -->
-                    <div class="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                        <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none flex-1">
-                            <input type="checkbox" name="feat_max_products" value="1" onchange="toggleFeatureInput(this, 'add_val_max_products')" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+                    <div class="p-2 bg-slate-50 border-t border-slate-100">
+                        <button type="button" onclick="promptAddNewOption('add_max_upload', 'Jumlah Upload', '100', '100')" class="w-full text-left px-3 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-100 rounded-lg transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-plus text-[10px]"></i> Tambah Limit Upload Baru...
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION CHECKBOX FITUR INTERAKTIF -->
+            <div class="border border-slate-200 rounded-xl p-4.5 bg-slate-50/70 space-y-3.5 shadow-inner">
+                <div class="flex items-center gap-2 mb-1">
+                    <div class="w-6 h-6 rounded-md bg-white border border-slate-200 text-slate-500 flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-list-check text-[10px]"></i>
+                    </div>
+                    <label class="text-[11px] font-extrabold text-slate-800 uppercase tracking-wide block">Pilihan Fitur / Benefit Kartu</label>
+                </div>
+
+                <!-- FITUR 1: JUMLAH JASA / BARANG -->
+                <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-200 transition-colors group">
+                    <label class="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-700 select-none flex-1">
+                        <input type="checkbox" name="feat_max_products" value="1" onchange="toggleFeatureInput(this, 'add_val_max_products')" class="w-4.5 h-4.5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-boxes-stacked text-slate-400 group-hover:text-emerald-500 transition-colors"></i>
                             <span>Batas Jumlah Jasa / Barang</span>
-                        </label>
-                        <div class="w-32 shrink-0">
-                            <input type="number" id="add_val_max_products" name="val_max_products" placeholder="Misal: 50" disabled class="w-full text-xs font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-40 transition">
+                        </div>
+                    </label>
+                    <div class="w-32 shrink-0">
+                        <div class="relative">
+                            <input type="number" id="add_val_max_products" name="val_max_products" placeholder="Misal: 50" disabled class="w-full text-xs font-bold border border-slate-200 rounded-lg px-3 py-2 bg-slate-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm">
                         </div>
                     </div>
+                </div>
+            </div>
 
+            <!-- FOOTER BUTTONS -->
+            <div class="pt-4 mt-2 border-t border-slate-100 flex items-center justify-end gap-3 pb-2">
+                <button type="button" onclick="closeAddModal()" class="px-5 py-2.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+                    Batal
+                </button>
+                <button type="submit" class="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md shadow-emerald-500/20 transition-all active:scale-95 flex items-center gap-2">
+                    <i class="fa-solid fa-floppy-disk text-[10px]"></i> Simpan Kartu
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL 2: CUSTOM PROMPT (Solusi Kemiringan / Skew Issue) -->
+<div id="customPromptModal" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-all duration-300 opacity-0 w-screen h-screen">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[380px] p-7 transform scale-95 transition-transform duration-300 mx-4 flex flex-col items-center border border-slate-100" id="customPromptContent">
+        
+        <h3 id="promptTitle" class="text-xl font-extrabold text-slate-800 mb-2 font-display text-center">Tambah Nama Paket Baru</h3>
+        <p id="promptMessage" class="text-[13px] font-medium text-slate-500 mb-6 text-center">Masukkan nama paket baru (contoh: Gold Plan):</p>
+        
+        <div class="w-full relative mb-6">
+            <input type="text" id="promptInput" placeholder="Nama paket..." autocomplete="off" class="w-full border-2 border-emerald-400 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all text-center placeholder:text-slate-300">
+        </div>
+
+        <div class="flex items-center justify-center gap-3 w-full">
+            <button type="button" id="promptSubmitBtn" class="px-6 py-2.5 text-sm font-bold text-white bg-[#00B87B] hover:bg-emerald-600 rounded-xl shadow-lg shadow-emerald-500/30 transition-all active:scale-95 flex-1">
+                Tambah
+            </button>
+            <button type="button" onclick="closeCustomPrompt()" class="px-6 py-2.5 text-sm font-bold text-white bg-[#64748B] hover:bg-slate-600 rounded-xl shadow-lg shadow-slate-500/30 transition-all active:scale-95 flex-1">
+                Batal
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- JAVASCRIPT UNTUK CUSTOM PROMPT MODAL -->
+<script>
+    // Fungsi memanggil Custom Prompt Modal
+    function promptAddNewOption(inputId, title, placeholder, example, isNumber = false) {
+        const modal = document.getElementById('customPromptModal');
+        const content = document.getElementById('customPromptContent');
+        const titleEl = document.getElementById('promptTitle');
+        const messageEl = document.getElementById('promptMessage');
+        const inputEl = document.getElementById('promptInput');
+        
+        titleEl.innerText = 'Tambah ' + title + ' Baru';
+        messageEl.innerText = 'Masukkan ' + title.toLowerCase() + ' baru (contoh: ' + example + '):';
+        inputEl.placeholder = placeholder;
+        inputEl.value = ''; 
+        inputEl.type = isNumber ? 'number' : 'text';
+
+        // Tampilkan Modal
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+            inputEl.focus();
+        }, 10);
+
+        // Eksekusi klik Tambah
+        const submitBtn = document.getElementById('promptSubmitBtn');
+        submitBtn.onclick = function() {
+            const val = inputEl.value.trim();
+            if (val) {
+                // Panggil fungsi selectOption milik Anda
+                selectOption(inputId, val, isNumber); 
+                closeCustomPrompt();
+            }
+        };
+        
+        // Enter = Submit
+        inputEl.onkeydown = function(e) {
+            if(e.key === 'Enter') {
+                e.preventDefault();
+                submitBtn.click();
+            }
+        };
+    }
+
+    // Fungsi menutup Custom Prompt Modal
+    function closeCustomPrompt() {
+        const modal = document.getElementById('customPromptModal');
+        const content = document.getElementById('customPromptContent');
+        
+        modal.classList.add('opacity-0');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+</script>
                     <!-- FITUR 2: SLOT IKLAN PROMOSI -->
                     <div class="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
                         <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none flex-1">
-                            <input type="checkbox" name="feat_max_ads" value="1" onchange="toggleFeatureInput(this, 'add_val_max_ads')" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+                         y   <input type="checkbox" name="feat_max_ads" value="1" onchange="toggleFeatureInput(this, 'add_val_max_ads')" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
                             <span>Batas Jumlah Iklan Promosi</span>
                         </label>
                         <div class="w-32 shrink-0">
