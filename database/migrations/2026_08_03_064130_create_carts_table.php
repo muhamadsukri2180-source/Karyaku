@@ -11,12 +11,25 @@ return new class extends Migration
         Schema::create('carts', function (Blueprint $table) {
             $table->id('id_cart');
 
-            $table->foreignId('user_id')->constrained('users', 'id_user')->onDelete('cascade');
-            $table->foreignId('product_id')->constrained('products', 'id_product')->onDelete('cascade');
+            $table->foreignId('user_id')
+                ->constrained('users', 'id_user')
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
 
-            $table->integer('quantity')->default(1);
+            $table->foreignId('product_id')
+                ->constrained('products', 'id_product')
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
+
+            $table->unsignedInteger('quantity')->default(1);
 
             $table->timestamps();
+
+            // Mencegah item yang sama masuk dua kali dalam keranjang
+            $table->unique(['user_id', 'product_id']);
+
+            // Index untuk retrieval data keranjang user
+            $table->index('user_id');
         });
     }
 

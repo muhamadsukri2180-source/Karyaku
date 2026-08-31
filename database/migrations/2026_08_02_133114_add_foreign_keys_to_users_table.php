@@ -10,12 +10,14 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->foreign('id_role')
-                ->references('id_role')->on('roles')
+                ->references('id_role')
+                ->on('roles')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
 
             $table->foreign('id_membership')
-                ->references('id_membership')->on('memberships')
+                ->references('id_membership')
+                ->on('memberships')
                 ->cascadeOnUpdate()
                 ->nullOnDelete();
         });

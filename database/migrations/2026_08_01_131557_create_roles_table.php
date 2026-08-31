@@ -9,15 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('roles', function (Blueprint $table) {
-
             $table->id('id_role');
-
-            $table->string('role_name', 100);
-
+            $table->string('role_name', 50)->unique();
             $table->text('description')->nullable();
-
             $table->timestamps();
-
         });
     }
 
