@@ -9,14 +9,10 @@ use Illuminate\Support\Facades\DB;
 
 class CustomerServiceController extends Controller
 {
-    /**
-     * Tampilkan halaman Customer Service dan riwayat tiket di sisi User/Pembeli
-     */
     public function userIndex()
     {
         $userId = Auth::id();
 
-        // 1. Hitung statistik langsung di level database SQL (Hemat RAM)
         $rawStats = CustomerService::where('user_id', $userId)
             ->selectRaw("
                 COUNT(CASE WHEN status = 'selesai' THEN 1 END) as selesai,
@@ -24,14 +20,11 @@ class CustomerServiceController extends Controller
                 COUNT(CASE WHEN status = 'belum' THEN 1 END) as belum
             ")
             ->first();
-
         $stats = [
             'selesai' => $rawStats->selesai ?? 0,
             'proses'  => $rawStats->proses ?? 0,
             'belum'   => $rawStats->belum ?? 0,
         ];
-
-        // 2. Ambil data tiket menggunakan pagination & select kolom spesifik
         $tickets = CustomerService::select('id', 'user_id', 'subject', 'message', 'status', 'admin_note', 'created_at')
             ->where('user_id', $userId)
             ->latest()
@@ -39,10 +32,6 @@ class CustomerServiceController extends Controller
 
         return view('admin.service.dashboard', compact('tickets', 'stats'));
     }
-
-    /**
-     * Proses simpan keluhan / masukan baru dari User/Pembeli
-     */
     public function userStore(Request $request)
     {
         $request->validate([

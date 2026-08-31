@@ -99,7 +99,6 @@
         </div>
     </section>
 
-<<<<<<< HEAD
     {{-- KATEGORI --}}
     <section class="section">
         <div class="section-header">
@@ -173,8 +172,8 @@
                             <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden position-relative hover-shadow" style="transition: transform 0.2s;">
                                 <span class="position-absolute top-0 start-0 badge bg-danger m-2 shadow-sm" style="font-size: 9px; z-index: 2;">IKLAN</span>
                                 <a href="{{ route('pembeli.produk.detail', $promo->id_product) }}" class="text-decoration-none text-dark d-flex flex-column h-100">
-                                    <img src="{{ $promo->thumbnail ? asset('storage/' . $promo->thumbnail) : 'https://placehold.co/200x200?text=Iklan' }}" 
-                                         class="card-img-top object-fit-cover" style="height: 120px;" alt="{{ $promo->title }}">
+                                    <img src="{{ $promo->image_url }}" 
+                                        class="card-img-top object-fit-cover" style="height: 120px;" alt="{{ $promo->title }}">
                                     <div class="card-body p-2 d-flex flex-column justify-content-between flex-grow-1">
                                         <div>
                                             <div class="text-truncate fw-bold small mb-1" title="{{ $promo->title }}">{{ $promo->title }}</div>
@@ -193,9 +192,6 @@
             </div>
         </section>
     @endif
-
-=======
->>>>>>> 65414174ff0f18d950508982acbd1aa874d9686e
     {{-- PRODUK + SIDEBAR --}}
     <section class="section">
         <div class="section-header">

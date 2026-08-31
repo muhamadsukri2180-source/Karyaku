@@ -11,7 +11,6 @@ use App\Models\Product;
 use App\Models\Withdrawal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class PenjualController extends Controller
@@ -21,21 +20,19 @@ class PenjualController extends Controller
     {
         $user = Auth::user()->load('membership', 'role');
         $membership = $user->membership;
-
         $membershipName = $membership->name ?? 'Gratis / Standar';
+        
         $maxProducts = $user->getMaxUploadLimit();
         $totalProduk = Product::where('seller_id', $user->id_user)->count();
         $quotaSisa = max(0, $maxProducts - $totalProduk);
         $batasTercapai = $totalProduk >= $maxProducts;
         $bisaIklan = $user->canUseAds();
         
-        // Fitur Countdown & Expiry
         $isExpired = $user->membership_expires_at ? $user->membership_expires_at->isPast() : false;
         $remainingDays = $user->remainingDays;
         $countdown = $user->membershipCountdown;
-        $showWarning = $user->needsMembershipRenewalWarning(3); // Peringatan aktif jika tersisa <= 3 hari
+        $showWarning = $user->needsMembershipRenewalWarning(3);
 
-        // Otomatis kirim notifikasi jika masuk masa peringatan perpanjangan (agar tidak duplicate dalam sehari)
         if ($showWarning) {
             $today = now()->format('Y-m-d');
             $hasNotifiedToday = Notification::where('user_id', $user->id_user)
@@ -53,16 +50,9 @@ class PenjualController extends Controller
             }
         }
 
-        // Statistik Penjualan
-        $totalPesanan = OrderItem::whereHas('product', function ($q) use ($user) {
-            $q->where('seller_id', $user->id_user);
-        })->count();
-
-        $totalPendapatan = OrderItem::whereHas('product', function ($q) use ($user) {
-            $q->where('seller_id', $user->id_user);
-        })->whereHas('order', function ($q) {
-            $q->where('payment_status', 'paid');
-        })->sum('subtotal');
+        $totalPesanan = OrderItem::whereHas('product', fn($q) => $q->where('seller_id', $user->id_user))->count();
+        $totalPendapatan = OrderItem::whereHas('product', fn($q) => $q->where('seller_id', $user->id_user))
+            ->whereHas('order', fn($q) => $q->where('payment_status', 'paid'))->sum('subtotal');
 
         $statsProduct = Product::where('seller_id', $user->id_user)
             ->selectRaw("
@@ -70,49 +60,20 @@ class PenjualController extends Controller
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as produk_aktif,
                 SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as produk_pending,
                 SUM(CASE WHEN status IN ('rejected', 'inactive', 'blocked') THEN 1 ELSE 0 END) as produk_buked
-            ")
-            ->first();
+            ")->first();
 
         $totalTerjual = (int) ($statsProduct->total_terjual ?? 0);
         $produkAktif = (int) ($statsProduct->produk_aktif ?? 0);
         $produkPending = (int) ($statsProduct->produk_pending ?? 0);
         $produkBuked = (int) ($statsProduct->produk_buked ?? 0);
 
-        $recentProducts = Product::where('seller_id', $user->id_user)
-            ->with('category')
-            ->latest('id_product')
-            ->take(5)
-            ->get();
-
-        $recentOrders = OrderItem::with(['product', 'order.buyer'])
-            ->whereHas('product', function ($q) use ($user) {
-                $q->where('seller_id', $user->id_user);
-            })
-            ->latest('id_order_item')
-            ->take(5)
-            ->get();
+        $recentProducts = Product::where('seller_id', $user->id_user)->with('category')->latest('id_product')->take(5)->get();
+        $recentOrders = OrderItem::with(['product', 'order.buyer'])->whereHas('product', fn($q) => $q->where('seller_id', $user->id_user))->latest('id_order_item')->take(5)->get();
 
         return view('penjual.dashboard', compact(
-            'user',
-            'membership',
-            'membershipName',
-            'maxProducts',
-            'totalProduk',
-            'quotaSisa',
-            'batasTercapai',
-            'bisaIklan',
-            'isExpired',
-            'remainingDays',
-            'countdown',
-            'showWarning',
-            'totalPesanan',
-            'totalPendapatan',
-            'totalTerjual',
-            'produkAktif',
-            'produkPending',
-            'produkBuked',
-            'recentProducts',
-            'recentOrders'
+            'user', 'membership', 'membershipName', 'maxProducts', 'totalProduk', 'quotaSisa', 'batasTercapai', 
+            'bisaIklan', 'isExpired', 'remainingDays', 'countdown', 'showWarning', 'totalPesanan', 'totalPendapatan', 
+            'totalTerjual', 'produkAktif', 'produkPending', 'produkBuked', 'recentProducts', 'recentOrders'
         ));
     }
 
@@ -123,8 +84,7 @@ class PenjualController extends Controller
         $tab = $request->get('tab', 'semua');
         $q = $request->get('q');
 
-        $query = Product::with(['category', 'reviews'])
-            ->where('seller_id', $user->id_user);
+        $query = Product::with(['category', 'reviews'])->where('seller_id', $user->id_user);
 
         if ($q) {
             $query->where('title', 'like', '%' . $q . '%');
@@ -160,11 +120,10 @@ class PenjualController extends Controller
 
         if (!$user->canUploadProduct()) {
             return redirect()->route('penjual.produk.index')
-                ->with('error', 'Kuota upload produk Anda sudah penuh (' . $user->getMaxUploadLimit() . ' produk). Silakan tingkatkan paket membership Anda untuk menambah kuota.');
+                ->with('error', 'Kuota upload produk Anda sudah penuh (' . $user->getMaxUploadLimit() . ' produk). Silakan tingkatkan paket membership Anda.');
         }
 
         $categories = Category::where('status', 'aktif')->orderBy('name')->get();
-
         return view('penjual.produk.create', compact('categories', 'user'));
     }
 
@@ -174,7 +133,7 @@ class PenjualController extends Controller
 
         if (!$user->canUploadProduct()) {
             return redirect()->route('penjual.produk.index')
-                ->with('error', 'Gagal mengunggah. Batas kuota upload produk paket Anda (' . $user->getMaxUploadLimit() . ' produk) telah tercapai. Silakan perpanjang / tingkatkan paket membership Anda.');
+                ->with('error', 'Gagal mengunggah. Batas kuota upload produk paket Anda telah tercapai.');
         }
 
         $validated = $request->validate([
@@ -184,38 +143,14 @@ class PenjualController extends Controller
             'stock'       => 'required|integer|min:1',
             'description' => 'required|string',
             'thumbnail'   => 'required|image|mimes:jpeg,png,jpg,webp|max:4096',
-<<<<<<< HEAD
             'images'      => 'nullable|array|max:5',
             'images.*'    => 'image|mimes:jpeg,png,jpg,webp|max:4096',
-            'video'       => 'nullable|file|mimes:mp4,webm,ogg,mov,avi|max:51200', // max 50MB opsional
-            'file'        => 'required|file|max:51200', // max 50MB
-=======
+            'video'       => 'nullable|file|mimes:mp4,webm,ogg,mov,avi|max:51200',
             'file'        => 'required|file|max:51200',
->>>>>>> 65414174ff0f18d950508982acbd1aa874d9686e
-        ], [
-            'title.required'       => 'Nama produk wajib diisi.',
-            'category_id.required' => 'Pilih kategori produk.',
-            'price.required'       => 'Harga produk wajib diisi (minimal Rp 1.000).',
-            'stock.required'       => 'Jumlah stok produk wajib diisi.',
-            'description.required' => 'Deskripsi produk wajib diisi.',
-            'thumbnail.required'   => 'Unggah foto/gambar sampul produk utama.',
-            'images.max'           => 'Foto pendukung maksimal 5 foto.',
-            'video.max'            => 'Ukuran berkas video maksimal 50MB.',
-            'video.mimes'          => 'Format berkas video harus MP4, WEBM, OGG, MOV, atau AVI.',
-            'file.required'        => 'Unggah berkas digital produk untuk pembeli.',
         ]);
 
-<<<<<<< HEAD
-        // Upload Sampul Utama (Thumbnail)
-=======
->>>>>>> 65414174ff0f18d950508982acbd1aa874d9686e
-        $thumbPath = null;
-        if ($request->hasFile('thumbnail')) {
-            $thumbPath = $request->file('thumbnail')->store('products/thumbnails', 'public');
-        }
-
-<<<<<<< HEAD
-        // Upload Gallery Photos (hingga 5 foto total)
+        $thumbPath = $request->hasFile('thumbnail') ? $request->file('thumbnail')->store('products/thumbnails', 'public') : null;
+        
         $galleryPaths = [];
         if ($thumbPath) {
             $galleryPaths[] = $thumbPath;
@@ -228,36 +163,25 @@ class PenjualController extends Controller
             }
         }
 
-        // Upload Video (Opsional 1 video)
-        $videoPath = null;
-        if ($request->hasFile('video')) {
-            $videoPath = $request->file('video')->store('products/videos', 'public');
-        }
-
-        // Upload Berkas Produk
-=======
->>>>>>> 65414174ff0f18d950508982acbd1aa874d9686e
-        $filePath = null;
-        if ($request->hasFile('file')) {
-            $filePath = $request->file('file')->store('products/files', 'public');
-        }
+        $videoPath = $request->hasFile('video') ? $request->file('video')->store('products/videos', 'public') : null;
+        $filePath = $request->hasFile('file') ? $request->file('file')->store('products/files', 'public') : null;
 
         Product::create([
-            'seller_id'       => $user->id_user,
-            'category_id'     => $validated['category_id'],
-            'title'           => $validated['title'],
-            'description'     => $validated['description'],
-            'price'           => $validated['price'],
-            'stock'           => $validated['stock'],
-            'thumbnail'       => $thumbPath,
-            'images'          => $galleryPaths,
-            'video'           => $videoPath,
-            'file'            => $filePath,
-            'status'          => 'pending',
-            'rejection_note'  => null,
-            'is_promoted'     => false,
-            'view_count'      => 0,
-            'sold_count'      => 0,
+            'seller_id'      => $user->id_user,
+            'category_id'    => $validated['category_id'],
+            'title'          => $validated['title'],
+            'description'    => $validated['description'],
+            'price'          => $validated['price'],
+            'stock'          => $validated['stock'],
+            'thumbnail'      => $thumbPath,
+            'images'         => $galleryPaths,
+            'video'          => $videoPath,
+            'file'           => $filePath,
+            'status'         => 'pending',
+            'rejection_note' => null,
+            'is_promoted'    => false,
+            'view_count'     => 0,
+            'sold_count'     => 0,
         ]);
 
         return redirect()->route('penjual.produk.index')
@@ -325,21 +249,14 @@ class PenjualController extends Controller
             $product->file = $request->file('file')->store('products/files', 'public');
         }
 
-        $product->title = $validated['title'];
-        $product->category_id = $validated['category_id'];
-        $product->price = $validated['price'];
-        $product->stock = $validated['stock'];
-        $product->description = $validated['description'];
-
+        $product->fill($validated);
         if (in_array($product->status, ['rejected', 'inactive', 'blocked'])) {
             $product->status = 'pending';
             $product->rejection_note = null;
         }
-
         $product->save();
 
-        return redirect()->route('penjual.produk.index')
-            ->with('success', 'Data produk berhasil diperbarui.');
+        return redirect()->route('penjual.produk.index')->with('success', 'Data produk berhasil diperbarui.');
     }
 
     // ================= 5. HAPUS PRODUK =================
@@ -355,9 +272,7 @@ class PenjualController extends Controller
         }
 
         $product->delete();
-
-        return redirect()->route('penjual.produk.index')
-            ->with('success', 'Produk berhasil dihapus.');
+        return redirect()->route('penjual.produk.index')->with('success', 'Produk berhasil dihapus.');
     }
 
     // ================= 6. FITUR IKLAN & PROMOSI PRODUK =================
@@ -365,16 +280,8 @@ class PenjualController extends Controller
     {
         $user = Auth::user();
         $bisaIklan = $user->canUseAds();
-
-        $activeProducts = Product::where('seller_id', $user->id_user)
-            ->where('status', 'active')
-            ->orderBy('title')
-            ->get();
-
-        $promotedProducts = Product::where('seller_id', $user->id_user)
-            ->where('is_promoted', true)
-            ->latest('promoted_until')
-            ->get();
+        $activeProducts = Product::where('seller_id', $user->id_user)->where('status', 'active')->orderBy('title')->get();
+        $promotedProducts = Product::where('seller_id', $user->id_user)->where('is_promoted', true)->latest('promoted_until')->get();
 
         return view('penjual.iklan.index', compact('user', 'bisaIklan', 'activeProducts', 'promotedProducts'));
     }
@@ -382,21 +289,19 @@ class PenjualController extends Controller
     public function iklanStore(Request $request, $id)
     {
         $user = Auth::user();
-
         if (!$user->canUseAds()) {
-            return redirect()->route('penjual.membership.index')
-                ->with('error', 'Fitur pasang iklan hanya tersedia untuk paket membership Gold & Diamond. Silakan tingkatkan paket Anda.');
+            return redirect()->route('penjual.membership.index')->with('error', 'Fitur pasang iklan hanya tersedia untuk paket Gold & Diamond.');
         }
 
         $product = Product::where('seller_id', $user->id_user)->findOrFail($id);
-
         if ($product->status !== 'active') {
-            return back()->with('error', 'Hanya produk yang sudah berstatus aktif/disetujui yang dapat diiklankan.');
+            return back()->with('error', 'Hanya produk berstatus aktif yang dapat diiklankan.');
         }
 
-        $product->is_promoted = true;
-        $product->promoted_until = now()->addDays(7);
-        $product->save();
+        $product->update([
+            'is_promoted' => true,
+            'promoted_until' => now()->addDays(7)
+        ]);
 
         return back()->with('success', 'Iklan produk "' . $product->title . '" berhasil diaktifkan selama 7 hari!');
     }
@@ -404,9 +309,10 @@ class PenjualController extends Controller
     public function iklanCancel($id)
     {
         $product = Product::where('seller_id', Auth::id())->findOrFail($id);
-        $product->is_promoted = false;
-        $product->promoted_until = null;
-        $product->save();
+        $product->update([
+            'is_promoted' => false,
+            'promoted_until' => null
+        ]);
 
         return back()->with('success', 'Promosi iklan untuk produk ini telah dinonaktifkan.');
     }
@@ -416,7 +322,6 @@ class PenjualController extends Controller
     {
         $user = Auth::user()->load('membership');
         $memberships = Membership::orderBy('price', 'asc')->get();
-
         $currentMembership = $user->membership;
         $maxUpload = $user->getMaxUploadLimit();
         $totalUploaded = Product::where('seller_id', $user->id_user)->count();
@@ -434,31 +339,25 @@ class PenjualController extends Controller
     {
         $membership = Membership::findOrFail($id);
         $user = Auth::user();
-
-        // Logika Akumulasi Durasi / Perpanjang Membership
         $durationDays = $membership->duration_days ?? 30;
 
-        // Jika membership aktif dan belum kedaluwarsa, tambahkan harinya dari tanggal kadaluwarsa saat ini
-        if ($user->membership_expires_at && $user->membership_expires_at->isFuture()) {
-            $newExpiresAt = $user->membership_expires_at->copy()->addDays($durationDays);
-        } else {
-            // Jika baru beli / sudah expired, hitung mulai dari sekarang
-            $newExpiresAt = now()->addDays($durationDays);
-        }
+        $newExpiresAt = ($user->membership_expires_at && $user->membership_expires_at->isFuture()) 
+            ? $user->membership_expires_at->copy()->addDays($durationDays) 
+            : now()->addDays($durationDays);
 
-        $user->id_membership = $membership->id_membership;
-        $user->membership_expires_at = $newExpiresAt;
-        $user->save();
+        $user->update([
+            'id_membership' => $membership->id_membership,
+            'membership_expires_at' => $newExpiresAt
+        ]);
 
         Notification::create([
             'user_id'     => $user->id_user,
             'name'        => '💎 Paket Membership Aktif',
-            'description' => 'Paket ' . $membership->name . ' Anda telah aktif hingga ' . $user->membership_expires_at->translatedFormat('d F Y H:i') . '. Kuota upload: ' . $membership->max_upload . ' produk.',
+            'description' => 'Paket ' . $membership->name . ' Anda telah aktif hingga ' . $user->membership_expires_at->translatedFormat('d F Y H:i') . '.',
             'is_read'     => false,
         ]);
 
-        return redirect()->route('penjual.membership.index')
-            ->with('success', 'Selamat! Paket membership ' . $membership->name . ' berhasil diaktifkan/diperpanjang.');
+        return redirect()->route('penjual.membership.index')->with('success', 'Paket membership berhasil diaktifkan/diperpanjang.');
     }
 
     // ================= 8. PESANAN MASUK (PENJUALAN) =================
@@ -467,19 +366,12 @@ class PenjualController extends Controller
         $user = Auth::user();
         $tab = $request->get('tab', 'semua');
 
-        $query = OrderItem::with(['product', 'order.buyer'])
-            ->whereHas('product', function ($q) use ($user) {
-                $q->where('seller_id', $user->id_user);
-            });
+        $query = OrderItem::with(['product', 'order.buyer'])->whereHas('product', fn($q) => $q->where('seller_id', $user->id_user));
 
         if ($tab === 'diproses') {
-            $query->whereHas('order', function ($q) {
-                $q->whereIn('status', ['diproses', 'pending']);
-            });
+            $query->whereHas('order', fn($q) => $q->whereIn('status', ['diproses', 'pending']));
         } elseif ($tab === 'selesai') {
-            $query->whereHas('order', function ($q) {
-                $q->where('status', 'selesai');
-            });
+            $query->whereHas('order', fn($q) => $q->where('status', 'selesai'));
         }
 
         $orderItems = $query->latest('id_order_item')->paginate(10)->withQueryString();
@@ -498,9 +390,7 @@ class PenjualController extends Controller
     public function pesananDetail($id)
     {
         $orderItem = OrderItem::with(['product.category', 'order.buyer'])
-            ->whereHas('product', function ($q) {
-                $q->where('seller_id', Auth::id());
-            })
+            ->whereHas('product', fn($q) => $q->where('seller_id', Auth::id()))
             ->findOrFail($id);
 
         return view('penjual.pesanan.detail', compact('orderItem'));
@@ -508,86 +398,58 @@ class PenjualController extends Controller
 
     public function pesananKonfirmasi($id)
     {
-        $user = Auth::user();
-
         $orderItem = OrderItem::with(['product', 'order'])
-            ->whereHas('product', function ($q) use ($user) {
-                $q->where('seller_id', $user->id_user);
-            })
+            ->whereHas('product', fn($q) => $q->where('seller_id', Auth::id()))
             ->findOrFail($id);
 
-        $order = $orderItem->order;
+        if ($order = $orderItem->order) {
+            $order->update([
+                'payment_status' => 'paid',
+                'status' => 'selesai'
+            ]);
 
-        if ($order) {
-            $order->payment_status = 'paid';
-            $order->status = 'selesai';
-            $order->save();
-
-            // Kirim notifikasi ke pembeli
             Notification::create([
                 'user_id'     => $order->buyer_id,
                 'name'        => '✅ Pesanan Dikonfirmasi Penjual',
-                'description' => 'Pesanan #' . $order->id_order . ' (' . ($orderItem->product->title ?? 'Produk Digital') . ') telah dikonfirmasi oleh penjual. Anda kini dapat mengunduh berkasnya!',
+                'description' => 'Pesanan #' . $order->id_order . ' telah dikonfirmasi oleh penjual. Anda kini dapat mengunduh berkasnya!',
                 'is_read'     => false,
             ]);
         }
 
-        return back()->with('success', 'Pesanan pembelian berhasil dikonfirmasi! Status pesanan kini Lunas & Selesai. Pembeli dapat langsung mengunduh berkas digital karya Anda.');
+        return back()->with('success', 'Pesanan pembelian berhasil dikonfirmasi dan selesai.');
     }
 
     // ================= 9. KEUANGAN & PENARIKAN SALDO =================
     public function keuanganIndex()
     {
         $user = Auth::user();
-
         $totalPendapatan = OrderItem::whereHas('product', fn($q) => $q->where('seller_id', $user->id_user))
-            ->whereHas('order', fn($q) => $q->where('payment_status', 'paid'))
-            ->sum('subtotal');
+            ->whereHas('order', fn($q) => $q->where('payment_status', 'paid'))->sum('subtotal');
 
-        $totalDitarik = Withdrawal::where('user_id', $user->id_user)
-            ->whereIn('status', ['completed', 'pending'])
-            ->sum('amount');
-
+        $totalDitarik = Withdrawal::where('user_id', $user->id_user)->whereIn('status', ['completed', 'pending'])->sum('amount');
         $saldoTersedia = max(0, $totalPendapatan - $totalDitarik);
+        $withdrawals = Withdrawal::where('user_id', $user->id_user)->latest('id_withdrawal')->paginate(10);
 
-        $withdrawals = Withdrawal::where('user_id', $user->id_user)
-            ->latest('id_withdrawal')
-            ->paginate(10);
-
-        return view('penjual.keuangan.index', compact(
-            'totalPendapatan', 'totalDitarik', 'saldoTersedia', 'withdrawals'
-        ));
+        return view('penjual.keuangan.index', compact('totalPendapatan', 'totalDitarik', 'saldoTersedia', 'withdrawals'));
     }
 
     public function penarikanStore(Request $request)
     {
         $user = Auth::user();
-
         $validated = $request->validate([
             'bank_name'           => 'required|string|max:100',
             'bank_account_number' => 'required|string|max:50',
             'bank_account_name'   => 'required|string|max:100',
             'amount'              => 'required|numeric|min:20000',
-        ], [
-            'bank_name.required'           => 'Nama bank/e-wallet wajib dipilih/diisi.',
-            'bank_account_number.required' => 'Nomor rekening wajib diisi.',
-            'bank_account_name.required'   => 'Nama pemilik rekening wajib diisi.',
-            'amount.required'              => 'Nominal penarikan wajib diisi.',
-            'amount.min'                   => 'Minimal penarikan saldo adalah Rp 20.000.',
         ]);
 
         $totalPendapatan = OrderItem::whereHas('product', fn($q) => $q->where('seller_id', $user->id_user))
-            ->whereHas('order', fn($q) => $q->where('payment_status', 'paid'))
-            ->sum('subtotal');
-
-        $totalDitarik = Withdrawal::where('user_id', $user->id_user)
-            ->whereIn('status', ['completed', 'pending'])
-            ->sum('amount');
-
+            ->whereHas('order', fn($q) => $q->where('payment_status', 'paid'))->sum('subtotal');
+        $totalDitarik = Withdrawal::where('user_id', $user->id_user)->whereIn('status', ['completed', 'pending'])->sum('amount');
         $saldoTersedia = max(0, $totalPendapatan - $totalDitarik);
 
         if ($validated['amount'] > $saldoTersedia) {
-            return back()->with('error', 'Saldo tidak mencukupi untuk melakukan penarikan sebesar Rp ' . number_format($validated['amount'], 0, ',', '.') . '. Saldo tersedia: Rp ' . number_format($saldoTersedia, 0, ',', '.'));
+            return back()->with('error', 'Saldo tidak mencukupi untuk melakukan penarikan.');
         }
 
         Withdrawal::create([
@@ -600,10 +462,6 @@ class PenjualController extends Controller
             'notes'               => 'Pengajuan penarikan dana oleh penjual',
         ]);
 
-        return back()->with('success', 'Permintaan penarikan saldo sebesar Rp ' . number_format($validated['amount'], 0, ',', '.') . ' berhasil diajukan dan sedang menunggu proses transfer oleh Admin.');
+        return back()->with('success', 'Permintaan penarikan saldo berhasil diajukan.');
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 65414174ff0f18d950508982acbd1aa874d9686e

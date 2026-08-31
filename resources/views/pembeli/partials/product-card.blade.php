@@ -8,7 +8,7 @@
             <i class="bi {{ $isWish ? 'bi-heart-fill' : 'bi-heart' }}"></i>
         </button>
         <a href="{{ route('pembeli.produk.detail', $product->id_product) }}">
-            <img src="{{ $product->thumbnail ? asset('storage/' . $product->thumbnail) : 'https://ui-avatars.com/api/?background=dbeafe&color=1e3a8a&size=256&name=' . urlencode($product->title) }}" alt="{{ $product->title }}">
+            <img src="{{ $product->image_url }}" alt="{{ $product->title }}">
         </a>
     </div>
     <div class="product-body">

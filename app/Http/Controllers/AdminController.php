@@ -814,12 +814,10 @@ class AdminController extends Controller
             'Failed Jobs' => fn() => Schema::hasTable('failed_jobs') ? DB::table('failed_jobs')->delete() : null,
             'Notif Lama' => fn() => Notification::where('created_at', '<', now()->subMonth())->delete()
         ];
-
         foreach ($tasks as $name => $task) {
             try { $task(); $res[] = "$name: bersih"; } 
             catch (\Throwable $e) { if ($name !== 'Event') $res[] = "$name: gagal"; }
         }
-
         $this->sendNotif(null, '🧹 Cache Dibersihkan', 'Admin membersihkan cache aplikasi.');
         return back()->with('success', 'Clear Cache berhasil! ' . implode(' • ', $res));
     }

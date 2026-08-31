@@ -25,6 +25,29 @@ class Product extends Model
         'images'          => 'array',
     ];
 
+    public function getImageUrlAttribute(): string
+    {
+        if (!$this->thumbnail) {
+            return 'https://ui-avatars.com/api/?background=dbeafe&color=1e3a8a&size=256&name=' . urlencode($this->title ?? 'Karyaku');
+        }
+        if (str_starts_with($this->thumbnail, 'http://') || str_starts_with($this->thumbnail, 'https://')) {
+            return $this->thumbnail;
+        }
+        $path = ltrim($this->thumbnail, '/');
+        if (str_starts_with($path, 'public/')) {
+            $path = preg_replace('/^public\//', '', $path);
+        }
+        if (str_starts_with($path, 'storage/')) {
+            return asset($path);
+        }
+        return asset('storage/' . $path);
+    }
+
+    public function getThumbnailUrlAttribute(): string
+    {
+        return $this->image_url;
+    }
+
     public function getImagesListAttribute(): array
     {
         $list = [];
