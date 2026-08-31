@@ -204,7 +204,7 @@
                 @endif
 
                 <!-- SUMMARY CARDS -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                     <div class="bg-gradient-to-br from-indigo-50 via-white to-blue-100/60 border-l-4 border-indigo-500 border-y border-r border-indigo-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-sm">
                         <div class="flex justify-between items-start mb-2 relative z-10">
                             <div><span class="text-[11px] font-bold text-indigo-900 uppercase tracking-wider">Total Verifikator</span><div class="text-3xl font-black text-slate-900 mt-1">{{ $totalVerifikator }} Staf</div></div>
@@ -227,14 +227,6 @@
                             <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/30"><i class="fa-solid fa-circle-check text-lg"></i></div>
                         </div>
                         <p class="text-[10px] text-slate-600 font-medium border-t border-emerald-200/50 pt-2 mt-2">Akurat dan cepat</p>
-                    </div>
-
-                    <div class="bg-gradient-to-br from-blue-50 via-white to-blue-100/60 border-l-4 border-blue-500 border-y border-r border-blue-200 p-5 rounded-2xl card-hover relative overflow-hidden group shadow-sm">
-                        <div class="flex justify-between items-start mb-2 relative z-10">
-                            <div><span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Akurasi Sistem</span><div class="text-3xl font-black text-slate-900 mt-1">{{ $akurasiSistem }}%</div></div>
-                            <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/30"><i class="fa-solid fa-chart-line text-lg"></i></div>
-                        </div>
-                        <p class="text-[10px] text-slate-600 font-medium border-t border-blue-200/50 pt-2 mt-2">Kinerja verifikator</p>
                     </div>
                 </div>
 

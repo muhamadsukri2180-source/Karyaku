@@ -9,9 +9,9 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
-use App\Models\Role;
 use App\Models\Wishlist;
 use App\Models\Review;
+use App\Models\IdentityVerification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,32 +19,91 @@ use Illuminate\Support\Facades\Storage;
 
 class PembeliController extends Controller
 {
-    // ================= DASHBOARD =================
+    // =========================================================
+    // DASHBOARD
+    // =========================================================
     public function dashboard()
     {
         $userId = Auth::id();
 
-        $totalPesanan    = Order::where('buyer_id', $userId)->count();
-        $totalSelesai    = Order::where('buyer_id', $userId)->where('status', 'selesai')->count();
-        $totalBelumBayar = Order::where('buyer_id', $userId)->where('payment_status', 'unpaid')->where('status', '!=', 'dibatalkan')->count();
-        $totalBelanja    = Order::where('buyer_id', $userId)->where('payment_status', 'paid')->sum('total_price');
-        $totalWishlist   = Wishlist::where('user_id', $userId)->count();
-        $totalKeranjang  = Cart::where('user_id', $userId)->count();
+        /*
+        |--------------------------------------------------------------------------
+        | STATISTIK
+        |--------------------------------------------------------------------------
+        | Semua statistik dihitung langsung oleh database.
+        | Tidak mengambil seluruh data Order/Wishlist/Cart ke RAM.
+        */
 
-        $recentOrders = Order::with('items.product')
+        $rawStats = Order::where('buyer_id', $userId)
+            ->selectRaw("
+                COUNT(*) as total_pesanan,
+                SUM(CASE WHEN status = 'selesai' THEN 1 ELSE 0 END) as total_selesai,
+                SUM(
+                    CASE
+                        WHEN payment_status = 'unpaid'
+                        AND status != 'dibatalkan'
+                        THEN 1
+                        ELSE 0
+                    END
+                ) as total_belum_bayar,
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN payment_status = 'paid'
+                            THEN total_price
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) as total_belanja
+            ")
+            ->first();
+
+        $totalPesanan = (int) ($rawStats->total_pesanan ?? 0);
+        $totalSelesai = (int) ($rawStats->total_selesai ?? 0);
+        $totalBelumBayar = (int) ($rawStats->total_belum_bayar ?? 0);
+        $totalBelanja = (float) ($rawStats->total_belanja ?? 0);
+
+        $totalWishlist = Wishlist::where('user_id', $userId)->count();
+
+        $totalKeranjang = Cart::where('user_id', $userId)->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | PESANAN TERBARU
+        |--------------------------------------------------------------------------
+        */
+
+        $recentOrders = Order::with([
+            'items.product'
+        ])
             ->where('buyer_id', $userId)
             ->latest('id_order')
             ->take(5)
             ->get();
 
+<<<<<<< HEAD
         $rekomendasi = Product::with(['category', 'seller'])
             ->withAvg('reviews', 'rating')
+=======
+        /*
+        |--------------------------------------------------------------------------
+        | REKOMENDASI PRODUK
+        |--------------------------------------------------------------------------
+        */
+
+        $rekomendasi = Product::with([
+            'category',
+            'seller'
+        ])
+>>>>>>> 7bd4a8b304248ff44c5ac394ac1acf83d9ed37d8
             ->withCount('reviews')
             ->where('status', 'active')
             ->orderByDesc('sold_count')
             ->take(8)
             ->get();
 
+<<<<<<< HEAD
         $promotedProducts = Product::with(['category', 'seller'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
@@ -64,402 +123,1186 @@ class PembeliController extends Controller
             'totalPesanan', 'totalSelesai', 'totalBelumBayar', 'totalBelanja', 
             'totalWishlist', 'totalKeranjang', 'recentOrders', 'rekomendasi', 'promotedProducts', 'categories', 'wishlistIds'
         ));
+=======
+        /*
+        |--------------------------------------------------------------------------
+        | KATEGORI
+        |--------------------------------------------------------------------------
+        */
+
+        $categories = Category::where('status', 'aktif')
+            ->orderBy('name')
+            ->take(8)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | WISHLIST USER
+        |--------------------------------------------------------------------------
+        */
+
+        $wishlistIds = Wishlist::where('user_id', $userId)
+            ->pluck('product_id')
+            ->toArray();
+
+        return view(
+            'pembeli.dashboard',
+            compact(
+                'totalPesanan',
+                'totalSelesai',
+                'totalBelumBayar',
+                'totalBelanja',
+                'totalWishlist',
+                'totalKeranjang',
+                'recentOrders',
+                'rekomendasi',
+                'categories',
+                'wishlistIds'
+            )
+        );
+>>>>>>> 7bd4a8b304248ff44c5ac394ac1acf83d9ed37d8
     }
 
-    // ================= MARKETPLACE =================
+
+    // =========================================================
+    // MARKETPLACE
+    // =========================================================
     public function marketplace(Request $request)
     {
+<<<<<<< HEAD
         $query = Product::with(['category', 'seller'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
             ->where('status', 'active');
+=======
+        $userId = Auth::id();
+
+        $query = Product::with([
+            'category',
+            'seller'
+        ])
+            ->where('status', 'active');
+
+        /*
+        |--------------------------------------------------------------------------
+        | SEARCH
+        |--------------------------------------------------------------------------
+        */
+>>>>>>> 7bd4a8b304248ff44c5ac394ac1acf83d9ed37d8
 
         if ($request->filled('q')) {
-            $query->where('title', 'like', '%' . $request->q . '%');
+
+            $search = trim($request->q);
+
+            $query->where(
+                'title',
+                'like',
+                '%' . $search . '%'
+            );
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FILTER KATEGORI
+        |--------------------------------------------------------------------------
+        */
 
         if ($request->filled('category')) {
-            $query->where('category_id', $request->category);
+
+            $query->where(
+                'category_id',
+                $request->category
+            );
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | SORTING
+        |--------------------------------------------------------------------------
+        */
+
         switch ($request->get('sort')) {
+
             case 'terbaru':
                 $query->orderByDesc('id_product');
                 break;
+
             case 'termurah':
                 $query->orderBy('price', 'asc');
                 break;
+
             case 'termahal':
                 $query->orderBy('price', 'desc');
                 break;
+
             case 'terlaris':
                 $query->orderByDesc('sold_count');
                 break;
+
             default:
                 $query->orderByDesc('sold_count');
+                break;
         }
 
-        $products   = $query->paginate(12)->withQueryString();
-        $categories = Category::where('status', 'aktif')->orderBy('name')->get();
+        /*
+        |--------------------------------------------------------------------------
+        | PAGINATION
+        |--------------------------------------------------------------------------
+        */
 
-        $wishlistIds = Wishlist::where('user_id', Auth::id())->pluck('product_id')->toArray();
+        $products = $query
+            ->paginate(12)
+            ->withQueryString();
 
-        return view('pembeli.marketplace', compact('products', 'categories', 'wishlistIds'));
+        /*
+        |--------------------------------------------------------------------------
+        | KATEGORI
+        |--------------------------------------------------------------------------
+        */
+
+        $categories = Category::where('status', 'aktif')
+            ->orderBy('name')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | WISHLIST
+        |--------------------------------------------------------------------------
+        */
+
+        $wishlistIds = Wishlist::where('user_id', $userId)
+            ->pluck('product_id')
+            ->toArray();
+
+        return view(
+            'pembeli.marketplace',
+            compact(
+                'products',
+                'categories',
+                'wishlistIds'
+            )
+        );
     }
 
-    // ================= DETAIL PRODUK =================
+
+    // =========================================================
+    // DETAIL PRODUK
+    // =========================================================
     public function produkDetail($id)
     {
-        $product = Product::with(['category', 'seller', 'reviews.user'])->findOrFail($id);
+        $userId = Auth::id();
+
+        /*
+        |--------------------------------------------------------------------------
+        | PRODUK
+        |--------------------------------------------------------------------------
+        */
+
+        $product = Product::with([
+            'category',
+            'seller',
+            'reviews.user'
+        ])
+            ->findOrFail($id);
+
+        /*
+        |--------------------------------------------------------------------------
+        | TAMBAH VIEW
+        |--------------------------------------------------------------------------
+        */
 
         $product->increment('view_count');
 
-        $produkLain = Product::where('seller_id', $product->seller_id)
-            ->where('id_product', '!=', $product->id_product)
-            ->where('status', 'active')
+        /*
+        |--------------------------------------------------------------------------
+        | PRODUK LAIN DARI SELLER YANG SAMA
+        |--------------------------------------------------------------------------
+        */
+
+        $produkLain = Product::where(
+            'seller_id',
+            $product->seller_id
+        )
+            ->where(
+                'id_product',
+                '!=',
+                $product->id_product
+            )
+            ->where(
+                'status',
+                'active'
+            )
+            ->latest('id_product')
             ->take(4)
             ->get();
 
-        $isWishlisted = Wishlist::where('user_id', Auth::id())
-            ->where('product_id', $product->id_product)
+        /*
+        |--------------------------------------------------------------------------
+        | CEK WISHLIST
+        |--------------------------------------------------------------------------
+        */
+
+        $isWishlisted = Wishlist::where('user_id', $userId)
+            ->where(
+                'product_id',
+                $product->id_product
+            )
             ->exists();
 
-        $reviews = $product->reviews()->with('user')->latest('id_review')->get();
-        $avgRating = round($reviews->avg('rating') ?: 5, 1);
+        /*
+        |--------------------------------------------------------------------------
+        | REVIEW
+        |--------------------------------------------------------------------------
+        */
+
+        $reviews = $product->reviews()
+            ->with('user')
+            ->latest('id_review')
+            ->get();
+
+        $avgRating = round(
+            $reviews->avg('rating') ?: 5,
+            1
+        );
+
         $totalReviews = $reviews->count();
 
-        // Cek apakah user pernah membeli produk ini dan pesanan sudah lunas/selesai
-        $hasBought = OrderItem::where('product_id', $product->id_product)
-            ->whereHas('order', function ($q) {
-                $q->where('buyer_id', Auth::id())->where('payment_status', 'paid');
-            })
+        /*
+        |--------------------------------------------------------------------------
+        | CEK PERNAH MEMBELI
+        |--------------------------------------------------------------------------
+        */
+
+        $hasBought = OrderItem::where(
+            'product_id',
+            $product->id_product
+        )
+            ->whereHas(
+                'order',
+                function ($query) use ($userId) {
+
+                    $query
+                        ->where('buyer_id', $userId)
+                        ->where('payment_status', 'paid');
+                }
+            )
             ->exists();
 
-        $userReview = Review::where('product_id', $product->id_product)
-            ->where('user_id', Auth::id())
+        /*
+        |--------------------------------------------------------------------------
+        | REVIEW USER
+        |--------------------------------------------------------------------------
+        */
+
+        $userReview = Review::where(
+            'product_id',
+            $product->id_product
+        )
+            ->where(
+                'user_id',
+                $userId
+            )
             ->first();
 
-        return view('pembeli.produk', compact(
-            'product', 'produkLain', 'isWishlisted', 'reviews', 'avgRating', 'totalReviews', 'hasBought', 'userReview'
-        ));
+        return view(
+            'pembeli.produk',
+            compact(
+                'product',
+                'produkLain',
+                'isWishlisted',
+                'reviews',
+                'avgRating',
+                'totalReviews',
+                'hasBought',
+                'userReview'
+            )
+        );
     }
 
-    // ================= REVIEW / RATING & KOMENTAR =================
+
+    // =========================================================
+    // REVIEW
+    // =========================================================
     public function reviewStore(Request $request, $id)
     {
         $request->validate([
-            'rating'  => 'required|integer|min:1|max:5',
+            'rating' => 'required|integer|min:1|max:5',
             'comment' => 'nullable|string|max:1000',
         ]);
 
+        $userId = Auth::id();
+
         $product = Product::findOrFail($id);
 
-        // Validasi apakah pembeli pernah membeli produk ini
-        $hasBought = OrderItem::where('product_id', $id)
-            ->whereHas('order', function ($q) {
-                $q->where('buyer_id', Auth::id())->where('payment_status', 'paid');
-            })
+        /*
+        |--------------------------------------------------------------------------
+        | CEK PEMBELIAN
+        |--------------------------------------------------------------------------
+        */
+
+        $hasBought = OrderItem::where(
+            'product_id',
+            $id
+        )
+            ->whereHas(
+                'order',
+                function ($query) use ($userId) {
+
+                    $query
+                        ->where('buyer_id', $userId)
+                        ->where('payment_status', 'paid');
+                }
+            )
             ->exists();
 
-        if (! $hasBought) {
-            return back()->with('error', 'Anda hanya dapat memberikan ulasan untuk produk yang sudah Anda beli dan bayar.');
+        if (!$hasBought) {
+
+            return back()->with(
+                'error',
+                'Anda hanya dapat memberikan ulasan untuk produk yang sudah Anda beli dan bayar.'
+            );
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | SIMPAN / UPDATE REVIEW
+        |--------------------------------------------------------------------------
+        */
 
         Review::updateOrCreate(
             [
                 'product_id' => $id,
-                'user_id'    => Auth::id(),
+                'user_id' => $userId,
             ],
             [
-                'rating'     => $request->rating,
-                'comment'    => $request->comment,
+                'rating' => $request->rating,
+                'comment' => $request->comment,
             ]
         );
 
-        return back()->with('success', 'Terima kasih! Ulasan dan rating Anda berhasil disimpan.');
+        return back()->with(
+            'success',
+            'Terima kasih! Ulasan dan rating Anda berhasil disimpan.'
+        );
     }
 
-    // ================= KERANJANG =================
+
+    // =========================================================
+    // KERANJANG
+    // =========================================================
     public function keranjangIndex()
     {
-        $items = Cart::with('product.seller')->where('user_id', Auth::id())->latest('id_cart')->get();
+        $items = Cart::with([
+            'product.seller'
+        ])
+            ->where(
+                'user_id',
+                Auth::id()
+            )
+            ->latest('id_cart')
+            ->get();
 
-        return view('pembeli.keranjang', compact('items'));
+        return view(
+            'pembeli.keranjang',
+            compact('items')
+        );
     }
 
+
+    // =========================================================
+    // TAMBAH KERANJANG
+    // =========================================================
     public function keranjangStore(Request $request)
     {
         $request->validate([
             'product_id' => 'required|exists:products,id_product',
-            'quantity'   => 'nullable|integer|min:1',
+            'quantity' => 'nullable|integer|min:1',
         ]);
 
+        $userId = Auth::id();
+
+        $quantity = (int) (
+            $request->quantity ?? 1
+        );
+
         $cart = Cart::firstOrNew([
-            'user_id'    => Auth::id(),
+            'user_id' => $userId,
             'product_id' => $request->product_id,
         ]);
 
-        $cart->quantity = ($cart->quantity ?? 0) + ($request->quantity ?? 1);
+        $cart->quantity = (
+            $cart->quantity ?? 0
+        ) + $quantity;
+
         $cart->save();
 
-        return back()->with('success', 'Produk berhasil ditambahkan ke keranjang!');
+        return back()->with(
+            'success',
+            'Produk berhasil ditambahkan ke keranjang!'
+        );
     }
 
-    public function keranjangUpdate(Request $request, $id)
-    {
-        $request->validate(['quantity' => 'required|integer|min:1']);
 
-        $cart = Cart::where('user_id', Auth::id())->findOrFail($id);
-        $cart->update(['quantity' => $request->quantity]);
+    // =========================================================
+    // UPDATE KERANJANG
+    // =========================================================
+    public function keranjangUpdate(
+        Request $request,
+        $id
+    ) {
+        $request->validate([
+            'quantity' => 'required|integer|min:1'
+        ]);
 
-        return back()->with('success', 'Jumlah item berhasil diperbarui.');
+        $cart = Cart::where(
+            'user_id',
+            Auth::id()
+        )
+            ->findOrFail($id);
+
+        $cart->update([
+            'quantity' => $request->quantity
+        ]);
+
+        return back()->with(
+            'success',
+            'Jumlah item berhasil diperbarui.'
+        );
     }
 
+
+    // =========================================================
+    // HAPUS KERANJANG
+    // =========================================================
     public function keranjangDestroy($id)
     {
-        Cart::where('user_id', Auth::id())->where('id_cart', $id)->delete();
+        Cart::where(
+            'user_id',
+            Auth::id()
+        )
+            ->where(
+                'id_cart',
+                $id
+            )
+            ->delete();
 
-        return back()->with('success', 'Item berhasil dihapus dari keranjang.');
+        return back()->with(
+            'success',
+            'Item berhasil dihapus dari keranjang.'
+        );
     }
 
-    // ================= CHECKOUT =================
+
+    // =========================================================
+    // CHECKOUT
+    // =========================================================
     public function checkout(Request $request)
     {
         $request->validate([
-            'cart_ids'   => 'required|array|min:1',
+            'cart_ids' => 'required|array|min:1',
             'cart_ids.*' => 'exists:carts,id_cart',
         ]);
 
+        $userId = Auth::id();
+
+        /*
+        |--------------------------------------------------------------------------
+        | AMBIL CART USER SAJA
+        |--------------------------------------------------------------------------
+        */
+
+        $cartIds = collect(
+            $request->cart_ids
+        )
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
         $carts = Cart::with('product')
-            ->where('user_id', Auth::id())
-            ->whereIn('id_cart', $request->cart_ids)
+            ->where(
+                'user_id',
+                $userId
+            )
+            ->whereIn(
+                'id_cart',
+                $cartIds
+            )
             ->get();
 
         if ($carts->isEmpty()) {
-            return back()->withErrors(['cart_ids' => 'Tidak ada item yang dipilih.']);
-        }
 
-        if ($carts->contains(fn ($c) => ! $c->product || $c->product->status !== 'active')) {
-            return back()->withErrors(['cart_ids' => 'Salah satu produk di keranjang sudah tidak tersedia. Silakan hapus item tersebut.']);
-        }
-
-        $order = DB::transaction(function () use ($carts) {
-            $total = $carts->sum(fn ($c) => $c->product->price * $c->quantity);
-
-            $order = Order::create([
-                'buyer_id'       => Auth::id(),
-                'total_price'    => $total,
-                'status'         => 'diproses',
-                'payment_status' => 'unpaid',
+            return back()->withErrors([
+                'cart_ids' =>
+                    'Tidak ada item yang dipilih.'
             ]);
+        }
 
-            foreach ($carts as $cart) {
-                $subtotal = $cart->product->price * $cart->quantity;
+        /*
+        |--------------------------------------------------------------------------
+        | VALIDASI PRODUK
+        |--------------------------------------------------------------------------
+        */
 
-                OrderItem::create([
-                    'order_id'   => $order->id_order,
-                    'product_id' => $cart->product_id,
-                    'price'      => $cart->product->price,
-                    'quantity'   => $cart->quantity,
-                    'subtotal'   => $subtotal,
+        foreach ($carts as $cart) {
+
+            if (
+                !$cart->product ||
+                $cart->product->status !== 'active'
+            ) {
+
+                return back()->withErrors([
+                    'cart_ids' =>
+                        'Salah satu produk di keranjang sudah tidak tersedia. Silakan hapus item tersebut.'
+                ]);
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | TRANSACTION
+        |--------------------------------------------------------------------------
+        */
+
+        $order = DB::transaction(
+            function () use (
+                $carts,
+                $userId
+            ) {
+
+                $total = $carts->sum(
+                    function ($cart) {
+
+                        return $cart->product->price
+                            * $cart->quantity;
+                    }
+                );
+
+                $order = Order::create([
+                    'buyer_id' => $userId,
+                    'total_price' => $total,
+                    'status' => 'diproses',
+                    'payment_status' => 'unpaid',
                 ]);
 
-                $cart->product->increment('sold_count', $cart->quantity);
+                foreach ($carts as $cart) {
+
+                    $subtotal =
+                        $cart->product->price
+                        * $cart->quantity;
+
+                    OrderItem::create([
+                        'order_id' =>
+                            $order->id_order,
+
+                        'product_id' =>
+                            $cart->product_id,
+
+                        'price' =>
+                            $cart->product->price,
+
+                        'quantity' =>
+                            $cart->quantity,
+
+                        'subtotal' =>
+                            $subtotal,
+                    ]);
+
+                    $cart->product->increment(
+                        'sold_count',
+                        $cart->quantity
+                    );
+                }
+
+                Cart::whereIn(
+                    'id_cart',
+                    $carts->pluck('id_cart')
+                )
+                    ->where(
+                        'user_id',
+                        $userId
+                    )
+                    ->delete();
+
+                return $order;
             }
+        );
 
-            Cart::whereIn('id_cart', $carts->pluck('id_cart'))->delete();
-
-            return $order;
-        });
-
-        return redirect()->route('pembeli.pesanan.detail', $order->id_order)
-            ->with('success', 'Pesanan berhasil dibuat. Silakan lakukan pembayaran.');
+        return redirect()
+            ->route(
+                'pembeli.pesanan.detail',
+                $order->id_order
+            )
+            ->with(
+                'success',
+                'Pesanan berhasil dibuat. Silakan lakukan pembayaran.'
+            );
     }
 
-    // ================= WISHLIST =================
+
+    // =========================================================
+    // WISHLIST TOGGLE
+    // =========================================================
     public function wishlistToggle($productId)
     {
-        $product = Product::find($productId);
+        $userId = Auth::id();
 
-        if (! $product) {
-            if (request()->expectsJson() || request()->wantsJson() || request()->ajax()) {
-                return response()->json(['status' => 'error', 'message' => 'Produk tidak ditemukan.'], 404);
+        $productExists = Product::where(
+            'id_product',
+            $productId
+        )
+            ->exists();
+
+        if (!$productExists) {
+
+            if (
+                request()->expectsJson() ||
+                request()->wantsJson() ||
+                request()->ajax()
+            ) {
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Produk tidak ditemukan.'
+                ], 404);
             }
-            return back()->withErrors(['wishlist' => 'Produk tidak ditemukan.']);
+
+            return back()->withErrors([
+                'wishlist' =>
+                    'Produk tidak ditemukan.'
+            ]);
         }
 
-        $existing = Wishlist::where('user_id', Auth::id())->where('product_id', $productId)->first();
+        $existing = Wishlist::where(
+            'user_id',
+            $userId
+        )
+            ->where(
+                'product_id',
+                $productId
+            )
+            ->first();
 
         if ($existing) {
+
             $existing->delete();
+
             $status = 'removed';
+
         } else {
-            Wishlist::create(['user_id' => Auth::id(), 'product_id' => $productId]);
+
+            Wishlist::create([
+                'user_id' => $userId,
+                'product_id' => $productId
+            ]);
+
             $status = 'added';
         }
 
-        if (request()->expectsJson() || request()->wantsJson() || request()->ajax()) {
-            return response()->json(['status' => $status]);
+        if (
+            request()->expectsJson() ||
+            request()->wantsJson() ||
+            request()->ajax()
+        ) {
+
+            return response()->json([
+                'status' => $status
+            ]);
         }
 
-        return back()->with('success', $status === 'added' ? 'Produk berhasil ditambahkan ke wishlist.' : 'Produk dihapus dari wishlist.');
+        return back()->with(
+            'success',
+            $status === 'added'
+                ? 'Produk berhasil ditambahkan ke wishlist.'
+                : 'Produk dihapus dari wishlist.'
+        );
     }
 
+
+    // =========================================================
+    // WISHLIST
+    // =========================================================
     public function wishlistIndex()
     {
-        $wishlists = Wishlist::with(['product.seller', 'product.category'])
-            ->where('user_id', Auth::id())
+        $userId = Auth::id();
+
+        $wishlists = Wishlist::with([
+            'product.seller',
+            'product.category'
+        ])
+            ->where(
+                'user_id',
+                $userId
+            )
             ->latest('id_wishlist')
             ->paginate(12);
 
         $items = $wishlists;
 
-        return view('pembeli.wishlist', compact('wishlists', 'items'));
+        return view(
+            'pembeli.wishlist',
+            compact(
+                'wishlists',
+                'items'
+            )
+        );
     }
 
-    // ================= PESANAN =================
+
+    // =========================================================
+    // PESANAN
+    // =========================================================
     public function pesananIndex(Request $request)
     {
-        $tab = $request->get('tab', 'semua');
-        $query = Order::with(['items.product.seller'])
-            ->where('buyer_id', Auth::id());
+        $userId = Auth::id();
+
+        $tab = $request->get(
+            'tab',
+            'semua'
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | QUERY UTAMA
+        |--------------------------------------------------------------------------
+        */
+
+        $query = Order::with([
+            'items.product.seller'
+        ])
+            ->where(
+                'buyer_id',
+                $userId
+            );
 
         if ($tab === 'diproses') {
-            $query->whereIn('status', ['diproses', 'pending']);
+
+            $query->whereIn(
+                'status',
+                [
+                    'diproses',
+                    'pending'
+                ]
+            );
+
         } elseif ($tab === 'selesai') {
-            $query->where('status', 'selesai');
+
+            $query->where(
+                'status',
+                'selesai'
+            );
+
         } elseif ($tab === 'dibatalkan') {
-            $query->where('status', 'dibatalkan');
+
+            $query->where(
+                'status',
+                'dibatalkan'
+            );
         }
 
-        $orders = $query->latest('id_order')->paginate(10)->withQueryString();
+        $orders = $query
+            ->latest('id_order')
+            ->paginate(10)
+            ->withQueryString();
+
+        /*
+        |--------------------------------------------------------------------------
+        | HITUNG SEMUA TAB DALAM 1 QUERY
+        |--------------------------------------------------------------------------
+        */
+
+        $rawCounts = Order::where(
+            'buyer_id',
+            $userId
+        )
+            ->selectRaw("
+                COUNT(*) as semua,
+                SUM(
+                    CASE
+                        WHEN status IN ('diproses', 'pending')
+                        THEN 1
+                        ELSE 0
+                    END
+                ) as diproses,
+                SUM(
+                    CASE
+                        WHEN status = 'selesai'
+                        THEN 1
+                        ELSE 0
+                    END
+                ) as selesai,
+                SUM(
+                    CASE
+                        WHEN status = 'dibatalkan'
+                        THEN 1
+                        ELSE 0
+                    END
+                ) as dibatalkan
+            ")
+            ->first();
 
         $counts = [
-            'semua'      => Order::where('buyer_id', Auth::id())->count(),
-            'diproses'   => Order::where('buyer_id', Auth::id())->whereIn('status', ['diproses', 'pending'])->count(),
-            'selesai'    => Order::where('buyer_id', Auth::id())->where('status', 'selesai')->count(),
-            'dibatalkan' => Order::where('buyer_id', Auth::id())->where('status', 'dibatalkan')->count(),
+            'semua' =>
+                (int) ($rawCounts->semua ?? 0),
+
+            'diproses' =>
+                (int) ($rawCounts->diproses ?? 0),
+
+            'selesai' =>
+                (int) ($rawCounts->selesai ?? 0),
+
+            'dibatalkan' =>
+                (int) ($rawCounts->dibatalkan ?? 0),
         ];
 
-        return view('pembeli.pesanan', compact('orders', 'tab', 'counts'));
+        return view(
+            'pembeli.pesanan',
+            compact(
+                'orders',
+                'tab',
+                'counts'
+            )
+        );
     }
 
+
+    // =========================================================
+    // DETAIL PESANAN
+    // =========================================================
     public function pesananDetail($id)
     {
-        $order = Order::with(['items.product.seller', 'items.product.category'])
-            ->where('buyer_id', Auth::id())
+        $order = Order::with([
+            'items.product.seller',
+            'items.product.category'
+        ])
+            ->where(
+                'buyer_id',
+                Auth::id()
+            )
             ->findOrFail($id);
 
-        return view('pembeli.pesanan-detail', compact('order'));
+        return view(
+            'pembeli.pesanan-detail',
+            compact('order')
+        );
     }
 
-    // ================= DOWNLOAD =================
+
+    // =========================================================
+    // DOWNLOAD
+    // =========================================================
     public function downloadIndex()
     {
-        $orderItems = OrderItem::with(['product.seller', 'product.category', 'order'])
-            ->whereHas('order', function ($q) {
-                $q->where('buyer_id', Auth::id())->where('payment_status', 'paid');
-            })
+        $userId = Auth::id();
+
+        $orderItems = OrderItem::with([
+            'product.seller',
+            'product.category',
+            'order'
+        ])
+            ->whereHas(
+                'order',
+                function ($query) use ($userId) {
+
+                    $query
+                        ->where(
+                            'buyer_id',
+                            $userId
+                        )
+                        ->where(
+                            'payment_status',
+                            'paid'
+                        );
+                }
+            )
             ->latest('id_order_item')
             ->paginate(12);
 
-        return view('pembeli.download', compact('orderItems'));
+        return view(
+            'pembeli.download',
+            compact('orderItems')
+        );
     }
 
+
+    // =========================================================
+    // DOWNLOAD FILE
+    // =========================================================
     public function downloadFile($id_order_item)
     {
-        $orderItem = OrderItem::with(['order', 'product'])
-            ->where('id_order_item', $id_order_item)
-            ->whereHas('order', function ($q) {
-                $q->where('buyer_id', Auth::id())->where('payment_status', 'paid');
-            })
+        $userId = Auth::id();
+
+        $orderItem = OrderItem::with([
+            'order',
+            'product'
+        ])
+            ->where(
+                'id_order_item',
+                $id_order_item
+            )
+            ->whereHas(
+                'order',
+                function ($query) use ($userId) {
+
+                    $query
+                        ->where(
+                            'buyer_id',
+                            $userId
+                        )
+                        ->where(
+                            'payment_status',
+                            'paid'
+                        );
+                }
+            )
             ->firstOrFail();
 
-        if (! $orderItem->product || ! $orderItem->product->file) {
-            return back()->with('error', 'File karya digital belum diunggah atau tidak ditemukan.');
+        if (
+            !$orderItem->product ||
+            !$orderItem->product->file
+        ) {
+
+            return back()->with(
+                'error',
+                'File karya digital belum diunggah atau tidak ditemukan.'
+            );
         }
 
-        $filePath = storage_path('app/public/' . $orderItem->product->file);
-        if (! file_exists($filePath)) {
-            // Cek di public disk langsung
-            if (Storage::disk('public')->exists($orderItem->product->file)) {
-                return Storage::disk('public')->download($orderItem->product->file);
-            }
-            return back()->with('error', 'File berkas tidak ditemukan di server penyimpanan.');
+        $file = $orderItem->product->file;
+
+        /*
+        |--------------------------------------------------------------------------
+        | CEK STORAGE PUBLIC
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            Storage::disk('public')->exists($file)
+        ) {
+
+            return Storage::disk('public')
+                ->download($file);
         }
 
-        return response()->download($filePath);
+        /*
+        |--------------------------------------------------------------------------
+        | FALLBACK PATH LAMA
+        |--------------------------------------------------------------------------
+        */
+
+        $filePath =
+            storage_path(
+                'app/public/' . $file
+            );
+
+        if (file_exists($filePath)) {
+
+            return response()->download(
+                $filePath
+            );
+        }
+
+        return back()->with(
+            'error',
+            'File berkas tidak ditemukan di server penyimpanan.'
+        );
     }
 
-    // ================= PROFILE =================
+
+    // =========================================================
+    // PROFILE
+    // =========================================================
     public function profile()
     {
-        return view('pembeli.profile', ['user' => Auth::user()]);
-    }
-
-    public function updateProfile(Request $request)
-    {
-        $user = Auth::user();
-
-        $validated = $request->validate([
-            'name'  => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id_user . ',id_user',
-            'phone' => 'nullable|string|max:20',
-        ]);
-
-        $user->update($validated);
-
-        return back()->with('success', 'Profil berhasil diperbarui.');
-    }
-
-    // ================= MEMBERSHIP (UPGRADE JADI PENJUAL) =================
-    public function membershipIndex()
-    {
-        $memberships = Membership::orderBy('price')->get();
-        $user        = Auth::user();
-        $isPenjual   = ($user->role->role_name ?? null) === 'penjual';
-        $pending     = \App\Models\IdentityVerification::where('user_id', Auth::id())
-            ->where('status', 'pending')
-            ->latest('id_identity_verification')
-            ->first();
-
-        return view('pembeli.membership', compact('memberships', 'user', 'isPenjual', 'pending'));
-    }
-
-    public function membershipPurchase(Request $request, $id)
-    {
-        $membership = Membership::findOrFail($id);
-
-        return redirect()->route(
-            'pembeli.seller.registration.create',
+        return view(
+            'pembeli.profile',
             [
-                'membership' => $membership->id_membership,
+                'user' => Auth::user()
             ]
         );
     }
 
-    // ================= NOTIFIKASI (dari Admin) =================
+
+    // =========================================================
+    // UPDATE PROFILE
+    // =========================================================
+    public function updateProfile(
+        Request $request
+    ) {
+
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'name' =>
+                'required|string|max:255',
+
+            'email' =>
+                'required|email|unique:users,email,'
+                . $user->id_user
+                . ',id_user',
+
+            'phone' =>
+                'nullable|string|max:20',
+        ]);
+
+        $user->update(
+            $validated
+        );
+
+        return back()->with(
+            'success',
+            'Profil berhasil diperbarui.'
+        );
+    }
+
+
+    // =========================================================
+    // MEMBERSHIP
+    // =========================================================
+    public function membershipIndex()
+    {
+        $userId = Auth::id();
+
+        /*
+        |--------------------------------------------------------------------------
+        | MEMBERSHIP
+        |--------------------------------------------------------------------------
+        */
+
+        $memberships = Membership::orderBy(
+            'price'
+        )
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | USER + ROLE
+        |--------------------------------------------------------------------------
+        */
+
+        $user = Auth::user();
+
+        $user->loadMissing('role');
+
+        $isPenjual =
+            ($user->role->role_name ?? null)
+            === 'penjual';
+
+        /*
+        |--------------------------------------------------------------------------
+        | PENGAJUAN PENDING
+        |--------------------------------------------------------------------------
+        */
+
+        $pending = IdentityVerification::where(
+            'user_id',
+            $userId
+        )
+            ->where(
+                'status',
+                'pending'
+            )
+            ->latest(
+                'id_identity_verification'
+            )
+            ->first();
+
+        return view(
+            'pembeli.membership',
+            compact(
+                'memberships',
+                'user',
+                'isPenjual',
+                'pending'
+            )
+        );
+    }
+
+
+    // =========================================================
+    // BELI MEMBERSHIP
+    // =========================================================
+    public function membershipPurchase(
+        Request $request,
+        $id
+    ) {
+
+        $membership = Membership::findOrFail(
+            $id
+        );
+
+        return redirect()->route(
+            'pembeli.seller.registration.create',
+            [
+                'membership' =>
+                    $membership->id_membership
+            ]
+        );
+    }
+
+
+    // =========================================================
+    // NOTIFIKASI
+    // =========================================================
     public function notificationsIndex()
     {
-        $notifications = Notification::where(function ($q) {
-                $q->where('user_id', Auth::id())
-                  ->orWhereNull('user_id');
-            })
+        $userId = Auth::id();
+
+        $notifications = Notification::where(
+            function ($query) use ($userId) {
+
+                $query
+                    ->where(
+                        'user_id',
+                        $userId
+                    )
+                    ->orWhereNull(
+                        'user_id'
+                    );
+            }
+        )
             ->latest()
             ->paginate(10);
 
-        return view('pembeli.notifications', compact('notifications'));
+        return view(
+            'pembeli.notifications',
+            compact(
+                'notifications'
+            )
+        );
     }
 
-    // ================= PERINGATAN DITERIMA (dari Admin/CS) =================
+
+    // =========================================================
+    // PERINGATAN
+    // =========================================================
     public function peringatanIndex()
     {
-        $peringatan = \App\Models\Report::where('reported_user_id', Auth::id())
-            ->whereIn('status', ['reviewed', 'escalated'])
-            ->whereNotNull('admin_note')
-            ->latest('reviewed_at')
+        $userId = Auth::id();
+
+        $peringatan = \App\Models\Report::where(
+            'reported_user_id',
+            $userId
+        )
+            ->whereIn(
+                'status',
+                [
+                    'reviewed',
+                    'escalated'
+                ]
+            )
+            ->whereNotNull(
+                'admin_note'
+            )
+            ->latest(
+                'reviewed_at'
+            )
             ->paginate(10);
 
-        return view('pembeli.peringatan', compact('peringatan'));
+        return view(
+            'pembeli.peringatan',
+            compact(
+                'peringatan'
+            )
+        );
     }
-}   
+}

@@ -198,59 +198,6 @@
             <!-- SCROLLABLE BODY CONTENT -->
             <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-8">
 
-                <!-- CARD KELOLA IP WHITELIST -->
-                <div class="bg-white border border-sky-200/80 rounded-2xl p-6 shadow-lg shadow-sky-500/5">
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5 border-b border-slate-100 pb-4">
-                        <div>
-                            <h3 class="font-extrabold text-slate-900 text-lg font-display flex items-center gap-2.5">
-                                <div class="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center border border-sky-200 shadow-inner">
-                                    <i class="fa-solid fa-key text-xs"></i>
-                                </div>
-                                Kelola IP Whitelist (Izin Akses Menu Keamanan)
-                            </h3>
-                            <p class="text-xs text-slate-500 font-medium mt-1">Tambahkan IP perangkat yang diperbolehkan membuka halaman Keamanan System.</p>
-                        </div>
-                    </div>
-
-                    <form action="{{ route('admin.security.allowed_ip.store') }}" method="POST" class="flex flex-col sm:flex-row gap-3.5 mb-6">
-                        @csrf
-                        <div class="w-full sm:w-1/3">
-                            <input type="text" name="ip_address" placeholder="Contoh: 180.252.12.99" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm">
-                        </div>
-                        <div class="w-full sm:w-1/3">
-                            <input type="text" name="label" placeholder="Nama Perangkat (Misal: Laptop Admin 2)" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm">
-                        </div>
-
-                        <button type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-blue-700 active:translate-y-[4px] transition-all cursor-pointer w-full sm:w-auto shrink-0">
-                            <i class="fa-solid fa-plus"></i> Tambah IP Whitelist
-                        </button>
-                    </form>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                        @foreach($allowedIps as $allowed)
-                            <div class="border rounded-2xl p-4 flex justify-between items-center transition-all {{ $allowed->ip_address === $myIp ? 'bg-gradient-to-r from-sky-50 to-blue-50/60 border-sky-300 shadow-sm' : 'bg-slate-50/80 border-slate-200' }}">
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-mono font-extrabold text-xs text-slate-800">{{ $allowed->ip_address }}</span>
-                                        @if($allowed->ip_address === $myIp)
-                                            <span class="text-[9px] bg-sky-600 text-white px-2 py-0.5 rounded-full font-bold shadow-xs">IP Anda</span>
-                                        @endif
-                                    </div>
-                                    <p class="text-[11px] text-slate-500 font-medium mt-1">{{ $allowed->label }} &middot; <span class="text-[10px] text-slate-400 font-semibold">{{ $allowed->added_by }}</span></p>
-                                </div>
-                                @if($allowed->ip_address !== $myIp)
-                                    <form action="{{ route('admin.security.allowed_ip.destroy', $allowed->id) }}" method="POST" id="delete-allowed-{{ $allowed->id }}">
-                                        @csrf @method('DELETE')
-                                        <button type="button" onclick="confirmDeleteAllowed('delete-allowed-{{ $allowed->id }}')" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-xs flex items-center justify-center text-xs cursor-pointer">
-                                            <i class="fa-solid fa-trash-can"></i>
-                                        </button>
-                                    </form>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
                 <!-- TABEL 1: IP ABNORMAL (DETEKSI HACK/JAILBREAK) -->
                 <div class="bg-white border border-red-200 rounded-2xl shadow-lg shadow-red-500/5 overflow-hidden">
                     <div class="p-5 border-b border-red-100 bg-gradient-to-r from-red-500/10 via-rose-50 to-white flex items-center justify-between flex-wrap gap-3">

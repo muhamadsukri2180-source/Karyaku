@@ -307,9 +307,6 @@
                             <div class="flex items-center gap-2">
                                 <i class="fa-solid fa-list-check text-[10px] text-sky-200 w-3 text-center"></i> Daftar Jasa
                             </div>
-                            @if($pendingProductsCount > 0)
-                                <span class="bg-amber-400 text-slate-900 text-[9px] px-1.5 py-0.5 rounded font-extrabold">{{ $pendingProductsCount }} Baru</span>
-                            @endif
                         </a>
                         <a href="{{ route('admin.categories.index') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
                             <i class="fa-solid fa-tags text-[10px] text-sky-200 w-3 text-center"></i> Kategori Jasa
@@ -416,7 +413,22 @@
                             <i class="fa-solid fa-triangle-exclamation"></i> Maintenance Aktif
                         </a>
                     @endif
-                    @php $totalNotif = $pendingIdentityCount + $pendingProductsCount + $pendingReportsCount; @endphp
+                    
+                    @php 
+                        // FIX: Menambahkan perhitungan variabel yang tidak dikirim oleh controller
+                        $pendingProductsCount = \App\Models\Product::where('status', 'pending')->count();
+                        $totalNotif = $pendingIdentityCount + $pendingProductsCount + $pendingReportsCount; 
+                    @endphp
+
+                    <!-- Tampilan Ikon Notifikasi di Header -->
+                    <a href="{{ route('admin.notifications.index') }}" class="relative w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition border border-sky-300 shadow-sm">
+                        <i class="fa-solid fa-bell text-base"></i>
+                        @if($totalNotif > 0)
+                            <span class="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-coral text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+                                {{ $totalNotif }}
+                            </span>
+                        @endif
+                    </a>
                 </div>
             </header>
 
@@ -520,201 +532,59 @@
 
                 </div>
 
-                <!-- SECTION 1: GRAFIK & KATEGORI -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-                    <div class="lg:col-span-8 bg-gradient-to-br from-white via-sky-50/70 to-blue-100/50 border border-sky-300/80 p-6 rounded-2xl card-hover shadow-md">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                            <div>
-                                <h3 class="font-extrabold text-slate-900 text-lg font-display">Statistik Pemesanan Jasa</h3>
-                                <p id="chartSubtitle" class="text-[11px] text-slate-600 mt-1">Pertumbuhan transaksi berdasarkan data order (Tahun {{ $year }})</p>
-                            </div>
-
-                            <!-- Custom Real-time Dynamic Year Dropdown (Starts from 2026 onwards) -->
-                            <div class="dropdown">
-                                <input type="checkbox" id="yearDropdownToggle" class="sr-only">
-                                <label for="yearDropdownToggle" class="trigger">
-                                    <span id="selectedYearText">Tahun {{ $year }}</span>
-                                </label>
-                                <ul id="yearList" class="list webkit-scrollbar">
-                                    <!-- Populated dynamically via JS starting from 2026 -->
-                                </ul>
-                            </div>
+                <!-- SECTION 1: GRAFIK FULL WIDTH -->
+                <div class="bg-gradient-to-br from-white via-sky-50/70 to-blue-100/50 border border-sky-300/80 p-6 rounded-2xl card-hover shadow-md">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div>
+                            <h3 class="font-extrabold text-slate-900 text-lg font-display">Statistik Pemesanan Jasa</h3>
+                            <p id="chartSubtitle" class="text-[11px] text-slate-600 mt-1">Pertumbuhan transaksi berdasarkan data order (Tahun {{ $year }})</p>
                         </div>
 
-                        <div class="h-64 w-full">
-                            <canvas id="yearlyChart"></canvas>
+                        <!-- Custom Real-time Dynamic Year Dropdown (Starts from 2026 onwards) -->
+                        <div class="dropdown">
+                            <input type="checkbox" id="yearDropdownToggle" class="sr-only">
+                            <label for="yearDropdownToggle" class="trigger">
+                                <span id="selectedYearText">Tahun {{ $year }}</span>
+                            </label>
+                            <ul id="yearList" class="list webkit-scrollbar">
+                                <!-- Populated dynamically via JS starting from 2026 -->
+                            </ul>
                         </div>
                     </div>
 
-                    <div class="lg:col-span-4 bg-gradient-to-br from-white via-indigo-50/70 to-purple-100/40 border border-indigo-200/80 p-6 rounded-2xl card-hover shadow-md relative">
-                        <div class="flex justify-between items-center mb-6 relative">
-                            <div>
-                                <h3 class="font-extrabold text-slate-900 text-lg font-display">Top Kategori</h3>
-                                <p class="text-[11px] text-slate-600 mt-1">Berdasarkan order item</p>
-                            </div>
-                            <div class="relative">
-                                <button id="topCatMenuBtn" type="button" class="w-8 h-8 rounded-full bg-white hover:bg-indigo-50 text-slate-500 flex items-center justify-center transition border border-indigo-200 shadow-sm cursor-pointer">
-                                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                                </button>
-                                <!-- Popup Card untuk Titik Tiga -->
-                                <div id="topCatPopup" class="absolute right-0 top-10 w-64 bg-white border border-indigo-100 rounded-2xl shadow-xl p-4 hidden z-50 transition-all duration-200">
-                                    <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-100">
-                                        <span class="text-xs font-bold text-slate-800">Detail Kategori Populer</span>
-                                        <button type="button" id="closeTopCatPopup" class="text-slate-400 hover:text-slate-600 text-xs"><i class="fa-solid fa-xmark"></i></button>
-                                    </div>
-                                    @if($topCategories->isEmpty())
-                                        <p class="text-xs text-slate-500 text-center py-4 font-semibold">Admin belum menambahkan kategori</p>
-                                    @else
-                                        <div class="space-y-2.5 max-h-48 overflow-y-auto webkit-scrollbar pr-1">
-                                            @foreach($topCategories as $cat)
-                                                <div class="flex items-center justify-between text-xs bg-slate-50 p-2 rounded-xl">
-                                                    <span class="font-bold text-slate-800 truncate max-w-[130px]">{{ $cat->name }}</span>
-                                                    <span class="font-extrabold text-indigo-600">{{ $cat->percentage }}%</span>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="space-y-5">
-                            @php
-                                $catColors = ['sky', 'emerald', 'amber', 'slate'];
-                                $catGradients = [
-                                    'sky'     => 'from-sky-500 to-sky-700',
-                                    'emerald' => 'from-emerald-500 to-teal-600',
-                                    'amber'   => 'from-amber-500 to-orange-600',
-                                    'slate'   => 'from-slate-400 to-slate-600',
-                                ];
-                                $catText = [
-                                    'sky' => 'text-sky-600', 'emerald' => 'text-emerald-600',
-                                    'amber' => 'text-amber-600', 'slate' => 'text-slate-500',
-                                ];
-                            @endphp
-
-                            @forelse($topCategories as $i => $cat)
-                                @php $c = $catColors[$i % 4]; @endphp
-                                <div>
-                                    <div class="flex justify-between text-xs mb-1.5">
-                                        <span class="font-bold text-slate-800">{{ $cat->name }}</span>
-                                        <span class="font-bold {{ $catText[$c] }}">{{ $cat->percentage }}%</span>
-                                    </div>
-                                    <div class="w-full bg-slate-200/70 rounded-full h-2">
-                                        <div class="bg-gradient-to-r {{ $catGradients[$c] }} h-2 rounded-full shadow-sm" style="width: {{ $cat->percentage }}%"></div>
-                                    </div>
-                                    <p class="text-[10px] text-slate-500 mt-1">{{ number_format($cat->order_count, 0, ',', '.') }} Transaksi</p>
-                                </div>
-                            @empty
-                                <p class="text-xs text-slate-500 text-center py-6">Belum ada data transaksi kategori.</p>
-                            @endforelse
-                        </div>
+                    <div class="h-64 w-full">
+                        <canvas id="yearlyChart"></canvas>
                     </div>
                 </div>
 
-                <!-- SECTION 2: ANTREAN MODERASI & AKTIVITAS -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-                    <div class="lg:col-span-7 bg-gradient-to-br from-white via-amber-50/50 to-orange-100/50 border border-amber-200/80 p-6 rounded-2xl card-hover shadow-md">
-                        <div class="flex justify-between items-center mb-6">
-                            <div>
-                                <h3 class="font-extrabold text-slate-900 text-lg font-display flex items-center gap-2">
-                                    <i class="fa-solid fa-clipboard-list text-amber-600"></i> Antrean Moderasi
-                                </h3>
-                                <p class="text-[11px] text-slate-600 mt-1">Tugas yang membutuhkan persetujuan/tinjauan Admin.</p>
-                            </div>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between p-4 rounded-xl border border-blue-200 bg-white/90 shadow-sm hover:border-blue-400 hover:shadow-md transition-all group">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-lg group-hover:scale-110 transition-transform shadow-inner">
-                                        <i class="fa-solid fa-id-card"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Verifikasi Identitas Kreator</h4>
-                                        <p class="text-[11px] text-slate-600 mt-0.5">Terdapat {{ $pendingIdentityCount }} pengajuan KTP/Identitas baru</p>
-                                    </div>
-                                </div>
-                                <a href="{{ route('admin.users.verifikator') }}" class="relative group border-none bg-transparent p-0 outline-none cursor-pointer">
-                                    <span class="absolute top-0 left-0 w-full h-full bg-black bg-opacity-15 rounded-lg transform translate-y-0.5 transition duration-300 group-hover:translate-y-1"></span>
-                                    <span class="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-slate-200 via-slate-300 to-slate-200"></span>
-                                    <div class="relative px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-xs font-bold text-blue-700 hover:bg-blue-600 hover:text-white transform -translate-y-0.5 transition duration-300 group-hover:-translate-y-1 shadow-sm">
-                                        Tinjau
-                                    </div>
-                                </a>
-                            </div>
-
-                            <div class="flex items-center justify-between p-4 rounded-xl border border-amber-200 bg-white/90 shadow-sm hover:border-amber-400 hover:shadow-md transition-all group">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg group-hover:scale-110 transition-transform shadow-inner">
-                                        <i class="fa-solid fa-photo-film"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="text-sm font-bold text-slate-900 group-hover:text-amber-600 transition-colors">Persetujuan Jasa/Karya Baru</h4>
-                                        <p class="text-[11px] text-slate-600 mt-0.5">{{ $pendingProductsCount }} Produk menunggu ditinjau kelayakannya</p>
-                                    </div>
-                                </div>
-                                <a href="{{ route('admin.products') }}" class="relative group border-none bg-transparent p-0 outline-none cursor-pointer">
-                                    <span class="absolute top-0 left-0 w-full h-full bg-black bg-opacity-15 rounded-lg transform translate-y-0.5 transition duration-300 group-hover:translate-y-1"></span>
-                                    <span class="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-slate-200 via-slate-300 to-slate-200"></span>
-                                    <div class="relative px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-bold transform -translate-y-0.5 transition duration-300 group-hover:-translate-y-1 hover:shadow-md hover:shadow-amber-500/30">
-                                        Proses ({{ $pendingProductsCount }})
-                                    </div>
-                                </a>
-                            </div>
-
-                            <div class="flex items-center justify-between p-4 rounded-xl border border-red-200 bg-white/90 shadow-sm hover:border-red-400 hover:shadow-md transition-all group">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center text-lg group-hover:scale-110 transition-transform shadow-inner">
-                                        <i class="fa-solid fa-flag"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="text-sm font-bold text-slate-900 group-hover:text-red-600 transition-colors">Laporan Pelanggaran Produk</h4>
-                                        <p class="text-[11px] text-slate-600 mt-0.5">Ada {{ $pendingReportsCount }} laporan yang perlu ditinjau</p>
-                                    </div>
-                                </div>
-                                <a href="{{ route('admin.pelanggaran') }}" class="relative group border-none bg-transparent p-0 outline-none cursor-pointer">
-                                    <span class="absolute top-0 left-0 w-full h-full bg-black bg-opacity-15 rounded-lg transform translate-y-0.5 transition duration-300 group-hover:translate-y-1"></span>
-                                    <span class="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-l from-slate-200 via-slate-300 to-slate-200"></span>
-                                    <div class="relative px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-xs font-bold text-red-700 hover:bg-red-600 hover:text-white transform -translate-y-0.5 transition duration-300 group-hover:-translate-y-1 shadow-sm">
-                                        Periksa
-                                    </div>
-                                </a>
-                            </div>
-                        </div>
+                <!-- SECTION 2: AKTIVITAS TERKINI FULL WIDTH -->
+                <div class="bg-gradient-to-br from-white via-emerald-50/50 to-teal-100/50 border border-emerald-200/80 p-6 rounded-2xl card-hover shadow-md">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-extrabold text-slate-900 text-lg font-display flex items-center gap-2">
+                            <i class="fa-solid fa-bolt text-emerald-600"></i> Aktivitas Terkini
+                        </h3>
                     </div>
 
-                    <div class="lg:col-span-5 bg-gradient-to-br from-white via-emerald-50/50 to-teal-100/50 border border-emerald-200/80 p-6 rounded-2xl card-hover shadow-md">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="font-extrabold text-slate-900 text-lg font-display flex items-center gap-2">
-                                <i class="fa-solid fa-bolt text-emerald-600"></i> Aktivitas Terkini
-                            </h3>
-                        </div>
-
-                        <div class="relative border-l-2 border-emerald-300 ml-3 space-y-6">
-                            @php
-                                $dotBg = ['emerald' => 'bg-emerald-200', 'sky' => 'bg-sky-200', 'amber' => 'bg-amber-200'];
-                                $dotInner = ['emerald' => 'bg-emerald-600', 'sky' => 'bg-sky-600', 'amber' => 'bg-amber-600'];
-                            @endphp
-                            @forelse($recentActivities as $activity)
-                                <div class="relative pl-5 hover:translate-x-1 transition-transform cursor-default">
-                                    <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full {{ $dotBg[$activity['color']] ?? 'bg-slate-200' }} border-2 border-white flex items-center justify-center shadow">
-                                        <div class="w-1.5 h-1.5 rounded-full {{ $dotInner[$activity['color']] ?? 'bg-slate-600' }}"></div>
-                                    </div>
-                                    <p class="text-xs font-bold text-slate-900">{{ $activity['title'] }}</p>
-                                    <p class="text-[11px] text-slate-600 mt-0.5">{{ $activity['desc'] }}</p>
-                                    <span class="text-[9px] font-bold text-slate-400 block mt-1">{{ \Carbon\Carbon::parse($activity['time'])->diffForHumans() }}</span>
+                    <div class="relative border-l-2 border-emerald-300 ml-3 space-y-6">
+                        @php
+                            $dotBg = ['emerald' => 'bg-emerald-200', 'sky' => 'bg-sky-200', 'amber' => 'bg-amber-200'];
+                            $dotInner = ['emerald' => 'bg-emerald-600', 'sky' => 'bg-sky-600', 'amber' => 'bg-amber-600'];
+                        @endphp
+                        @forelse($recentActivities as $activity)
+                            <div class="relative pl-5 hover:translate-x-1 transition-transform cursor-default">
+                                <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full {{ $dotBg[$activity['color']] ?? 'bg-slate-200' }} border-2 border-white flex items-center justify-center shadow">
+                                    <div class="w-1.5 h-1.5 rounded-full {{ $dotInner[$activity['color']] ?? 'bg-slate-600' }}"></div>
                                 </div>
-                            @empty
-                                <p class="text-xs text-slate-500 pl-5">Belum ada aktivitas terbaru.</p>
-                            @endforelse
-                        </div>
+                                <p class="text-xs font-bold text-slate-900">{{ $activity['title'] }}</p>
+                                <p class="text-[11px] text-slate-600 mt-0.5">{{ $activity['desc'] }}</p>
+                                <span class="text-[9px] font-bold text-slate-400 block mt-1">{{ \Carbon\Carbon::parse($activity['time'])->diffForHumans() }}</span>
+                            </div>
+                        @empty
+                            <p class="text-xs text-slate-500 pl-5">Belum ada aktivitas terbaru.</p>
+                        @endforelse
                     </div>
                 </div>
-
-            </div>
+           </div>
         </main>
     </div>
 
@@ -774,7 +644,6 @@
         const chartDataUrl = "{{ route('admin.dashboard.chartData') }}";
 
         document.addEventListener('DOMContentLoaded', function () {
-            // Fix 1: Start year from 2026 (launch year) and update dynamically in real-time
             const startYear = 2026;
             const currentRealYear = new Date().getFullYear();
             const maxYear = Math.max(startYear, currentRealYear, initialYear);

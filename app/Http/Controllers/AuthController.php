@@ -228,8 +228,6 @@ class AuthController extends Controller
             'email' => $request->email
         ]);
     }
-
-    // Proses simpan password baru
     public function resetPassword(Request $request)
     {
         $request->validate([
@@ -237,24 +235,19 @@ class AuthController extends Controller
             'email'    => 'required|email',
             'password' => 'required|string|min:6|confirmed',
         ]);
-
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
                 $user->forceFill([
                     'password' => Hash::make($password)
                 ])->setRememberToken(Str::random(60));
-
                 $user->save();
             }
         );
-
         return $status === Password::PASSWORD_RESET
             ? redirect()->route('auth.login')->with('success', 'Password berhasil diubah! Silakan masuk dengan password baru.')
             : back()->withErrors(['email' => [__($status)]]);
     }
-
-    // Helper redirect sesuai role
     protected function redirectByRole(User $user)
     {
         $roleName = $user->role->role_name ?? null;

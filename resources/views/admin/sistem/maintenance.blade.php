@@ -258,6 +258,65 @@
                     </form>
                 </div>
 
+                <!-- Pratinjau Tampilan Halaman Per Peran -->
+                <div class="bg-white border border-sky-200 p-6 rounded-2xl shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 border border-sky-200 flex items-center justify-center font-bold text-sm">
+                            <i class="fa-solid fa-eye"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-slate-900 text-base font-display">Tinjau Halaman per Peran (Preview Mode)</h3>
+                            <p class="text-xs text-slate-600 font-medium">Tinjau tampilan sistem untuk masing-masing peran saat maintenance atau down.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <a href="{{ route('pembeli.dashboard') }}" target="_blank" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-sky-50 hover:border-sky-300 transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-shopping-bag"></i></div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800 group-hover:text-sky-600">Peran Pembeli</h4>
+                                    <p class="text-[10px] text-slate-500">Tinjau Halaman Pembeli</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400 group-hover:text-sky-600"></i>
+                        </a>
+
+                        <a href="{{ route('penjual.dashboard') }}" target="_blank" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-store"></i></div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800 group-hover:text-emerald-600">Peran Penjual</h4>
+                                    <p class="text-[10px] text-slate-500">Tinjau Halaman Penjual</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400 group-hover:text-emerald-600"></i>
+                        </a>
+
+                        <a href="{{ route('verifikator.dashboard') }}" target="_blank" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-user-shield"></i></div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800 group-hover:text-indigo-600">Peran Verifikator</h4>
+                                    <p class="text-[10px] text-slate-500">Tinjau Halaman Verifikator</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400 group-hover:text-indigo-600"></i>
+                        </a>
+
+                        <a href="{{ route('cs.dashboard') }}" target="_blank" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-amber-50 hover:border-amber-300 transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-headset"></i></div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800 group-hover:text-amber-600">Peran Customer Service</h4>
+                                    <p class="text-[10px] text-slate-500">Tinjau Halaman CS</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400 group-hover:text-amber-600"></i>
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Backup Data Area -->
                 <div class="bg-white border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

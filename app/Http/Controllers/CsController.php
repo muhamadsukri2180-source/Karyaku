@@ -11,33 +11,120 @@ use App\Models\Report;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CsController extends Controller
 {
-    /* ===================== 1. DASHBOARD CS ===================== */
     public function dashboard()
     {
-        $totalLaporanMasuk = Report::where('status', 'pending')->count();
-        $laporanSelesai    = Report::whereIn('status', ['reviewed', 'dismissed'])->count();
-        $totalTiketPending = CustomerService::where('status', 'pending')->count();
+    /*
+    |--------------------------------------------------------------------------
+    | ID USER YANG LOGIN
+    |--------------------------------------------------------------------------
+    */
 
-        $recentReports = Report::with(['reporter', 'reportedUser', 'product'])
-            ->latest()
-            ->take(5)
-            ->get();
+    $userId = Auth::id();
 
-        $recentTickets = CustomerService::with('user')
-            ->latest()
-            ->take(5)
-            ->get();
 
-        return view('cs.dashboard', compact(
-            'totalLaporanMasuk', 
-            'laporanSelesai', 
+    /*
+    |--------------------------------------------------------------------------
+    | STATISTIK LAPORAN
+    |--------------------------------------------------------------------------
+    */
+
+    $totalLaporanMasuk = Report::where(
+        'status',
+        'pending'
+    )->count();
+
+
+    $laporanSelesai = Report::whereIn(
+        'status',
+        [
+            'reviewed',
+            'dismissed',
+        ]
+    )->count();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | STATISTIK CUSTOMER SERVICE
+    |--------------------------------------------------------------------------
+    */
+
+    $totalTiketPending = CustomerService::where(
+        'status',
+        'pending'
+    )->count();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | LAPORAN TERBARU
+    |--------------------------------------------------------------------------
+    |
+    | PENTING:
+    | Jangan menggunakan kolom "id" karena tabel reports
+    | tidak memiliki kolom tersebut.
+    |
+    */
+
+    $recentReports = Report::select([
+            'user_id',
+            'reported_user_id',
+            'product_id',
+            'reason',
+            'status',
+            'created_at',
+        ])
+        ->with([
+            'reporter:id_user,name',
+            'reportedUser:id_user,name',
+            'product:id_product,title',
+        ])
+        ->latest('created_at')
+        ->limit(5)
+        ->get();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TIKET CUSTOMER SERVICE TERBARU
+    |--------------------------------------------------------------------------
+    */
+
+    $recentTickets = CustomerService::select([
+            'id',
+            'user_id',
+            'subject',
+            'status',
+            'created_at',
+        ])
+        ->with([
+            'user:id_user,name,email',
+        ])
+        ->latest('created_at')
+        ->limit(5)
+        ->get();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TAMPILKAN DASHBOARD
+    |--------------------------------------------------------------------------
+    */
+
+    return view(
+        'cs.dashboard',
+        compact(
+            'totalLaporanMasuk',
+            'laporanSelesai',
             'totalTiketPending',
             'recentReports',
             'recentTickets'
-        ));
+        )
+    );
     }
 
     /* ===================== 2. TIKET PENGADUAN / BANTUAN USER ===================== */
@@ -46,13 +133,14 @@ class CsController extends Controller
         $search = $request->query('search');
         $status = $request->query('status');
 
-        $tickets = CustomerService::with('user')
+        $tickets = CustomerService::select('id', 'user_id', 'subject', 'status', 'created_at')
+            ->with('user:id_user,name,email')
+            ->when($status, fn ($q) => $q->where('status', $status))
             ->when($search, function ($q) use ($search) {
-                $q->where('subject', 'like', "%{$search}%")
-                  ->orWhereHas('user', fn ($qq) => $qq->where('name', 'like', "%{$search}%"));
-            })
-            ->when($status, function ($q) use ($status) {
-                $q->where('status', $status);
+                $q->where(function ($query) use ($search) {
+                    $query->where('subject', 'like', "%{$search}%")
+                          ->orWhereHas('user', fn ($qq) => $qq->where('name', 'like', "%{$search}%"));
+                });
             })
             ->latest()
             ->paginate(10)
@@ -63,7 +151,7 @@ class CsController extends Controller
 
     public function tiketDetail(string|int $id)
     {
-        $ticket = CustomerService::with('user')->findOrFail($id);
+        $ticket = CustomerService::with('user:id_user,name,email,avatar')->findOrFail($id);
         return response()->json($ticket);
     }
 
@@ -74,22 +162,23 @@ class CsController extends Controller
             'admin_note' => 'required|string|max:1000',
         ]);
 
-        $ticket = CustomerService::findOrFail($id);
-        $ticket->update([
-            'status'     => $request->status,
-            'admin_note' => $request->admin_note,
-        ]);
-
-        // Kirim Notifikasi Balasan ke User
-        $targetUserId = $ticket->user_id ?? $ticket->id_user ?? null;
-        if ($targetUserId) {
-            Notification::create([
-                'user_id'     => $targetUserId,
-                'name'        => 'Balasan Tiket Bantuan: ' . $ticket->subject,
-                'description' => 'CS memberikan respon: ' . $request->admin_note,
-                'is_read'     => false,
+        DB::transaction(function () use ($request, $id) {
+            $ticket = CustomerService::findOrFail($id);
+            $ticket->update([
+                'status'     => $request->status,
+                'admin_note' => $request->admin_note,
             ]);
-        }
+
+            $targetUserId = $ticket->user_id ?? $ticket->id_user ?? null;
+            if ($targetUserId) {
+                Notification::create([
+                    'user_id'     => $targetUserId,
+                    'name'        => 'Balasan Tiket Bantuan: ' . $ticket->subject,
+                    'description' => 'CS memberikan respon: ' . $request->admin_note,
+                    'is_read'     => false,
+                ]);
+            }
+        });
 
         return redirect()->back()->with('success', 'Tiket bantuan berhasil diperbarui dan notifikasi dikirim ke pengguna.');
     }
@@ -99,36 +188,63 @@ class CsController extends Controller
     {
         $search = $request->query('search');
 
-        $reportsUser = Report::with(['reporter', 'reportedUser'])
+        // 1. Laporan Pengguna
+        $reportsUser = Report::select('id', 'user_id', 'reported_user_id', 'reason', 'status', 'created_at')
+            ->with([
+                'reporter:id_user,name',
+                'reportedUser:id_user,name'
+            ])
             ->whereNull('product_id')
             ->whereIn('status', ['pending', 'escalated'])
             ->when($search, function ($q) use ($search) {
-                $q->whereHas('reporter', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
-                  ->orWhereHas('reportedUser', fn ($qq) => $qq->where('name', 'like', "%{$search}%"));
+                $q->where(function ($query) use ($search) {
+                    $query->whereHas('reporter', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
+                          ->orWhereHas('reportedUser', fn ($qq) => $qq->where('name', 'like', "%{$search}%"));
+                });
             })
             ->latest()
             ->paginate(10, ['*'], 'page_user')
             ->withQueryString();
 
-        $reportsProduk = Report::with(['reporter', 'product.seller'])
+        // 2. Laporan Produk
+        $reportsProduk = Report::select('id', 'user_id', 'product_id', 'reason', 'status', 'created_at')
+            ->with([
+                'reporter:id_user,name',
+                'product:id_product,seller_id,title',
+                'product.seller:id_user,name'
+            ])
             ->whereNotNull('product_id')
             ->whereIn('status', ['pending', 'escalated'])
             ->when($search, function ($q) use ($search) {
-                $q->whereHas('reporter', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
-                  ->orWhereHas('product', fn ($qq) => $qq->where('title', 'like', "%{$search}%"));
+                $q->where(function ($query) use ($search) {
+                    $query->whereHas('reporter', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
+                          ->orWhereHas('product', fn ($qq) => $qq->where('title', 'like', "%{$search}%"));
+                });
             })
             ->latest()
             ->paginate(10, ['*'], 'page_produk')
             ->withQueryString();
 
-        $reportsAppeal = AccountAppeal::with(['user.role', 'reviewer'])
+        // 3. Permohonan Banding
+        $reportsAppeal = AccountAppeal::select('id', 'user_id', 'reason', 'status', 'created_at', 'reviewed_by')
+            ->with([
+                'user:id_user,name,id_role',
+                'user.role:id_role,name',
+                'reviewer:id_user,name'
+            ])
             ->latest()
             ->paginate(10, ['*'], 'page_banding')
             ->withQueryString();
 
         $pendingAppealCount = AccountAppeal::where('status', 'pending')->count();
 
-        $riwayat = Report::with(['reporter', 'reportedUser', 'product'])
+        // 4. Riwayat Moderasi
+        $riwayat = Report::select('id', 'user_id', 'reported_user_id', 'product_id', 'status', 'admin_note', 'updated_at')
+            ->with([
+                'reporter:id_user,name',
+                'reportedUser:id_user,name',
+                'product:id_product,title'
+            ])
             ->whereIn('status', ['reviewed', 'dismissed'])
             ->latest()
             ->paginate(10, ['*'], 'page_riwayat')
@@ -144,61 +260,63 @@ class CsController extends Controller
             'admin_notes' => 'required|string|max:500',
         ]);
 
-        $report = Report::findOrFail($id);
+        $message = DB::transaction(function () use ($request, $id) {
+            $report = Report::findOrFail($id);
 
-        $status = match ($request->action) {
-            'abaikan'  => 'dismissed',
-            'eskalasi' => 'escalated',
-            default    => 'reviewed',
-        };
+            $status = match ($request->action) {
+                'abaikan'  => 'dismissed',
+                'eskalasi' => 'escalated',
+                default    => 'reviewed',
+            };
 
-        $report->update([
-            'status'      => $status,
-            'admin_note'  => $request->admin_notes,
-            'reviewed_by' => Auth::id(),
-            'reviewed_at' => now(),
-        ]);
+            $report->update([
+                'status'      => $status,
+                'admin_note'  => $request->admin_notes,
+                'reviewed_by' => Auth::id(),
+                'reviewed_at' => now(),
+            ]);
 
-        // Jika Suspend Akun Pengguna yang dilaporkan
-        if (in_array($request->action, ['suspend']) && $report->reported_user_id) {
-            User::where('id_user', $report->reported_user_id)->update(['status' => 'blocked']);
-        }
+            // Suspend Akun jika diperlukan
+            if ($request->action === 'suspend' && $report->reported_user_id) {
+                User::where('id_user', $report->reported_user_id)->update(['status' => 'blocked']);
+            }
 
-        // Sembunyikan Jasa / Produk
-        if (in_array($request->action, ['sembunyikan', 'suspend']) && $report->product_id) {
-            Product::where('id_product', $report->product_id)->update(['status' => 'inactive']);
-        }
+            // Sembunyikan Jasa / Produk
+            if (in_array($request->action, ['sembunyikan', 'suspend']) && $report->product_id) {
+                Product::where('id_product', $report->product_id)->update(['status' => 'inactive']);
+            }
 
-        // Notifikasi ke Pengguna yang Dilaporkan jika Peringatan / Teguran
-        if (in_array($request->action, ['peringatan', 'teguran'])) {
-            $targetUserId = $report->reported_user_id ?? ($report->product->user_id ?? $report->product->id_user ?? null);
-            if ($targetUserId) {
+            // Notifikasi Peringatan ke Pengguna yang dilaporkan
+            if (in_array($request->action, ['peringatan', 'teguran'])) {
+                $targetUserId = $report->reported_user_id ?? ($report->product->seller_id ?? null);
+                if ($targetUserId) {
+                    Notification::create([
+                        'user_id'     => $targetUserId,
+                        'name'        => '⚠️ Peringatan Laporan Pelanggaran',
+                        'description' => 'Akun/Jasa Anda menerima peringatan dari CS: ' . $request->admin_notes,
+                        'is_read'     => false,
+                    ]);
+                }
+            }
+
+            // Notifikasi ke Pelapor
+            $reporterId = $report->user_id ?? $report->id_user ?? null;
+            if ($reporterId) {
                 Notification::create([
-                    'user_id'     => $targetUserId,
-                    'name'        => '⚠️ Peringatan Laporan Pelanggaran',
-                    'description' => 'Akun/Jasa Anda menerima peringatan dari CS: ' . $request->admin_notes,
+                    'user_id'     => $reporterId,
+                    'name'        => 'Status Laporan Anda',
+                    'description' => 'Laporan Anda telah ditindaklanjuti CS. Catatan: ' . $request->admin_notes,
                     'is_read'     => false,
                 ]);
             }
-        }
 
-        // Notifikasi balik ke Pelapor
-        $reporterId = $report->user_id ?? $report->id_user ?? null;
-        if ($reporterId) {
-            Notification::create([
-                'user_id'     => $reporterId,
-                'name'        => 'Status Laporan Anda',
-                'description' => 'Laporan Anda telah ditindaklanjuti CS. Catatan: ' . $request->admin_notes,
-                'is_read'     => false,
-            ]);
-        }
-
-        $message = match ($request->action) {
-            'abaikan'     => 'Laporan telah diabaikan.',
-            'peringatan', 'teguran' => 'Peringatan berhasil dikirim ke pengguna.',
-            'sembunyikan', 'suspend' => 'Tindakan penangguhan / penyembunyian berhasil diproses.',
-            'eskalasi'    => 'Laporan berhasil dieskalasi ke Admin.',
-        };
+            return match ($request->action) {
+                'abaikan'               => 'Laporan telah diabaikan.',
+                'peringatan', 'teguran' => 'Peringatan berhasil dikirim ke pengguna.',
+                'sembunyikan', 'suspend'=> 'Tindakan penangguhan / penyembunyian berhasil diproses.',
+                'eskalasi'              => 'Laporan berhasil dieskalasi ke Admin.',
+            };
+        });
 
         return redirect()->back()->with('success', $message);
     }
@@ -220,52 +338,56 @@ class CsController extends Controller
             'admin_notes' => 'nullable|string|max:500',
         ]);
 
-        $appeal = AccountAppeal::findOrFail($id);
-        $user = $appeal->user;
+        $result = DB::transaction(function () use ($request, $id) {
+            $appeal = AccountAppeal::with('user:id_user,name')->findOrFail($id);
+            $user = $appeal->user;
 
-        if ($request->action === 'setujui') {
-            $appeal->update([
-                'status'      => 'approved',
-                'admin_note'  => $request->admin_notes ?: 'Banding disetujui. Akun telah diaktifkan kembali.',
-                'reviewed_at' => now(),
-                'reviewed_by' => Auth::id(),
-            ]);
-
-            if ($user) {
-                $user->update([
-                    'status'          => 'active',
-                    'suspended_until' => null,
-                    'suspend_reason'  => null,
+            if ($request->action === 'setujui') {
+                $appeal->update([
+                    'status'      => 'approved',
+                    'admin_note'  => $request->admin_notes ?: 'Banding disetujui. Akun telah diaktifkan kembali.',
+                    'reviewed_at' => now(),
+                    'reviewed_by' => Auth::id(),
                 ]);
 
-                Notification::create([
-                    'user_id'     => $user->id_user,
-                    'name'        => '🎉 Banding Disetujui & Akun Aktif',
-                    'description' => 'Pengajuan banding Anda telah disetujui oleh CS. Akun Anda telah diaktifkan kembali. ' . ($request->admin_notes ? 'Catatan CS: ' . $request->admin_notes : ''),
-                    'is_read'     => false,
+                if ($user) {
+                    $user->update([
+                        'status'          => 'active',
+                        'suspended_until' => null,
+                        'suspend_reason'  => null,
+                    ]);
+
+                    Notification::create([
+                        'user_id'     => $user->id_user,
+                        'name'        => '🎉 Banding Disetujui & Akun Aktif',
+                        'description' => 'Pengajuan banding Anda telah disetujui oleh CS. Akun Anda telah diaktifkan kembali. ' . ($request->admin_notes ? 'Catatan CS: ' . $request->admin_notes : ''),
+                        'is_read'     => false,
+                    ]);
+                }
+
+                return 'Banding disetujui dan akun pengguna "' . ($user->name ?? 'User') . '" berhasil diaktifkan kembali.';
+            } else {
+                $appeal->update([
+                    'status'      => 'rejected',
+                    'admin_note'  => $request->admin_notes ?: 'Banding ditolak oleh CS.',
+                    'reviewed_at' => now(),
+                    'reviewed_by' => Auth::id(),
                 ]);
+
+                if ($user) {
+                    Notification::create([
+                        'user_id'     => $user->id_user,
+                        'name'        => '❌ Pengajuan Banding Ditolak',
+                        'description' => 'Pengajuan banding akun Anda ditolak oleh CS. Catatan CS: ' . ($request->admin_notes ?: 'Alasan pembelaan atau bukti tidak mencukupi.'),
+                        'is_read'     => false,
+                    ]);
+                }
+
+                return 'Pengajuan banding telah ditolak.';
             }
+        });
 
-            return redirect()->back()->with('success', 'Banding disetujui dan akun pengguna "' . ($user->name ?? 'User') . '" berhasil diaktifkan kembali.');
-        } else {
-            $appeal->update([
-                'status'      => 'rejected',
-                'admin_note'  => $request->admin_notes ?: 'Banding ditolak oleh CS.',
-                'reviewed_at' => now(),
-                'reviewed_by' => Auth::id(),
-            ]);
-
-            if ($user) {
-                Notification::create([
-                    'user_id'     => $user->id_user,
-                    'name'        => '❌ Pengajuan Banding Ditolak',
-                    'description' => 'Pengajuan banding akun Anda ditolak oleh CS. Catatan CS: ' . ($request->admin_notes ?: 'Alasan pembelaan atau bukti tidak mencukupi.'),
-                    'is_read'     => false,
-                ]);
-            }
-
-            return redirect()->back()->with('success', 'Pengajuan banding telah ditolak.');
-        }
+        return redirect()->back()->with('success', $result);
     }
 
     /* ===================== 4. PANTAU TRANSAKSI (READ-ONLY) ===================== */
@@ -273,10 +395,18 @@ class CsController extends Controller
     {
         $search = $request->query('search');
 
-        $orders = Order::with(['buyer', 'items.product.seller'])
+        $orders = Order::select('id_order', 'buyer_id', 'total_price', 'status', 'created_at')
+            ->with([
+                'buyer:id_user,name',
+                'items:id,order_id,product_id',
+                'items.product:id_product,seller_id,title',
+                'items.product.seller:id_user,name'
+            ])
             ->when($search, function ($q) use ($search) {
-                $q->whereHas('buyer', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
-                  ->orWhere('id_order', 'like', "%{$search}%");
+                $q->where(function ($query) use ($search) {
+                    $query->where('id_order', 'like', "%{$search}%")
+                          ->orWhereHas('buyer', fn ($qq) => $qq->where('name', 'like', "%{$search}%"));
+                });
             })
             ->latest()
             ->paginate(15)
@@ -287,7 +417,12 @@ class CsController extends Controller
 
     public function transaksiDetail(string|int $id)
     {
-        $order = Order::with(['buyer', 'items.product.seller'])->findOrFail($id);
+        $order = Order::with([
+            'buyer:id_user,name,email,phone',
+            'items:id,order_id,product_id,quantity,price',
+            'items.product:id_product,seller_id,title,price',
+            'items.product.seller:id_user,name'
+        ])->findOrFail($id);
 
         return response()->json($order);
     }
@@ -295,8 +430,11 @@ class CsController extends Controller
     /* ===================== 5. NOTIFIKASI CS ===================== */
     public function notifikasi()
     {
-        $notifications = Notification::where('user_id', Auth::id())
-            ->orWhereNull('user_id')
+        $notifications = Notification::select('id', 'user_id', 'name', 'description', 'is_read', 'created_at')
+            ->where(function ($q) {
+                $q->where('user_id', Auth::id())
+                  ->orWhereNull('user_id');
+            })
             ->latest()
             ->paginate(10);
 
