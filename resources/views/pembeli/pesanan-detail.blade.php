@@ -55,6 +55,9 @@
                             <th>Penjual</th>
                             <th class="text-center">Jumlah</th>
                             <th class="text-end">Subtotal</th>
+                            @if($order->payment_status === 'paid')
+                                <th class="text-center">Aksi Berkas</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -63,14 +66,14 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-3">
-                                        <img src="{{ $product->image_url ?? asset('storage/' . ($product->image ?? '')) }}" 
+                                        <img src="{{ $product && $product->thumbnail ? asset('storage/' . $product->thumbnail) : 'https://placehold.co/100x100?text=Produk' }}" 
                                              alt="{{ $product->title ?? 'Produk' }}" 
-                                             class="rounded-3 object-fit-cover" 
+                                             class="rounded-3 object-fit-cover border" 
                                              style="width: 50px; height: 50px;"
                                              onerror="this.src='https://placehold.co/100x100?text=Produk'">
                                         <div>
                                             <h6 class="fw-bold mb-0 text-dark" style="font-size: 13.5px;">
-                                                <a href="{{ route('pembeli.produk.detail', $product->id_product) }}" class="text-dark">{{ $product->title ?? 'Produk Digital' }}</a>
+                                                <a href="{{ $product ? route('pembeli.produk.detail', $product->id_product) : '#' }}" class="text-dark">{{ $product->title ?? 'Produk Digital' }}</a>
                                             </h6>
                                             <span class="text-muted small">Rp {{ number_format($item->price, 0, ',', '.') }}</span>
                                         </div>
@@ -85,6 +88,17 @@
                                 <td class="text-end fw-bold text-primary">
                                     Rp {{ number_format($item->subtotal, 0, ',', '.') }}
                                 </td>
+                                @if($order->payment_status === 'paid')
+                                    <td class="text-center">
+                                        @if($product && $product->file)
+                                            <a href="{{ route('pembeli.download.file', $item->id_order_item) }}" class="btn btn-success btn-sm fw-bold px-2 py-1">
+                                                <i class="bi bi-download me-1"></i> Unduh File
+                                            </a>
+                                        @else
+                                            <span class="badge bg-secondary">TIDAK ADA FILE</span>
+                                        @endif
+                                    </td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>

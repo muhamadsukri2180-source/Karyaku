@@ -16,14 +16,28 @@
 </div>
 
 <div class="row g-4">
-    {{-- FOTO PRODUK --}}
+    {{-- FOTO & GALLERY PRODUK --}}
     <div class="col-lg-6">
-        <div class="card-box overflow-hidden p-2 rounded-4">
-            <img src="{{ $product->thumbnail ? asset('storage/' . $product->thumbnail) : ($product->image_url ?? 'https://ui-avatars.com/api/?background=dbeafe&color=1e3a8a&size=512&name=' . urlencode($product->title)) }}"
+        <div class="card-box overflow-hidden p-3 rounded-4">
+            @php
+                $imagesList = $product->images_list;
+            @endphp
+            <img id="mainProductImg" src="{{ $product->thumbnail ? asset('storage/' . $product->thumbnail) : ($product->image_url ?? 'https://ui-avatars.com/api/?background=dbeafe&color=1e3a8a&size=512&name=' . urlencode($product->title)) }}"
                  alt="{{ $product->title }}" 
-                 class="w-100 rounded-3 object-fit-cover shadow-sm" 
+                 class="w-100 rounded-3 object-fit-cover shadow-sm mb-2" 
                  style="max-height: 420px; object-fit: cover;"
                  onerror="this.src='https://placehold.co/600x400?text=Karyaku+Produk'">
+            
+            @if(count($imagesList) > 1)
+                <div class="d-flex gap-2 mt-2 overflow-x-auto pb-1">
+                    @foreach($imagesList as $imgKey => $img)
+                        <img src="{{ asset('storage/' . $img) }}" 
+                             class="rounded border shadow-sm cursor-pointer" 
+                             style="width: 70px; height: 70px; object-fit: cover; cursor: pointer; transition: transform 0.2s;" 
+                             onclick="document.getElementById('mainProductImg').src=this.src;">
+                    @endforeach
+                </div>
+            @endif
         </div>
     </div>
 
@@ -80,6 +94,19 @@
         </div>
     </div>
 </div>
+
+{{-- VIDIO PREVIEW PRODUK (OPSIONAL) --}}
+@if($product->video)
+    <div class="card-box p-4 mt-4">
+        <h6 class="fw-bold mb-3 border-bottom pb-2"><i class="bi bi-play-btn-fill text-danger me-2"></i>Vidio Preview / Demo Karya</h6>
+        <div class="ratio ratio-16x9 rounded-3 overflow-hidden shadow-sm bg-dark">
+            <video controls class="w-100 h-100 rounded-3">
+                <source src="{{ asset('storage/' . $product->video) }}" type="video/mp4">
+                Browser Anda tidak mendukung pemutaran video.
+            </video>
+        </div>
+    </div>
+@endif
 
 {{-- DESKRIPSI PRODUK --}}
 <div class="card-box p-4 mt-4">

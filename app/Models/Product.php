@@ -13,7 +13,7 @@ class Product extends Model
 
     protected $fillable = [
         'seller_id', 'category_id', 'title', 'description',
-        'price', 'stock', 'file', 'thumbnail', 'status', 'rejection_note',
+        'price', 'stock', 'file', 'thumbnail', 'images', 'video', 'status', 'rejection_note',
         'is_promoted', 'promoted_until', 'view_count', 'sold_count'
     ];
 
@@ -22,7 +22,24 @@ class Product extends Model
         'promoted_until'  => 'datetime',
         'price'           => 'float',
         'stock'           => 'integer',
+        'images'          => 'array',
     ];
+
+    public function getImagesListAttribute(): array
+    {
+        $list = [];
+        if ($this->thumbnail) {
+            $list[] = $this->thumbnail;
+        }
+        if (is_array($this->images)) {
+            foreach ($this->images as $img) {
+                if (!empty($img) && !in_array($img, $list)) {
+                    $list[] = $img;
+                }
+            }
+        }
+        return array_slice($list, 0, 5);
+    }
 
     public function seller(): BelongsTo
     {
@@ -71,11 +88,24 @@ class Product extends Model
 
     public function getAvgRatingAttribute(): float
     {
-        return round($this->reviews()->avg('rating') ?? 5.0, 1);
+        if (array_key_exists('reviews_avg_rating', $this->attributes) && $this->attributes['reviews_avg_rating'] !== null) {
+            return round((float) $this->attributes['reviews_avg_rating'], 1);
+        }
+        if ($this->relationLoaded('reviews')) {
+            $avg = $this->reviews->avg('rating');
+            return round((float) ($avg !== null ? $avg : 5.0), 1);
+        }
+        return round((float) ($this->reviews()->avg('rating') ?? 5.0), 1);
     }
 
     public function getReviewsCountAttribute(): int
     {
+        if (array_key_exists('reviews_count', $this->attributes) && $this->attributes['reviews_count'] !== null) {
+            return (int) $this->attributes['reviews_count'];
+        }
+        if ($this->relationLoaded('reviews')) {
+            return $this->reviews->count();
+        }
         return $this->reviews()->count();
     }
 }

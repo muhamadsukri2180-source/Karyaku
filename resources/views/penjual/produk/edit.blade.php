@@ -75,9 +75,9 @@
                     @enderror
                 </div>
 
-                <div class="row g-3 mb-4">
+                <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold small text-dark">Foto Sampul / Thumbnail (Opsional)</label>
+                        <label class="form-label fw-bold small text-dark">Foto Sampul Utama / Thumbnail (Opsional)</label>
                         @if($product->thumbnail)
                             <div class="mb-2">
                                 <img src="{{ asset('storage/' . $product->thumbnail) }}" alt="cover" class="img-fluid rounded-3 border" style="max-height: 100px;">
@@ -85,8 +85,42 @@
                         @endif
                         <input type="file" name="thumbnail" accept="image/png,image/jpeg,image/jpg,image/webp" 
                                class="form-control @error('thumbnail') is-invalid @enderror">
-                        <small class="text-muted" style="font-size: 11px;">Biarkan kosong jika tidak ingin mengubah thumbnail.</small>
+                        <small class="text-muted" style="font-size: 11px;">Biarkan kosong jika tidak ingin mengubah foto sampul utama.</small>
                         @error('thumbnail')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-dark">Tambah Foto Pendukung (Opsional, Maks 4 Foto)</label>
+                        @if(!empty($product->images) && is_array($product->images))
+                            <div class="d-flex gap-1 mb-2 flex-wrap">
+                                @foreach($product->images as $img)
+                                    <img src="{{ asset('storage/' . $img) }}" class="rounded border" style="width: 45px; height: 45px; object-fit: cover;">
+                                @endforeach
+                            </div>
+                        @endif
+                        <input type="file" name="images[]" accept="image/png,image/jpeg,image/jpg,image/webp" multiple
+                               class="form-control @error('images') is-invalid @enderror @error('images.*') is-invalid @enderror">
+                        <small class="text-muted" style="font-size: 11px;">Pilih foto tambahan untuk memperbarui galeri produk (Maks 5 foto total).</small>
+                        @error('images')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-dark">Vidio Preview Produk (Opsional - 1 Vidio)</label>
+                        @if($product->video)
+                            <div class="mb-2 small text-success">
+                                <i class="bi bi-file-earmark-play-fill me-1"></i> Vidio preview sudah ada.
+                            </div>
+                        @endif
+                        <input type="file" name="video" accept="video/mp4,video/webm,video/ogg,video/quicktime" 
+                               class="form-control @error('video') is-invalid @enderror">
+                        <small class="text-muted" style="font-size: 11px;">Biarkan kosong jika tidak ingin mengganti berkas vidio.</small>
+                        @error('video')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>

@@ -62,7 +62,10 @@ class User extends Authenticatable
 
     public function getMaxUploadLimit(): int
     {
-        return $this->membership ? ($this->membership->max_upload ?? 5) : 5;
+        if ($this->isMembershipActive() && $this->membership) {
+            return (int) ($this->membership->max_upload ?? 5);
+        }
+        return 5; // Default limit untuk akun gratis/tanpa membership/paket kadaluarsa
     }
 
     public function canUploadProduct(): bool
@@ -74,6 +77,9 @@ class User extends Authenticatable
 
     public function canUseAds(): bool
     {
+        if (!$this->isMembershipActive()) {
+            return false;
+        }
         $name = strtolower($this->membership?->name ?? '');
         return str_contains($name, 'diamond') || str_contains($name, 'gold') || str_contains($name, 'platinum');
     }

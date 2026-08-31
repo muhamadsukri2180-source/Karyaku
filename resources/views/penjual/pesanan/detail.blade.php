@@ -76,11 +76,17 @@
                         <small>Pembeli telah membayar & dapat mengunduh berkas.</small>
                     </div>
                 @else
-                    <div class="p-3 bg-warning-subtle rounded-3 border border-warning-subtle text-warning">
+                    <div class="p-3 bg-warning-subtle rounded-3 border border-warning-subtle text-warning mb-3">
                         <i class="bi bi-clock-history fs-2 d-block mb-1"></i>
-                        <h6 class="fw-bold mb-0">MENUNGGU PEMBAYARAN</h6>
-                        <small>Menunggu verifikasi pembayaran oleh sistem.</small>
+                        <h6 class="fw-bold mb-0">MENUNGGU KONFIRMASI</h6>
+                        <small>Silakan konfirmasi pesanan jika pembayaran pembeli telah Anda terima.</small>
                     </div>
+                    <form action="{{ route('penjual.pesanan.konfirmasi', $orderItem->id_order_item) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin mengonfirmasi pesanan ini? Pembeli akan langsung dapat mengunduh berkas digital.');">
+                        @csrf
+                        <button type="submit" class="btn btn-success btn-sm w-100 fw-bold py-2 shadow-sm mb-2">
+                            <i class="bi bi-check-circle-fill me-1"></i> Konfirmasi Pembelian
+                        </button>
+                    </form>
                 @endif
             </div>
 

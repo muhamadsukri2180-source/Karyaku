@@ -228,6 +228,7 @@ Route::middleware(['auth', 'role:penjual'])->prefix('penjual')->name('penjual.')
     // Pesanan Masuk (Penjualan)
     Route::get('/pesanan', [PenjualController::class, 'pesananIndex'])->name('pesanan.index');
     Route::get('/pesanan/{id}', [PenjualController::class, 'pesananDetail'])->name('pesanan.detail');
+    Route::post('/pesanan/{id}/konfirmasi', [PenjualController::class, 'pesananKonfirmasi'])->name('pesanan.konfirmasi');
 
     // Keuangan & Penarikan Saldo
     Route::get('/keuangan', [PenjualController::class, 'keuanganIndex'])->name('keuangan.index');

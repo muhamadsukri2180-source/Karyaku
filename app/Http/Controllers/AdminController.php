@@ -65,12 +65,10 @@ class AdminController extends Controller
             $chartData[] = (int) ($chartRaw[$m] ?? 0);
         }
 
-        $topCategories = Category::all()->map(function ($cat) {
-            $cat->order_count = OrderItem::whereHas('product', function ($q) use ($cat) {
-                $q->where('category_id', $cat->id_category);
-            })->count();
-            return $cat;
-        })->sortByDesc('order_count')->take(4)->values();
+        $topCategories = Category::withCount('orderItems as order_count')
+            ->orderByDesc('order_count')
+            ->take(4)
+            ->get();
 
         $totalCategoryOrders = max(1, $topCategories->sum('order_count'));
         $topCategories = $topCategories->map(function ($cat) use ($totalCategoryOrders) {

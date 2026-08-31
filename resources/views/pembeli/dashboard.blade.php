@@ -195,6 +195,46 @@
         </div>
     </section>
 
+    {{-- SEKSI IKLAN & PROMOSI (SPONSORED PRODUCTS) --}}
+    @if(isset($promotedProducts) && $promotedProducts->count() > 0)
+        <section class="section mb-4">
+            <div class="p-4 rounded-4 shadow-sm border border-primary-subtle" style="background: linear-gradient(135deg, #f0f7ff 0%, #e0eefe 100%);">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-warning text-dark font-weight-bold px-2 py-1 rounded-pill" style="font-size:11px;">
+                            <i class="bi bi-star-fill me-1 text-dark"></i> SPONSORED
+                        </span>
+                        <h4 class="fw-bold text-dark mb-0 fs-5"><i class="bi bi-megaphone-fill text-primary me-2"></i>Produk Promosi & Iklan Pilihan</h4>
+                    </div>
+                    <span class="text-muted small">Promosi Resmi Penjual Karyaku</span>
+                </div>
+                <div class="row g-3">
+                    @foreach($promotedProducts as $promo)
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden position-relative hover-shadow" style="transition: transform 0.2s;">
+                                <span class="position-absolute top-0 start-0 badge bg-danger m-2 shadow-sm" style="font-size: 9px; z-index: 2;">IKLAN</span>
+                                <a href="{{ route('pembeli.produk.detail', $promo->id_product) }}" class="text-decoration-none text-dark d-flex flex-column h-100">
+                                    <img src="{{ $promo->thumbnail ? asset('storage/' . $promo->thumbnail) : 'https://placehold.co/200x200?text=Iklan' }}" 
+                                         class="card-img-top object-fit-cover" style="height: 120px;" alt="{{ $promo->title }}">
+                                    <div class="card-body p-2 d-flex flex-column justify-content-between flex-grow-1">
+                                        <div>
+                                            <div class="text-truncate fw-bold small mb-1" title="{{ $promo->title }}">{{ $promo->title }}</div>
+                                            <div class="text-muted" style="font-size: 10px;">{{ $promo->category->name ?? 'Karya' }}</div>
+                                        </div>
+                                        <div class="mt-2 pt-1 border-top d-flex align-items-center justify-content-between">
+                                            <span class="fw-bold text-primary small">Rp {{ number_format($promo->price, 0, ',', '.') }}</span>
+                                            <span class="badge bg-light text-muted border" style="font-size: 9px;"><i class="bi bi-eye"></i> {{ $promo->view_count }}</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+
     {{-- PRODUK + SIDEBAR --}}
     <section class="section">
         <div class="section-header">

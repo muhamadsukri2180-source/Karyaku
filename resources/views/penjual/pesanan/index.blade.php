@@ -72,12 +72,24 @@
                         </div>
                     </div>
 
-                    <div class="text-md-end flex-shrink-0 d-flex flex-md-column justify-content-between align-items-end">
-                        <div class="text-muted small" style="font-size: 11px;">Total Pendapatan:</div>
-                        <h5 class="fw-bold text-primary mb-2">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</h5>
-                        <a href="{{ route('penjual.pesanan.detail', $item->id_order_item) }}" class="btn btn-outline-primary btn-sm fw-semibold">
-                            <i class="bi bi-eye me-1"></i> Detail Pesanan
-                        </a>
+                    <div class="text-md-end flex-shrink-0 d-flex flex-md-column justify-content-between align-items-end gap-2">
+                        <div>
+                            <div class="text-muted small" style="font-size: 11px;">Total Pendapatan:</div>
+                            <h5 class="fw-bold text-primary mb-0">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</h5>
+                        </div>
+                        <div class="d-flex gap-2">
+                            @if(!$isPaid)
+                                <form action="{{ route('penjual.pesanan.konfirmasi', $item->id_order_item) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin mengonfirmasi pembelian ini? Pembeli akan mendapatkan akses unduh berkas digital.');">
+                                    @csrf
+                                    <button type="submit" class="btn btn-success btn-sm fw-bold">
+                                        <i class="bi bi-check-circle-fill me-1"></i> Konfirmasi Pembelian
+                                    </button>
+                                </form>
+                            @endif
+                            <a href="{{ route('penjual.pesanan.detail', $item->id_order_item) }}" class="btn btn-outline-primary btn-sm fw-semibold">
+                                <i class="bi bi-eye me-1"></i> Detail
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

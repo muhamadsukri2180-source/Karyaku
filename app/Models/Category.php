@@ -17,6 +17,11 @@ class Category extends Model
         return $this->hasMany(Product::class, 'category_id', 'id_category');
     }
 
+    public function orderItems()
+    {
+        return $this->hasManyThrough(OrderItem::class, Product::class, 'category_id', 'product_id', 'id_category', 'id_product');
+    }
+
     public function getSlugAttribute(): string
     {
         return \Illuminate\Support\Str::slug($this->name);

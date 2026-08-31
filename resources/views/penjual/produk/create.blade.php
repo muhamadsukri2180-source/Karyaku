@@ -80,9 +80,9 @@
                     @enderror
                 </div>
 
-                <div class="row g-3 mb-4">
+                <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold small text-dark">Foto Sampul / Thumbnail <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold small text-dark">Foto Sampul Utama (Thumbnail) <span class="text-danger">*</span></label>
                         <input type="file" name="thumbnail" accept="image/png,image/jpeg,image/jpg,image/webp" 
                                class="form-control @error('thumbnail') is-invalid @enderror" required id="thumbInput">
                         <small class="text-muted" style="font-size: 11px;">Format: PNG, JPG, JPEG, WEBP (Max 4MB).</small>
@@ -92,6 +92,28 @@
                         <div class="mt-2 text-center d-none" id="previewContainer">
                             <img id="thumbPreview" class="img-fluid rounded-3 border shadow-sm" style="max-height: 140px;" alt="preview">
                         </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-dark">Foto Pendukung (Opsional, Maks 4 Foto)</label>
+                        <input type="file" name="images[]" accept="image/png,image/jpeg,image/jpg,image/webp" multiple
+                               class="form-control @error('images') is-invalid @enderror @error('images.*') is-invalid @enderror">
+                        <small class="text-muted" style="font-size: 11px;">Pilih hingga 4 foto pendukung karya (Total galeri maks 5 foto).</small>
+                        @error('images')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-dark">Vidio Preview Produk (Opsional - 1 Vidio)</label>
+                        <input type="file" name="video" accept="video/mp4,video/webm,video/ogg,video/quicktime" 
+                               class="form-control @error('video') is-invalid @enderror">
+                        <small class="text-muted" style="font-size: 11px;">Format: MP4, WEBM, OGG (Max 50MB). Opsional untuk demo karya.</small>
+                        @error('video')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="col-md-6">

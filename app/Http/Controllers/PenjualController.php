@@ -42,10 +42,19 @@ class PenjualController extends Controller
             $q->where('payment_status', 'paid');
         })->sum('subtotal');
 
-        $totalTerjual = Product::where('seller_id', $user->id_user)->sum('sold_count');
-        $produkAktif = Product::where('seller_id', $user->id_user)->where('status', 'active')->count();
-        $produkPending = Product::where('seller_id', $user->id_user)->where('status', 'pending')->count();
-        $produkBuked = Product::where('seller_id', $user->id_user)->whereIn('status', ['rejected', 'inactive', 'blocked'])->count();
+        $statsProduct = Product::where('seller_id', $user->id_user)
+            ->selectRaw("
+                SUM(sold_count) as total_terjual,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as produk_aktif,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as produk_pending,
+                SUM(CASE WHEN status IN ('rejected', 'inactive', 'blocked') THEN 1 ELSE 0 END) as produk_buked
+            ")
+            ->first();
+
+        $totalTerjual = (int) ($statsProduct->total_terjual ?? 0);
+        $produkAktif = (int) ($statsProduct->produk_aktif ?? 0);
+        $produkPending = (int) ($statsProduct->produk_pending ?? 0);
+        $produkBuked = (int) ($statsProduct->produk_buked ?? 0);
 
         $recentProducts = Product::where('seller_id', $user->id_user)
             ->with('category')
@@ -143,7 +152,7 @@ class PenjualController extends Controller
         // Cek kembali kuota upload
         if (!$user->canUploadProduct()) {
             return redirect()->route('penjual.produk.index')
-                ->with('error', 'Gagal mengunggah. Batas kuota upload produk paket Anda telah tercapai.');
+                ->with('error', 'Gagal mengunggah. Batas kuota upload produk paket Anda (' . $user->getMaxUploadLimit() . ' produk) telah tercapai. Silakan perpanjang / tingkatkan paket membership Anda.');
         }
 
         $validated = $request->validate([
@@ -153,6 +162,9 @@ class PenjualController extends Controller
             'stock'       => 'required|integer|min:1',
             'description' => 'required|string',
             'thumbnail'   => 'required|image|mimes:jpeg,png,jpg,webp|max:4096',
+            'images'      => 'nullable|array|max:5',
+            'images.*'    => 'image|mimes:jpeg,png,jpg,webp|max:4096',
+            'video'       => 'nullable|file|mimes:mp4,webm,ogg,mov,avi|max:51200', // max 50MB opsional
             'file'        => 'required|file|max:51200', // max 50MB
         ], [
             'title.required'       => 'Nama produk wajib diisi.',
@@ -160,14 +172,36 @@ class PenjualController extends Controller
             'price.required'       => 'Harga produk wajib diisi (minimal Rp 1.000).',
             'stock.required'       => 'Jumlah stok produk wajib diisi.',
             'description.required' => 'Deskripsi produk wajib diisi.',
-            'thumbnail.required'   => 'Unggah foto/gambar sampul produk.',
+            'thumbnail.required'   => 'Unggah foto/gambar sampul produk utama.',
+            'images.max'           => 'Foto pendukung maksimal 5 foto.',
+            'video.max'            => 'Ukuran berkas video maksimal 50MB.',
+            'video.mimes'          => 'Format berkas video harus MP4, WEBM, OGG, MOV, atau AVI.',
             'file.required'        => 'Unggah berkas digital produk untuk pembeli.',
         ]);
 
-        // Upload Thumbnail
+        // Upload Sampul Utama (Thumbnail)
         $thumbPath = null;
         if ($request->hasFile('thumbnail')) {
             $thumbPath = $request->file('thumbnail')->store('products/thumbnails', 'public');
+        }
+
+        // Upload Gallery Photos (hingga 5 foto total)
+        $galleryPaths = [];
+        if ($thumbPath) {
+            $galleryPaths[] = $thumbPath;
+        }
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $imgFile) {
+                if (count($galleryPaths) < 5) {
+                    $galleryPaths[] = $imgFile->store('products/gallery', 'public');
+                }
+            }
+        }
+
+        // Upload Video (Opsional 1 video)
+        $videoPath = null;
+        if ($request->hasFile('video')) {
+            $videoPath = $request->file('video')->store('products/videos', 'public');
         }
 
         // Upload Berkas Produk
@@ -184,6 +218,8 @@ class PenjualController extends Controller
             'price'           => $validated['price'],
             'stock'           => $validated['stock'],
             'thumbnail'       => $thumbPath,
+            'images'          => $galleryPaths,
+            'video'           => $videoPath,
             'file'            => $filePath,
             'status'          => 'pending', // Menunggu verifikasi
             'rejection_note'  => null,
@@ -216,6 +252,9 @@ class PenjualController extends Controller
             'stock'       => 'required|integer|min:1',
             'description' => 'required|string',
             'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+            'images'      => 'nullable|array|max:5',
+            'images.*'    => 'image|mimes:jpeg,png,jpg,webp|max:4096',
+            'video'       => 'nullable|file|mimes:mp4,webm,ogg,mov,avi|max:51200',
             'file'        => 'nullable|file|max:51200',
         ]);
 
@@ -224,6 +263,27 @@ class PenjualController extends Controller
                 Storage::disk('public')->delete($product->thumbnail);
             }
             $product->thumbnail = $request->file('thumbnail')->store('products/thumbnails', 'public');
+        }
+
+        $galleryPaths = is_array($product->images) ? $product->images : [];
+        if ($product->thumbnail && !in_array($product->thumbnail, $galleryPaths)) {
+            array_unshift($galleryPaths, $product->thumbnail);
+        }
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $imgFile) {
+                if (count($galleryPaths) < 5) {
+                    $galleryPaths[] = $imgFile->store('products/gallery', 'public');
+                }
+            }
+        }
+        $product->images = array_slice($galleryPaths, 0, 5);
+
+        if ($request->hasFile('video')) {
+            if ($product->video && Storage::disk('public')->exists($product->video)) {
+                Storage::disk('public')->delete($product->video);
+            }
+            $product->video = $request->file('video')->store('products/videos', 'public');
         }
 
         if ($request->hasFile('file')) {
@@ -403,6 +463,35 @@ class PenjualController extends Controller
         return view('penjual.pesanan.detail', compact('orderItem'));
     }
 
+    public function pesananKonfirmasi($id)
+    {
+        $user = Auth::user();
+
+        $orderItem = OrderItem::with(['product', 'order'])
+            ->whereHas('product', function ($q) use ($user) {
+                $q->where('seller_id', $user->id_user);
+            })
+            ->findOrFail($id);
+
+        $order = $orderItem->order;
+
+        if ($order) {
+            $order->payment_status = 'paid';
+            $order->status = 'selesai';
+            $order->save();
+
+            // Kirim notifikasi ke pembeli
+            Notification::create([
+                'user_id'     => $order->buyer_id,
+                'name'        => '✅ Pesanan Dikonfirmasi Penjual',
+                'description' => 'Pesanan #' . $order->id_order . ' (' . ($orderItem->product->title ?? 'Produk Digital') . ') telah dikonfirmasi oleh penjual. Anda kini dapat mengunduh berkasnya!',
+                'is_read'     => false,
+            ]);
+        }
+
+        return back()->with('success', 'Pesanan pembelian berhasil dikonfirmasi! Status pesanan kini Lunas & Selesai. Pembeli dapat langsung mengunduh berkas digital karya Anda.');
+    }
+
     // ================= 9. KEUANGAN & PENARIKAN SALDO =================
     public function keuanganIndex()
     {
@@ -474,5 +563,3 @@ class PenjualController extends Controller
         return back()->with('success', 'Permintaan penarikan saldo sebesar Rp ' . number_format($validated['amount'], 0, ',', '.') . ' berhasil diajukan dan sedang menunggu proses transfer oleh Admin.');
     }
 }
-
-

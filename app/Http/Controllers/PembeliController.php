@@ -37,10 +37,24 @@ class PembeliController extends Controller
             ->take(5)
             ->get();
 
-        $rekomendasi = Product::with(['category', 'seller', 'reviews'])
+        $rekomendasi = Product::with(['category', 'seller'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->where('status', 'active')
             ->orderByDesc('sold_count')
             ->take(8)
+            ->get();
+
+        $promotedProducts = Product::with(['category', 'seller'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->where('status', 'active')
+            ->where('is_promoted', true)
+            ->where(function ($q) {
+                $q->whereNull('promoted_until')->orWhere('promoted_until', '>=', now());
+            })
+            ->latest('id_product')
+            ->take(6)
             ->get();
 
         $categories = Category::where('status', 'aktif')->orderBy('name')->take(8)->get();
@@ -48,14 +62,17 @@ class PembeliController extends Controller
 
         return view('pembeli.dashboard', compact(
             'totalPesanan', 'totalSelesai', 'totalBelumBayar', 'totalBelanja', 
-            'totalWishlist', 'totalKeranjang', 'recentOrders', 'rekomendasi', 'categories', 'wishlistIds'
+            'totalWishlist', 'totalKeranjang', 'recentOrders', 'rekomendasi', 'promotedProducts', 'categories', 'wishlistIds'
         ));
     }
 
     // ================= MARKETPLACE =================
     public function marketplace(Request $request)
     {
-        $query = Product::with(['category', 'seller', 'reviews'])->where('status', 'active');
+        $query = Product::with(['category', 'seller'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->where('status', 'active');
 
         if ($request->filled('q')) {
             $query->where('title', 'like', '%' . $request->q . '%');
