@@ -1582,4 +1582,141 @@ class AdminController extends Controller
         IpLog::findOrFail($id)->delete();
         return back()->with('success', 'Log IP dihapus.');
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 14. CLEAR CACHE & OPTIMASI SISTEM
+    |--------------------------------------------------------------------------
+    */
+    public function clearCache(Request $request)
+    {
+        $results = [];
+
+        // 1. Bersihkan cache aplikasi (query cache, remember(), dll)
+        try {
+            Artisan::call('cache:clear');
+            $results[] = 'Application Cache: bersih';
+        } catch (\Throwable $e) {
+            $results[] = 'Application Cache: gagal (' . $e->getMessage() . ')';
+        }
+
+        // 2. Bersihkan cache konfigurasi (.env yang ter-cache)
+        try {
+            Artisan::call('config:clear');
+            $results[] = 'Config Cache: bersih';
+        } catch (\Throwable $e) {
+            $results[] = 'Config Cache: gagal (' . $e->getMessage() . ')';
+        }
+
+        // 3. Bersihkan cache routing
+        try {
+            Artisan::call('route:clear');
+            $results[] = 'Route Cache: bersih';
+        } catch (\Throwable $e) {
+            $results[] = 'Route Cache: gagal (' . $e->getMessage() . ')';
+        }
+
+        // 4. Bersihkan cache view Blade (ini yang paling sering bikin bug "Undefined variable")
+        try {
+            Artisan::call('view:clear');
+            $results[] = 'View Cache (Blade): bersih';
+        } catch (\Throwable $e) {
+            $results[] = 'View Cache: gagal (' . $e->getMessage() . ')';
+        }
+
+        // 5. Bersihkan cache event listener (aman diabaikan jika command tidak tersedia)
+        try {
+            Artisan::call('event:clear');
+        } catch (\Throwable $e) {
+            // tidak fatal, lewati saja
+        }
+
+        // 6. Bersihkan isi tabel `cache` & `cache_locks` di database (kalau driver cache = database)
+        try {
+            if (Schema::hasTable('cache')) {
+                $deletedCache = DB::table('cache')->delete();
+                $results[] = "Tabel 'cache': {$deletedCache} baris dibersihkan";
+            }
+            if (Schema::hasTable('cache_locks')) {
+                DB::table('cache_locks')->delete();
+            }
+        } catch (\Throwable $e) {
+            $results[] = "Tabel 'cache': gagal (" . $e->getMessage() . ')';
+        }
+
+        // 7. Bersihkan session yang sudah kedaluwarsa (kalau driver session = database)
+        try {
+            if (Schema::hasTable('sessions')) {
+                $lifetimeMinutes = (int) config('session.lifetime', 120);
+                $expiredBefore   = now()->subMinutes($lifetimeMinutes)->getTimestamp();
+
+                $deletedSessions = DB::table('sessions')
+                    ->where('last_activity', '<', $expiredBefore)
+                    ->delete();
+
+                $results[] = "Session kedaluwarsa: {$deletedSessions} sesi dibersihkan";
+            }
+        } catch (\Throwable $e) {
+            $results[] = 'Session Database: gagal (' . $e->getMessage() . ')';
+        }
+
+        // 8. Bersihkan antrean job yang gagal (kalau ada tabel failed_jobs)
+        try {
+            if (Schema::hasTable('failed_jobs')) {
+                $deletedJobs = DB::table('failed_jobs')->delete();
+                if ($deletedJobs > 0) {
+                    $results[] = "Failed Jobs: {$deletedJobs} antrean gagal dibersihkan";
+                }
+            }
+        } catch (\Throwable $e) {
+            // tidak fatal, lewati saja
+        }
+
+        Notification::create([
+            'user_id'     => null,
+            'name'        => '🧹 Cache Sistem Dibersihkan',
+            'description' => 'Admin baru saja membersihkan cache aplikasi. Sistem kini berjalan lebih ringan.',
+            'is_read'     => false,
+        ]);
+
+        return redirect()->back()->with('success', 'Clear Cache berhasil! ' . implode(' • ', $results));
+    }
+
+    public function optimizeApp(Request $request)
+    {
+        $results = [];
+
+        // Pastikan tidak ada cache lama yang bentrok sebelum membuat cache baru
+        try {
+            Artisan::call('optimize:clear');
+        } catch (\Throwable $e) {
+            // lewati, lanjut proses cache ulang
+        }
+
+        try {
+            Artisan::call('config:cache');
+            $results[] = 'Config: di-cache';
+        } catch (\Throwable $e) {
+            $results[] = 'Config: gagal di-cache (' . $e->getMessage() . ')';
+        }
+
+        try {
+            Artisan::call('route:cache');
+            $results[] = 'Route: di-cache';
+        } catch (\Throwable $e) {
+            $results[] = 'Route: gagal di-cache (' . $e->getMessage() . ')';
+        }
+
+        try {
+            Artisan::call('view:cache');
+            $results[] = 'View: di-cache';
+        } catch (\Throwable $e) {
+            $results[] = 'View: gagal di-cache (' . $e->getMessage() . ')';
+        }
+
+        return redirect()->back()->with('success', 'Optimasi sistem selesai! Cocok dipakai setelah aplikasi sudah stabil di hosting. ' . implode(' • ', $results));
+    }
+
+
 }

@@ -144,6 +144,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/security/allowed-ip/{id}', [AdminController::class, 'securityDestroyAllowedIp'])->name('security.allowed_ip.destroy');
     Route::post('/security/toggle/{id}', [AdminController::class, 'securityToggleStatus'])->name('security.toggle');
     Route::delete('/security/log/{id}', [AdminController::class, 'securityDestroyLog'])->name('security.log.destroy');
+
+
+    //route fitur clear cache
+    Route::post('/clear-cache', [AdminController::class, 'clearCache'])->name('clearCache');
+    Route::post('/optimize', [AdminController::class, 'optimizeApp'])->name('optimize');
+
+
+
 });
 
 
