@@ -28,8 +28,30 @@ class PenjualController extends Controller
         $quotaSisa = max(0, $maxProducts - $totalProduk);
         $batasTercapai = $totalProduk >= $maxProducts;
         $bisaIklan = $user->canUseAds();
+        
+        // Fitur Countdown & Expiry
         $isExpired = $user->membership_expires_at ? $user->membership_expires_at->isPast() : false;
-        $remainingDays = $user->remaining_days;
+        $remainingDays = $user->remainingDays;
+        $countdown = $user->membershipCountdown;
+        $showWarning = $user->needsMembershipRenewalWarning(3); // Peringatan aktif jika tersisa <= 3 hari
+
+        // Otomatis kirim notifikasi jika masuk masa peringatan perpanjangan (agar tidak duplicate dalam sehari)
+        if ($showWarning) {
+            $today = now()->format('Y-m-d');
+            $hasNotifiedToday = Notification::where('user_id', $user->id_user)
+                ->where('name', 'LIKE', '%Peringatan Perpanjangan%')
+                ->whereDate('created_at', $today)
+                ->exists();
+
+            if (!$hasNotifiedToday) {
+                Notification::create([
+                    'user_id'     => $user->id_user,
+                    'name'        => '⚠️ Peringatan Perpanjangan Paket',
+                    'description' => "Masa aktif paket membership {$membershipName} Anda akan segera berakhir dalam {$remainingDays} hari lagi. Segera perpanjang paket Anda agar kuota dan fitur toko tidak terbatasi.",
+                    'is_read'     => false,
+                ]);
+            }
+        }
 
         // Statistik Penjualan
         $totalPesanan = OrderItem::whereHas('product', function ($q) use ($user) {
@@ -81,6 +103,8 @@ class PenjualController extends Controller
             'bisaIklan',
             'isExpired',
             'remainingDays',
+            'countdown',
+            'showWarning',
             'totalPesanan',
             'totalPendapatan',
             'totalTerjual',
@@ -134,7 +158,6 @@ class PenjualController extends Controller
     {
         $user = Auth::user();
 
-        // Validasi kuota upload produk
         if (!$user->canUploadProduct()) {
             return redirect()->route('penjual.produk.index')
                 ->with('error', 'Kuota upload produk Anda sudah penuh (' . $user->getMaxUploadLimit() . ' produk). Silakan tingkatkan paket membership Anda untuk menambah kuota.');
@@ -149,7 +172,6 @@ class PenjualController extends Controller
     {
         $user = Auth::user();
 
-        // Cek kembali kuota upload
         if (!$user->canUploadProduct()) {
             return redirect()->route('penjual.produk.index')
                 ->with('error', 'Gagal mengunggah. Batas kuota upload produk paket Anda (' . $user->getMaxUploadLimit() . ' produk) telah tercapai. Silakan perpanjang / tingkatkan paket membership Anda.');
@@ -162,10 +184,14 @@ class PenjualController extends Controller
             'stock'       => 'required|integer|min:1',
             'description' => 'required|string',
             'thumbnail'   => 'required|image|mimes:jpeg,png,jpg,webp|max:4096',
+<<<<<<< HEAD
             'images'      => 'nullable|array|max:5',
             'images.*'    => 'image|mimes:jpeg,png,jpg,webp|max:4096',
             'video'       => 'nullable|file|mimes:mp4,webm,ogg,mov,avi|max:51200', // max 50MB opsional
             'file'        => 'required|file|max:51200', // max 50MB
+=======
+            'file'        => 'required|file|max:51200',
+>>>>>>> 65414174ff0f18d950508982acbd1aa874d9686e
         ], [
             'title.required'       => 'Nama produk wajib diisi.',
             'category_id.required' => 'Pilih kategori produk.',
@@ -179,12 +205,16 @@ class PenjualController extends Controller
             'file.required'        => 'Unggah berkas digital produk untuk pembeli.',
         ]);
 
+<<<<<<< HEAD
         // Upload Sampul Utama (Thumbnail)
+=======
+>>>>>>> 65414174ff0f18d950508982acbd1aa874d9686e
         $thumbPath = null;
         if ($request->hasFile('thumbnail')) {
             $thumbPath = $request->file('thumbnail')->store('products/thumbnails', 'public');
         }
 
+<<<<<<< HEAD
         // Upload Gallery Photos (hingga 5 foto total)
         $galleryPaths = [];
         if ($thumbPath) {
@@ -205,6 +235,8 @@ class PenjualController extends Controller
         }
 
         // Upload Berkas Produk
+=======
+>>>>>>> 65414174ff0f18d950508982acbd1aa874d9686e
         $filePath = null;
         if ($request->hasFile('file')) {
             $filePath = $request->file('file')->store('products/files', 'public');
@@ -221,7 +253,7 @@ class PenjualController extends Controller
             'images'          => $galleryPaths,
             'video'           => $videoPath,
             'file'            => $filePath,
-            'status'          => 'pending', // Menunggu verifikasi
+            'status'          => 'pending',
             'rejection_note'  => null,
             'is_promoted'     => false,
             'view_count'      => 0,
@@ -299,7 +331,6 @@ class PenjualController extends Controller
         $product->stock = $validated['stock'];
         $product->description = $validated['description'];
 
-        // Jika sebelumnya diblokir/ditolak, kembalikan ke status pending untuk ditinjau ulang
         if (in_array($product->status, ['rejected', 'inactive', 'blocked'])) {
             $product->status = 'pending';
             $product->rejection_note = null;
@@ -364,7 +395,7 @@ class PenjualController extends Controller
         }
 
         $product->is_promoted = true;
-        $product->promoted_until = now()->addDays(7); // Iklan aktif selama 7 hari
+        $product->promoted_until = now()->addDays(7);
         $product->save();
 
         return back()->with('success', 'Iklan produk "' . $product->title . '" berhasil diaktifkan selama 7 hari!');
@@ -389,11 +420,13 @@ class PenjualController extends Controller
         $currentMembership = $user->membership;
         $maxUpload = $user->getMaxUploadLimit();
         $totalUploaded = Product::where('seller_id', $user->id_user)->count();
-        $remainingDays = $user->remaining_days;
+        $remainingDays = $user->remainingDays;
+        $countdown = $user->membershipCountdown;
+        $showWarning = $user->needsMembershipRenewalWarning(3);
         $isExpired = $user->membership_expires_at ? $user->membership_expires_at->isPast() : false;
 
         return view('penjual.membership.index', compact(
-            'user', 'memberships', 'currentMembership', 'maxUpload', 'totalUploaded', 'remainingDays', 'isExpired'
+            'user', 'memberships', 'currentMembership', 'maxUpload', 'totalUploaded', 'remainingDays', 'countdown', 'showWarning', 'isExpired'
         ));
     }
 
@@ -402,15 +435,25 @@ class PenjualController extends Controller
         $membership = Membership::findOrFail($id);
         $user = Auth::user();
 
-        // Perpanjang atau ganti paket membership
+        // Logika Akumulasi Durasi / Perpanjang Membership
+        $durationDays = $membership->duration_days ?? 30;
+
+        // Jika membership aktif dan belum kedaluwarsa, tambahkan harinya dari tanggal kadaluwarsa saat ini
+        if ($user->membership_expires_at && $user->membership_expires_at->isFuture()) {
+            $newExpiresAt = $user->membership_expires_at->copy()->addDays($durationDays);
+        } else {
+            // Jika baru beli / sudah expired, hitung mulai dari sekarang
+            $newExpiresAt = now()->addDays($durationDays);
+        }
+
         $user->id_membership = $membership->id_membership;
-        $user->membership_expires_at = now()->addDays($membership->duration_days ?? 30);
+        $user->membership_expires_at = $newExpiresAt;
         $user->save();
 
         Notification::create([
             'user_id'     => $user->id_user,
             'name'        => '💎 Paket Membership Aktif',
-            'description' => 'Paket ' . $membership->name . ' Anda telah aktif hingga ' . $user->membership_expires_at->translatedFormat('d F Y') . '. Kuota upload: ' . $membership->max_upload . ' produk.',
+            'description' => 'Paket ' . $membership->name . ' Anda telah aktif hingga ' . $user->membership_expires_at->translatedFormat('d F Y H:i') . '. Kuota upload: ' . $membership->max_upload . ' produk.',
             'is_read'     => false,
         ]);
 
@@ -497,12 +540,10 @@ class PenjualController extends Controller
     {
         $user = Auth::user();
 
-        // Total seluruh omset penjualan dari pesanan yang lunas (paid)
         $totalPendapatan = OrderItem::whereHas('product', fn($q) => $q->where('seller_id', $user->id_user))
             ->whereHas('order', fn($q) => $q->where('payment_status', 'paid'))
             ->sum('subtotal');
 
-        // Total dana yang sudah berhasil ditarik atau sedang diproses
         $totalDitarik = Withdrawal::where('user_id', $user->id_user)
             ->whereIn('status', ['completed', 'pending'])
             ->sum('amount');
@@ -535,7 +576,6 @@ class PenjualController extends Controller
             'amount.min'                   => 'Minimal penarikan saldo adalah Rp 20.000.',
         ]);
 
-        // Cek saldo
         $totalPendapatan = OrderItem::whereHas('product', fn($q) => $q->where('seller_id', $user->id_user))
             ->whereHas('order', fn($q) => $q->where('payment_status', 'paid'))
             ->sum('subtotal');
@@ -562,4 +602,8 @@ class PenjualController extends Controller
 
         return back()->with('success', 'Permintaan penarikan saldo sebesar Rp ' . number_format($validated['amount'], 0, ',', '.') . ' berhasil diajukan dan sedang menunggu proses transfer oleh Admin.');
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 65414174ff0f18d950508982acbd1aa874d9686e

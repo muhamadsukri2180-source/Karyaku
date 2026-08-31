@@ -27,7 +27,7 @@ Route::get('/', function () {
 
 
 // ==========================================
-// 2. AUTHENTICATION ROUTES
+// 2. AUTHENTICATION & SUSPEND ROUTES
 // ==========================================
 Route::prefix('auth')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login');
@@ -48,6 +48,10 @@ Route::prefix('auth')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
+
+// Halaman Khusus Penangguhan Akun & Pengajuan Banding
+Route::get('/suspended-notice', [AuthController::class, 'showSuspendedNotice'])->name('suspended.notice');
+Route::post('/appeal/submit', [AuthController::class, 'submitAppeal'])->name('appeal.submit');
 
 
 // ==========================================
@@ -71,7 +75,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');
     Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('users.update');
     Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('users.delete');
-    Route::put('admin/users/{id}/suspend', [AdminController::class, 'suspendUser'])->name('admin.users.suspend');
+    Route::put('/users/{id}/suspend', [AdminController::class, 'suspendUser'])->name('users.suspend');
 
     Route::get('/users/verifikator', [AdminController::class, 'verifikator'])->name('users.verifikator');
     Route::post('/users/add-verifier', [AdminController::class, 'addVerifier'])->name('users.addVerifier');
@@ -114,10 +118,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/memberships/{id}', [AdminController::class, 'updateMembership'])->name('memberships.update');
     Route::delete('/memberships/{id}', [AdminController::class, 'deleteMembership'])->name('memberships.delete');
 
-    // 9. Laporan Pelanggaran (Sistem)
+    // 9. Laporan Pelanggaran (Sistem) & Banding Akun
     Route::get('/pelanggaran', [AdminController::class, 'pelanggaran'])->name('pelanggaran');
     Route::post('/pelanggaran/user/{id}', [AdminController::class, 'tindakUserPelanggaran'])->name('pelanggaran.user');
     Route::post('/pelanggaran/produk/{id}', [AdminController::class, 'tindakProdukPelanggaran'])->name('pelanggaran.produk');
+    Route::post('/pelanggaran/appeal/{id}', [AdminController::class, 'tindakAppeal'])->name('pelanggaran.appeal');
+    Route::delete('/pelanggaran/appeal/delete/{id}', [AdminController::class, 'hapusAppeal'])->name('pelanggaran.appeal.delete');
 
     // 10. Profile Admin
     Route::get('/profile', [AdminController::class, 'profile'])->name('profile');
@@ -138,77 +144,53 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/security/allowed-ip/{id}', [AdminController::class, 'securityDestroyAllowedIp'])->name('security.allowed_ip.destroy');
     Route::post('/security/toggle/{id}', [AdminController::class, 'securityToggleStatus'])->name('security.toggle');
     Route::delete('/security/log/{id}', [AdminController::class, 'securityDestroyLog'])->name('security.log.destroy');
+
+
+    //route fitur clear cache
+    Route::post('/clear-cache', [AdminController::class, 'clearCache'])->name('clearCache');
+    Route::post('/optimize', [AdminController::class, 'optimizeApp'])->name('optimize');
+
+
+
 });
 
 
-/*
-|--------------------------------------------------------------------------
-| Verifikator Routes (Admin & CS)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware(['auth', 'role:verifikator,admin'])
+// ==========================================
+// 4. VERIFIKATOR ROUTES (DILINDUNGI SUSPENDED)
+// ==========================================
+Route::middleware(['auth', 'suspended', 'role:verifikator,admin'])
     ->prefix('verifikator')
     ->name('verifikator.')
     ->group(function () {
-
-        // ==========================================
-        // 1. DASHBOARD & PENDAFTARAN (READ-ONLY CS & ADMIN)
-        // ==========================================
         Route::get('/dashboard', [VerifikatorController::class, 'dashboard'])->name('dashboard');
-
-        // Pendaftaran / Identitas KTP
         Route::get('/identitas', [VerifikatorController::class, 'identitas'])->name('identitas');
         Route::get('/pendaftaran/{id}', [VerifikatorController::class, 'show'])->name('pendaftaran.show');
-
-        // Modul Produk & Jasa
         Route::get('/produk', [VerifikatorController::class, 'produk'])->name('produk');
         Route::get('/produk/{id}', [VerifikatorController::class, 'showProduk'])->name('produk.show');
-
-        // Modul Transaksi Pembayaran
         Route::get('/pembayaran', [VerifikatorController::class, 'pembayaran'])->name('pembayaran');
         Route::get('/pembayaran/{id}', [VerifikatorController::class, 'showPembayaran'])->name('pembayaran.show');
-
-        // Modul Laporan Pelanggaran
         Route::get('/laporan', [VerifikatorController::class, 'laporan'])->name('laporan');
         Route::get('/laporan/{id}', [VerifikatorController::class, 'showLaporan'])->name('laporan.show');
 
-        
-
-
-        // ==========================================
-        // 2. EKSEKUSI / ACTIONS (KHUSUS ADMIN)
-        // ==========================================
-        
-        // Eksekusi Pendaftaran / Identitas
         Route::post('/pendaftaran/{id}/approve', [VerifikatorController::class, 'approve'])->name('pendaftaran.approve');
         Route::post('/pendaftaran/{id}/reject', [VerifikatorController::class, 'reject'])->name('pendaftaran.reject');
-
-        // Eksekusi Produk
         Route::post('/produk/{id}/approve', [VerifikatorController::class, 'approveProduk'])->name('produk.approve');
         Route::post('/produk/{id}/reject', [VerifikatorController::class, 'rejectProduk'])->name('produk.reject');
-
-        // Eksekusi Pembayaran
         Route::post('/pembayaran/{id}/approve', [VerifikatorController::class, 'approvePembayaran'])->name('pembayaran.approve');
         Route::post('/pembayaran/{id}/reject', [VerifikatorController::class, 'rejectPembayaran'])->name('pembayaran.reject');
-
-        // Eksekusi Action Laporan
         Route::post('/laporan/{id}/action', [VerifikatorController::class, 'actionLaporan'])->name('laporan.action');
 
-        // Profile Verifikator
         Route::get('/profile', [VerifikatorController::class, 'profile'])->name('profile');
         Route::put('/profile', [VerifikatorController::class, 'updateProfile'])->name('profile.update');
     });
-    
 
 
 // ==========================================
-// 5. PENJUAL ROUTES
+// 5. PENJUAL ROUTES (DILINDUNGI SUSPENDED)
 // ==========================================
-Route::middleware(['auth', 'role:penjual'])->prefix('penjual')->name('penjual.')->group(function () {
+Route::middleware(['auth', 'suspended', 'role:penjual'])->prefix('penjual')->name('penjual.')->group(function () {
     Route::get('/dashboard', [PenjualController::class, 'dashboard'])->name('dashboard');
 
-    // Manajemen Produk
     Route::get('/produk', [PenjualController::class, 'produkIndex'])->name('produk.index');
     Route::get('/produk/create', [PenjualController::class, 'produkCreate'])->name('produk.create');
     Route::post('/produk', [PenjualController::class, 'produkStore'])->name('produk.store');
@@ -216,30 +198,26 @@ Route::middleware(['auth', 'role:penjual'])->prefix('penjual')->name('penjual.')
     Route::put('/produk/{id}', [PenjualController::class, 'produkUpdate'])->name('produk.update');
     Route::delete('/produk/{id}', [PenjualController::class, 'produkDestroy'])->name('produk.destroy');
 
-    // Fitur Iklan & Promosi Produk
     Route::get('/iklan', [PenjualController::class, 'iklanIndex'])->name('iklan.index');
     Route::post('/iklan/{id}/promote', [PenjualController::class, 'iklanStore'])->name('iklan.promote');
     Route::delete('/iklan/{id}/cancel', [PenjualController::class, 'iklanCancel'])->name('iklan.cancel');
 
-    // Paket Membership & Pembelian / Perpanjangan
     Route::get('/membership', [PenjualController::class, 'membershipIndex'])->name('membership.index');
     Route::post('/membership/{id}/purchase', [PenjualController::class, 'membershipPurchase'])->name('membership.purchase');
 
-    // Pesanan Masuk (Penjualan)
     Route::get('/pesanan', [PenjualController::class, 'pesananIndex'])->name('pesanan.index');
     Route::get('/pesanan/{id}', [PenjualController::class, 'pesananDetail'])->name('pesanan.detail');
     Route::post('/pesanan/{id}/konfirmasi', [PenjualController::class, 'pesananKonfirmasi'])->name('pesanan.konfirmasi');
 
-    // Keuangan & Penarikan Saldo
     Route::get('/keuangan', [PenjualController::class, 'keuanganIndex'])->name('keuangan.index');
     Route::post('/keuangan/tarik', [PenjualController::class, 'penarikanStore'])->name('keuangan.tarik');
 });
 
 
 // ==========================================
-// 6. PEMBELI ROUTES (Bisa Diakses Pembeli & Penjual)
+// 6. PEMBELI ROUTES (DILINDUNGI SUSPENDED)
 // ==========================================
-Route::middleware(['auth', 'role:pembeli,penjual'])->prefix('pembeli')->name('pembeli.')->group(function () {
+Route::middleware(['auth', 'suspended', 'role:pembeli,penjual'])->prefix('pembeli')->name('pembeli.')->group(function () {
     Route::get('/dashboard', [PembeliController::class, 'dashboard'])->name('dashboard');
 
     Route::get('/marketplace', [PembeliController::class, 'marketplace'])->name('marketplace');
@@ -265,18 +243,14 @@ Route::middleware(['auth', 'role:pembeli,penjual'])->prefix('pembeli')->name('pe
     Route::get('/profile', [PembeliController::class, 'profile'])->name('profile');
     Route::put('/profile', [PembeliController::class, 'updateProfile'])->name('profile.update');
 
-    // Customer Service (User / Pembeli Side)
     Route::get('/customer-service', [CustomerServiceController::class, 'userIndex'])->name('service.index');
     Route::post('/customer-service', [CustomerServiceController::class, 'userStore'])->name('service.store');
 
-    // Membership -> Upgrade jadi Penjual
     Route::get('/membership', [PembeliController::class, 'membershipIndex'])->name('membership');
     Route::post('/membership/{id}/purchase', [PembeliController::class, 'membershipPurchase'])->name('membership.purchase');
 
-    // Notifikasi dari Admin
     Route::get('/notifikasi', [PembeliController::class, 'notificationsIndex'])->name('notifications');
 
-    // Pendaftaran Menjadi Penjual (Diakses setelah login sebagai Pembeli)
     Route::get('/daftar-penjual', [SellerRegistrationController::class, 'create'])->name('seller.registration.create');
     Route::get('/daftar-penjual-alias', [SellerRegistrationController::class, 'create'])->name('daftar.penjual');
     Route::post('/daftar-penjual', [SellerRegistrationController::class, 'store'])->name('seller.registration.store');
@@ -288,9 +262,9 @@ Route::middleware(['auth', 'role:pembeli,penjual'])->prefix('pembeli')->name('pe
 
 
 // ==========================================
-// 7. LAPORAN PELANGGARAN (pembeli & penjual, siapapun yang login)
+// 7. LAPORAN PELANGGARAN (DILINDUNGI SUSPENDED)
 // ==========================================
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'suspended'])->group(function () {
     Route::get('/laporan', [ReportController::class, 'create'])->name('reports.create');
     Route::post('/laporan', [ReportController::class, 'store'])->name('reports.store');
     Route::get('/laporan/riwayat', [ReportController::class, 'index'])->name('reports.index');
@@ -298,24 +272,20 @@ Route::middleware(['auth'])->group(function () {
 
 
 // ==========================================
-// 8. CUSTOMER SERVICE ROUTES (AUTH + ROLE: CUSTOMER_SERVICE)
+// 8. CUSTOMER SERVICE ROUTES (DILINDUNGI SUSPENDED)
 // ==========================================
-Route::middleware(['auth', 'role:customer_service'])->prefix('cs')->name('cs.')->group(function () {
+Route::middleware(['auth', 'suspended', 'role:customer_service'])->prefix('cs')->name('cs.')->group(function () {
     Route::get('/dashboard', [CsController::class, 'dashboard'])->name('dashboard');
 
-    // Modul Tiket Bantuan Pengguna
     Route::get('/tiket', [CsController::class, 'tiket'])->name('tiket');
     Route::get('/tiket/{id}', [CsController::class, 'tiketDetail'])->name('tiket.detail');
     Route::post('/tiket/{id}/balas', [CsController::class, 'balasTiket'])->name('tiket.balas');
 
-    // Modul Laporan Pelanggaran
     Route::get('/laporan', [CsController::class, 'laporan'])->name('laporan');
     Route::post('/laporan/{id}/tindak', [CsController::class, 'tindakLaporan'])->name('laporan.tindak');
 
-    // Modul Cek Transaksi
     Route::get('/transaksi', [CsController::class, 'transaksi'])->name('transaksi');
     Route::get('/transaksi/{id}', [CsController::class, 'transaksiDetail'])->name('transaksi.detail');
 
-    // Modul Notifikasi CS
     Route::get('/notifikasi', [CsController::class, 'notifikasi'])->name('notifikasi');
 });

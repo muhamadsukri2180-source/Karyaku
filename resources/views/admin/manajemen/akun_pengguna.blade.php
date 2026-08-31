@@ -358,41 +358,141 @@
                 const name = btn.dataset.name;
                 const isBlocked = btn.dataset.status === 'blocked';
 
-                Swal.fire({
-                    title: isBlocked ? 'Aktifkan Pengguna?' : 'Suspend Pengguna?',
-                    text: isBlocked
-                        ? `Akun "${name}" akan diaktifkan kembali dan bisa login seperti biasa.`
-                        : `Akun "${name}" akan disuspend (diblokir) dan tidak bisa login sampai diaktifkan kembali.`,
-                    icon: isBlocked ? 'question' : 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: isBlocked ? '#10b981' : '#f59e0b',
-                    cancelButtonColor: '#94a3b8',
-                    confirmButtonText: isBlocked ? 'Ya, Aktifkan!' : 'Ya, Suspend!',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = `{{ url('admin/users') }}/${id}/suspend`;
+                if (isBlocked) {
+                    Swal.fire({
+                        title: 'Aktifkan Pengguna?',
+                        text: `Akun "${name}" akan diaktifkan kembali dan bisa login seperti biasa.`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#10b981',
+                        cancelButtonColor: '#94a3b8',
+                        confirmButtonText: 'Ya, Aktifkan!',
+                        cancelButtonText: 'Batal',
+                        buttonsStyling: false,
+                        customClass: {
+                            popup: 'rounded-3xl p-6 shadow-2xl border border-slate-100 max-w-md bg-white',
+                            confirmButton: 'px-6 py-2.5 bg-emerald-600 text-white font-bold text-sm rounded-xl hover:bg-emerald-700 transition-all shadow-md mx-1 cursor-pointer',
+                            cancelButton: 'px-6 py-2.5 bg-slate-500 text-white font-bold text-sm rounded-xl hover:bg-slate-600 transition-all shadow-md mx-1 cursor-pointer'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            submitSuspendForm(id, 0, 0, 0, '');
+                        }
+                    });
+                } else {
+                    // Tampilkan form modal durasi (Hari, Jam, Menit) + Alasan
+                    Swal.fire({
+                        title: `<span class="font-display font-extrabold text-slate-800 text-xl">Suspend Pengguna "${name}"</span>`,
+                        html: `
+                            <p class="text-xs font-semibold text-slate-500 mb-4 text-left">Tentukan durasi penonaktifan sementara akun serta alasan pemblokiran:</p>
+                            
+                            <div class="space-y-4 text-left">
+                                <div>
+                                    <label class="text-[11px] font-extrabold text-slate-700 uppercase tracking-wide block mb-1">Durasi Pemblokiran</label>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <div>
+                                            <span class="text-[10px] font-bold text-slate-500 block mb-0.5">Hari</span>
+                                            <input id="swal_suspend_days" type="number" min="0" value="1" placeholder="0" class="w-full text-center border-2 border-amber-200 rounded-xl px-2 py-2 text-sm font-bold text-slate-800 focus:border-amber-500 focus:outline-none transition">
+                                        </div>
+                                        <div>
+                                            <span class="text-[10px] font-bold text-slate-500 block mb-0.5">Jam</span>
+                                            <input id="swal_suspend_hours" type="number" min="0" max="23" value="0" placeholder="0" class="w-full text-center border-2 border-amber-200 rounded-xl px-2 py-2 text-sm font-bold text-slate-800 focus:border-amber-500 focus:outline-none transition">
+                                        </div>
+                                        <div>
+                                            <span class="text-[10px] font-bold text-slate-500 block mb-0.5">Menit</span>
+                                            <input id="swal_suspend_minutes" type="number" min="0" max="59" value="0" placeholder="0" class="w-full text-center border-2 border-amber-200 rounded-xl px-2 py-2 text-sm font-bold text-slate-800 focus:border-amber-500 focus:outline-none transition">
+                                        </div>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 mt-1 font-medium">*Kosongkan/set 0 semua jika ingin blokir permanen.</p>
+                                </div>
 
-                        const csrfInput = document.createElement('input');
-                        csrfInput.type = 'hidden';
-                        csrfInput.name = '_token';
-                        csrfInput.value = '{{ csrf_token() }}';
-                        form.appendChild(csrfInput);
+                                <div>
+                                    <label class="text-[11px] font-extrabold text-slate-700 uppercase tracking-wide block mb-1">Alasan Pemblokiran <span class="text-red-500">*</span></label>
+                                    <textarea id="swal_suspend_reason" rows="3" placeholder="Contoh: Mengunggah karya tanpa izin hak cipta / penipuan transaksi..." class="w-full border-2 border-amber-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:border-amber-500 focus:outline-none transition"></textarea>
+                                </div>
+                            </div>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, Suspend!',
+                        cancelButtonText: 'Batal',
+                        buttonsStyling: false,
+                        customClass: {
+                            popup: 'rounded-3xl p-6 shadow-2xl border border-slate-100 max-w-md bg-white',
+                            confirmButton: 'px-6 py-2.5 bg-amber-500 text-white font-bold text-sm rounded-xl hover:bg-amber-600 transition-all shadow-md mx-1 cursor-pointer',
+                            cancelButton: 'px-6 py-2.5 bg-slate-500 text-white font-bold text-sm rounded-xl hover:bg-slate-600 transition-all shadow-md mx-1 cursor-pointer'
+                        },
+                        preConfirm: () => {
+                            const days = parseInt(document.getElementById('swal_suspend_days').value) || 0;
+                            const hours = parseInt(document.getElementById('swal_suspend_hours').value) || 0;
+                            const minutes = parseInt(document.getElementById('swal_suspend_minutes').value) || 0;
+                            const reason = document.getElementById('swal_suspend_reason').value.trim();
 
-                        const methodInput = document.createElement('input');
-                        methodInput.type = 'hidden';
-                        methodInput.name = '_method';
-                        methodInput.value = 'PUT';
-                        form.appendChild(methodInput);
+                            if (!reason) {
+                                Swal.showValidationMessage('Alasan pemblokiran wajib diisi!');
+                                return false;
+                            }
 
-                        document.body.appendChild(form);
-                        form.submit();
-                    }
-                });
+                            return { days, hours, minutes, reason };
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed && result.value) {
+                            submitSuspendForm(
+                                id,
+                                result.value.days,
+                                result.value.hours,
+                                result.value.minutes,
+                                result.value.reason
+                            );
+                        }
+                    });
+                }
             });
         });
+
+        function submitSuspendForm(id, days, hours, minutes, reason) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `{{ url('admin/users') }}/${id}/suspend`;
+
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = '{{ csrf_token() }}';
+            form.appendChild(csrfInput);
+
+            const methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'PUT';
+            form.appendChild(methodInput);
+
+            const daysInput = document.createElement('input');
+            daysInput.type = 'hidden';
+            daysInput.name = 'suspend_days';
+            daysInput.value = days;
+            form.appendChild(daysInput);
+
+            const hoursInput = document.createElement('input');
+            hoursInput.type = 'hidden';
+            hoursInput.name = 'suspend_hours';
+            hoursInput.value = hours;
+            form.appendChild(hoursInput);
+
+            const minutesInput = document.createElement('input');
+            minutesInput.type = 'hidden';
+            minutesInput.name = 'suspend_minutes';
+            minutesInput.value = minutes;
+            form.appendChild(minutesInput);
+
+            const reasonInput = document.createElement('input');
+            reasonInput.type = 'hidden';
+            reasonInput.name = 'suspend_reason';
+            reasonInput.value = reason;
+            form.appendChild(reasonInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
 
         // === HAPUS PENGGUNA ===
         document.querySelectorAll('.btn-delete-user').forEach(btn => {

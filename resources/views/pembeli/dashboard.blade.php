@@ -5,26 +5,10 @@
 @push('styles')
 <style>
     /* WELCOME CARD */
-    .welcome-card {
-        background: #fff;
-        border: 1px solid var(--border-color);
-        border-radius: 18px;
-        padding: 25px 28px;
-        margin-bottom: 22px;
-        box-shadow: var(--shadow);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 20px;
-    }
+    .welcome-card { background: #fff; border: 1px solid var(--border-color); border-radius: 18px; padding: 25px 28px; margin-bottom: 22px; box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: center; gap: 20px; }
     .welcome-title { margin: 0; font-size: 24px; font-weight: 800; }
     .welcome-title span { color: var(--primary); }
     .welcome-desc { margin: 7px 0 0; color: var(--text-muted); font-size: 12px; max-width: 700px; line-height: 1.7; }
-    .profile-progress { margin-top: 16px; max-width: 400px; }
-    .progress-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-bottom: 6px; }
-    .progress { height: 7px; background: #e2e8f0; border-radius: 20px; }
-    .progress-bar { background: var(--primary); border-radius: 20px; }
-    .btn-profile { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 10px; font-weight: 700; color: var(--primary); }
     .welcome-icon { width: 100px; height: 100px; border-radius: 25px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 45px; }
 
     /* STATISTICS GRID */
@@ -41,18 +25,12 @@
     .stat-label { margin-top: 2px; color: var(--text-muted); font-size: 10px; }
     .stat-link { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; color: var(--primary); font-size: 9px; font-weight: 700; }
 
-    /* SECTIONS & CATEGORY */
+    /* SECTIONS */
     .section { margin-bottom: 30px; }
     .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
     .section-title { margin: 0; font-size: 19px; font-weight: 800; }
     .section-subtitle { margin: 4px 0 0; color: var(--text-muted); font-size: 11px; }
     .see-all { color: var(--primary); font-size: 11px; font-weight: 700; }
-
-    .category-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; }
-    .category-card { background: #fff; border: 1px solid var(--border-color); border-radius: 14px; padding: 15px 8px; text-align: center; color: var(--text-dark); transition: all .2s ease; box-shadow: var(--shadow); }
-    .category-card:hover { color: var(--primary); transform: translateY(-4px); box-shadow: var(--shadow-hover); }
-    .category-icon { width: 43px; height: 43px; margin: auto auto 8px; border-radius: 12px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 18px; }
-    .category-card span { font-size: 9px; font-weight: 600; }
 
     /* LAYOUT & SIDEBAR */
     .content-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
@@ -76,24 +54,9 @@
     .creator-rating { color: #f59e0b; font-size: 9px; font-weight: 700; }
 
     /* RESPONSIVE */
-    @media(max-width: 1200px) {
-        .category-grid { grid-template-columns: repeat(4, 1fr); }
-    }
-    @media(max-width: 1000px) {
-        .content-layout { grid-template-columns: 1fr; }
-        .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media(max-width: 700px) {
-        .welcome-card { padding: 20px; }
-        .welcome-icon { display: none; }
-        .welcome-title { font-size: 20px; }
-        .category-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    }
-    @media(max-width: 450px) {
-        .stats-grid { grid-template-columns: 1fr; }
-        .category-grid { grid-template-columns: repeat(2, 1fr); }
-        .section-title { font-size: 16px; }
-    }
+    @media(max-width: 1000px) { .content-layout { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media(max-width: 700px) { .welcome-card { padding: 20px; } .welcome-icon { display: none; } .welcome-title { font-size: 20px; } }
+    @media(max-width: 450px) { .stats-grid { grid-template-columns: 1fr; } .section-title { font-size: 16px; } }
 </style>
 @endpush
 
@@ -104,11 +67,6 @@
         <div>
             <h2 class="welcome-title">Halo, <span>{{ auth()->user()->name ?? 'Pembeli' }}</span> 👋</h2>
             <p class="welcome-desc">Selamat datang kembali di Dashboard Karyaku. Jelajahi berbagai karya digital premium, kelola pesananmu, dan temukan kreator favoritmu.</p>
-            <div class="profile-progress">
-                <div class="progress-label"><span>Kelengkapan Profil</span><strong>80%</strong></div>
-                <div class="progress"><div class="progress-bar" style="width:80%"></div></div>
-                <a href="{{ route('pembeli.profile') }}" class="btn-profile">Lengkapi Profil <i class="bi bi-arrow-right"></i></a>
-            </div>
         </div>
         <div class="welcome-icon"><i class="bi bi-bag-heart-fill"></i></div>
     </section>
@@ -141,6 +99,7 @@
         </div>
     </section>
 
+<<<<<<< HEAD
     {{-- KATEGORI --}}
     <section class="section">
         <div class="section-header">
@@ -235,6 +194,8 @@
         </section>
     @endif
 
+=======
+>>>>>>> 65414174ff0f18d950508982acbd1aa874d9686e
     {{-- PRODUK + SIDEBAR --}}
     <section class="section">
         <div class="section-header">
@@ -244,72 +205,39 @@
             </div>
             <a href="{{ route('pembeli.marketplace') }}" class="see-all">Lihat Semua <i class="bi bi-chevron-right"></i></a>
         </div>
+        
         <div class="content-layout">
             <div>
                 <div class="product-grid" id="productGrid">
-                    @if(isset($rekomendasi) && $rekomendasi->count() > 0)
-                        @foreach($rekomendasi as $product)
-                            @include('pembeli.partials.product-card', ['product' => $product])
+                    @forelse($rekomendasi ?? [] as $product)
+                        @include('pembeli.partials.product-card', ['product' => $product])
+                    @empty
+                        {{-- Fallback Produk --}}
+                        @php
+                            $dummyProducts = [
+                                ['cat' => 'Poster', 'img' => '1626785774573-4b799315345d', 'title' => 'Desain Poster Promosi Cafe & Resto', 'price' => 'Rp75.000', 'seller' => 'Dinda Studio'],
+                                ['cat' => '3D', 'img' => '1618172193622-ae2d025f4032', 'title' => 'Model 3D Karakter Game Low-Poly', 'price' => 'Rp480.000', 'seller' => 'Rangga.blend'],
+                                ['cat' => 'Logo', 'img' => '1611162617213-7d7a39e9b1d7', 'title' => 'Paket Logo & Brand Identity Kit', 'price' => 'Rp150.000', 'seller' => 'Kirana Design'],
+                                ['cat' => 'Social Media', 'img' => '1611926653458-09294b3142bf', 'title' => 'Paket 15 Feed & Story Instagram', 'price' => 'Rp120.000', 'seller' => 'Sasi Creative']
+                            ];
+                        @endphp
+                        @foreach($dummyProducts as $idx => $dp)
+                            <div class="product-card">
+                                <div class="product-thumb">
+                                    <span class="cat-badge">{{ $dp['cat'] }}</span>
+                                    <button class="wish-btn" type="button"><i class="bi bi-heart"></i></button>
+                                    <img src="https://images.unsplash.com/photo-{{ $dp['img'] }}?auto=format&fit=crop&w=600&q=80" alt="{{ $dp['cat'] }}">
+                                </div>
+                                <div class="product-body">
+                                    <h6>{{ $dp['title'] }}</h6>
+                                    <div class="product-price">{{ $dp['price'] }}</div>
+                                    <div class="product-meta"><span class="rating">★ 4.9</span><span>Terjual 100+</span></div>
+                                    <div class="product-seller"><img src="https://ui-avatars.com/api/?name={{ urlencode($dp['seller']) }}" alt="">{{ $dp['seller'] }}</div>
+                                    <button class="btn-add-cart" data-product="{{ $idx+1 }}" type="button"><i class="bi bi-cart-plus"></i> Tambah Keranjang</button>
+                                </div>
+                            </div>
                         @endforeach
-                    @else
-                        {{-- Fallback jika belum ada data produk real di DB --}}
-                        <div class="product-card">
-                            <div class="product-thumb">
-                                <span class="cat-badge">Poster</span>
-                                <button class="wish-btn" type="button"><i class="bi bi-heart"></i></button>
-                                <img src="https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=600&q=80" alt="Poster">
-                            </div>
-                            <div class="product-body">
-                                <h6>Desain Poster Promosi Cafe & Resto</h6>
-                                <div class="product-price">Rp75.000</div>
-                                <div class="product-meta"><span class="rating">★ 4.9</span><span>Terjual 320</span></div>
-                                <div class="product-seller"><img src="https://ui-avatars.com/api/?name=Dinda+Studio" alt="">Dinda Studio</div>
-                                <button class="btn-add-cart" data-product="1" type="button"><i class="bi bi-cart-plus"></i> Tambah Keranjang</button>
-                            </div>
-                        </div>
-                        <div class="product-card">
-                            <div class="product-thumb">
-                                <span class="cat-badge">3D</span>
-                                <button class="wish-btn" type="button"><i class="bi bi-heart"></i></button>
-                                <img src="https://images.unsplash.com/photo-1618172193622-ae2d025f4032?auto=format&fit=crop&w=600&q=80" alt="3D">
-                            </div>
-                            <div class="product-body">
-                                <h6>Model 3D Karakter Game Low-Poly</h6>
-                                <div class="product-price">Rp480.000</div>
-                                <div class="product-meta"><span class="rating">★ 5.0</span><span>Terjual 128</span></div>
-                                <div class="product-seller"><img src="https://ui-avatars.com/api/?name=Rangga" alt="">Rangga.blend</div>
-                                <button class="btn-add-cart" data-product="2" type="button"><i class="bi bi-cart-plus"></i> Tambah Keranjang</button>
-                            </div>
-                        </div>
-                        <div class="product-card">
-                            <div class="product-thumb">
-                                <span class="cat-badge">Logo</span>
-                                <button class="wish-btn" type="button"><i class="bi bi-heart"></i></button>
-                                <img src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=600&q=80" alt="Logo">
-                            </div>
-                            <div class="product-body">
-                                <h6>Paket Logo & Brand Identity Kit</h6>
-                                <div class="product-price">Rp150.000</div>
-                                <div class="product-meta"><span class="rating">★ 4.8</span><span>Terjual 210</span></div>
-                                <div class="product-seller"><img src="https://ui-avatars.com/api/?name=Kirana+Design" alt="">Kirana Design</div>
-                                <button class="btn-add-cart" data-product="3" type="button"><i class="bi bi-cart-plus"></i> Tambah Keranjang</button>
-                            </div>
-                        </div>
-                        <div class="product-card">
-                            <div class="product-thumb">
-                                <span class="cat-badge">Social Media</span>
-                                <button class="wish-btn" type="button"><i class="bi bi-heart"></i></button>
-                                <img src="https://images.unsplash.com/photo-1611926653458-09294b3142bf?auto=format&fit=crop&w=600&q=80" alt="Social Media">
-                            </div>
-                            <div class="product-body">
-                                <h6>Paket 15 Feed & Story Instagram</h6>
-                                <div class="product-price">Rp120.000</div>
-                                <div class="product-meta"><span class="rating">★ 4.7</span><span>Terjual 176</span></div>
-                                <div class="product-seller"><img src="https://ui-avatars.com/api/?name=Sasi+Creative" alt="">Sasi Creative</div>
-                                <button class="btn-add-cart" data-product="4" type="button"><i class="bi bi-cart-plus"></i> Tambah Keranjang</button>
-                            </div>
-                        </div>
-                    @endif
+                    @endforelse
                 </div>
             </div>
 
@@ -328,21 +256,20 @@
 
                 <div class="sidebar-card">
                     <h4 class="sidebar-title"><i class="bi bi-award-fill text-warning"></i> Top Kreator</h4>
-                    <div class="creator">
-                        <img src="https://ui-avatars.com/api/?name=Dinda+Studio" alt="">
-                        <div class="creator-info"><div class="creator-name">Dinda Studio</div><div class="creator-sales">320+ produk terjual</div></div>
-                        <div class="creator-rating">★ 4.9</div>
-                    </div>
-                    <div class="creator">
-                        <img src="https://ui-avatars.com/api/?name=CodeCraft" alt="">
-                        <div class="creator-info"><div class="creator-name">CodeCraft</div><div class="creator-sales">97+ produk terjual</div></div>
-                        <div class="creator-rating">★ 4.9</div>
-                    </div>
-                    <div class="creator">
-                        <img src="https://ui-avatars.com/api/?name=Nadia+UX" alt="">
-                        <div class="creator-info"><div class="creator-name">Nadia UX</div><div class="creator-sales">84+ produk terjual</div></div>
-                        <div class="creator-rating">★ 4.9</div>
-                    </div>
+                    @php
+                        $topCreators = [
+                            ['name' => 'Dinda Studio', 'sales' => '320+'],
+                            ['name' => 'CodeCraft', 'sales' => '97+'],
+                            ['name' => 'Nadia UX', 'sales' => '84+']
+                        ];
+                    @endphp
+                    @foreach($topCreators as $creator)
+                        <div class="creator">
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode($creator['name']) }}" alt="">
+                            <div class="creator-info"><div class="creator-name">{{ $creator['name'] }}</div><div class="creator-sales">{{ $creator['sales'] }} produk terjual</div></div>
+                            <div class="creator-rating">★ 4.9</div>
+                        </div>
+                    @endforeach
                 </div>
 
                 <div class="sidebar-card" style="background: linear-gradient(135deg, #eff6ff, #dbeafe);">
