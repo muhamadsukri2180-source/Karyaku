@@ -11,14 +11,26 @@ return new class extends Migration
         Schema::create('reports', function (Blueprint $table) {
             $table->id('id_report');
 
-            $table->foreignId('user_id')->constrained('users', 'id_user')->onDelete('cascade');
-            $table->foreignId('product_id')->nullable()->constrained('products', 'id_product')->onDelete('cascade');
+            $table->foreignId('user_id')
+                ->constrained('users', 'id_user')
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
 
-            $table->string('reason');
+            $table->foreignId('product_id')
+                ->nullable()
+                ->constrained('products', 'id_product')
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
+
+            $table->string('reason', 255);
             $table->text('description')->nullable();
-            $table->string('status')->default('pending');
+            $table->string('status', 30)->default('pending');
 
             $table->timestamps();
+
+            // Index untuk antrean laporan di dashboard admin
+            $table->index('status');
+            $table->index('user_id');
         });
     }
 

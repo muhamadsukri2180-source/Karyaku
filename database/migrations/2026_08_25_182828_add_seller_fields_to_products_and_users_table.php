@@ -39,11 +39,19 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn(['stock', 'rejection_note', 'is_promoted', 'promoted_until']);
+            $columnsToDrop = array_filter(
+                ['stock', 'rejection_note', 'is_promoted', 'promoted_until'],
+                fn($col) => Schema::hasColumn('products', $col)
+            );
+            if (!empty($columnsToDrop)) {
+                $table->dropColumn($columnsToDrop);
+            }
         });
 
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['membership_expires_at']);
+            if (Schema::hasColumn('users', 'membership_expires_at')) {
+                $table->dropColumn('membership_expires_at');
+            }
         });
     }
 };

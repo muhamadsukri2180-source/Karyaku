@@ -12,7 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('notifications', function (Blueprint $table) {
-            // Cek dulu apakah kolom user_id belum ada di tabel notifications
             if (!Schema::hasColumn('notifications', 'user_id')) {
                 $table->unsignedBigInteger('user_id')->nullable()->after('id');
                 $table->foreign('user_id')->references('id_user')->on('users')->onDelete('cascade');

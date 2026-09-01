@@ -27,11 +27,12 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (Schema::hasColumn('users', 'suspended_until')) {
-                $table->dropColumn('suspended_until');
-            }
-            if (Schema::hasColumn('users', 'suspend_reason')) {
-                $table->dropColumn('suspend_reason');
+            $columnsToDrop = array_filter(
+                ['suspended_until', 'suspend_reason'],
+                fn($col) => Schema::hasColumn('users', $col)
+            );
+            if (!empty($columnsToDrop)) {
+                $table->dropColumn($columnsToDrop);
             }
         });
     }

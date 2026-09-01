@@ -10,10 +10,11 @@ return new class extends Migration
     {
         Schema::table('categories', function (Blueprint $table) {
             if (! Schema::hasColumn('categories', 'status')) {
-                $table->string('status')->default('aktif')->after('description'); // aktif, nonaktif
+                $table->string('status', 20)->default('aktif')->after('description'); // aktif, nonaktif
+                $table->index('status');
             }
             if (! Schema::hasColumn('categories', 'icon')) {
-                $table->string('icon')->nullable()->after('status'); // contoh: fa-laptop-code
+                $table->string('icon', 100)->nullable()->after('status'); // contoh: fa-laptop-code
             }
         });
     }
@@ -21,7 +22,18 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('categories', function (Blueprint $table) {
-            $table->dropColumn(['status', 'icon']);
+            $columnsToDrop = [];
+
+            if (Schema::hasColumn('categories', 'status')) {
+                $columnsToDrop[] = 'status';
+            }
+            if (Schema::hasColumn('categories', 'icon')) {
+                $columnsToDrop[] = 'icon';
+            }
+
+            if (! empty($columnsToDrop)) {
+                $table->dropColumn($columnsToDrop);
+            }
         });
     }
 };
