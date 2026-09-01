@@ -192,8 +192,23 @@
             @endif
 
             @php
-                $latestNotifications = \App\Models\Notification::latest()->take(5)->get();
-                $newNotifCount = \App\Models\Notification::where('created_at', '>=', now()->subDays(3))->count();
+                // Hapus otomatis notifikasi yang sudah lebih dari 1 bulan
+                \App\Models\Notification::where('created_at', '<', now()->subMonth())->delete();
+
+                $currentUserId = \Illuminate\Support\Facades\Auth::id();
+                $latestNotifications = $currentUserId
+                    ? \App\Models\Notification::where(function ($q) use ($currentUserId) {
+                        $q->whereNull('user_id')
+                          ->orWhere('user_id', $currentUserId);
+                    })->latest()->take(5)->get()
+                    : collect();
+
+                $newNotifCount = $currentUserId
+                    ? \App\Models\Notification::where(function ($q) use ($currentUserId) {
+                        $q->whereNull('user_id')
+                          ->orWhere('user_id', $currentUserId);
+                    })->where('created_at', '>=', now()->subDays(3))->count()
+                    : 0;
             @endphp
             <div class="user-menu notif-menu" id="notifMenu">
                 <button class="icon-btn-light" id="btnNotif" type="button" title="Notifikasi">

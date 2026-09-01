@@ -864,24 +864,18 @@ class AdminController extends Controller
             'title'       => 'required|string|max:255',
             'description' => 'required|string|max:2000',
         ]);
-
-        // target_type = 'tertentu' -> hanya 1 user yang lihat.
-        // target_type = 'semua'    -> user_id = null, dianggap broadcast ke semua pengguna.
         $targetUserId = $validated['target_type'] === 'tertentu'
             ? $validated['user_id']
             : null;
-
         Notification::create([
             'user_id'     => $targetUserId,
             'name'        => $validated['title'],
             'description' => $validated['description'],
             'is_read'     => false,
         ]);
-
         $message = $targetUserId
             ? 'Notifikasi berhasil dikirim ke pengguna yang dipilih.'
             : 'Notifikasi berhasil dikirim sebagai broadcast ke SEMUA pengguna.';
-
         return back()->with('success', $message);
     }
 
@@ -890,7 +884,4 @@ class AdminController extends Controller
         Notification::findOrFail($id)->delete();
         return back()->with('success', 'Notifikasi berhasil dihapus.');
     }
-
-
-
 }

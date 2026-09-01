@@ -455,14 +455,17 @@ class PembeliController extends Controller
     // =========================================================
     public function notificationsIndex()
     {
-    $notifications = Notification::where(function ($q) {
+        // Hapus otomatis notifikasi yang sudah lebih dari 1 bulan
+        Notification::where('created_at', '<', now()->subMonth())->delete();
+
+        $notifications = Notification::where(function ($q) {
             $q->whereNull('user_id')
               ->orWhere('user_id', Auth::id());
         })
         ->latest()
         ->paginate(10);
 
-    return view('pembeli.notifications', compact('notifications'));
+        return view('pembeli.notifications', compact('notifications'));
     }
 
     public function peringatanIndex()
