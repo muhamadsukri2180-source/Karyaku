@@ -265,10 +265,14 @@ class CsController extends Controller
 
     public function notifikasi()
     {
-        $notifications = Notification::select('id', 'user_id', 'name', 'description', 'is_read', 'created_at')
-            ->where(fn ($q) => $q->where('user_id', Auth::id())->orWhereNull('user_id'))
-            ->latest()->paginate(10);
+    $notifications = Notification::where(function ($q) {
+            $q->whereNull('user_id')
+              ->orWhere('user_id', Auth::id());
+        })
+        ->latest()
+        ->paginate(10);
 
-        return view('cs.notifikasi', compact('notifications'));
+    return view('cs.notifikasi', compact('notifications'));
     }
+
 }

@@ -833,4 +833,64 @@ class AdminController extends Controller
         }
         return back()->with('success', 'Optimasi selesai! ' . implode(' • ', $res));
     }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | 15. KELOLA NOTIFIKASI (KIRIM MANUAL KE PENGGUNA TERTENTU / SEMUA)
+    |--------------------------------------------------------------------------
+    */
+    public function notifikasi()
+    {
+        $notifications = Notification::with('targetUser')
+            ->latest()
+            ->paginate(15);
+
+        // Dropdown daftar SEMUA pengguna (kecuali Admin) untuk dipilih tujuan notifikasi.
+        // View tinggal loop $allUsers, otomatis nambah kalau ada pengguna baru daftar.
+        $allUsers = User::with('role')
+            ->whereHas('role', fn ($q) => $q->where('role_name', '!=', 'admin'))
+            ->orderBy('name')
+            ->get(['id_user', 'name', 'email', 'id_role']);
+
+        return view('admin.sistem.notifikasi', compact('notifications', 'allUsers'));
+    }
+
+    public function sendNotification(Request $request)
+    {
+        $validated = $request->validate([
+            'target_type' => 'required|in:semua,tertentu',
+            'user_id'     => 'nullable|required_if:target_type,tertentu|exists:users,id_user',
+            'title'       => 'required|string|max:255',
+            'description' => 'required|string|max:2000',
+        ]);
+
+        // target_type = 'tertentu' -> hanya 1 user yang lihat.
+        // target_type = 'semua'    -> user_id = null, dianggap broadcast ke semua pengguna.
+        $targetUserId = $validated['target_type'] === 'tertentu'
+            ? $validated['user_id']
+            : null;
+
+        Notification::create([
+            'user_id'     => $targetUserId,
+            'name'        => $validated['title'],
+            'description' => $validated['description'],
+            'is_read'     => false,
+        ]);
+
+        $message = $targetUserId
+            ? 'Notifikasi berhasil dikirim ke pengguna yang dipilih.'
+            : 'Notifikasi berhasil dikirim sebagai broadcast ke SEMUA pengguna.';
+
+        return back()->with('success', $message);
+    }
+
+    public function deleteNotification(string|int $id)
+    {
+        Notification::findOrFail($id)->delete();
+        return back()->with('success', 'Notifikasi berhasil dihapus.');
+    }
+
+
+
 }

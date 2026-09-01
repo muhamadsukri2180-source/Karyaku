@@ -455,12 +455,14 @@ class PembeliController extends Controller
     // =========================================================
     public function notificationsIndex()
     {
-        $userId = Auth::id();
-        $notifications = Notification::where(fn ($q) => $q->where('user_id', $userId)->orWhereNull('user_id'))
-            ->latest()
-            ->paginate(10);
+    $notifications = Notification::where(function ($q) {
+            $q->whereNull('user_id')
+              ->orWhere('user_id', Auth::id());
+        })
+        ->latest()
+        ->paginate(10);
 
-        return view('pembeli.notifications', compact('notifications'));
+    return view('pembeli.notifications', compact('notifications'));
     }
 
     public function peringatanIndex()

@@ -151,6 +151,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/optimize', [AdminController::class, 'optimizeApp'])->name('optimize');
 
 
+    //tambahan routes fitur notifikasi admin
+        Route::get('/notifikasi', [AdminController::class, 'notifikasi'])->name('notifikasi');
+    Route::post('/notifikasi/send', [AdminController::class, 'sendNotification'])->name('notifikasi.send');
+    Route::delete('/notifikasi/{id}', [AdminController::class, 'deleteNotification'])->name('notifikasi.delete');
 
 });
 
