@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PembeliController;
-use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\CustomerServiceController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PenjualController;
@@ -130,10 +129,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/profile', [AdminController::class, 'updateProfile'])->name('profile.update');
 
     // 11. Manajemen Notifikasi
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications', [NotificationController::class, 'store'])->name('notifications.store');
-    Route::put('/notifications/{id}', [NotificationController::class, 'update'])->name('notifications.update');
-    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    // Catatan: fitur ini sudah dipindah sepenuhnya ke AdminController@notifikasi (lihat bawah).
+    // Route lama tetap didaftarkan sebagai REDIRECT (bukan controller lama), supaya link
+    // route('admin.notifications.index') yang mungkin masih tersisa di blade lain otomatis
+    // diarahkan ke halaman yang benar dan tidak lagi memicu error "Undefined variable $allUsers".
+    Route::redirect('/notifications', '/admin/notifikasi', 301)->name('notifications.index');
 
     // 12. Keamanan System & Monitoring IP
     Route::get('/security/verify', [AdminController::class, 'securityVerifyPage'])->name('security.verify');
@@ -152,7 +152,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 
     //tambahan routes fitur notifikasi admin
-        Route::get('/notifikasi', [AdminController::class, 'notifikasi'])->name('notifikasi');
+    Route::get('/notifikasi', [AdminController::class, 'notifikasi'])->name('notifikasi');
     Route::post('/notifikasi/send', [AdminController::class, 'sendNotification'])->name('notifikasi.send');
     Route::delete('/notifikasi/{id}', [AdminController::class, 'deleteNotification'])->name('notifikasi.delete');
 
