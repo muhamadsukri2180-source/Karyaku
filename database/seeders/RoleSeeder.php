@@ -18,7 +18,11 @@ class RoleSeeder extends Seeder
         ];
 
         foreach ($roles as $role) {
-            Role::updateOrCreate(['role_name' => $role['role_name']], $role);
+            $name = strtolower(trim($role['role_name']));
+            Role::updateOrCreate(
+                ['role_name' => $name],
+                ['role_name' => $name, 'description' => $role['description']]
+            );
         }
     }
 }

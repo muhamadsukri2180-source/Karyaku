@@ -270,7 +270,29 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <a href="{{ route('landing') }}" target="_blank" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-sky-50 hover:border-sky-300 transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-house"></i></div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800 group-hover:text-sky-600">Landing Page Publik</h4>
+                                    <p class="text-[10px] text-slate-500">Pratinjau Halaman Utama</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400 group-hover:text-sky-600"></i>
+                        </a>
+
+                        <a href="{{ route('pembeli.marketplace') }}" target="_blank" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-store"></i></div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800 group-hover:text-blue-600">Katalog Marketplace</h4>
+                                    <p class="text-[10px] text-slate-500">Pratinjau Katalog Produk</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400 group-hover:text-blue-600"></i>
+                        </a>
+
                         <a href="{{ route('pembeli.dashboard') }}" target="_blank" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-sky-50 hover:border-sky-300 transition-all group">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-shopping-bag"></i></div>
@@ -284,7 +306,7 @@
 
                         <a href="{{ route('penjual.dashboard') }}" target="_blank" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 transition-all group">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-store"></i></div>
+                                <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-briefcase"></i></div>
                                 <div>
                                     <h4 class="text-xs font-bold text-slate-800 group-hover:text-emerald-600">Peran Penjual</h4>
                                     <p class="text-[10px] text-slate-500">Tinjau Halaman Penjual</p>

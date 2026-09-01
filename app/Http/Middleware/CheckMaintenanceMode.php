@@ -11,29 +11,44 @@ class CheckMaintenanceMode
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // 1. Route Publik & Admin yang selalu diizinkan diakses
+        $user = auth()->user();
+        $email = strtolower(trim($user->email ?? ''));
+        $roleName = strtolower(trim($user->role?->role_name ?? ''));
+        $isAdmin = $user && ($roleName === 'admin' || str_contains($email, 'admin'));
+
+        // 1. Admin SELALU diizinkan mengakses & melihat pratinjau seluruh halaman sistem saat maintenance
+        if ($isAdmin) {
+            return $next($request);
+        }
+
+        // 2. Route Infrastruktur & Admin yang selalu diizinkan diakses (Auth, Reset Password, Admin Panel)
         if ($request->is(
-            '/',            // Landing page
             'auth*',        // Halaman Login & Register
             'password*',    // Reset Password
             'forgot-password',
             'reset-password',
-            'admin*'        // Panel Admin (Selalu bisa diakses admin)
+            'admin*',       // Panel Admin
+            'logout',
+            'suspended-notice',
+            'appeal*'
         )) {
             return $next($request);
         }
 
+        // 3. Cek Maintenance bawaan Artisan (php artisan down)
+        if (app()->isDownForMaintenance()) {
+            return $this->maintenanceResponse(null);
+        }
+
+        // 4. Cek Maintenance Mode Kustom (per Peran / Semua User)
         $statusFile = storage_path('framework/maintenance_mode.json');
 
         if (file_exists($statusFile)) {
             $data       = json_decode(file_get_contents($statusFile), true);
-            $targetRole = $data['target_role'] ?? 'none';
+            $targetRole = strtolower(trim($data['target_role'] ?? 'none'));
             $endAt      = $data['end_at'] ?? null;
 
-            // =========================================================
             // AUTO-EXPIRE PAKAI TIMESTAMP (100% Presisi WIB)
-            // Jika waktu sekarang sudah melebihi target, matikan maintenance
-            // =========================================================
             if ($targetRole !== 'none' && $endAt) {
                 try {
                     $targetTimestamp = isset($data['timestamp']) 
@@ -51,25 +66,13 @@ class CheckMaintenanceMode
             }
 
             if ($targetRole !== 'none') {
-                $user = auth()->user();
-
-                if ($user) {
-                    $email    = strtolower(trim($user->email ?? ''));
-                    $roleName = strtolower(trim($user->role?->role_name ?? ''));
-
-                    // Admin selalu lolos
-                    if ($roleName === 'admin' || str_contains($email, 'admin')) {
-                        return $next($request);
-                    }
-
-                    // Jika role user saat ini sedang di-maintenance
-                    if ($roleName === strtolower($targetRole)) {
-                        return $this->maintenanceResponse($endAt);
-                    }
-                }
-
                 // Jika mode 'all' (Down Semua User kecuali Admin)
                 if ($targetRole === 'all') {
+                    return $this->maintenanceResponse($endAt);
+                }
+
+                // Jika role user saat ini (atau guest jika role down spesifik) sedang di-maintenance
+                if ($user && $roleName === $targetRole) {
                     return $this->maintenanceResponse($endAt);
                 }
             }

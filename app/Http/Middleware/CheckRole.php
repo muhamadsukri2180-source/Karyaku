@@ -12,7 +12,20 @@ class CheckRole
     {
         $user = $request->user();
 
-        if (! $user || ! in_array($user->role->role_name ?? null, $roles)) {
+        if (! $user) {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }
+
+        $userRole = strtolower(trim($user->role->role_name ?? ''));
+
+        // Admin selalu diizinkan mengakses dan melihat pratinjau semua halaman
+        if ($userRole === 'admin') {
+            return $next($request);
+        }
+
+        $allowedRoles = array_map(fn($r) => strtolower(trim($r)), $roles);
+
+        if (! in_array($userRole, $allowedRoles)) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 

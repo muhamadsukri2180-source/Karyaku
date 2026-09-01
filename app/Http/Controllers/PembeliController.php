@@ -51,7 +51,7 @@ class PembeliController extends Controller
         $rekomendasi = Product::with(['category', 'seller'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
-            ->whereIn('status', ['active', 'pending'])
+            ->where('status', 'active')
             ->orderByDesc('id_product')
             ->take(8)
             ->get();
@@ -59,7 +59,7 @@ class PembeliController extends Controller
         $promotedProducts = Product::with(['category', 'seller'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
-            ->whereIn('status', ['active', 'pending'])
+            ->where('status', 'active')
             ->where('is_promoted', true)
             ->where(fn ($q) => $q->whereNull('promoted_until')->orWhere('promoted_until', '>=', now()))
             ->latest('id_product')
@@ -237,7 +237,8 @@ class PembeliController extends Controller
 
         foreach ($carts as $cart) {
             if (!$cart->product || $cart->product->status !== 'active') {
-                return back()->withErrors(['cart_ids' => 'Salah satu produk di keranjang sudah tidak tersedia.']);
+                $productName = $cart->product ? '"' . $cart->product->title . '"' : 'satu produk';
+                return back()->withErrors(['cart_ids' => "Produk {$productName} di keranjang saat ini tidak tersedia atau masih menunggu verifikasi."]);
             }
         }
 
