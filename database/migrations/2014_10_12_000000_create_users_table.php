@@ -13,6 +13,7 @@ return new class extends Migration
 
             $table->unsignedBigInteger('id_role');
             $table->unsignedBigInteger('id_membership')->nullable();
+            $table->timestamp('membership_expires_at')->nullable();
 
             $table->string('name');
             $table->string('email')->unique();
@@ -20,6 +21,8 @@ return new class extends Migration
             $table->string('phone', 20)->nullable();
             $table->string('avatar')->nullable();
             $table->string('status')->default('active');
+            $table->timestamp('suspended_until')->nullable();
+            $table->text('suspend_reason')->nullable();
 
             $table->timestamps();
         });

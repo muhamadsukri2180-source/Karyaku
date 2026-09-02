@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->nullable();
             $table->string('name');
             $table->text('description');
+            $table->boolean('is_read')->default(false);
             $table->timestamps();
 
             // Relasi Foreign Key ke tabel 'users' dengan primary key 'id_user'

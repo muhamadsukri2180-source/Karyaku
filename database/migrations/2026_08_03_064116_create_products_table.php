@@ -24,9 +24,15 @@ return new class extends Migration
             $table->string('title', 255);
             $table->text('description')->nullable();
             $table->unsignedDecimal('price', 12, 2);
+            $table->integer('stock')->default(1);
             $table->string('file');
             $table->string('thumbnail')->nullable();
+            $table->text('images')->nullable();
+            $table->string('video')->nullable();
             $table->string('status', 20)->default('pending');
+            $table->text('rejection_note')->nullable();
+            $table->boolean('is_promoted')->default(false);
+            $table->timestamp('promoted_until')->nullable();
             $table->unsignedInteger('view_count')->default(0);
             $table->unsignedInteger('sold_count')->default(0);
 

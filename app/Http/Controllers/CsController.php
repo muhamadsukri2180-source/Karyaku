@@ -267,7 +267,7 @@ class CsController extends Controller
     {
     $notifications = Notification::where(function ($q) {
             $q->whereNull('user_id')
-              ->orWhere('user_id', Auth::id());
+            ->orWhere('user_id', Auth::id());
         })
         ->latest()
         ->paginate(10);

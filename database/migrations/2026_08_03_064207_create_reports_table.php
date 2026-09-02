@@ -13,10 +13,18 @@ return new class extends Migration
 
             $table->foreignId('user_id')->constrained('users', 'id_user')->onDelete('cascade');
             $table->foreignId('product_id')->nullable()->constrained('products', 'id_product')->onDelete('cascade');
+            $table->foreignId('reported_user_id')->nullable()
+                ->constrained('users', 'id_user')->nullOnDelete();
 
             $table->string('reason');
             $table->text('description')->nullable();
             $table->string('status')->default('pending');
+            $table->string('action_taken')->nullable();
+            $table->text('admin_note')->nullable();
+
+            $table->foreignId('reviewed_by')->nullable()
+                ->constrained('users', 'id_user')->nullOnDelete();
+            $table->timestamp('reviewed_at')->nullable();
 
             $table->timestamps();
         });

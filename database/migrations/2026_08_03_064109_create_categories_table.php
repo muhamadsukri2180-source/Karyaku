@@ -12,6 +12,8 @@ return new class extends Migration
             $table->id('id_category');
             $table->string('name', 100);
             $table->text('description')->nullable();
+            $table->string('status')->default('aktif'); // aktif, nonaktif
+            $table->string('icon')->nullable(); // contoh: fa-laptop-code
             $table->timestamps();
         });
     }

@@ -30,6 +30,7 @@ return new class extends Migration
             $table->string('bank_name', 100)->nullable();
             $table->string('account_name', 150)->nullable();
             $table->string('account_number', 50)->nullable();
+            $table->string('payment_method', 100)->nullable();
 
             // Foreign Key ke tabel memberships
             $table->foreignId('membership_id')
