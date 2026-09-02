@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users', 'id_user')->onDelete('cascade');
 
             $table->string('bank_name');
-            $table->string('bank_account_number');
+            $table->string('bank_account_number', 255);
             $table->string('bank_account_name');
             $table->decimal('amount', 12, 2);
             $table->string('status')->default('pending'); // pending, processed, rejected

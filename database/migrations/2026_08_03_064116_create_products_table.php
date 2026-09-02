@@ -29,7 +29,7 @@ return new class extends Migration
             $table->string('thumbnail')->nullable();
             $table->text('images')->nullable();
             $table->string('video')->nullable();
-            $table->string('status', 20)->default('pending');
+            $table->string('status', 20)->default('active');
             $table->text('rejection_note')->nullable();
             $table->boolean('is_promoted')->default(false);
             $table->timestamp('promoted_until')->nullable();

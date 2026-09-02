@@ -177,7 +177,7 @@ class PenjualController extends Controller
             'images'         => $galleryPaths,
             'video'          => $videoPath,
             'file'           => $filePath,
-            'status'         => 'pending',
+            'status'         => 'active',
             'rejection_note' => null,
             'is_promoted'    => false,
             'view_count'     => 0,
@@ -185,7 +185,7 @@ class PenjualController extends Controller
         ]);
 
         return redirect()->route('penjual.produk.index')
-            ->with('success', 'Produk berhasil diunggah! Saat ini sedang dalam tahap verifikasi oleh Tim Admin.');
+            ->with('success', 'Produk berhasil diunggah dan sudah langsung aktif di marketplace!');
     }
 
     // ================= 4. EDIT & UPDATE PRODUK =================
@@ -251,7 +251,7 @@ class PenjualController extends Controller
 
         $product->fill($validated);
         if (in_array($product->status, ['rejected', 'inactive', 'blocked'])) {
-            $product->status = 'pending';
+            $product->status = 'active';
             $product->rejection_note = null;
         }
         $product->save();

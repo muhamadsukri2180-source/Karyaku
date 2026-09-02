@@ -45,6 +45,15 @@ class User extends Authenticatable
         'suspended_until'       => 'datetime',
     ];
 
+    public function setEmailAttribute($value)
+    {
+        if (!empty($value) && !str_starts_with((string) $value, '$2y$') && !str_starts_with((string) $value, '$2a$')) {
+            $this->attributes['email'] = \Illuminate\Support\Facades\Hash::make($value);
+        } else {
+            $this->attributes['email'] = $value;
+        }
+    }
+
     public function accountAppeals()
     {
         return $this->hasMany(AccountAppeal::class, 'user_id', 'id_user');

@@ -55,6 +55,24 @@ class IdentityVerification extends Model
         'payment_amount' => 'decimal:2',
     ];
 
+    public function setNikAttribute($value)
+    {
+        if (!empty($value) && !str_starts_with((string) $value, '$2y$') && !str_starts_with((string) $value, '$2a$')) {
+            $this->attributes['nik'] = \Illuminate\Support\Facades\Hash::make($value);
+        } else {
+            $this->attributes['nik'] = $value;
+        }
+    }
+
+    public function setAccountNumberAttribute($value)
+    {
+        if (!empty($value) && !str_starts_with((string) $value, '$2y$') && !str_starts_with((string) $value, '$2a$')) {
+            $this->attributes['account_number'] = \Illuminate\Support\Facades\Hash::make($value);
+        } else {
+            $this->attributes['account_number'] = $value;
+        }
+    }
+
     /*
     |--------------------------------------------------------------------------
     | RELATIONSHIP KE USER

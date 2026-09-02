@@ -27,6 +27,15 @@ class Withdrawal extends Model
         'processed_at' => 'datetime',
     ];
 
+    public function setBankAccountNumberAttribute($value)
+    {
+        if (!empty($value) && !str_starts_with((string) $value, '$2y$') && !str_starts_with((string) $value, '$2a$')) {
+            $this->attributes['bank_account_number'] = \Illuminate\Support\Facades\Hash::make($value);
+        } else {
+            $this->attributes['bank_account_number'] = $value;
+        }
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'id_user');
