@@ -10,15 +10,21 @@ return new class extends Migration
     {
         Schema::create('customer_services', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id'); // Relasi ke tabel users (pembeli/pengguna)
-            $table->string('subject');
+
+            $table->foreignId('user_id')
+                ->constrained('users', 'id_user')
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
+
+            $table->string('subject', 200);
             $table->text('message');
             $table->enum('status', ['belum', 'proses', 'selesai'])->default('belum');
             $table->text('admin_note')->nullable();
             $table->timestamps();
 
-            // Foreign key jika menggunakan id_user di tabel users
-            $table->foreign('user_id')->references('id_user')->on('users')->onDelete('cascade');
+            // Indexing untuk dashboard antrean ticket support
+            $table->index(['user_id', 'status']);
+            $table->index('status');
         });
     }
 
