@@ -13,20 +13,14 @@ return new class extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            
-            $table->foreignId('user_id')
-                ->nullable()
-                ->constrained('users', 'id_user')
-                ->cascadeOnUpdate()
-                ->cascadeOnDelete();
-
-            $table->string('name', 150);
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->string('name');
             $table->text('description');
             $table->boolean('is_read')->default(false);
             $table->timestamps();
 
-            // Index untuk query lonceng notifikasi user
-            $table->index(['user_id', 'created_at']);
+            // Relasi Foreign Key ke tabel 'users' dengan primary key 'id_user'
+            $table->foreign('user_id')->references('id_user')->on('users')->onDelete('cascade');
         });
     }
 

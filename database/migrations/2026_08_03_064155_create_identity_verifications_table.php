@@ -23,13 +23,13 @@ return new class extends Migration
 
             // Dokumen Identitas & Biodata
             $table->string('identity_document')->nullable();
-            $table->string('nik', 255)->nullable()->unique();
+            $table->string('nik', 20)->nullable()->unique();
             $table->text('address')->nullable();
 
             // Informasi Bank
             $table->string('bank_name', 100)->nullable();
             $table->string('account_name', 150)->nullable();
-            $table->string('account_number', 255)->nullable();
+            $table->string('account_number', 50)->nullable();
             $table->string('payment_method', 100)->nullable();
 
             // Foreign Key ke tabel memberships

@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('allowed_ips', function (Blueprint $table) {
             $table->id();
-            $table->string('ip_address', 45)->unique(); // Mendukung IPv4 & IPv6 secara unik
-            $table->string('label', 100)->nullable();
-            $table->string('added_by', 100)->nullable();
+            $table->string('ip_address')->unique();
+            $table->string('label')->nullable();
+            $table->string('added_by')->nullable();
             $table->timestamps();
         });
     }

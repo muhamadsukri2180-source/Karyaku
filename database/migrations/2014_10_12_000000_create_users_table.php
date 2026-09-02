@@ -16,7 +16,7 @@ return new class extends Migration
             $table->timestamp('membership_expires_at')->nullable();
 
             $table->string('name');
-            $table->string('email', 255)->unique();
+            $table->string('email')->unique();
             $table->string('password');
             $table->string('phone', 20)->nullable();
             $table->string('avatar')->nullable();

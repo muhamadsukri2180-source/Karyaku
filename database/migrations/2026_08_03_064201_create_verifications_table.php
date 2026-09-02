@@ -11,24 +11,13 @@ return new class extends Migration
         Schema::create('verifications', function (Blueprint $table) {
             $table->id('id_verification');
 
-            $table->foreignId('product_id')
-                ->constrained('products', 'id_product')
-                ->cascadeOnUpdate()
-                ->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained('products', 'id_product')->onDelete('cascade');
+            $table->foreignId('verifier_id')->constrained('users', 'id_user')->onDelete('cascade');
 
-            $table->foreignId('verifier_id')
-                ->constrained('users', 'id_user')
-                ->cascadeOnUpdate()
-                ->cascadeOnDelete();
-
-            $table->string('status', 30)->default('pending');
+            $table->string('status');
             $table->text('notes')->nullable();
 
             $table->timestamps();
-
-            // Index untuk tracking & riwayat verifikasi produk
-            $table->index(['product_id', 'status']);
-            $table->index('verifier_id');
         });
     }
 
