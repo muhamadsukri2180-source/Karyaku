@@ -3,13 +3,32 @@
 
 @section('content')
 
+<style>
+    :root{
+        --primary:#2563eb;
+        --primary-light:#eff6ff;
+        --border-color:#e5e7eb;
+        --shadow:0 5px 20px rgba(15,23,42,.06);
+        --shadow-hover:0 12px 30px rgba(15,23,42,.10);
+        --text-muted:#64748b;
+        --text-dark:#1e293b;
+    }
+    .kk-card { background: #fff; border: 1px solid var(--border-color) !important; border-radius: 18px; box-shadow: var(--shadow); }
+    .kk-card-hover { transition: .2s ease; }
+    .kk-card-hover:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+    .kk-tabs .nav-link { border-radius: 10px; font-size: 12px; font-weight: 600; padding: 9px 13px; color: var(--text-muted); }
+    .kk-tabs .nav-link.active { background: var(--primary); color: #fff !important; box-shadow: 0 5px 14px rgba(37,99,235,.18); }
+    .kk-tabs .nav-link.danger-tab.active { background: #ef4444; }
+    .kk-tabs .nav-link.danger-tab { color: #ef4444; }
+</style>
+
 <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
     <div>
-        <h4 class="fw-bold mb-1"><i class="bi bi-box-seam-fill text-primary me-2"></i>Produk & Karya Saya</h4>
-        <p class="text-muted small mb-0">Kelola seluruh karya digital yang Anda jual di marketplace Karyaku.</p>
+        <h4 class="fw-bold mb-1" style="color:var(--text-dark);"><i class="bi bi-box-seam-fill me-2" style="color:var(--primary);"></i>Produk & Karya Saya</h4>
+        <p class="small mb-0" style="color:var(--text-muted);">Kelola seluruh karya digital yang Anda jual di marketplace Karyaku.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
-        <a href="{{ route('penjual.produk.create') }}" class="btn btn-primary btn-sm fw-bold px-3 py-2 rounded-3 shadow-sm {{ !$canUpload ? 'disabled' : '' }}">
+        <a href="{{ route('penjual.produk.create') }}" class="btn btn-sm fw-bold px-3 py-2 rounded-3 shadow-sm {{ !$canUpload ? 'disabled' : '' }}" style="background:var(--primary); color:#fff;">
             <i class="bi bi-plus-lg me-1"></i> Tambah Produk Baru
         </a>
     </div>
@@ -17,41 +36,41 @@
 
 {{-- STATUS KUOTA UPLOAD --}}
 @if(!$canUpload)
-    <div class="alert alert-warning card-box p-3 border-0 border-start border-4 border-warning d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <div class="kk-card p-3 d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4" style="background:#fff7ed; border-left: 4px solid #f59e0b !important;">
         <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-exclamation-circle-fill text-warning fs-5"></i>
+            <i class="bi bi-exclamation-circle-fill fs-5" style="color:#f59e0b;"></i>
             <span class="small fw-medium">Kuota upload produk Anda telah penuh ({{ $counts['semua'] }}/{{ $maxUpload }} produk). Tingkatkan paket membership Anda untuk menambah kuota upload.</span>
         </div>
-        <a href="{{ route('penjual.membership.index') }}" class="btn btn-warning btn-sm fw-bold px-3 py-1.5">
+        <a href="{{ route('penjual.membership.index') }}" class="btn btn-sm fw-bold px-3 py-1.5" style="background:#f59e0b; color:#1e293b;">
             Upgrade Paket
         </a>
     </div>
 @endif
 
 {{-- TAB FILTER STATUS & PENCARIAN --}}
-<div class="card-box p-3 mb-4">
+<div class="kk-card p-3 mb-4">
     <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
-        <ul class="nav nav-pills gap-2">
+        <ul class="nav nav-pills gap-2 kk-tabs">
             <li class="nav-item">
-                <a class="nav-link {{ ($tab ?? 'semua') === 'semua' ? 'active fw-bold' : 'text-secondary' }}" 
+                <a class="nav-link {{ ($tab ?? 'semua') === 'semua' ? 'active fw-bold' : '' }}" 
                    href="{{ route('penjual.produk.index', ['tab' => 'semua']) }}">
                     Semua <span class="badge {{ ($tab ?? 'semua') === 'semua' ? 'bg-white text-primary' : 'bg-light text-dark border' }} ms-1">{{ $counts['semua'] }}</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ ($tab ?? '') === 'aktif' ? 'active fw-bold' : 'text-secondary' }}" 
+                <a class="nav-link {{ ($tab ?? '') === 'aktif' ? 'active fw-bold' : '' }}" 
                    href="{{ route('penjual.produk.index', ['tab' => 'aktif']) }}">
                     <i class="bi bi-check-circle me-1"></i> Aktif <span class="badge {{ ($tab ?? '') === 'aktif' ? 'bg-white text-primary' : 'bg-light text-dark border' }} ms-1">{{ $counts['aktif'] }}</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ ($tab ?? '') === 'pending' ? 'active fw-bold' : 'text-secondary' }}" 
+                <a class="nav-link {{ ($tab ?? '') === 'pending' ? 'active fw-bold' : '' }}" 
                    href="{{ route('penjual.produk.index', ['tab' => 'pending']) }}">
                     <i class="bi bi-hourglass-split me-1"></i> Menunggu Verifikasi <span class="badge {{ ($tab ?? '') === 'pending' ? 'bg-white text-primary' : 'bg-light text-dark border' }} ms-1">{{ $counts['pending'] }}</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ ($tab ?? '') === 'diblokir' ? 'active fw-bold bg-danger' : 'text-danger' }}" 
+                <a class="nav-link danger-tab {{ ($tab ?? '') === 'diblokir' ? 'active fw-bold' : '' }}" 
                    href="{{ route('penjual.produk.index', ['tab' => 'diblokir']) }}">
                     <i class="bi bi-x-circle me-1"></i> Ditolak / Diblokir <span class="badge {{ ($tab ?? '') === 'diblokir' ? 'bg-white text-danger' : 'bg-danger-subtle text-danger border' }} ms-1">{{ $counts['diblokir'] }}</span>
                 </a>
@@ -68,12 +87,12 @@
 
 {{-- DAFTAR PRODUK --}}
 @if($products->isEmpty())
-    <div class="card-box p-5 text-center text-muted">
-        <i class="bi bi-box fs-1 d-block mb-3 text-secondary opacity-50"></i>
-        <h5 class="fw-bold text-dark mb-1">Tidak Ada Produk</h5>
-        <p class="small text-muted mb-3">Tidak ditemukan produk pada kategori/filter ini.</p>
+    <div class="kk-card p-5 text-center" style="color:var(--text-muted);">
+        <i class="bi bi-box fs-1 d-block mb-3 opacity-50"></i>
+        <h5 class="fw-bold mb-1" style="color:var(--text-dark);">Tidak Ada Produk</h5>
+        <p class="small mb-3">Tidak ditemukan produk pada kategori/filter ini.</p>
         @if($canUpload)
-            <a href="{{ route('penjual.produk.create') }}" class="btn btn-primary btn-sm fw-semibold">
+            <a href="{{ route('penjual.produk.create') }}" class="btn btn-sm fw-semibold" style="background:var(--primary); color:#fff;">
                 <i class="bi bi-plus-lg me-1"></i> Tambah Produk Sekarang
             </a>
         @endif
@@ -84,37 +103,37 @@
             @php
                 $isBlocked = in_array($prod->status, ['rejected', 'inactive', 'blocked']);
             @endphp
-            <div class="card-box p-3 border {{ $isBlocked ? 'border-danger-subtle bg-danger-subtle bg-opacity-10' : '' }} hover-shadow">
+            <div class="kk-card kk-card-hover p-3" style="{{ $isBlocked ? 'border-color:#fecaca !important; background:#fef2f2;' : '' }}">
                 <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
                     <div class="d-flex align-items-center gap-3 overflow-hidden">
                         <img src="{{ $prod->thumbnail ? asset('storage/' . $prod->thumbnail) : 'https://placehold.co/100x100?text=Karyaku' }}" 
                              alt="{{ $prod->title }}" class="rounded-3 object-fit-cover flex-shrink-0 border" style="width: 75px; height: 75px;">
                         <div class="overflow-hidden">
                             <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                                <span class="badge bg-primary-subtle text-primary font-weight-bold" style="font-size: 10px;">
+                                <span class="badge fw-bold" style="font-size: 10px; background:var(--primary-light); color:var(--primary);">
                                     {{ $prod->category->name ?? 'Kategori' }}
                                 </span>
                                 @if($prod->status === 'active')
-                                    <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle-fill me-1"></i> Aktif di Marketplace</span>
+                                    <span class="badge" style="background:#ecfdf5; color:#16a34a;"><i class="bi bi-check-circle-fill me-1"></i> Aktif di Marketplace</span>
                                 @elseif($prod->status === 'pending')
-                                    <span class="badge bg-warning-subtle text-warning"><i class="bi bi-hourglass-split me-1"></i> Menunggu Verifikasi</span>
+                                    <span class="badge" style="background:#fff7ed; color:#f59e0b;"><i class="bi bi-hourglass-split me-1"></i> Menunggu Verifikasi</span>
                                 @else
-                                    <span class="badge bg-danger-subtle text-danger"><i class="bi bi-exclamation-octagon-fill me-1"></i> Ditolak / Dinonaktifkan</span>
+                                    <span class="badge" style="background:#fef2f2; color:#ef4444;"><i class="bi bi-exclamation-octagon-fill me-1"></i> Ditolak / Dinonaktifkan</span>
                                 @endif
 
                                 @if($prod->is_promoted)
-                                    <span class="badge bg-warning text-dark"><i class="bi bi-megaphone-fill me-1"></i> Sedang Diiklankan</span>
+                                    <span class="badge" style="background:#f59e0b; color:#1e293b;"><i class="bi bi-megaphone-fill me-1"></i> Sedang Diiklankan</span>
                                 @endif
                             </div>
 
                             <h6 class="fw-bold mb-1 text-truncate" style="font-size: 15px;">
-                                <a href="{{ route('pembeli.produk.detail', $prod->id_product) }}" target="_blank" class="text-dark text-decoration-none">
+                                <a href="{{ route('pembeli.produk.detail', $prod->id_product) }}" target="_blank" class="text-decoration-none" style="color:var(--text-dark);">
                                     {{ $prod->title }}
                                 </a>
                             </h6>
 
-                            <div class="d-flex align-items-center gap-3 text-muted small" style="font-size: 12px;">
-                                <strong class="text-primary font-weight-bold">Rp {{ number_format($prod->price, 0, ',', '.') }}</strong>
+                            <div class="d-flex align-items-center gap-3 small" style="font-size: 12px; color:var(--text-muted);">
+                                <strong style="color:var(--primary);">Rp {{ number_format($prod->price, 0, ',', '.') }}</strong>
                                 <span><i class="bi bi-boxes me-1"></i> Stok: <strong>{{ $prod->stock }}</strong></span>
                                 <span><i class="bi bi-eye me-1"></i> {{ $prod->view_count }}</span>
                                 <span><i class="bi bi-bag-check me-1"></i> Terjual {{ $prod->sold_count }}</span>
@@ -137,7 +156,7 @@
                             @else
                                 <form action="{{ route('penjual.iklan.promote', $prod->id_product) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="btn btn-outline-primary btn-sm fw-semibold" title="Pasang Iklan untuk Produk Ini">
+                                    <button type="submit" class="btn btn-sm fw-semibold" style="border:1px solid var(--primary); color:var(--primary);" title="Pasang Iklan untuk Produk Ini">
                                         <i class="bi bi-megaphone me-1"></i> Iklankan
                                     </button>
                                 </form>
@@ -160,11 +179,11 @@
 
                 {{-- CATATAN PENOLAKAN / PEMBLOKIRAN JIKA ADA --}}
                 @if($isBlocked && $prod->rejection_note)
-                    <div class="mt-3 p-3 bg-danger-subtle bg-opacity-50 border border-danger-subtle rounded-3 text-danger small">
+                    <div class="mt-3 p-3 rounded-3 small" style="background:#fef2f2; border:1px solid #fecaca; color:#b91c1c;">
                         <div class="d-flex align-items-center gap-2 fw-bold mb-1">
                             <i class="bi bi-exclamation-triangle-fill"></i> Catatan Penolakan / Pemblokiran oleh Petugas:
                         </div>
-                        <p class="mb-2 text-dark">{{ $prod->rejection_note }}</p>
+                        <p class="mb-2" style="color:var(--text-dark);">{{ $prod->rejection_note }}</p>
                         <a href="{{ route('penjual.produk.edit', $prod->id_product) }}" class="btn btn-danger btn-sm fw-semibold py-1 px-3">
                             <i class="bi bi-pencil me-1"></i> Perbaiki & Ajukan Verifikasi Ulang
                         </a>
