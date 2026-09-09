@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Artisan, Hash, Storage, DB, Schema};
 use Carbon\Carbon;
 use ZipArchive;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\{Alignment, Border, Fill, Font, NumberFormat};
 
 class AdminController extends Controller
 {
@@ -887,50 +890,104 @@ class AdminController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 16. LAPORAN KEUANGAN & EKSPOR EXCEL (MINGGUAN & BULANAN) - BACKEND ONLY
+    | 16. LAPORAN KEUANGAN & EKSPOR EXCEL (BULANAN & CUSTOM)
     |--------------------------------------------------------------------------
     */
 
     /**
-     * Helper privat: mengolah rentang tanggal filter laporan keuangan (mingguan / bulanan / custom)
+     * Helper privat: mengolah rentang tanggal filter laporan keuangan (bulanan / mingguan / custom)
      */
     private function getFinancialReportDateRange(Request $request): array
     {
-        $filterType = $request->input('filter_type', 'bulanan'); // 'mingguan', 'bulanan', 'custom'
+        $filterType = $request->input('filter_type', 'bulanan'); // 'bulanan', 'mingguan', 'custom'
+
+        $monthNames = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        $launchYear  = 2026;
+        $currentYear = (int) now()->year;
+        $maxYear     = max($launchYear, $currentYear);
 
         if ($filterType === 'mingguan') {
-            // Rentang mingguan: 7 hari terakhir atau berdasarkan start_date & end_date
             $startDate = $request->filled('start_date')
                 ? Carbon::parse($request->start_date)->startOfDay()
                 : now()->subDays(6)->startOfDay();
             $endDate = $request->filled('end_date')
                 ? Carbon::parse($request->end_date)->endOfDay()
                 : now()->endOfDay();
-        } elseif ($filterType === 'bulanan') {
-            // Rentang bulanan: bulan ini atau berdasarkan parameter month & year
-            $month = (int) $request->input('month', now()->month);
-            $year  = (int) $request->input('year', now()->year);
-            $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-            $endDate   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-        } else {
-            // Custom date range
+            $month = (int) $startDate->month;
+            $year  = (int) $startDate->year;
+            $periodLabel = 'Mingguan (' . $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y') . ')';
+        } elseif ($filterType === 'custom') {
             $startDate = $request->filled('start_date')
                 ? Carbon::parse($request->start_date)->startOfDay()
                 : now()->startOfMonth();
             $endDate = $request->filled('end_date')
                 ? Carbon::parse($request->end_date)->endOfDay()
                 : now()->endOfDay();
+            $month = (int) $startDate->month;
+            $year  = (int) $startDate->year;
+            $periodLabel = 'Periode ' . $startDate->format('d M Y') . ' s/d ' . $endDate->format('d M Y');
+        } else {
+            // Default bulanan
+            $filterType = 'bulanan';
+            $inputMonth = (int) $request->input('month', now()->month);
+            $inputYear  = (int) $request->input('year', now()->year);
+
+            // Validasi ketat: Tahun tidak boleh kurang dari 2026 dan tidak boleh melebihi tahun saat ini (now()->year)
+            $year  = min(max($inputYear, $launchYear), $maxYear);
+            $month = min(max($inputMonth, 1), 12);
+
+            // Jika berada di tahun berjalan saat ini, batasi bulan tidak boleh melompat ke masa depan
+            if ($year === $currentYear && $month > (int) now()->month) {
+                $month = (int) now()->month;
+            }
+
+            $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+            $endDate   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+            $periodLabel = ($monthNames[$month] ?? 'Bulan ' . $month) . ' ' . $year;
         }
 
+        // Hitung navigasi bulan sebelumnya dan bulan berikutnya
+        $currentMonthCarbon = Carbon::createFromDate($year, $month, 1);
+        $prevCarbon = $currentMonthCarbon->copy()->subMonth();
+        $nextCarbon = $currentMonthCarbon->copy()->addMonth();
+
+        // Batas navigasi:
+        // has_prev: tidak bisa mundur sebelum Januari 2026 (tahun launching)
+        $hasPrev = !($prevCarbon->year < $launchYear);
+        // has_next: tidak bisa maju ke bulan/tahun masa depan yang belum tiba
+        $hasNext = !($nextCarbon->year > $currentYear || ($nextCarbon->year === $currentYear && $nextCarbon->month > (int) now()->month));
+
+        // Hanya menampilkan rentang dari 2026 s/d tahun saat ini (now()->year).
+        // Pada tahun 2026 saat ini, HANYA tahun 2026 yang tampil.
+        // Ketika sistem masuk ke tahun 2027, opsi 2027 akan OTOMATIS muncul sendiri tanpa perlu ditambah manual.
+        $availableYears = range($launchYear, $maxYear);
+
         return [
-            'filter_type' => $filterType,
-            'start_date'  => $startDate,
-            'end_date'    => $endDate,
+            'filter_type'     => $filterType,
+            'month'           => $month,
+            'year'            => $year,
+            'month_name'      => $monthNames[$month] ?? 'Bulan ' . $month,
+            'period_label'    => $periodLabel,
+            'start_date'      => $startDate,
+            'end_date'        => $endDate,
+            'prev_month'      => $prevCarbon->month,
+            'prev_year'       => $prevCarbon->year,
+            'next_month'      => $nextCarbon->month,
+            'next_year'       => $nextCarbon->year,
+            'has_prev'        => $hasPrev,
+            'has_next'        => $hasNext,
+            'available_years' => $availableYears,
+            'month_names'     => $monthNames,
         ];
     }
 
     /**
-     * Laporan Keuangan Backend (Mendukung Filter Mingguan & Bulanan)
+     * Laporan Keuangan Bulanan & Analisis Finansial Admin
      */
     public function laporanKeuangan(Request $request)
     {
@@ -955,39 +1012,117 @@ class AdminController extends Controller
             ->latest('created_at')
             ->get();
 
-        // Kalkulasi Ringkasan Statistik Keuangan
-        $totalPemasukan = $orders->where('payment_status', 'paid')->sum('total_price');
-        $totalOrdersPaid = $orders->where('payment_status', 'paid')->count();
-        $totalOrdersCount = $orders->count();
-        $totalPenarikanDisetujui = $withdrawals->whereIn('status', ['approved', 'selesai', 'success'])->sum('amount');
-        $rataRataTransaksi = $totalOrdersPaid > 0 ? ($totalPemasukan / $totalOrdersPaid) : 0;
+        // Kalkulasi Statistik Finansial
+        $totalPemasukan          = (float) $orders->where('payment_status', 'paid')->sum('total_price');
+        $totalKomisiPlatform     = (float) ($totalPemasukan * 0.05); // Komisi 5% platform
+        $totalOrdersPaid         = (int) $orders->where('payment_status', 'paid')->count();
+        $totalOrdersUnpaid       = (int) $orders->where('payment_status', 'unpaid')->count();
+        $totalOrdersFailed       = (int) $orders->whereIn('payment_status', ['failed', 'dibatalkan', 'expired'])->count();
+        $totalOrdersCount        = (int) $orders->count();
+        
+        $totalPenarikanDisetujui = (float) $withdrawals->whereIn('status', ['approved', 'selesai', 'success', 'processed'])->sum('amount');
+        $totalPenarikanPending   = (float) $withdrawals->where('status', 'pending')->sum('amount');
+        $totalPenarikanDitolak   = (float) $withdrawals->where('status', 'rejected')->sum('amount');
+        $countPenarikanDisetujui = (int) $withdrawals->whereIn('status', ['approved', 'selesai', 'success', 'processed'])->count();
+        $countPenarikanPending   = (int) $withdrawals->where('status', 'pending')->count();
+
+        $saldoBersih             = (float) ($totalPemasukan - $totalPenarikanDisetujui);
+        $rataRataTransaksi       = $totalOrdersPaid > 0 ? ($totalPemasukan / $totalOrdersPaid) : 0;
+        $successRate             = $totalOrdersCount > 0 ? round(($totalOrdersPaid / $totalOrdersCount) * 100, 1) : 0;
+
+        // Breakdown Per Hari (Daily Breakdown) untuk Chart & Tabel Rekapitulasi
+        $daysInPeriod = $startDate->diffInDays($endDate) + 1;
+        $dailyBreakdown = [];
+        $chartLabels = [];
+        $chartInflow = [];
+        $chartOutflow = [];
+        $chartOrderCounts = [];
+
+        for ($i = 0; $i < $daysInPeriod; $i++) {
+            $dayCarbon = $startDate->copy()->addDays($i);
+            $dayStart = $dayCarbon->copy()->startOfDay();
+            $dayEnd = $dayCarbon->copy()->endOfDay();
+            $dateString = $dayCarbon->format('Y-m-d');
+            $dayLabel = $dayCarbon->format('d M');
+
+            $dayOrders = $orders->filter(function ($order) use ($dayStart, $dayEnd) {
+                return $order->created_at >= $dayStart && $order->created_at <= $dayEnd;
+            });
+            $dayPaidOrders = $dayOrders->where('payment_status', 'paid');
+            $dayInflow = (float) $dayPaidOrders->sum('total_price');
+            $dayCommission = (float) ($dayInflow * 0.05);
+
+            $dayWithdrawals = $withdrawals->filter(function ($w) use ($dayStart, $dayEnd) {
+                return $w->created_at >= $dayStart && $w->created_at <= $dayEnd;
+            });
+            $dayOutflow = (float) $dayWithdrawals->whereIn('status', ['approved', 'selesai', 'success', 'processed'])->sum('amount');
+
+            $dailyBreakdown[] = [
+                'date'         => $dateString,
+                'formatted'    => $dayCarbon->translatedFormat('d F Y') ?: $dayCarbon->format('d M Y'),
+                'day_num'      => $dayCarbon->format('d'),
+                'day_name'     => $dayCarbon->format('l'),
+                'order_count'  => $dayPaidOrders->count(),
+                'inflow'       => $dayInflow,
+                'commission'   => $dayCommission,
+                'outflow'      => $dayOutflow,
+                'net'          => $dayInflow - $dayOutflow,
+            ];
+
+            $chartLabels[] = $dayCarbon->format('d');
+            $chartInflow[] = $dayInflow;
+            $chartOutflow[] = $dayOutflow;
+            $chartOrderCounts[] = $dayPaidOrders->count();
+        }
+
+        $chartData = [
+            'labels'      => $chartLabels,
+            'inflow'      => $chartInflow,
+            'outflow'     => $chartOutflow,
+            'orderCounts' => $chartOrderCounts,
+        ];
 
         $summary = [
             'filter_type'               => $dateRange['filter_type'],
+            'month'                     => $dateRange['month'],
+            'year'                      => $dateRange['year'],
+            'month_name'                => $dateRange['month_name'],
+            'period_label'              => $dateRange['period_label'],
             'start_date'                => $startDate->format('Y-m-d'),
             'end_date'                  => $endDate->format('Y-m-d'),
-            'total_pemasukan'           => (float) $totalPemasukan,
-            'total_orders_paid'         => (int) $totalOrdersPaid,
-            'total_orders_count'        => (int) $totalOrdersCount,
-            'total_penarikan_disetujui' => (float) $totalPenarikanDisetujui,
-            'rata_rata_transaksi'       => (float) $rataRataTransaksi,
+            'total_pemasukan'           => $totalPemasukan,
+            'total_komisi_platform'     => $totalKomisiPlatform,
+            'total_penarikan_disetujui' => $totalPenarikanDisetujui,
+            'total_penarikan_pending'   => $totalPenarikanPending,
+            'total_penarikan_ditolak'   => $totalPenarikanDitolak,
+            'saldo_bersih'              => $saldoBersih,
+            'total_orders_paid'         => $totalOrdersPaid,
+            'total_orders_unpaid'       => $totalOrdersUnpaid,
+            'total_orders_failed'       => $totalOrdersFailed,
+            'total_orders_count'        => $totalOrdersCount,
+            'count_penarikan_disetujui' => $countPenarikanDisetujui,
+            'count_penarikan_pending'   => $countPenarikanPending,
+            'rata_rata_transaksi'       => $rataRataTransaksi,
+            'success_rate'              => $successRate,
         ];
 
         // Jika dipanggil via JSON / API / AJAX
         if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
             return response()->json([
-                'status'      => 'success',
-                'summary'     => $summary,
-                'orders'      => $orders,
-                'withdrawals' => $withdrawals,
+                'status'         => 'success',
+                'summary'        => $summary,
+                'orders'         => $orders,
+                'withdrawals'    => $withdrawals,
+                'dailyBreakdown' => $dailyBreakdown,
+                'chartData'      => $chartData,
             ]);
         }
 
-        return view('admin.sistem.laporan_keuangan', compact('summary', 'orders', 'withdrawals', 'dateRange'));
+        return view('admin.keuangan.laporan_keuangan', compact('summary', 'orders', 'withdrawals', 'dateRange', 'dailyBreakdown', 'chartData'));
     }
 
     /**
-     * Ekspor Laporan Keuangan ke Excel (Mendukung Filter Mingguan & Bulanan)
+     * Ekspor Laporan Keuangan ke Berkas Excel (.xlsx) Berwarna & Rapi
      */
     public function exportLaporanKeuanganExcel(Request $request)
     {
@@ -995,7 +1130,6 @@ class AdminController extends Controller
         $startDate = $dateRange['start_date'];
         $endDate   = $dateRange['end_date'];
         $status    = $request->input('status', 'all');
-        $filterType = $dateRange['filter_type'];
 
         // Query Transactions
         $orderQuery = Order::with(['buyer', 'items.product.seller'])
@@ -1013,105 +1147,568 @@ class AdminController extends Controller
             ->latest('created_at')
             ->get();
 
-        // Stat Calculations
-        $totalPemasukan = $orders->where('payment_status', 'paid')->sum('total_price');
-        $totalOrdersPaid = $orders->where('payment_status', 'paid')->count();
-        $totalPenarikan = $withdrawals->whereIn('status', ['approved', 'selesai', 'success'])->sum('amount');
+        // Aggregations
+        $totalPemasukan          = (float) $orders->where('payment_status', 'paid')->sum('total_price');
+        $totalKomisiPlatform     = (float) ($totalPemasukan * 0.05);
+        $totalPenarikanDisetujui = (float) $withdrawals->whereIn('status', ['approved', 'selesai', 'success', 'processed'])->sum('amount');
+        $saldoBersih             = (float) ($totalPemasukan - $totalPenarikanDisetujui);
+        $totalOrdersPaid         = (int) $orders->where('payment_status', 'paid')->count();
+        $totalOrdersCount        = (int) $orders->count();
 
-        $filename = 'Laporan_Keuangan_' . ucfirst($filterType) . '_Karyaku_' . $startDate->format('Ymd') . '_sd_' . $endDate->format('Ymd') . '.csv';
+        // Inisialisasi PhpSpreadsheet
+        $spreadsheet = new Spreadsheet();
+        $spreadsheet->getDefaultStyle()->getFont()->setName('Segoe UI')->setSize(10);
 
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires'             => '0',
+        // =========================================================================
+        // SHEET 1: RINGKASAN & TRANSAKSI PENJUALAN
+        // =========================================================================
+        $sheetOrders = $spreadsheet->getActiveSheet();
+        $sheetOrders->setTitle('Transaksi Penjualan');
+        $sheetOrders->setShowGridLines(true);
+
+        // 1. BANNER HEADER UTAMA (Navy Blue & Sky Blue)
+        $sheetOrders->mergeCells('A1:I1');
+        $sheetOrders->setCellValue('A1', 'LAPORAN KEUANGAN KARYAKU MARKETPLACE');
+        $sheetOrders->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 15, 'color' => ['rgb' => 'FFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0B3D62']]
+        ]);
+        $sheetOrders->getRowDimension(1)->setRowHeight(38);
+
+        // Subtitle / Periode info
+        $sheetOrders->mergeCells('A2:I2');
+        $sheetOrders->setCellValue('A2', 'Periode: ' . $dateRange['period_label'] . ' (' . $startDate->format('d/m/Y') . ' - ' . $endDate->format('d/m/Y') . ')  |  Dicetak pada: ' . now()->format('d/m/Y H:i') . ' WIB');
+        $sheetOrders->getStyle('A2')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0284C7']]
+        ]);
+        $sheetOrders->getRowDimension(2)->setRowHeight(24);
+
+        // 2. KARTU STATISTIK RINGKASAN (KPI METRIC BOXES)
+        // Header Kartu (Row 4)
+        $sheetOrders->mergeCells('A4:B4');
+        $sheetOrders->setCellValue('A4', 'TOTAL PEMASUKAN (LUNAS)');
+        $sheetOrders->mergeCells('C4:D4');
+        $sheetOrders->setCellValue('C4', 'KOMISI PLATFORM (5%)');
+        $sheetOrders->mergeCells('E4:F4');
+        $sheetOrders->setCellValue('E4', 'PENARIKAN SALDO PENJUAL');
+        $sheetOrders->mergeCells('G4:I4');
+        $sheetOrders->setCellValue('G4', 'SALDO BERSIH (NET INFLOW)');
+
+        // Nilai Kartu (Row 5)
+        $sheetOrders->mergeCells('A5:B5');
+        $sheetOrders->setCellValue('A5', $totalPemasukan);
+        $sheetOrders->mergeCells('C5:D5');
+        $sheetOrders->setCellValue('C5', $totalKomisiPlatform);
+        $sheetOrders->mergeCells('E5:F5');
+        $sheetOrders->setCellValue('E5', $totalPenarikanDisetujui);
+        $sheetOrders->mergeCells('G5:I5');
+        $sheetOrders->setCellValue('G5', $saldoBersih);
+
+        // Styling Kartu 1: Pemasukan (Emerald Green)
+        $sheetOrders->getStyle('A4:B4')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '065F46']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D1FAE5']]
+        ]);
+        $sheetOrders->getStyle('A5:B5')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 13, 'color' => ['rgb' => '065F46']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'ECFDF5']],
+            'numberFormat' => ['formatCode' => '"Rp "#,##0']
+        ]);
+
+        // Styling Kartu 2: Komisi (Sky Blue)
+        $sheetOrders->getStyle('C4:D4')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '0369A1']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E0F2FE']]
+        ]);
+        $sheetOrders->getStyle('C5:D5')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 13, 'color' => ['rgb' => '0369A1']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F0F9FF']],
+            'numberFormat' => ['formatCode' => '"Rp "#,##0']
+        ]);
+
+        // Styling Kartu 3: Penarikan (Amber)
+        $sheetOrders->getStyle('E4:F4')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '92400E']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FEF3C7']]
+        ]);
+        $sheetOrders->getStyle('E5:F5')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 13, 'color' => ['rgb' => '92400E']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFFBEB']],
+            'numberFormat' => ['formatCode' => '"Rp "#,##0']
+        ]);
+
+        // Styling Kartu 4: Saldo Bersih (Violet / Indigo)
+        $sheetOrders->getStyle('G4:I4')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '4338CA']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'EDE9FE']]
+        ]);
+        $sheetOrders->getStyle('G5:I5')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 13, 'color' => ['rgb' => '4338CA']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F5F3FF']],
+            'numberFormat' => ['formatCode' => '"Rp "#,##0']
+        ]);
+
+        // Border keliling kartu ringkasan
+        $sheetOrders->getStyle('A4:I5')->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CBD5E1']]]
+        ]);
+        $sheetOrders->getRowDimension(4)->setRowHeight(20);
+        $sheetOrders->getRowDimension(5)->setRowHeight(28);
+
+        // 3. TABEL DATA TRANSAKSI PENJUALAN
+        // Judul Bagian Tabel
+        $sheetOrders->mergeCells('A7:I7');
+        $sheetOrders->setCellValue('A7', 'RINCIAN TRANSAKSI PENJUALAN (ORDERS)');
+        $sheetOrders->getStyle('A7')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 11, 'color' => ['rgb' => '0F172A']],
+            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
+        ]);
+        $sheetOrders->getRowDimension(7)->setRowHeight(22);
+
+        // Header Kolom Tabel Transaksi (Row 8)
+        $orderHeaders = [
+            'A8' => 'No',
+            'B8' => 'Kode Order',
+            'C8' => 'Tanggal & Waktu',
+            'D8' => 'Nama Pembeli',
+            'E8' => 'Rincian Produk / Layanan',
+            'F8' => 'Status Pembayaran',
+            'G8' => 'Status Pesanan',
+            'H8' => 'Total Transaksi',
+            'I8' => 'Komisi Platform (5%)'
         ];
 
-        $callback = function () use ($orders, $withdrawals, $filterType, $startDate, $endDate, $totalPemasukan, $totalOrdersPaid, $totalPenarikan) {
-            $file = fopen('php://output', 'w');
+        foreach ($orderHeaders as $cell => $text) {
+            $sheetOrders->setCellValue($cell, $text);
+        }
 
-            // Write UTF-8 BOM for Microsoft Excel Compatibility
-            fputs($file, "\xEF\xBB\xBF");
+        $sheetOrders->getStyle('A8:I8')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0284C7']],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '0369A1']]]
+        ]);
+        $sheetOrders->getRowDimension(8)->setRowHeight(26);
 
-            // HEADER INFORMASI LAPORAN
-            fputcsv($file, ['LAPORAN KEUANGAN KARYAKU MARKETPLACE']);
-            fputcsv($file, ['Jenis Laporan', ucfirst($filterType)]);
-            fputcsv($file, ['Periode Tanggal', $startDate->format('d/m/Y') . ' s/d ' . $endDate->format('d/m/Y')]);
-            fputcsv($file, ['Tanggal Dicetak', now()->format('d/m/Y H:i:s')]);
-            fputcsv($file, []);
+        // Data Rows Transaksi
+        $rowOrder = 9;
+        $noOrder = 1;
 
-            // RINGKASAN KEUANGAN
-            fputcsv($file, ['--- RINGKASAN STATISTIK KEUANGAN ---']);
-            fputcsv($file, ['Total Pemasukan Transaksi Lunas', 'Rp ' . number_format($totalPemasukan, 0, ',', '.')]);
-            fputcsv($file, ['Total Transaksi Lunas', $totalOrdersPaid . ' Transaksi']);
-            fputcsv($file, ['Total Penarikan Saldo Disetujui', 'Rp ' . number_format($totalPenarikan, 0, ',', '.')]);
-            fputcsv($file, []);
+        if ($orders->count() > 0) {
+            foreach ($orders as $o) {
+                $itemList = $o->items->map(function ($item) {
+                    return ($item->product->title ?? 'Item') . ' (' . $item->quantity . 'x)';
+                })->implode(', ');
 
-            // TABEL 1: DETAIL TRANSAKSI PENJUALAN (ORDERS)
-            fputcsv($file, ['--- DETAIL TRANSAKSI PENJUALAN (ORDERS) ---']);
-            fputcsv($file, [
-                'No',
-                'ID Order',
-                'Tanggal Transaksi',
-                'Nama Pembeli',
-                'Status Pembayaran',
-                'Status Pesanan',
-                'Detail Produk Item',
-                'Total Nominal (Rp)'
-            ]);
+                $isEven = ($noOrder % 2 === 0);
+                $rowBg = $isEven ? 'F8FAFC' : 'FFFFFF';
 
-            $no = 1;
-            foreach ($orders as $order) {
-                $itemList = $order->items->map(function ($item) {
-                    return ($item->product->title ?? 'Produk') . ' (' . $item->quantity . 'x)';
-                })->implode('; ');
+                $sheetOrders->setCellValue('A' . $rowOrder, $noOrder++);
+                $sheetOrders->setCellValue('B' . $rowOrder, '#' . $o->id_order);
+                $sheetOrders->setCellValue('C' . $rowOrder, $o->created_at ? $o->created_at->format('d/m/Y H:i') : '-');
+                $sheetOrders->setCellValue('D' . $rowOrder, $o->buyer->name ?? 'User #' . $o->buyer_id);
+                $sheetOrders->setCellValue('E' . $rowOrder, $itemList ?: '-');
+                $sheetOrders->setCellValue('F' . $rowOrder, strtoupper($o->payment_status));
+                $sheetOrders->setCellValue('G' . $rowOrder, strtoupper($o->status));
+                $sheetOrders->setCellValue('H' . $rowOrder, (float) $o->total_price);
+                $sheetOrders->setCellValue('I' . $rowOrder, (float) ($o->total_price * 0.05));
 
-                fputcsv($file, [
-                    $no++,
-                    '#' . $order->id_order,
-                    $order->created_at ? $order->created_at->format('d/m/Y H:i') : '-',
-                    $order->buyer->name ?? 'Pembeli (ID: ' . $order->buyer_id . ')',
-                    strtoupper($order->payment_status),
-                    strtoupper($order->status),
-                    $itemList ?: 'Tanpa Detail',
-                    number_format($order->total_price, 0, ',', '.')
+                // Basic Row Styling
+                $sheetOrders->getStyle('A' . $rowOrder . ':I' . $rowOrder)->applyFromArray([
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => $rowBg]],
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'E2E8F0']]],
+                    'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
                 ]);
+
+                // Alignment & Format Kolom
+                $sheetOrders->getStyle('A' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetOrders->getStyle('B' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetOrders->getStyle('C' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetOrders->getStyle('F' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetOrders->getStyle('G' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                
+                $sheetOrders->getStyle('H' . $rowOrder)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+                $sheetOrders->getStyle('I' . $rowOrder)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+
+                // Pewarnaan Badge Status Pembayaran
+                $payStatus = strtolower($o->payment_status);
+                if ($payStatus === 'paid' || $payStatus === 'lunas') {
+                    $sheetOrders->getStyle('F' . $rowOrder)->applyFromArray([
+                        'font' => ['bold' => true, 'color' => ['rgb' => '166534']],
+                        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'DCFCE7']]
+                    ]);
+                } elseif ($payStatus === 'unpaid' || $payStatus === 'pending') {
+                    $sheetOrders->getStyle('F' . $rowOrder)->applyFromArray([
+                        'font' => ['bold' => true, 'color' => ['rgb' => '854D0E']],
+                        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FEF9C3']]
+                    ]);
+                } else {
+                    $sheetOrders->getStyle('F' . $rowOrder)->applyFromArray([
+                        'font' => ['bold' => true, 'color' => ['rgb' => '991B1B']],
+                        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FEE2E2']]
+                    ]);
+                }
+
+                $sheetOrders->getRowDimension($rowOrder)->setRowHeight(22);
+                $rowOrder++;
             }
-
-            fputcsv($file, []);
-
-            // TABEL 2: DETAIL PENARIKAN SALDO PENJUAL (WITHDRAWALS)
-            fputcsv($file, ['--- DETAIL PENARIKAN SALDO PENJUAL (WITHDRAWALS) ---']);
-            fputcsv($file, [
-                'No',
-                'ID Penarikan',
-                'Tanggal Pengajuan',
-                'Nama Penjual',
-                'Nama Bank',
-                'No. Rekening',
-                'Atas Nama',
-                'Nominal Penarikan (Rp)',
-                'Status'
+        } else {
+            $sheetOrders->mergeCells('A' . $rowOrder . ':I' . $rowOrder);
+            $sheetOrders->setCellValue('A' . $rowOrder, 'Tidak ada data transaksi pada periode ini.');
+            $sheetOrders->getStyle('A' . $rowOrder)->applyFromArray([
+                'font' => ['italic' => true, 'color' => ['rgb' => '64748B']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'E2E8F0']]]
             ]);
+            $sheetOrders->getRowDimension($rowOrder)->setRowHeight(24);
+            $rowOrder++;
+        }
 
-            $noW = 1;
+        // Baris Total Transaksi
+        $sheetOrders->mergeCells('A' . $rowOrder . ':G' . $rowOrder);
+        $sheetOrders->setCellValue('A' . $rowOrder, 'TOTAL TRANSAKSI KESELURUHAN:');
+        if ($orders->count() > 0) {
+            $sheetOrders->setCellValue('H' . $rowOrder, '=SUM(H8:H' . ($rowOrder - 1) . ')');
+            $sheetOrders->setCellValue('I' . $rowOrder, '=SUM(I8:I' . ($rowOrder - 1) . ')');
+        } else {
+            $sheetOrders->setCellValue('H' . $rowOrder, 0);
+            $sheetOrders->setCellValue('I' . $rowOrder, 0);
+        }
+
+        $sheetOrders->getStyle('A' . $rowOrder . ':I' . $rowOrder)->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '0F172A']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E2E8F0']],
+            'borders' => [
+                'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '94A3B8']],
+                'bottom' => ['borderStyle' => Border::BORDER_DOUBLE, 'color' => ['rgb' => '0F172A']],
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CBD5E1']]
+            ],
+            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
+        ]);
+        $sheetOrders->getStyle('A' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheetOrders->getStyle('H' . $rowOrder)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+        $sheetOrders->getStyle('I' . $rowOrder)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+        $sheetOrders->getRowDimension($rowOrder)->setRowHeight(26);
+
+        // Auto-fit Columns
+        foreach (range('A', 'I') as $col) {
+            $sheetOrders->getColumnDimension($col)->setAutoSize(true);
+        }
+        $sheetOrders->getColumnDimension('E')->setAutoSize(false)->setWidth(35);
+
+
+        // =========================================================================
+        // SHEET 2: DETAIL PENARIKAN SALDO (WITHDRAWALS)
+        // =========================================================================
+        $sheetWd = $spreadsheet->createSheet();
+        $sheetWd->setTitle('Penarikan Saldo');
+        $sheetWd->setShowGridLines(true);
+
+        // Header Banner Penarikan (Teal Theme)
+        $sheetWd->mergeCells('A1:J1');
+        $sheetWd->setCellValue('A1', 'DETAIL PENARIKAN SALDO PENJUAL (WITHDRAWALS)');
+        $sheetWd->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => 'FFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0F766E']]
+        ]);
+        $sheetWd->getRowDimension(1)->setRowHeight(36);
+
+        $sheetWd->mergeCells('A2:J2');
+        $sheetWd->setCellValue('A2', 'Periode: ' . $dateRange['period_label'] . '  |  Total Penarikan Disetujui: Rp ' . number_format($totalPenarikanDisetujui, 0, ',', '.'));
+        $sheetWd->getStyle('A2')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0D9488']]
+        ]);
+        $sheetWd->getRowDimension(2)->setRowHeight(22);
+
+        // Header Kolom Tabel Penarikan (Row 4)
+        $wdHeaders = [
+            'A4' => 'No',
+            'B4' => 'ID Penarikan',
+            'C4' => 'Tanggal Pengajuan',
+            'D4' => 'Nama Penjual',
+            'E4' => 'Nama Bank',
+            'F4' => 'No. Rekening',
+            'G4' => 'Atas Nama Rekening',
+            'H4' => 'Nominal Penarikan',
+            'I4' => 'Tanggal Diproses',
+            'J4' => 'Status'
+        ];
+
+        foreach ($wdHeaders as $cell => $text) {
+            $sheetWd->setCellValue($cell, $text);
+        }
+
+        $sheetWd->getStyle('A4:J4')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0F766E']],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '115E59']]]
+        ]);
+        $sheetWd->getRowDimension(4)->setRowHeight(26);
+
+        // Data Rows Penarikan
+        $rowWd = 5;
+        $noWd = 1;
+
+        if ($withdrawals->count() > 0) {
             foreach ($withdrawals as $w) {
-                fputcsv($file, [
-                    $noW++,
-                    '#WD-' . $w->id_withdrawal,
-                    $w->created_at ? $w->created_at->format('d/m/Y H:i') : '-',
-                    $w->user->name ?? 'Penjual',
-                    $w->bank_name,
-                    "'" . $w->bank_account_number, // Single quote for Excel leading zero
-                    $w->bank_account_name,
-                    number_format($w->amount, 0, ',', '.'),
-                    strtoupper($w->status)
+                $isEven = ($noWd % 2 === 0);
+                $rowBg = $isEven ? 'F0FDFA' : 'FFFFFF';
+
+                $sheetWd->setCellValue('A' . $rowWd, $noWd++);
+                $sheetWd->setCellValue('B' . $rowWd, '#WD-' . $w->id_withdrawal);
+                $sheetWd->setCellValue('C' . $rowWd, $w->created_at ? $w->created_at->format('d/m/Y H:i') : '-');
+                $sheetWd->setCellValue('D' . $rowWd, $w->user->name ?? 'Penjual #' . $w->user_id);
+                $sheetWd->setCellValue('E' . $rowWd, strtoupper($w->bank_name ?? '-'));
+                
+                // Pastikan No Rekening diset sebagai string
+                $sheetWd->setCellValueExplicit('F' . $rowWd, (string) $w->bank_account_number, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+                
+                $sheetWd->setCellValue('G' . $rowWd, $w->bank_account_name ?? '-');
+                $sheetWd->setCellValue('H' . $rowWd, (float) $w->amount);
+                $sheetWd->setCellValue('I' . $rowWd, $w->processed_at ? $w->processed_at->format('d/m/Y H:i') : '-');
+                $sheetWd->setCellValue('J' . $rowWd, strtoupper($w->status));
+
+                $sheetWd->getStyle('A' . $rowWd . ':J' . $rowWd)->applyFromArray([
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => $rowBg]],
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCFBF1']]],
+                    'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
                 ]);
+
+                $sheetWd->getStyle('A' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetWd->getStyle('B' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetWd->getStyle('C' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetWd->getStyle('E' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetWd->getStyle('F' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetWd->getStyle('I' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetWd->getStyle('J' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                
+                $sheetWd->getStyle('H' . $rowWd)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+
+                // Styling Status Penarikan
+                $wStatus = strtolower($w->status);
+                if (in_array($wStatus, ['processed', 'approved', 'selesai', 'success'])) {
+                    $sheetWd->getStyle('J' . $rowWd)->applyFromArray([
+                        'font' => ['bold' => true, 'color' => ['rgb' => '166534']],
+                        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'DCFCE7']]
+                    ]);
+                } elseif ($wStatus === 'pending') {
+                    $sheetWd->getStyle('J' . $rowWd)->applyFromArray([
+                        'font' => ['bold' => true, 'color' => ['rgb' => '854D0E']],
+                        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FEF9C3']]
+                    ]);
+                } else {
+                    $sheetWd->getStyle('J' . $rowWd)->applyFromArray([
+                        'font' => ['bold' => true, 'color' => ['rgb' => '991B1B']],
+                        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FEE2E2']]
+                    ]);
+                }
+
+                $sheetWd->getRowDimension($rowWd)->setRowHeight(22);
+                $rowWd++;
             }
+        } else {
+            $sheetWd->mergeCells('A' . $rowWd . ':J' . $rowWd);
+            $sheetWd->setCellValue('A' . $rowWd, 'Tidak ada data pengajuan penarikan pada periode ini.');
+            $sheetWd->getStyle('A' . $rowWd)->applyFromArray([
+                'font' => ['italic' => true, 'color' => ['rgb' => '64748B']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'E2E8F0']]]
+            ]);
+            $sheetWd->getRowDimension($rowWd)->setRowHeight(24);
+            $rowWd++;
+        }
 
-            fclose($file);
-        };
+        // Total Penarikan Row
+        $sheetWd->mergeCells('A' . $rowWd . ':G' . $rowWd);
+        $sheetWd->setCellValue('A' . $rowWd, 'TOTAL PENARIKAN SALDO:');
+        if ($withdrawals->count() > 0) {
+            $sheetWd->setCellValue('H' . $rowWd, '=SUM(H4:H' . ($rowWd - 1) . ')');
+        } else {
+            $sheetWd->setCellValue('H' . $rowWd, 0);
+        }
 
-        return response()->streamDownload($callback, $filename, $headers);
+        $sheetWd->getStyle('A' . $rowWd . ':J' . $rowWd)->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '0F172A']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E2E8F0']],
+            'borders' => [
+                'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '94A3B8']],
+                'bottom' => ['borderStyle' => Border::BORDER_DOUBLE, 'color' => ['rgb' => '0F172A']],
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CBD5E1']]
+            ],
+            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
+        ]);
+        $sheetWd->getStyle('A' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheetWd->getStyle('H' . $rowWd)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+        $sheetWd->getRowDimension($rowWd)->setRowHeight(26);
+
+        foreach (range('A', 'J') as $col) {
+            $sheetWd->getColumnDimension($col)->setAutoSize(true);
+        }
+
+
+        // =========================================================================
+        // SHEET 3: REKAPITULASI HARIAN (DAILY BREAKDOWN)
+        // =========================================================================
+        $sheetDaily = $spreadsheet->createSheet();
+        $sheetDaily->setTitle('Rekap Harian');
+        $sheetDaily->setShowGridLines(true);
+
+        // Header Banner Rekap Harian (Indigo Theme)
+        $sheetDaily->mergeCells('A1:H1');
+        $sheetDaily->setCellValue('A1', 'REKAPITULASI ARUS KAS HARIAN');
+        $sheetDaily->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => 'FFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4338CA']]
+        ]);
+        $sheetDaily->getRowDimension(1)->setRowHeight(36);
+
+        $sheetDaily->mergeCells('A2:H2');
+        $sheetDaily->setCellValue('A2', 'Rangkuman Penerimaan dan Pengeluaran Harian Periode ' . $dateRange['period_label']);
+        $sheetDaily->getStyle('A2')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '6366F1']]
+        ]);
+        $sheetDaily->getRowDimension(2)->setRowHeight(22);
+
+        // Kolom Header Rekap (Row 4)
+        $dailyHeaders = [
+            'A4' => 'No',
+            'B4' => 'Tanggal',
+            'C4' => 'Hari',
+            'D4' => 'Transaksi Lunas',
+            'E4' => 'Pemasukan Bruto (Rp)',
+            'F4' => 'Komisi Platform 5% (Rp)',
+            'G4' => 'Penarikan Saldo (Rp)',
+            'H4' => 'Arus Kas Bersih (Rp)'
+        ];
+
+        foreach ($dailyHeaders as $cell => $text) {
+            $sheetDaily->setCellValue($cell, $text);
+        }
+
+        $sheetDaily->getStyle('A4:H4')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F46E5']],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '3730A3']]]
+        ]);
+        $sheetDaily->getRowDimension(4)->setRowHeight(26);
+
+        $rowDaily = 5;
+        $noDaily = 1;
+        $daysCount = $startDate->diffInDays($endDate) + 1;
+
+        for ($i = 0; $i < $daysCount; $i++) {
+            $dayCarbon = $startDate->copy()->addDays($i);
+            $dayStart = $dayCarbon->copy()->startOfDay();
+            $dayEnd = $dayCarbon->copy()->endOfDay();
+
+            $dayOrders = $orders->filter(function ($order) use ($dayStart, $dayEnd) {
+                return $order->created_at >= $dayStart && $order->created_at <= $dayEnd && $order->payment_status === 'paid';
+            });
+            $dayInflow = (float) $dayOrders->sum('total_price');
+            $dayCommission = (float) ($dayInflow * 0.05);
+
+            $dayWd = $withdrawals->filter(function ($w) use ($dayStart, $dayEnd) {
+                return $w->created_at >= $dayStart && $w->created_at <= $dayEnd && in_array($w->status, ['approved', 'selesai', 'success', 'processed']);
+            });
+            $dayOutflow = (float) $dayWd->sum('amount');
+            $dayNet = $dayInflow - $dayOutflow;
+
+            $isEven = ($noDaily % 2 === 0);
+            $rowBg = $isEven ? 'F5F3FF' : 'FFFFFF';
+
+            $sheetDaily->setCellValue('A' . $rowDaily, $noDaily++);
+            $sheetDaily->setCellValue('B' . $rowDaily, $dayCarbon->format('d/m/Y'));
+            $sheetDaily->setCellValue('C' . $rowDaily, $dayCarbon->format('l'));
+            $sheetDaily->setCellValue('D' . $rowDaily, $dayOrders->count());
+            $sheetDaily->setCellValue('E' . $rowDaily, $dayInflow);
+            $sheetDaily->setCellValue('F' . $rowDaily, $dayCommission);
+            $sheetDaily->setCellValue('G' . $rowDaily, $dayOutflow);
+            $sheetDaily->setCellValue('H' . $rowDaily, $dayNet);
+
+            $sheetDaily->getStyle('A' . $rowDaily . ':H' . $rowDaily)->applyFromArray([
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => $rowBg]],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'E0E7FF']]],
+                'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
+            ]);
+
+            $sheetDaily->getStyle('A' . $rowDaily)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheetDaily->getStyle('B' . $rowDaily)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheetDaily->getStyle('C' . $rowDaily)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheetDaily->getStyle('D' . $rowDaily)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            
+            $sheetDaily->getStyle('E' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+            $sheetDaily->getStyle('F' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+            $sheetDaily->getStyle('G' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+            $sheetDaily->getStyle('H' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+
+            $sheetDaily->getRowDimension($rowDaily)->setRowHeight(20);
+            $rowDaily++;
+        }
+
+        // Total Rekap Row
+        $sheetDaily->mergeCells('A' . $rowDaily . ':C' . $rowDaily);
+        $sheetDaily->setCellValue('A' . $rowDaily, 'TOTAL PERIODE:');
+        $sheetDaily->setCellValue('D' . $rowDaily, '=SUM(D4:D' . ($rowDaily - 1) . ')');
+        $sheetDaily->setCellValue('E' . $rowDaily, '=SUM(E4:E' . ($rowDaily - 1) . ')');
+        $sheetDaily->setCellValue('F' . $rowDaily, '=SUM(F4:F' . ($rowDaily - 1) . ')');
+        $sheetDaily->setCellValue('G' . $rowDaily, '=SUM(G4:G' . ($rowDaily - 1) . ')');
+        $sheetDaily->setCellValue('H' . $rowDaily, '=SUM(H4:H' . ($rowDaily - 1) . ')');
+
+        $sheetDaily->getStyle('A' . $rowDaily . ':H' . $rowDaily)->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '0F172A']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E2E8F0']],
+            'borders' => [
+                'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '94A3B8']],
+                'bottom' => ['borderStyle' => Border::BORDER_DOUBLE, 'color' => ['rgb' => '0F172A']],
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CBD5E1']]
+            ],
+            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
+        ]);
+        $sheetDaily->getStyle('A' . $rowDaily)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheetDaily->getStyle('D' . $rowDaily)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheetDaily->getStyle('E' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+        $sheetDaily->getStyle('F' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+        $sheetDaily->getStyle('G' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+        $sheetDaily->getStyle('H' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+        $sheetDaily->getRowDimension($rowDaily)->setRowHeight(26);
+
+        foreach (range('A', 'H') as $col) {
+            $sheetDaily->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Set active sheet ke sheet 1 saat dibuka
+        $spreadsheet->setActiveSheetIndex(0);
+
+        // Export Download Response
+        $monthClean = str_replace(' ', '_', $dateRange['month_name']);
+        $filename = 'Laporan_Keuangan_Karyaku_' . $monthClean . '_' . $dateRange['year'] . '.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 }
