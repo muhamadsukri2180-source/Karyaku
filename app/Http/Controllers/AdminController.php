@@ -130,9 +130,22 @@ class AdminController extends Controller
                 'created_at' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file)),
             ])->sortByDesc('created_at')->values();
 
+        // Riwayat pembersihan cache terakhir
+        $cacheClearedFile = storage_path('framework/cache_cleared_at.json');
+        $lastCacheClearedAt = null;
+        if (file_exists($cacheClearedFile)) {
+            $clearedData = json_decode(file_get_contents($cacheClearedFile), true);
+            if (!empty($clearedData['cleared_at'])) {
+                $lastCacheClearedAt = Carbon::parse($clearedData['cleared_at'], 'Asia/Jakarta');
+            }
+        }
+
         return view('admin.sistem.maintenance', [
             'isMaintenance' => app()->isDownForMaintenance(),
-            'currentMode' => $currentMode, 'currentEndAt' => $currentEndAt, 'backups' => $backups
+            'currentMode' => $currentMode,
+            'currentEndAt' => $currentEndAt,
+            'backups' => $backups,
+            'lastCacheClearedAt' => $lastCacheClearedAt,
         ]);
     }
 
@@ -818,24 +831,117 @@ class AdminController extends Controller
     | 14. OPTIMASI & CACHE
     |--------------------------------------------------------------------------
     */
-    public function clearCache()
+    public function clearCache(Request $request)
     {
+        $step = $request->input('step');
+
+        // Jika request menjalankan step tertentu secara asinkronus (AJAX)
+        if ($step) {
+            try {
+                switch ($step) {
+                    case 'app':
+                        Artisan::call('cache:clear');
+                        if (Schema::hasTable('cache')) DB::table('cache')->delete();
+                        if (Schema::hasTable('cache_locks')) DB::table('cache_locks')->delete();
+                        return response()->json(['success' => true, 'step' => 'app', 'name' => 'App Cache', 'label' => 'Bersih']);
+
+                    case 'config':
+                        Artisan::call('config:clear');
+                        return response()->json(['success' => true, 'step' => 'config', 'name' => 'Config Cache', 'label' => 'Bersih']);
+
+                    case 'route':
+                        Artisan::call('route:clear');
+                        return response()->json(['success' => true, 'step' => 'route', 'name' => 'Route Cache', 'label' => 'Bersih']);
+
+                    case 'view':
+                        Artisan::call('view:clear');
+                        return response()->json(['success' => true, 'step' => 'view', 'name' => 'View Cache', 'label' => 'Bersih']);
+
+                    case 'event':
+                        Artisan::call('event:clear');
+                        if (Schema::hasTable('sessions')) {
+                            DB::table('sessions')
+                                ->where('last_activity', '<', now()->subMinutes(config('session.lifetime', 120))->getTimestamp())
+                                ->delete();
+                        }
+                        return response()->json(['success' => true, 'step' => 'event', 'name' => 'Event Cache', 'label' => 'Bersih']);
+
+                    case 'finish':
+                        $now = now('Asia/Jakarta');
+                        file_put_contents(storage_path('framework/cache_cleared_at.json'), json_encode([
+                            'cleared_at' => $now->toIso8601String(),
+                            'by' => auth()->user()->name ?? 'Admin',
+                        ], JSON_PRETTY_PRINT));
+
+                        try {
+                            $this->sendNotif(null, '🧹 Cache Dibersihkan', 'Admin membersihkan cache aplikasi.');
+                        } catch (\Throwable $e) {}
+
+                        return response()->json([
+                            'success' => true,
+                            'step' => 'finish',
+                            'cleared_at' => $now->toIso8601String(),
+                            'cleared_at_formatted' => $now->translatedFormat('d M Y, H:i') . ' WIB',
+                            'message' => 'Cache aplikasi berhasil dibersihkan sepenuhnya.'
+                        ]);
+
+                    default:
+                        return response()->json(['success' => false, 'message' => 'Step tidak dikenali.'], 400);
+                }
+            } catch (\Throwable $e) {
+                return response()->json(['success' => false, 'step' => $step, 'message' => $e->getMessage()], 500);
+            }
+        }
+
+        // Eksekusi penuh (Full run)
         $res = [];
         $tasks = [
-            'App Cache' => fn() => Artisan::call('cache:clear'), 'Config' => fn() => Artisan::call('config:clear'),
-            'Route' => fn() => Artisan::call('route:clear'), 'View' => fn() => Artisan::call('view:clear'),
-            'Event' => fn() => Artisan::call('event:clear'),
-            'Tabel cache' => fn() => Schema::hasTable('cache') ? DB::table('cache')->delete() : null,
-            'Tabel cache_locks' => fn() => Schema::hasTable('cache_locks') ? DB::table('cache_locks')->delete() : null,
-            'Session DB' => fn() => Schema::hasTable('sessions') ? DB::table('sessions')->where('last_activity', '<', now()->subMinutes(config('session.lifetime', 120))->getTimestamp())->delete() : null,
-            'Failed Jobs' => fn() => Schema::hasTable('failed_jobs') ? DB::table('failed_jobs')->delete() : null,
-            'Notif Lama' => fn() => Notification::where('created_at', '<', now()->subMonth())->delete()
+            'App Cache' => function () {
+                Artisan::call('cache:clear');
+                if (Schema::hasTable('cache')) DB::table('cache')->delete();
+                if (Schema::hasTable('cache_locks')) DB::table('cache_locks')->delete();
+            },
+            'Config Cache' => fn() => Artisan::call('config:clear'),
+            'Route Cache' => fn() => Artisan::call('route:clear'),
+            'View Cache' => fn() => Artisan::call('view:clear'),
+            'Event Cache' => function () {
+                Artisan::call('event:clear');
+                if (Schema::hasTable('sessions')) {
+                    DB::table('sessions')
+                        ->where('last_activity', '<', now()->subMinutes(config('session.lifetime', 120))->getTimestamp())
+                        ->delete();
+                }
+            },
         ];
+
         foreach ($tasks as $name => $task) {
-            try { $task(); $res[] = "$name: bersih"; } 
-            catch (\Throwable $e) { if ($name !== 'Event') $res[] = "$name: gagal"; }
+            try {
+                $task();
+                $res[] = "$name: bersih";
+            } catch (\Throwable $e) {
+                if ($name !== 'Event Cache') $res[] = "$name: gagal";
+            }
         }
-        $this->sendNotif(null, '🧹 Cache Dibersihkan', 'Admin membersihkan cache aplikasi.');
+
+        $now = now('Asia/Jakarta');
+        file_put_contents(storage_path('framework/cache_cleared_at.json'), json_encode([
+            'cleared_at' => $now->toIso8601String(),
+            'by' => auth()->user()->name ?? 'Admin',
+        ], JSON_PRETTY_PRINT));
+
+        try {
+            $this->sendNotif(null, '🧹 Cache Dibersihkan', 'Admin membersihkan cache aplikasi.');
+        } catch (\Throwable $e) {}
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Cache berhasil dibersihkan',
+                'cleared_at_formatted' => $now->translatedFormat('d M Y, H:i') . ' WIB',
+                'results' => $res,
+            ]);
+        }
+
         return back()->with('success', 'Clear Cache berhasil! ' . implode(' • ', $res));
     }
 

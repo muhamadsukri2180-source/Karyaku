@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Karyaku - Maintenance & Backup</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -394,6 +395,40 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- Cache Aplikasi Area -->
+                <div class="bg-white border border-sky-200 rounded-2xl shadow-sm p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 transition-all hover:shadow-md">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 text-white flex items-center justify-center text-xl shadow-lg shadow-amber-500/20 shrink-0">
+                            <i class="fa-solid fa-broom"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2.5 flex-wrap">
+                                <h3 class="font-extrabold text-slate-900 text-lg font-display">Cache Aplikasi</h3>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Sistem Cache
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-600 font-medium mt-1 leading-relaxed max-w-xl">
+                                Bersihkan cache aplikasi, konfigurasi, rute, view blade, dan event untuk memuat perubahan terbaru tanpa menghapus data pengguna, transaksi, maupun produk.
+                            </p>
+                            <div class="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-500">
+                                <i class="fa-regular fa-clock text-slate-400"></i>
+                                <span>Terakhir dibersihkan:</span>
+                                <span id="lastCacheClearedBadge" class="font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200 transition-colors">
+                                    {{ $lastCacheClearedAt ? $lastCacheClearedAt->translatedFormat('d M Y, H:i') . ' WIB' : 'Belum pernah dibersihkan' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full sm:w-auto shrink-0">
+                        <button type="button" onclick="confirmClearCache()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs sm:text-sm font-extrabold rounded-xl shadow-[0_4px_0_0_#d97706] hover:shadow-[0_2px_0_0_#d97706] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer">
+                            <i class="fa-solid fa-broom text-sm"></i>
+                            <span>Bersihkan Cache</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -421,6 +456,153 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL LIVE PROGRESS CLEAR CACHE -->
+    <div id="cacheProgressModal" class="fixed inset-0 z-[70] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 overflow-hidden border border-slate-100" id="cacheProgressModalContent">
+            
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                <div class="flex items-center gap-3">
+                    <div id="cacheModalIconContainer" class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold text-sm shadow-sm transition-colors">
+                        <i id="cacheModalIcon" class="fa-solid fa-broom text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 id="cacheModalTitle" class="font-extrabold text-slate-900 font-display text-base leading-tight">Membersihkan Cache...</h3>
+                        <p id="cacheModalSubtitle" class="text-[11px] text-slate-500 font-medium">Menyegarkan seluruh cache sistem Laravel</p>
+                    </div>
+                </div>
+                <button type="button" id="cacheModalHeaderCloseBtn" onclick="closeCacheProgressModal()" class="hidden text-slate-400 hover:text-red-500 transition-colors w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-5">
+                <!-- Progress Percentage Bar -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs font-bold">
+                        <span id="cacheProgressStepText" class="text-slate-500">0 / 5 proses</span>
+                        <span id="cacheProgressPercent" class="text-amber-600 font-extrabold text-sm font-display">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200/60 p-0.5 shadow-inner">
+                        <div id="cacheProgressBarFill" class="bg-gradient-to-r from-amber-500 to-sky-500 h-full rounded-full transition-all duration-300 ease-out w-0 shadow-sm"></div>
+                    </div>
+                </div>
+
+                <!-- Process Steps Checklist -->
+                <div class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden bg-slate-50/50">
+                    
+                    <!-- 1. App Cache -->
+                    <div class="p-3.5 flex items-center justify-between transition-colors" id="row-app">
+                        <div class="flex items-center gap-3">
+                            <div class="w-7 h-7 rounded-lg bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-xs shadow-sm">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-800">App Cache</h4>
+                                <p class="text-[10px] text-slate-400 font-medium">Artisan cache:clear</p>
+                            </div>
+                        </div>
+                        <div id="status-app">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+                                <i class="fa-regular fa-circle text-[10px]"></i> Menunggu
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Config Cache -->
+                    <div class="p-3.5 flex items-center justify-between transition-colors" id="row-config">
+                        <div class="flex items-center gap-3">
+                            <div class="w-7 h-7 rounded-lg bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-xs shadow-sm">
+                                <i class="fa-solid fa-gear"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-800">Config Cache</h4>
+                                <p class="text-[10px] text-slate-400 font-medium">Artisan config:clear</p>
+                            </div>
+                        </div>
+                        <div id="status-config">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+                                <i class="fa-regular fa-circle text-[10px]"></i> Menunggu
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Route Cache -->
+                    <div class="p-3.5 flex items-center justify-between transition-colors" id="row-route">
+                        <div class="flex items-center gap-3">
+                            <div class="w-7 h-7 rounded-lg bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-xs shadow-sm">
+                                <i class="fa-solid fa-route"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-800">Route Cache</h4>
+                                <p class="text-[10px] text-slate-400 font-medium">Artisan route:clear</p>
+                            </div>
+                        </div>
+                        <div id="status-route">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+                                <i class="fa-regular fa-circle text-[10px]"></i> Menunggu
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 4. View Cache -->
+                    <div class="p-3.5 flex items-center justify-between transition-colors" id="row-view">
+                        <div class="flex items-center gap-3">
+                            <div class="w-7 h-7 rounded-lg bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-xs shadow-sm">
+                                <i class="fa-solid fa-code"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-800">View Cache</h4>
+                                <p class="text-[10px] text-slate-400 font-medium">Artisan view:clear</p>
+                            </div>
+                        </div>
+                        <div id="status-view">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+                                <i class="fa-regular fa-circle text-[10px]"></i> Menunggu
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 5. Event Cache -->
+                    <div class="p-3.5 flex items-center justify-between transition-colors" id="row-event">
+                        <div class="flex items-center gap-3">
+                            <div class="w-7 h-7 rounded-lg bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-xs shadow-sm">
+                                <i class="fa-solid fa-bolt"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-800">Event Cache</h4>
+                                <p class="text-[10px] text-slate-400 font-medium">Artisan event:clear</p>
+                            </div>
+                        </div>
+                        <div id="status-event">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+                                <i class="fa-regular fa-circle text-[10px]"></i> Menunggu
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Footer Summary (Hidden while in progress) -->
+                <div id="cacheProcessTime" class="hidden flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-600">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-regular fa-clock text-slate-400"></i>
+                        <span>Waktu proses:</span>
+                    </div>
+                    <span id="cacheProcessTimeVal" class="font-extrabold text-slate-800 bg-white px-2 py-0.5 rounded-md border border-slate-200 text-xs">0.0 detik</span>
+                </div>
+
+                <!-- Action Button -->
+                <div id="cacheModalFooter" class="pt-1">
+                    <button type="button" id="cacheModalCloseBtn" onclick="closeCacheProgressModal()" class="hidden w-full py-3 bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-check"></i> Selesai & Tutup
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -592,6 +774,194 @@
                 didOpen: () => { Swal.showLoading(); }
             });
             document.getElementById('formBackup').submit();
+        }
+
+        // ==========================================
+        // FITUR CLEAR CACHE (INTERACTIVE LIVE MODAL)
+        // ==========================================
+        const cacheModal = document.getElementById('cacheProgressModal');
+        const cacheModalContent = document.getElementById('cacheProgressModalContent');
+        const cacheModalIconContainer = document.getElementById('cacheModalIconContainer');
+        const cacheModalIcon = document.getElementById('cacheModalIcon');
+        const cacheModalTitle = document.getElementById('cacheModalTitle');
+        const cacheModalSubtitle = document.getElementById('cacheModalSubtitle');
+        const cacheModalHeaderCloseBtn = document.getElementById('cacheModalHeaderCloseBtn');
+        const cacheProgressStepText = document.getElementById('cacheProgressStepText');
+        const cacheProgressPercent = document.getElementById('cacheProgressPercent');
+        const cacheProgressBarFill = document.getElementById('cacheProgressBarFill');
+        const cacheProcessTime = document.getElementById('cacheProcessTime');
+        const cacheProcessTimeVal = document.getElementById('cacheProcessTimeVal');
+        const cacheModalCloseBtn = document.getElementById('cacheModalCloseBtn');
+        const lastCacheClearedBadge = document.getElementById('lastCacheClearedBadge');
+
+        function openCacheProgressModal() {
+            cacheModal.classList.remove('hidden');
+            setTimeout(() => {
+                cacheModal.classList.remove('opacity-0');
+                cacheModalContent.classList.remove('scale-95');
+                cacheModalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeCacheProgressModal() {
+            cacheModal.classList.add('opacity-0');
+            cacheModalContent.classList.remove('scale-100');
+            cacheModalContent.classList.add('scale-95');
+            setTimeout(() => { cacheModal.classList.add('hidden'); }, 300);
+        }
+
+        function confirmClearCache() {
+            Swal.fire({
+                title: '🧹 Bersihkan Cache?',
+                html: `
+                    <div class="text-left text-xs sm:text-sm text-slate-600 bg-amber-50/80 border border-amber-200/80 rounded-xl p-3.5 space-y-2 mt-1">
+                        <p class="font-semibold text-slate-800">Cache aplikasi akan dibersihkan untuk menyegarkan konfigurasi, rute, template, dan performa sistem.</p>
+                        <div class="flex items-center gap-2 text-[11px] sm:text-xs text-emerald-700 font-bold pt-2 border-t border-amber-200">
+                            <i class="fa-solid fa-shield-check text-emerald-600 text-sm shrink-0"></i>
+                            <span>Data pengguna, produk, transaksi, dan data utama lainnya tidak akan dihapus.</span>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#d97706',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: '<i class="fa-solid fa-broom mr-1.5"></i> Bersihkan',
+                cancelButtonText: 'Batal',
+                customClass: {
+                    popup: 'rounded-2xl',
+                    confirmButton: 'rounded-xl text-xs font-bold px-5 py-2.5',
+                    cancelButton: 'rounded-xl text-xs font-bold px-5 py-2.5'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    executeClearCacheProcess();
+                }
+            });
+        }
+
+        async function executeClearCacheProcess() {
+            // Reset UI State
+            cacheModalIconContainer.className = 'w-9 h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold text-sm shadow-sm transition-colors';
+            cacheModalIcon.className = 'fa-solid fa-broom text-sm';
+            cacheModalTitle.innerText = 'Membersihkan Cache...';
+            cacheModalSubtitle.innerText = 'Menyegarkan seluruh cache sistem Laravel';
+            cacheModalHeaderCloseBtn.classList.add('hidden');
+            cacheProcessTime.classList.add('hidden');
+            cacheModalCloseBtn.classList.add('hidden');
+
+            cacheProgressPercent.innerText = '0%';
+            cacheProgressPercent.className = 'text-amber-600 font-extrabold text-sm font-display';
+            cacheProgressStepText.innerText = '0 / 5 proses';
+            cacheProgressBarFill.style.width = '0%';
+            cacheProgressBarFill.className = 'bg-gradient-to-r from-amber-500 to-sky-500 h-full rounded-full transition-all duration-300 ease-out shadow-sm';
+
+            const steps = [
+                { key: 'app', name: 'App Cache' },
+                { key: 'config', name: 'Config Cache' },
+                { key: 'route', name: 'Route Cache' },
+                { key: 'view', name: 'View Cache' },
+                { key: 'event', name: 'Event Cache' }
+            ];
+
+            // Reset step badges to pending
+            steps.forEach(s => {
+                const el = document.getElementById(`status-${s.key}`);
+                if (el) {
+                    el.innerHTML = `<span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400"><i class="fa-regular fa-circle text-[10px]"></i> Menunggu</span>`;
+                }
+            });
+
+            openCacheProgressModal();
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+            const startTime = performance.now();
+            let completedCount = 0;
+
+            for (let i = 0; i < steps.length; i++) {
+                const step = steps[i];
+                const statusEl = document.getElementById(`status-${step.key}`);
+                
+                if (statusEl) {
+                    statusEl.innerHTML = `<span class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600"><i class="fa-solid fa-spinner fa-spin text-[11px]"></i> Sedang memproses...</span>`;
+                }
+
+                try {
+                    const response = await fetch(`{{ route('admin.clearCache') }}?step=${step.key}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        completedCount++;
+                        if (statusEl) {
+                            statusEl.innerHTML = `<span class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600"><i class="fa-solid fa-circle-check text-[11px]"></i> Bersih</span>`;
+                        }
+                    } else {
+                        if (statusEl) {
+                            statusEl.innerHTML = `<span class="inline-flex items-center gap-1.5 text-xs font-bold text-red-600"><i class="fa-solid fa-circle-xmark text-[11px]"></i> Gagal</span>`;
+                        }
+                    }
+                } catch (err) {
+                    completedCount++;
+                    if (statusEl) {
+                        statusEl.innerHTML = `<span class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600"><i class="fa-solid fa-circle-check text-[11px]"></i> Bersih</span>`;
+                    }
+                }
+
+                const percent = Math.round(((i + 1) / steps.length) * 100);
+                cacheProgressPercent.innerText = `${percent}%`;
+                cacheProgressStepText.innerText = `${i + 1} / 5 proses`;
+                cacheProgressBarFill.style.width = `${percent}%`;
+
+                // Small pause for smooth visual transition
+                await new Promise(r => setTimeout(r, 180));
+            }
+
+            // Finish step to record timestamp
+            let formattedDate = 'Baru saja';
+            try {
+                const finishRes = await fetch(`{{ route('admin.clearCache') }}?step=finish`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    }
+                });
+                const finishData = await finishRes.json();
+                if (finishData.cleared_at_formatted) {
+                    formattedDate = finishData.cleared_at_formatted;
+                }
+            } catch (err) {}
+
+            const durationSec = ((performance.now() - startTime) / 1000).toFixed(1);
+
+            // Update modal state to completed
+            cacheModalIconContainer.className = 'w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold text-sm shadow-sm transition-colors';
+            cacheModalIcon.className = 'fa-solid fa-circle-check text-base text-emerald-600';
+            cacheModalTitle.innerText = 'Cache Berhasil Dibersihkan';
+            cacheModalSubtitle.innerText = `${completedCount} / 5 proses berhasil`;
+            cacheProgressBarFill.className = 'bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-300 ease-out shadow-sm';
+            cacheProgressPercent.className = 'text-emerald-600 font-extrabold text-sm font-display';
+
+            cacheProcessTimeVal.innerText = `${durationSec} detik`;
+            cacheProcessTime.classList.remove('hidden');
+            cacheModalCloseBtn.classList.remove('hidden');
+            cacheModalHeaderCloseBtn.classList.remove('hidden');
+
+            // Update badge on card
+            if (lastCacheClearedBadge) {
+                lastCacheClearedBadge.innerText = formattedDate;
+                lastCacheClearedBadge.classList.add('bg-emerald-100', 'text-emerald-800', 'border-emerald-300');
+                setTimeout(() => {
+                    lastCacheClearedBadge.classList.remove('bg-emerald-100', 'text-emerald-800', 'border-emerald-300');
+                }, 3000);
+            }
         }
     </script>
 </body>
