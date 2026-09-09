@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\IdentityVerification;
 use App\Models\Membership;
 use App\Models\Notification;
 use App\Models\Order;
@@ -346,34 +347,190 @@ class PenjualController extends Controller
         $showWarning = $user->needsMembershipRenewalWarning(3);
         $isExpired = $user->membership_expires_at ? $user->membership_expires_at->isPast() : false;
 
+        // Cek apakah penjual memiliki pengajuan pembayaran paket yang sedang pending
+        $pendingPayment = IdentityVerification::with('membership')
+            ->where('user_id', $user->id_user)
+            ->where('status', 'pending')
+            ->latest('id_identity_verification')
+            ->first();
+
+        // Cek jika ada penolakan pembayaran sebelumnya (dalam 7 hari terakhir)
+        $lastRejectedPayment = IdentityVerification::with('membership')
+            ->where('user_id', $user->id_user)
+            ->where('status', 'rejected')
+            ->where('updated_at', '>=', now()->subDays(7))
+            ->latest('id_identity_verification')
+            ->first();
+
+        // Data rekening dan metode pembayaran resmi platform
+        $paymentMethods = [
+            'BCA' => [
+                'name'           => 'Bank Central Asia (BCA)',
+                'account_number' => '0862398284994',
+                'account_name'   => 'PT Karyaku Digital Kreatif',
+                'type'           => 'Transfer Bank',
+                'badge'          => 'BCA',
+                'color'          => '#005baa',
+                'icon'           => 'bi-bank',
+            ],
+            'BNI' => [
+                'name'           => 'Bank Negara Indonesia (BNI)',
+                'account_number' => '8820192019',
+                'account_name'   => 'PT Karyaku Digital Kreatif',
+                'type'           => 'Transfer Bank',
+                'badge'          => 'BNI',
+                'color'          => '#f15a24',
+                'icon'           => 'bi-bank',
+            ],
+            'Mandiri' => [
+                'name'           => 'Bank Mandiri',
+                'account_number' => '137001928301',
+                'account_name'   => 'PT Karyaku Digital Kreatif',
+                'type'           => 'Transfer Bank',
+                'badge'          => 'Mandiri',
+                'color'          => '#003366',
+                'icon'           => 'bi-bank',
+            ],
+            'BRI' => [
+                'name'           => 'Bank Rakyat Indonesia (BRI)',
+                'account_number' => '0192019283019',
+                'account_name'   => 'PT Karyaku Digital Kreatif',
+                'type'           => 'Transfer Bank',
+                'badge'          => 'BRI',
+                'color'          => '#00529c',
+                'icon'           => 'bi-bank',
+            ],
+            'QRIS' => [
+                'name'           => 'QRIS / Semua Bank & E-Wallet',
+                'account_number' => 'NMID: ID102003920192',
+                'account_name'   => 'KARYAKU QRIS RESMI',
+                'type'           => 'Scan QR',
+                'badge'          => 'QRIS',
+                'color'          => '#dc2626',
+                'icon'           => 'bi-qr-code-scan',
+            ],
+            'GOPAY' => [
+                'name'           => 'GoPay',
+                'account_number' => '081234567890',
+                'account_name'   => 'KARYAKU OFFICIAL',
+                'type'           => 'E-Wallet',
+                'badge'          => 'GoPay',
+                'color'          => '#00aed6',
+                'icon'           => 'bi-wallet2',
+            ],
+            'DANA' => [
+                'name'           => 'DANA',
+                'account_number' => '081234567890',
+                'account_name'   => 'KARYAKU OFFICIAL',
+                'type'           => 'E-Wallet',
+                'badge'          => 'DANA',
+                'color'          => '#118eea',
+                'icon'           => 'bi-wallet2',
+            ],
+            'OVO' => [
+                'name'           => 'OVO',
+                'account_number' => '081234567890',
+                'account_name'   => 'KARYAKU OFFICIAL',
+                'type'           => 'E-Wallet',
+                'badge'          => 'OVO',
+                'color'          => '#4c2a86',
+                'icon'           => 'bi-wallet2',
+            ],
+        ];
+
         return view('penjual.membership.index', compact(
-            'user', 'memberships', 'currentMembership', 'maxUpload', 'totalUploaded', 'remainingDays', 'countdown', 'showWarning', 'isExpired'
+            'user', 'memberships', 'currentMembership', 'maxUpload', 'totalUploaded',
+            'remainingDays', 'countdown', 'showWarning', 'isExpired',
+            'pendingPayment', 'lastRejectedPayment', 'paymentMethods'
         ));
     }
 
     public function membershipPurchase(Request $request, $id)
     {
-        $membership = Membership::findOrFail($id);
         $user = Auth::user();
-        $durationDays = $membership->duration_days ?? 30;
+        $membership = Membership::findOrFail($id);
 
-        $newExpiresAt = ($user->membership_expires_at && $user->membership_expires_at->isFuture()) 
-            ? $user->membership_expires_at->copy()->addDays($durationDays) 
-            : now()->addDays($durationDays);
+        // Cek jika penjual masih memiliki pembayaran pending
+        if (IdentityVerification::where('user_id', $user->id_user)->where('status', 'pending')->exists()) {
+            return redirect()->route('penjual.membership.index')
+                ->with('error', 'Anda masih memiliki transaksi perpanjangan/upgrade paket yang sedang diproses oleh admin.');
+        }
 
-        $user->update([
-            'id_membership' => $membership->id_membership,
-            'membership_expires_at' => $newExpiresAt
+        $validated = $request->validate([
+            'payment_method' => 'required|string|max:100',
+            'payment_proof'  => 'required|image|mimes:jpg,jpeg,png,webp|max:3072',
+            'sender_bank'    => 'nullable|string|max:100',
+            'sender_name'    => 'nullable|string|max:150',
+            'sender_account' => 'nullable|string|max:100',
+        ], [
+            'payment_method.required' => 'Silakan pilih metode pembayaran yang Anda gunakan.',
+            'payment_proof.required'  => 'Foto bukti transfer pembayaran wajib dilampirkan.',
+            'payment_proof.image'     => 'Bukti pembayaran harus berupa berkas gambar.',
+            'payment_proof.mimes'     => 'Format gambar bukti transfer harus JPG, JPEG, PNG, atau WEBP.',
+            'payment_proof.max'       => 'Ukuran foto bukti transfer tidak boleh lebih dari 3 MB.',
+        ]);
+
+        $proofPath = $request->file('payment_proof')->store('identity-verifications/payment', 'public');
+
+        // Ambil data verifikasi sebelumnya (NIK, alamat, rekening awal) jika ada
+        $lastVerif = IdentityVerification::where('user_id', $user->id_user)->latest('id_identity_verification')->first();
+
+        $nik = $lastVerif->nik ?? null;
+        $address = $lastVerif->address ?? null;
+        $identityDoc = $lastVerif->identity_document ?? null;
+        $bankName = !empty($validated['sender_bank']) ? $validated['sender_bank'] : ($lastVerif->bank_name ?? $validated['payment_method']);
+        $accountName = !empty($validated['sender_name']) ? $validated['sender_name'] : ($lastVerif->account_name ?? $user->name);
+        $accountNumber = !empty($validated['sender_account']) ? $validated['sender_account'] : ($lastVerif->account_number ?? '-');
+
+        // Buat record pengajuan verifikasi pembayaran baru
+        IdentityVerification::create([
+            'user_id'              => $user->id_user,
+            'identity_document'    => $identityDoc,
+            'nik'                  => $nik,
+            'address'              => $address,
+            'bank_name'            => $bankName,
+            'account_name'         => $accountName,
+            'account_number'       => $accountNumber,
+            'membership_id'        => $membership->id_membership,
+            'payment_method'       => $validated['payment_method'],
+            'payment_proof'        => $proofPath,
+            'payment_amount'       => $membership->price,
+            'payment_submitted_at' => now(),
+            'submitted_at'         => now(),
+            'status'               => 'pending',
+            'notes'                => null,
         ]);
 
         Notification::create([
             'user_id'     => $user->id_user,
-            'name'        => '💎 Paket Membership Aktif',
-            'description' => 'Paket ' . $membership->name . ' Anda telah aktif hingga ' . $user->membership_expires_at->translatedFormat('d F Y H:i') . '.',
+            'name'        => '⏳ Pembayaran Paket Terkirim',
+            'description' => 'Bukti transfer pembayaran paket ' . $membership->name . ' sebesar Rp ' . number_format($membership->price, 0, ',', '.') . ' telah dikirimkan. Menunggu verifikasi admin.',
             'is_read'     => false,
         ]);
 
-        return redirect()->route('penjual.membership.index')->with('success', 'Paket membership berhasil diaktifkan/diperpanjang.');
+        return redirect()->route('penjual.membership.index')
+            ->with('success', 'Bukti pembayaran paket ' . $membership->name . ' berhasil dikirim! Verifikator kami akan memproses aktivasi paket Anda secepatnya.');
+    }
+
+    public function membershipCancelPayment()
+    {
+        $user = Auth::user();
+        $pending = IdentityVerification::where('user_id', $user->id_user)
+            ->where('status', 'pending')
+            ->latest('id_identity_verification')
+            ->first();
+
+        if ($pending) {
+            if ($pending->payment_proof && Storage::disk('public')->exists($pending->payment_proof)) {
+                Storage::disk('public')->delete($pending->payment_proof);
+            }
+            $pending->delete();
+
+            return redirect()->route('penjual.membership.index')
+                ->with('success', 'Pengajuan pembayaran paket telah dibatalkan.');
+        }
+
+        return back()->with('error', 'Tidak ada pengajuan pembayaran pending yang dapat dibatalkan.');
     }
 
     // ================= 8. PESANAN MASUK (PENJUALAN) =================

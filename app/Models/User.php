@@ -288,7 +288,7 @@ class User extends Authenticatable
             IdentityVerification::class,
             'user_id',
             'id_user'
-        );
+        )->latestOfMany('id_identity_verification');
     }
 
     public function identityVerificationsAsVerifier()

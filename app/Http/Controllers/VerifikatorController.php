@@ -96,21 +96,29 @@ class VerifikatorController extends Controller
 
                 if ($verification->membership_id && $membership = Membership::find($verification->membership_id)) {
                     $userData['id_membership'] = $membership->id_membership;
-                    $userData['membership_expires_at'] = now()->addDays($membership->duration_days ?? 30);
+                    $durationDays = $membership->duration_days ?? 30;
+
+                    // Jika memperpanjang paket yang sama dan masih aktif, tambahkan dari expiry lama
+                    $isSamePlanActive = ($user->id_membership == $membership->id_membership) && $user->membership_expires_at && $user->membership_expires_at->isFuture();
+
+                    $userData['membership_expires_at'] = $isSamePlanActive
+                        ? $user->membership_expires_at->copy()->addDays($durationDays)
+                        : now()->addDays($durationDays);
                 }
 
                 $user->update($userData);
                 $verification->update(['status' => 'approved', 'verifier_id' => Auth::id(), 'verified_at' => now()]);
 
+                $membershipName = $verification->membership->name ?? 'Membership Penjual';
                 Notification::create([
                     'user_id'     => $verification->user_id,
-                    'name'        => '🎉 Verifikasi Disetujui',
-                    'description' => 'Selamat! Pendaftaran akun penjual Anda telah disetujui. Sekarang Anda dapat mulai berjualan.',
+                    'name'        => '💎 Pembayaran Paket Disetujui',
+                    'description' => 'Selamat! Pembayaran paket ' . $membershipName . ' Anda telah disetujui. Paket telah aktif hingga ' . ($user->fresh()->membership_expires_at ? $user->fresh()->membership_expires_at->translatedFormat('d F Y H:i') : '-') . '.',
                     'is_read'     => false,
                 ]);
             });
 
-            return redirect()->route('verifikator.identitas')->with('success', 'Pendaftaran berhasil disetujui.');
+            return redirect()->back()->with('success', 'Pendaftaran / Pembayaran membership berhasil disetujui.');
         } catch (\Throwable $e) {
             report($e);
             return redirect()->back()->with('error', 'Gagal memproses verifikasi: ' . $e->getMessage());
@@ -131,15 +139,16 @@ class VerifikatorController extends Controller
 
                 $verification->update(['status' => 'rejected', 'notes' => $note, 'verifier_id' => Auth::id(), 'verified_at' => now()]);
 
+                $membershipName = $verification->membership->name ?? 'Paket Membership';
                 Notification::create([
                     'user_id'     => $verification->user_id,
-                    'name'        => '❌ Verifikasi Ditolak',
-                    'description' => 'Pendaftaran penjual Anda ditolak. Catatan: ' . $note,
+                    'name'        => '❌ Pembayaran / Verifikasi Ditolak',
+                    'description' => 'Pembayaran/pengajuan paket ' . $membershipName . ' Anda ditolak. Catatan: ' . $note,
                     'is_read'     => false,
                 ]);
             });
 
-            return redirect()->route('verifikator.identitas')->with('success', 'Pendaftaran berhasil ditolak.');
+            return redirect()->back()->with('success', 'Pengajuan / Pembayaran berhasil ditolak.');
         } catch (\Throwable $e) {
             report($e);
             return redirect()->back()->with('error', 'Gagal menolak verifikasi: ' . $e->getMessage());

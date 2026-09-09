@@ -210,6 +210,7 @@ Route::middleware(['auth', 'suspended', 'role:penjual'])->prefix('penjual')->nam
 
     Route::get('/membership', [PenjualController::class, 'membershipIndex'])->name('membership.index');
     Route::post('/membership/{id}/purchase', [PenjualController::class, 'membershipPurchase'])->name('membership.purchase');
+    Route::delete('/membership/cancel-payment', [PenjualController::class, 'membershipCancelPayment'])->name('membership.cancel');
 
     Route::get('/pesanan', [PenjualController::class, 'pesananIndex'])->name('pesanan.index');
     Route::get('/pesanan/{id}', [PenjualController::class, 'pesananDetail'])->name('pesanan.detail');

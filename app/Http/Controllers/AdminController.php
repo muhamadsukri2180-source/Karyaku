@@ -398,11 +398,25 @@ class AdminController extends Controller
 
         DB::beginTransaction();
         try {
+            $membership = $verif->membership_id ? Membership::find($verif->membership_id) : null;
+            $userData = ['id_role' => $role->id_role, 'status' => 'active'];
+
+            if ($membership) {
+                $userData['id_membership'] = $membership->id_membership;
+                $durationDays = $membership->duration_days ?? 30;
+                $isSamePlanActive = ($user->id_membership == $membership->id_membership) && $user->membership_expires_at && $user->membership_expires_at->isFuture();
+                $userData['membership_expires_at'] = $isSamePlanActive
+                    ? $user->membership_expires_at->copy()->addDays($durationDays)
+                    : now()->addDays($durationDays);
+            }
+
             $verif->update(['status' => 'approved', 'verifier_id' => auth()->id(), 'verified_at' => now()]);
-            $user->update(['id_role' => $role->id_role, 'id_membership' => $verif->membership_id ?? $user->id_membership, 'status' => 'active']);
-            $this->sendNotif($user->id_user, '🎉 Pendaftaran Penjual Disetujui', 'Selamat! Verifikasi identitas Anda telah disetujui.');
+            $user->update($userData);
+            
+            $membershipName = $membership->name ?? 'Paket Penjual';
+            $this->sendNotif($user->id_user, '💎 Paket Penjual / Membership Disetujui', 'Selamat! Verifikasi pendaftaran/pembayaran paket ' . $membershipName . ' Anda telah disetujui.');
             DB::commit();
-            return back()->with('success', 'Pengajuan disetujui. Akun user sekarang menjadi penjual.');
+            return back()->with('success', 'Pengajuan disetujui. Akun penjual / paket membership berhasil diperbarui.');
         } catch (\Throwable $e) {
             DB::rollBack(); report($e);
             return back()->with('error', 'Pengajuan gagal disetujui.');
