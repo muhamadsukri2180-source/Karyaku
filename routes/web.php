@@ -104,7 +104,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // 6. Transaksi & Keuangan
     Route::get('/transactions', [AdminController::class, 'transactions'])->name('transactions');
     Route::get('/transactions/export', [AdminController::class, 'exportTransactions'])->name('transactions.export');
-    Route::get('/transactions/{id}', [AdminController::class, 'transactionDetail'])->name('transactions.detail');
+    Route::get('/laporan-keuangan', [AdminController::class, 'laporanKeuangan'])->name('laporan.keuangan');
+    Route::get('/laporan-keuangan/export-excel', [AdminController::class, 'exportLaporanKeuanganExcel'])->name('laporan.keuangan.export');
 
     // 7. Penarikan Saldo (Withdrawal)
     Route::get('/withdrawals', [AdminController::class, 'withdrawals'])->name('withdrawals');
@@ -203,6 +204,7 @@ Route::middleware(['auth', 'suspended', 'role:penjual'])->prefix('penjual')->nam
     Route::delete('/produk/{id}', [PenjualController::class, 'produkDestroy'])->name('produk.destroy');
 
     Route::get('/iklan', [PenjualController::class, 'iklanIndex'])->name('iklan.index');
+    Route::post('/iklan/store', [PenjualController::class, 'iklanStore'])->name('iklan.store');
     Route::post('/iklan/{id}/promote', [PenjualController::class, 'iklanStore'])->name('iklan.promote');
     Route::delete('/iklan/{id}/cancel', [PenjualController::class, 'iklanCancel'])->name('iklan.cancel');
 

@@ -48,6 +48,24 @@ class Product extends Model
         return $this->image_url;
     }
 
+    public function getVideoUrlAttribute(): ?string
+    {
+        if (!$this->video) {
+            return null;
+        }
+        if (str_starts_with($this->video, 'http://') || str_starts_with($this->video, 'https://')) {
+            return $this->video;
+        }
+        $path = ltrim($this->video, '/');
+        if (str_starts_with($path, 'public/')) {
+            $path = preg_replace('/^public\//', '', $path);
+        }
+        if (str_starts_with($path, 'storage/')) {
+            return asset($path);
+        }
+        return asset('storage/' . $path);
+    }
+
     public function getImagesListAttribute(): array
     {
         $list = [];

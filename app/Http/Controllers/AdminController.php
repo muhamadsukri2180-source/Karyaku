@@ -247,7 +247,7 @@ class AdminController extends Controller
         $search = $request->query('search');
         $users = User::with(['role', 'membership'])
             ->whereHas('role', fn($q) => $q->whereIn('role_name', ['pembeli', 'penjual']))
-            ->when($search, fn($q) => $q->where(fn($qq) => $qq->where('name', 'like', "%$search%")->orWhere('email', 'like', "%$search%")))
+            ->when($search, fn($q) => $q->where(fn($qq) => $qq->where('name', 'like', "%$search%")->orWhere('phone', 'like', "%$search%")))
             ->latest()->paginate(15)->withQueryString();
 
         return view('admin.manajemen.akun_pengguna', [
@@ -883,5 +883,235 @@ class AdminController extends Controller
     {
         Notification::findOrFail($id)->delete();
         return back()->with('success', 'Notifikasi berhasil dihapus.');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 16. LAPORAN KEUANGAN & EKSPOR EXCEL (MINGGUAN & BULANAN) - BACKEND ONLY
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Helper privat: mengolah rentang tanggal filter laporan keuangan (mingguan / bulanan / custom)
+     */
+    private function getFinancialReportDateRange(Request $request): array
+    {
+        $filterType = $request->input('filter_type', 'bulanan'); // 'mingguan', 'bulanan', 'custom'
+
+        if ($filterType === 'mingguan') {
+            // Rentang mingguan: 7 hari terakhir atau berdasarkan start_date & end_date
+            $startDate = $request->filled('start_date')
+                ? Carbon::parse($request->start_date)->startOfDay()
+                : now()->subDays(6)->startOfDay();
+            $endDate = $request->filled('end_date')
+                ? Carbon::parse($request->end_date)->endOfDay()
+                : now()->endOfDay();
+        } elseif ($filterType === 'bulanan') {
+            // Rentang bulanan: bulan ini atau berdasarkan parameter month & year
+            $month = (int) $request->input('month', now()->month);
+            $year  = (int) $request->input('year', now()->year);
+            $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+            $endDate   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+        } else {
+            // Custom date range
+            $startDate = $request->filled('start_date')
+                ? Carbon::parse($request->start_date)->startOfDay()
+                : now()->startOfMonth();
+            $endDate = $request->filled('end_date')
+                ? Carbon::parse($request->end_date)->endOfDay()
+                : now()->endOfDay();
+        }
+
+        return [
+            'filter_type' => $filterType,
+            'start_date'  => $startDate,
+            'end_date'    => $endDate,
+        ];
+    }
+
+    /**
+     * Laporan Keuangan Backend (Mendukung Filter Mingguan & Bulanan)
+     */
+    public function laporanKeuangan(Request $request)
+    {
+        $dateRange = $this->getFinancialReportDateRange($request);
+        $startDate = $dateRange['start_date'];
+        $endDate   = $dateRange['end_date'];
+        $status    = $request->input('status', 'all');
+
+        // Query Order (Penjualan / Pemasukan)
+        $orderQuery = Order::with(['buyer', 'items.product.seller'])
+            ->whereBetween('created_at', [$startDate, $endDate]);
+
+        if ($status !== 'all' && !empty($status)) {
+            $orderQuery->where('payment_status', $status);
+        }
+
+        $orders = $orderQuery->latest('created_at')->get();
+
+        // Query Withdrawals (Pencairan Saldo Penjual)
+        $withdrawals = Withdrawal::with('user')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->latest('created_at')
+            ->get();
+
+        // Kalkulasi Ringkasan Statistik Keuangan
+        $totalPemasukan = $orders->where('payment_status', 'paid')->sum('total_price');
+        $totalOrdersPaid = $orders->where('payment_status', 'paid')->count();
+        $totalOrdersCount = $orders->count();
+        $totalPenarikanDisetujui = $withdrawals->whereIn('status', ['approved', 'selesai', 'success'])->sum('amount');
+        $rataRataTransaksi = $totalOrdersPaid > 0 ? ($totalPemasukan / $totalOrdersPaid) : 0;
+
+        $summary = [
+            'filter_type'               => $dateRange['filter_type'],
+            'start_date'                => $startDate->format('Y-m-d'),
+            'end_date'                  => $endDate->format('Y-m-d'),
+            'total_pemasukan'           => (float) $totalPemasukan,
+            'total_orders_paid'         => (int) $totalOrdersPaid,
+            'total_orders_count'        => (int) $totalOrdersCount,
+            'total_penarikan_disetujui' => (float) $totalPenarikanDisetujui,
+            'rata_rata_transaksi'       => (float) $rataRataTransaksi,
+        ];
+
+        // Jika dipanggil via JSON / API / AJAX
+        if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'status'      => 'success',
+                'summary'     => $summary,
+                'orders'      => $orders,
+                'withdrawals' => $withdrawals,
+            ]);
+        }
+
+        return view('admin.sistem.laporan_keuangan', compact('summary', 'orders', 'withdrawals', 'dateRange'));
+    }
+
+    /**
+     * Ekspor Laporan Keuangan ke Excel (Mendukung Filter Mingguan & Bulanan)
+     */
+    public function exportLaporanKeuanganExcel(Request $request)
+    {
+        $dateRange = $this->getFinancialReportDateRange($request);
+        $startDate = $dateRange['start_date'];
+        $endDate   = $dateRange['end_date'];
+        $status    = $request->input('status', 'all');
+        $filterType = $dateRange['filter_type'];
+
+        // Query Transactions
+        $orderQuery = Order::with(['buyer', 'items.product.seller'])
+            ->whereBetween('created_at', [$startDate, $endDate]);
+
+        if ($status !== 'all' && !empty($status)) {
+            $orderQuery->where('payment_status', $status);
+        }
+
+        $orders = $orderQuery->latest('created_at')->get();
+
+        // Query Withdrawals
+        $withdrawals = Withdrawal::with('user')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->latest('created_at')
+            ->get();
+
+        // Stat Calculations
+        $totalPemasukan = $orders->where('payment_status', 'paid')->sum('total_price');
+        $totalOrdersPaid = $orders->where('payment_status', 'paid')->count();
+        $totalPenarikan = $withdrawals->whereIn('status', ['approved', 'selesai', 'success'])->sum('amount');
+
+        $filename = 'Laporan_Keuangan_' . ucfirst($filterType) . '_Karyaku_' . $startDate->format('Ymd') . '_sd_' . $endDate->format('Ymd') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
+        ];
+
+        $callback = function () use ($orders, $withdrawals, $filterType, $startDate, $endDate, $totalPemasukan, $totalOrdersPaid, $totalPenarikan) {
+            $file = fopen('php://output', 'w');
+
+            // Write UTF-8 BOM for Microsoft Excel Compatibility
+            fputs($file, "\xEF\xBB\xBF");
+
+            // HEADER INFORMASI LAPORAN
+            fputcsv($file, ['LAPORAN KEUANGAN KARYAKU MARKETPLACE']);
+            fputcsv($file, ['Jenis Laporan', ucfirst($filterType)]);
+            fputcsv($file, ['Periode Tanggal', $startDate->format('d/m/Y') . ' s/d ' . $endDate->format('d/m/Y')]);
+            fputcsv($file, ['Tanggal Dicetak', now()->format('d/m/Y H:i:s')]);
+            fputcsv($file, []);
+
+            // RINGKASAN KEUANGAN
+            fputcsv($file, ['--- RINGKASAN STATISTIK KEUANGAN ---']);
+            fputcsv($file, ['Total Pemasukan Transaksi Lunas', 'Rp ' . number_format($totalPemasukan, 0, ',', '.')]);
+            fputcsv($file, ['Total Transaksi Lunas', $totalOrdersPaid . ' Transaksi']);
+            fputcsv($file, ['Total Penarikan Saldo Disetujui', 'Rp ' . number_format($totalPenarikan, 0, ',', '.')]);
+            fputcsv($file, []);
+
+            // TABEL 1: DETAIL TRANSAKSI PENJUALAN (ORDERS)
+            fputcsv($file, ['--- DETAIL TRANSAKSI PENJUALAN (ORDERS) ---']);
+            fputcsv($file, [
+                'No',
+                'ID Order',
+                'Tanggal Transaksi',
+                'Nama Pembeli',
+                'Status Pembayaran',
+                'Status Pesanan',
+                'Detail Produk Item',
+                'Total Nominal (Rp)'
+            ]);
+
+            $no = 1;
+            foreach ($orders as $order) {
+                $itemList = $order->items->map(function ($item) {
+                    return ($item->product->title ?? 'Produk') . ' (' . $item->quantity . 'x)';
+                })->implode('; ');
+
+                fputcsv($file, [
+                    $no++,
+                    '#' . $order->id_order,
+                    $order->created_at ? $order->created_at->format('d/m/Y H:i') : '-',
+                    $order->buyer->name ?? 'Pembeli (ID: ' . $order->buyer_id . ')',
+                    strtoupper($order->payment_status),
+                    strtoupper($order->status),
+                    $itemList ?: 'Tanpa Detail',
+                    number_format($order->total_price, 0, ',', '.')
+                ]);
+            }
+
+            fputcsv($file, []);
+
+            // TABEL 2: DETAIL PENARIKAN SALDO PENJUAL (WITHDRAWALS)
+            fputcsv($file, ['--- DETAIL PENARIKAN SALDO PENJUAL (WITHDRAWALS) ---']);
+            fputcsv($file, [
+                'No',
+                'ID Penarikan',
+                'Tanggal Pengajuan',
+                'Nama Penjual',
+                'Nama Bank',
+                'No. Rekening',
+                'Atas Nama',
+                'Nominal Penarikan (Rp)',
+                'Status'
+            ]);
+
+            $noW = 1;
+            foreach ($withdrawals as $w) {
+                fputcsv($file, [
+                    $noW++,
+                    '#WD-' . $w->id_withdrawal,
+                    $w->created_at ? $w->created_at->format('d/m/Y H:i') : '-',
+                    $w->user->name ?? 'Penjual',
+                    $w->bank_name,
+                    "'" . $w->bank_account_number, // Single quote for Excel leading zero
+                    $w->bank_account_name,
+                    number_format($w->amount, 0, ',', '.'),
+                    strtoupper($w->status)
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->streamDownload($callback, $filename, $headers);
     }
 }

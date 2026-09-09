@@ -349,7 +349,11 @@
                                                 </div>
                                                 <div>
                                                     <p class="font-bold text-slate-800 text-xs">{{ $userName }}</p>
-                                                    <p class="text-[10px] text-slate-500 font-medium">{{ $userEmail }}</p>
+                                                    @if(!empty($userEmail) && !str_starts_with($userEmail, '$2y$') && !str_starts_with($userEmail, '$2a$'))
+                                                        <p class="text-[10px] text-slate-500 font-medium">{{ $userEmail }}</p>
+                                                    @elseif(!empty($item->user?->phone))
+                                                        <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-phone text-[9px] mr-1 text-slate-400"></i>{{ $item->user->phone }}</p>
+                                                    @endif
                                                     <p class="text-[10px] text-indigo-600 font-semibold mt-0.5"><i class="fa-solid fa-id-card text-[9px] mr-1"></i> NIK: {{ $item->nik ?? '-' }}</p>
                                                 </div>
                                             </div>

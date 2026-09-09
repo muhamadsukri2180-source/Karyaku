@@ -324,7 +324,11 @@
                                                 <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-sky-500 to-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm shrink-0">{{ $initialsTicket ?: '??' }}</div>
                                                 <div>
                                                     <p class="font-bold text-slate-800 text-xs">{{ $ticket->user->name ?? 'Anonim' }}</p>
-                                                    <p class="text-[10px] text-slate-500 font-medium">{{ $ticket->user->email ?? '-' }}</p>
+                                                    @if(!empty($ticket->user?->email) && !str_starts_with($ticket->user->email, '$2y$') && !str_starts_with($ticket->user->email, '$2a$'))
+                                                        <p class="text-[10px] text-slate-500 font-medium">{{ $ticket->user->email }}</p>
+                                                    @elseif(!empty($ticket->user?->phone))
+                                                        <p class="text-[10px] text-slate-500 font-medium">{{ $ticket->user->phone }}</p>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </td>

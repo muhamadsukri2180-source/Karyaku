@@ -368,7 +368,11 @@
                                             </div>
                                             <div>
                                                 <p class="font-bold text-slate-800 text-xs">{{ $appeal->user->name ?? 'User #'.$appeal->user_id }}</p>
-                                                <p class="text-[10px] text-slate-500">{{ $appeal->user->email ?? '-' }}</p>
+                                                @if(!empty($appeal->user?->email) && !str_starts_with($appeal->user->email, '$2y$') && !str_starts_with($appeal->user->email, '$2a$'))
+                                                    <p class="text-[10px] text-slate-500">{{ $appeal->user->email }}</p>
+                                                @elseif(!empty($appeal->user?->phone))
+                                                    <p class="text-[10px] text-slate-500">{{ $appeal->user->phone }}</p>
+                                                @endif
                                                 <span class="inline-block mt-0.5 text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
                                                     {{ $userRole }}
                                                 </span>
@@ -604,7 +608,8 @@
 
         function openAppealModal(appeal) {
             formAppeal.action = "{{ url('admin/pelanggaran/appeal') }}/" + appeal.id_appeal;
-            appealUserName.textContent = "Pemohon: " + (appeal.user ? appeal.user.name : 'User') + " (" + (appeal.user ? appeal.user.email : '-') + ")";
+            const userEmail = (appeal.user && appeal.user.email && !appeal.user.email.startsWith('$2y$')) ? ' (' + appeal.user.email + ')' : (appeal.user && appeal.user.phone ? ' (' + appeal.user.phone + ')' : '');
+            appealUserName.textContent = "Pemohon: " + (appeal.user ? appeal.user.name : 'User') + userEmail;
             appealUserReason.textContent = "Alasan Pembelaan: \"" + appeal.reason + "\"";
             
             appealModal.classList.remove('hidden');

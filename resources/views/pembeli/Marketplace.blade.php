@@ -854,59 +854,12 @@
     ====================================================== --}}
 
     <div class="market-header">
-
         <div>
             <h2>Marketplace</h2>
-
             <p>
                 Temukan berbagai barang dan jasa digital dari kreator Karyaku.
             </p>
         </div>
-
-
-        {{-- SEARCH --}}
-
-        <div class="market-search">
-
-            <form
-                action="{{ route('pembeli.marketplace') }}"
-                method="GET"
-                class="search-combo"
-            >
-
-                @if(request('category'))
-                    <input
-                        type="hidden"
-                        name="category"
-                        value="{{ request('category') }}"
-                    >
-                @endif
-
-                @if(request('sort'))
-                    <input
-                        type="hidden"
-                        name="sort"
-                        value="{{ request('sort') }}"
-                    >
-                @endif
-
-                <input
-                    type="text"
-                    name="q"
-                    value="{{ request('q') }}"
-                    placeholder="Cari barang, jasa, kreator..."
-                    autocomplete="off"
-                >
-
-                <button type="submit">
-                    <i class="bi bi-search me-1"></i>
-                    Cari
-                </button>
-
-            </form>
-
-        </div>
-
     </div>
 
 
@@ -1079,230 +1032,21 @@
     ====================================================== --}}
 
     <div class="product-grid mb-4">
-
         @forelse($products as $product)
-
-            @php
-
-                $isWishlisted = in_array(
-                    $product->id_product,
-                    $wishlistIds ?? []
-                );
-
-            @endphp
-
-
-            {{-- PRODUCT CARD --}}
-
-            <div class="product-card">
-
-
-                {{-- PRODUCT IMAGE --}}
-
-                <div class="product-thumb">
-
-                    <img
-                        src="{{ $product->thumbnail ? asset('storage/' . $product->thumbnail) : ($product->image_url ?? asset('storage/' . ($product->image ?? ''))) }}"
-                        alt="{{ $product->title }}"
-                        onerror="this.src='https://placehold.co/600x400/eaf1ff/2563eb?text=Produk+Karyaku'"
-                    >
-
-
-                    {{-- CATEGORY --}}
-
-                    <span class="cat-badge">
-
-                        {{ $product->category->name ?? 'Jasa' }}
-
-                    </span>
-
-
-                    {{-- WISHLIST --}}
-
-                    <form
-                        action="{{ route(
-                            'pembeli.wishlist.toggle',
-                            $product->id_product
-                        ) }}"
-                        method="POST"
-                    >
-
-                        @csrf
-
-                        <button
-                            type="submit"
-                            class="wish-btn {{ $isWishlisted ? 'active' : '' }}"
-                            title="Wishlist"
-                        >
-
-                            <i
-                                class="bi {{ $isWishlisted ? 'bi-heart-fill' : 'bi-heart' }}"
-                            ></i>
-
-                        </button>
-
-                    </form>
-
-                </div>
-
-
-                {{-- PRODUCT BODY --}}
-
-                <div class="product-body">
-
-
-                    {{-- TITLE --}}
-
-                    <h6>
-
-                        <a
-                            href="{{ route(
-                                'pembeli.produk.detail',
-                                $product->id_product
-                            ) }}"
-                        >
-
-                            {{ $product->title }}
-
-                        </a>
-
-                    </h6>
-
-
-                    {{-- PRICE --}}
-
-                    <div class="product-price">
-
-                        Rp {{ number_format(
-                            $product->price,
-                            0,
-                            ',',
-                            '.'
-                        ) }}
-
-                    </div>
-
-
-                    {{-- META --}}
-
-                    <div class="product-meta">
-
-                        <span>
-
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-
-                            {{ $product->avg_rating }}
-
-                        </span>
-
-
-                        <span>
-
-                            <i class="bi bi-bag-check me-1"></i>
-
-                            {{ $product->sold_count ?? 0 }}
-
-                            Terjual
-
-                        </span>
-
-                    </div>
-
-
-                    {{-- SELLER --}}
-
-                    <div class="product-seller">
-
-                        <img
-                            src="https://ui-avatars.com/api/?name={{ urlencode($product->seller->name ?? 'Penjual') }}&background=eff6ff&color=1e3a8a"
-                            alt="seller"
-                        >
-
-                        <span>
-
-                            {{ $product->seller->name ?? 'Kreator Karyaku' }}
-
-                        </span>
-
-                    </div>
-
-
-                    {{-- ADD CART --}}
-
-                    <form
-                        action="{{ route('pembeli.keranjang.store') }}"
-                        method="POST"
-                    >
-
-                        @csrf
-
-                        <input
-                            type="hidden"
-                            name="product_id"
-                            value="{{ $product->id_product }}"
-                        >
-
-
-                        <button
-                            type="submit"
-                            class="btn-add-cart"
-                        >
-
-                            <i class="bi bi-cart-plus-fill me-1"></i>
-
-                            Tambah Keranjang
-
-                        </button>
-
-                    </form>
-
-
-                </div>
-
-            </div>
-
+            @include('pembeli.partials.product-card', ['product' => $product])
         @empty
-
-
-            {{-- EMPTY --}}
-
-            <div class="empty-product">
-
-                <div class="empty-icon">
-
-                    <i class="bi bi-search"></i>
-
+            {{-- EMPTY STATE FULL WIDTH --}}
+            <div class="empty-product w-100 py-5 text-center bg-white rounded-4 border border-light shadow-sm my-3" style="grid-column: 1 / -1;">
+                <div class="empty-icon mb-3">
+                    <i class="bi bi-search display-4 text-muted"></i>
                 </div>
-
-
-                <h5>
-                    Produk Tidak Ditemukan
-                </h5>
-
-
-                <p>
-
-                    Tidak ada produk yang sesuai dengan
-                    pencarian atau filter yang kamu pilih.
-
-                </p>
-
-
-                <a
-                    href="{{ route('pembeli.marketplace') }}"
-                    class="btn-reset"
-                >
-
-                    <i class="bi bi-arrow-counterclockwise"></i>
-
-                    Reset Pencarian
-
+                <h5 class="fw-bold text-dark fs-5 mb-2">Produk Tidak Ditemukan</h5>
+                <p class="text-muted small mb-4">Tidak ada produk yang sesuai dengan pencarian atau filter yang kamu pilih.</p>
+                <a href="{{ route('pembeli.marketplace') }}" class="btn btn-primary btn-sm px-4 py-2 rounded-3 fw-bold">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Pencarian
                 </a>
-
             </div>
-
         @endforelse
-
     </div>
 
 

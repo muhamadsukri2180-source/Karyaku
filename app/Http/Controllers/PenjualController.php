@@ -279,31 +279,47 @@ class PenjualController extends Controller
     public function iklanIndex()
     {
         $user = Auth::user();
-        $bisaIklan = $user->canUseAds();
+        $bisaIklan = true; // Izinkan penjual mempublikasikan iklan video
         $activeProducts = Product::where('seller_id', $user->id_user)->where('status', 'active')->orderBy('title')->get();
-        $promotedProducts = Product::where('seller_id', $user->id_user)->where('is_promoted', true)->latest('promoted_until')->get();
+        $promotedProducts = Product::where('seller_id', $user->id_user)->where('is_promoted', true)->latest('id_product')->get();
 
         return view('penjual.iklan.index', compact('user', 'bisaIklan', 'activeProducts', 'promotedProducts'));
     }
 
-    public function iklanStore(Request $request, $id)
+    public function iklanStore(Request $request, $id = null)
     {
         $user = Auth::user();
-        if (!$user->canUseAds()) {
-            return redirect()->route('penjual.membership.index')->with('error', 'Fitur pasang iklan hanya tersedia untuk paket Gold & Diamond.');
+        $productId = $id ?: $request->input('product_id');
+
+        if (!$productId) {
+            return back()->with('error', 'Silakan pilih produk yang ingin diiklankan.');
         }
 
-        $product = Product::where('seller_id', $user->id_user)->findOrFail($id);
+        $product = Product::where('seller_id', $user->id_user)->findOrFail($productId);
         if ($product->status !== 'active') {
             return back()->with('error', 'Hanya produk berstatus aktif yang dapat diiklankan.');
         }
 
-        $product->update([
-            'is_promoted' => true,
-            'promoted_until' => now()->addDays(7)
+        $request->validate([
+            'ad_video' => 'nullable|file|mimes:mp4,webm,ogg,mov,qt|max:10240',
+        ], [
+            'ad_video.mimes' => 'Video iklan harus berformat MP4, WebM, OGG, atau MOV.',
+            'ad_video.max'   => 'Ukuran video iklan tidak boleh lebih dari 10 MB (maksimal durasi 10 detik).',
         ]);
 
-        return back()->with('success', 'Iklan produk "' . $product->title . '" berhasil diaktifkan selama 7 hari!');
+        $updateData = [
+            'is_promoted'    => true,
+            'promoted_until' => now()->addDays(30),
+        ];
+
+        if ($request->hasFile('ad_video')) {
+            $videoPath = $request->file('ad_video')->store('products/videos', 'public');
+            $updateData['video'] = $videoPath;
+        }
+
+        $product->update($updateData);
+
+        return back()->with('success', 'Iklan produk "' . $product->title . '" berhasil dipublikasikan!');
     }
 
     public function iklanCancel($id)
@@ -314,7 +330,7 @@ class PenjualController extends Controller
             'promoted_until' => null
         ]);
 
-        return back()->with('success', 'Promosi iklan untuk produk ini telah dinonaktifkan.');
+        return back()->with('success', 'Promosi iklan untuk produk ini telah dihentikan.');
     }
 
     // ================= 7. MEMBERSHIP PENJUAL & PEMBELIAN =================

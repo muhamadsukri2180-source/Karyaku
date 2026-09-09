@@ -98,21 +98,20 @@
     @media (max-width: 1200px){ .product-grid{ grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 768px){ .product-grid{ grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 480px){ .product-grid{ grid-template-columns: 1fr 1fr; gap: 12px; } }
-    .product-card{ background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color); box-shadow: var(--shadow); transition: transform .25s ease, box-shadow .25s ease; position: relative; display: flex; flex-direction: column; }
+    .product-card{ background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color); box-shadow: var(--shadow); transition: transform .25s ease, box-shadow .25s ease; position: relative; display: flex; flex-direction: column; height: 100%; }
     .product-card:hover{ transform: translateY(-6px); box-shadow: var(--shadow-hover); }
-    .product-thumb{ position: relative; height: 150px; overflow: hidden; background: var(--primary-light); }
+    .product-thumb{ position: relative; height: 160px; overflow: hidden; background: var(--primary-light); }
     .product-thumb img{ width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
     .product-card:hover .product-thumb img{ transform: scale(1.08); }
-    .product-thumb .cat-badge{ position: absolute; top: 10px; left: 10px; background: rgba(20,34,92,0.75); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px; backdrop-filter: blur(2px); }
-    .wish-btn{ position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.9); border: none; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 14px; transition: all .2s ease; }
-    .wish-btn:hover, .wish-btn.active{ color: var(--coral); background: #fff; }
-    .product-body{ padding: 12px 13px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
-    .product-body h6{ font-size: 13px; font-weight: 600; margin: 0; line-height: 1.35; min-height: 34px; }
-    .product-body h6 a{ color: inherit; }
-    .product-price{ color: var(--coral); font-weight: 800; font-size: 15px; }
-    .product-meta{ display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); }
-    .product-seller{ display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .product-seller img{ width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
+    .product-thumb .cat-badge{ position: absolute; top: 10px; left: 10px; background: rgba(20,34,92,0.85); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px; backdrop-filter: blur(4px); z-index: 2; }
+    .wish-btn{ position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.92); border: none; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 15px; transition: all .2s ease; z-index: 3; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .wish-btn:hover, .wish-btn.active{ color: #ef4444; background: #fff; transform: scale(1.1); }
+    .product-body{ padding: 14px 15px 16px; display: flex; flex-direction: column; flex: 1; }
+    .wish-icon-btn{ background: #fef2f2; border: 1px solid #fee2e2; width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: #ef4444; font-size: 14px; transition: all .2s ease; cursor: pointer; }
+    .wish-icon-btn:hover, .wish-icon-btn.active{ background: #ef4444; color: #fff; transform: scale(1.1); }
+    .wish-icon-btn:hover i, .wish-icon-btn.active i{ color: #fff !important; }
+    .btn-buy-rectangular{ width: 100%; border: none; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #fff; font-weight: 700; font-size: 13px; padding: 10px 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all .25s ease; box-shadow: 0 4px 12px rgba(37,99,235,0.25); text-transform: uppercase; letter-spacing: 0.5px; }
+    .btn-buy-rectangular:hover{ background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(37,99,235,0.35); color: #fff; }
     .btn-add-cart{ margin-top: 6px; width: 100%; border: none; background: var(--primary-light); color: var(--primary); font-weight: 700; font-size: 12px; padding: 8px 0; border-radius: 9px; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all .2s ease; }
     .btn-add-cart:hover{ background: var(--primary); color: #fff; }
 
@@ -367,7 +366,7 @@
 
 
     // Toggle wishlist via AJAX (dipakai di marketplace, produk, wishlist page)
-    document.querySelectorAll('.wish-btn[data-url]').forEach(btn => {
+    document.querySelectorAll('.wish-btn[data-url], .wish-icon-btn[data-url]').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             const url = btn.getAttribute('data-url');
@@ -383,16 +382,23 @@
             })
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'added') {
-                    btn.classList.add('active');
-                    btn.querySelector('i').className = 'bi bi-heart-fill';
-                } else if (data.status === 'removed') {
-                    btn.classList.remove('active');
-                    btn.querySelector('i').className = 'bi bi-heart';
-                    if (btn.dataset.removeOnUnwish === '1') {
-                        btn.closest('[data-wishlist-row]')?.remove();
+                const card = btn.closest('.product-card');
+                const wishButtons = card ? card.querySelectorAll('.wish-btn, .wish-icon-btn') : [btn];
+                
+                wishButtons.forEach(b => {
+                    if (data.status === 'added') {
+                        b.classList.add('active');
+                        const icon = b.querySelector('i');
+                        if (icon) icon.className = b.classList.contains('wish-icon-btn') ? 'bi bi-heart-fill text-danger' : 'bi bi-heart-fill';
+                    } else if (data.status === 'removed') {
+                        b.classList.remove('active');
+                        const icon = b.querySelector('i');
+                        if (icon) icon.className = 'bi bi-heart';
+                        if (b.dataset.removeOnUnwish === '1') {
+                            b.closest('[data-wishlist-row]')?.remove();
+                        }
                     }
-                }
+                });
             })
             .catch(() => alert('Gagal memperbarui wishlist. Coba lagi.'));
         });

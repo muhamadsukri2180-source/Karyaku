@@ -237,7 +237,7 @@
     <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 backdrop-blur-sm">
         <form method="GET" action="{{ route('admin.users') }}" class="relative w-full sm:flex-1">
             <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau email..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau no. telepon pengguna..." class="pl-8 pr-4 py-2 w-full bg-white border border-sky-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all shadow-sm">
         </form>
     </div>
 
@@ -271,7 +271,9 @@
                                                 <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-sky-500 to-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">{{ $initialsRow ?: '??' }}</div>
                                                 <div>
                                                     <p class="font-bold text-slate-800 text-xs">{{ $user->name }}</p>
-                                                    <p class="text-[10px] text-slate-500 font-medium">{{ $user->email }}</p>
+                                                    @if(!empty($user->phone))
+                                                        <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-phone text-[9px] mr-1 text-slate-400"></i>{{ $user->phone }}</p>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </td>
