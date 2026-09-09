@@ -224,8 +224,8 @@
             <div class="p-4 border-t border-white/15">
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
-                    <button type="submit" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-red-500/80 text-white font-semibold transition-all duration-200 text-xs">
-                        <i class="fa-solid fa-right-from-bracket w-4 text-center"></i> Keluar
+                    <button type="submit" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-red-600/80 text-white hover:bg-red-700 text-xs font-bold transition-all duration-300 shadow-md">
+                        <i class="fa-solid fa-power-off"></i><span>Keluar Sistem</span>
                     </button>
                 </form>
             </div>
