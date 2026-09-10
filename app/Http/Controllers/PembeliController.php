@@ -48,6 +48,43 @@ class PembeliController extends Controller
             ->take(5)
             ->get();
 
+        // Rotasi iklan & produk populer setiap 3 jam agar selalu fresh & variatif
+        $hourSeed = (int) floor(now()->timestamp / 10800); // 10.800 detik = 3 jam
+
+        // 1. Iklan yang dipromosikan oleh penjual (Aktif & Belum Kedaluwarsa)
+        $promotedProducts = Product::with(['category', 'seller'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->where('status', 'active')
+            ->where('is_promoted', true)
+            ->where(fn ($q) => $q->whereNull('promoted_until')->orWhere('promoted_until', '>=', now()))
+            ->inRandomOrder($hourSeed)
+            ->take(8)
+            ->get();
+
+        // Jika penjual belum ada yang pasang iklan promosi, fallback ke karya aktif dengan rotasi
+        if ($promotedProducts->isEmpty()) {
+            $promotedProducts = Product::with(['category', 'seller'])
+                ->withAvg('reviews', 'rating')
+                ->withCount('reviews')
+                ->where('status', 'active')
+                ->inRandomOrder($hourSeed)
+                ->take(6)
+                ->get();
+        }
+
+        // 2. Produk Populer & Terlaris untuk kolom kanan samping iklan (3 karya teratas)
+        $popularProducts = Product::with(['category', 'seller'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->where('status', 'active')
+            ->orderByDesc('sold_count')
+            ->orderByDesc('view_count')
+            ->inRandomOrder($hourSeed + 99)
+            ->take(6)
+            ->get();
+
+        // 3. Rekomendasi Karya Terbaru & Pilihan
         $rekomendasi = Product::with(['category', 'seller'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
@@ -56,23 +93,13 @@ class PembeliController extends Controller
             ->take(8)
             ->get();
 
-        $promotedProducts = Product::with(['category', 'seller'])
-            ->withAvg('reviews', 'rating')
-            ->withCount('reviews')
-            ->where('status', 'active')
-            ->where('is_promoted', true)
-            ->where(fn ($q) => $q->whereNull('promoted_until')->orWhere('promoted_until', '>=', now()))
-            ->latest('id_product')
-            ->take(6)
-            ->get();
-
         $categories = Category::where('status', 'aktif')->orderBy('name')->take(8)->get();
         $wishlistIds = Wishlist::where('user_id', $userId)->pluck('product_id')->toArray();
 
         return view('pembeli.dashboard', compact(
             'totalPesanan', 'totalSelesai', 'totalBelumBayar', 'totalBelanja',
             'totalWishlist', 'totalKeranjang', 'recentOrders', 'rekomendasi',
-            'promotedProducts', 'categories', 'wishlistIds'
+            'promotedProducts', 'popularProducts', 'categories', 'wishlistIds'
         ));
     }
 

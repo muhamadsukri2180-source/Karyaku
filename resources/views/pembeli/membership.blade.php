@@ -1,31 +1,23 @@
 @extends('layouts.pembeli')
-@section('title', 'Paket Membership Penjual')
+@section('title', 'Paket Membership Penjual - Karyaku')
 
 @section('content')
 
 <div class="mb-4">
     <div class="d-flex align-items-center gap-3">
-        <div class="d-flex align-items-center justify-content-center rounded-3 bg-primary text-white shadow-sm" style="width:48px;height:48px;">
-            <i class="bi bi-crown fs-4"></i>
+        <div class="d-flex align-items-center justify-content-center rounded-4 bg-primary text-white shadow-sm" style="width:52px;height:52px;">
+            <i class="bi bi-crown fs-3"></i>
         </div>
         <div>
-            <h4 class="fw-bold mb-0">Paket Membership Penjual</h4>
-            <p class="text-muted mb-0 small">Pilih paket terbaik untuk mulai berjualan dan mengunggah produk digital di Karyaku.</p>
+            <h4 class="fw-extrabold text-dark mb-0">Paket Membership Penjual</h4>
+            <p class="text-muted mb-0 small">Pilih paket terbaik untuk mulai berjualan dan mengunggah produk digital di platform Karyaku.</p>
         </div>
     </div>
 </div>
 
-@if (session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill me-1"></i> {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
 @if ($isPenjual)
-
-    <div class="card-box p-4 mb-4 border-success bg-success-subtle text-success-emphasis">
-        <div class="d-flex align-items-center justify-content-between gap-3">
+    <div class="card-box p-4 mb-4 border-success bg-success-subtle text-success-emphasis rounded-4">
+        <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
             <div class="d-flex align-items-center gap-3">
                 <div class="d-flex align-items-center justify-content-center bg-success text-white rounded-circle flex-shrink-0" style="width:48px;height:48px;">
                     <i class="bi bi-check-circle-fill fs-4"></i>
@@ -40,11 +32,9 @@
             </a>
         </div>
     </div>
-
 @elseif ($pending)
-
-    <div class="card-box p-4 mb-4 border-warning bg-warning-subtle text-warning-emphasis">
-        <div class="d-flex align-items-center justify-content-between gap-3">
+    <div class="card-box p-4 mb-4 border-warning bg-warning-subtle text-warning-emphasis rounded-4">
+        <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
             <div class="d-flex align-items-center gap-3">
                 <div class="d-flex align-items-center justify-content-center bg-warning text-dark rounded-circle flex-shrink-0" style="width:48px;height:48px;">
                     <i class="bi bi-hourglass-split fs-4"></i>
@@ -59,18 +49,16 @@
             </a>
         </div>
     </div>
-
 @endif
 
 {{-- LIST DAFTAR PAKET MEMBERSHIP --}}
 <div class="row g-4">
     @forelse ($memberships as $membership)
         <div class="col-md-6 col-lg-4">
-            <div class="card-box h-100 p-4 d-flex flex-direction-column justify-content-between border position-relative hover-shadow transition-all" style="border-radius:18px;">
-                
+            <div class="card-box h-100 p-4 d-flex flex-column justify-content-between border rounded-4 hover-shadow position-relative">
                 <div>
                     <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-bold text-uppercase" style="font-size:11px;">
+                        <span class="badge bg-primary-subtle text-primary px-3 py-1.5 rounded-pill fw-bold text-uppercase" style="font-size:11px;">
                             {{ $membership->name }}
                         </span>
                         <div class="text-muted small">
@@ -85,7 +73,7 @@
                         <span class="text-muted small">Masa aktif paket {{ $membership->duration_days }} hari</span>
                     </div>
 
-                    <ul class="list-unstyled text-secondary small space-y-2 mb-4">
+                    <ul class="list-unstyled text-secondary small mb-4">
                         <li class="d-flex align-items-center gap-2 mb-2">
                             <i class="bi bi-check-circle-fill text-success"></i>
                             <span>Batas Unggah: <strong>{{ $membership->max_upload }} Produk</strong></span>
@@ -96,7 +84,7 @@
                         </li>
                         @if ($membership->benefit)
                             <li class="d-flex align-items-start gap-2 mb-2">
-                                <i class="bi bi-star-fill text-amber-500 mt-1"></i>
+                                <i class="bi bi-star-fill text-warning mt-1"></i>
                                 <span>{{ $membership->benefit }}</span>
                             </li>
                         @endif
@@ -118,7 +106,6 @@
                         </a>
                     @endif
                 </div>
-
             </div>
         </div>
     @empty

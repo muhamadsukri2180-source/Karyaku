@@ -1,11 +1,13 @@
 @extends('layouts.pembeli')
-@section('title', 'Peringatan Saya')
+@section('title', 'Peringatan Saya - Karyaku')
 
 @section('content')
 
 <div class="mb-4">
-    <h4 class="fw-bold mb-1"><i class="bi bi-shield-exclamation text-danger me-2"></i>Peringatan & Teguran Akun</h4>
-    <p class="text-muted small mb-0">Daftar catatan peringatan resmi dari Tim Verifikator / Admin terkait aktivitas atau laporan pada akun Anda.</p>
+    <h4 class="fw-extrabold text-dark mb-1">
+        <i class="bi bi-shield-exclamation text-danger me-2"></i>Peringatan & Teguran Akun
+    </h4>
+    <p class="text-muted small mb-0">Daftar catatan teguran resmi dari Tim Verifikator / Admin terkait aktivitas atau laporan pada akun Anda.</p>
 </div>
 
 @if ($peringatan->isEmpty())
@@ -28,7 +30,7 @@
                     <div class="fw-bold text-dark" style="font-size: 14px;">
                         Peringatan Pelanggaran: <span class="text-danger">{{ $p->reason }}</span>
                     </div>
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1 rounded-pill small">
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1 rounded-pill small fw-bold">
                         {{ $p->action_taken ? ucfirst($p->action_taken) : 'Peringatan' }}
                     </span>
                 </div>

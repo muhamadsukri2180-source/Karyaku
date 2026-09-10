@@ -8,20 +8,19 @@
     <a href="{{ route('pembeli.pesanan') }}" class="btn btn-sm btn-outline-secondary rounded-pill mb-2">
         <i class="bi bi-arrow-left me-1"></i> Kembali ke Pesanan Saya
     </a>
-    <h4 class="fw-bold mb-1">Rincian Detail Pesanan</h4>
+    <h4 class="fw-extrabold text-dark mb-1">Rincian Detail Pesanan</h4>
     <p class="text-muted mb-0 small">Kode Transaksi: <strong>#{{ $order->kode_order ?? $order->id_order }}</strong> &middot; {{ $order->created_at->format('d M Y, H:i') }} WIB</p>
 </div>
 
 <div class="row g-4 mb-4">
-    
     {{-- KOLOM KIRI: RINCIAN ITEM & DOWNLOAD --}}
     <div class="col-lg-8">
         {{-- STATUS BANNER --}}
-        <div class="card-box p-4 mb-4 border shadow-sm" style="border-radius: 16px;">
+        <div class="card-box p-4 mb-4 border shadow-sm rounded-4">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div class="d-flex align-items-center gap-3">
                     <div class="d-flex align-items-center justify-content-center bg-primary text-white rounded-circle flex-shrink-0" style="width:50px;height:50px;">
-                        <i class="bi bi-bag-check-fill fs-3"></i>
+                        <i class="bi bi-bag-check-fill fs-4"></i>
                     </div>
                     <div>
                         <h6 class="fw-bold mb-1">Status Pesanan: <span class="text-capitalize text-primary">{{ $order->status }}</span></h6>
@@ -45,7 +44,7 @@
 
         {{-- DAFTAR PRODUK YANG DIBELI --}}
         <div class="card-box p-4 mb-4">
-            <h6 class="fw-bold mb-3 border-bottom pb-3">Produk yang Dibeli</h6>
+            <h6 class="fw-bold mb-3 border-bottom pb-3 text-dark">Daftar Produk yang Dibeli</h6>
 
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
@@ -68,12 +67,12 @@
                                     <div class="d-flex align-items-center gap-3">
                                         <img src="{{ $product && $product->thumbnail ? asset('storage/' . $product->thumbnail) : 'https://placehold.co/100x100?text=Produk' }}" 
                                              alt="{{ $product->title ?? 'Produk' }}" 
-                                             class="rounded-3 object-fit-cover border" 
+                                             class="rounded-3 object-fit-cover border flex-shrink-0" 
                                              style="width: 50px; height: 50px;"
                                              onerror="this.src='https://placehold.co/100x100?text=Produk'">
-                                        <div>
-                                            <h6 class="fw-bold mb-0 text-dark" style="font-size: 13.5px;">
-                                                <a href="{{ $product ? route('pembeli.produk.detail', $product->id_product) : '#' }}" class="text-dark">{{ $product->title ?? 'Produk Digital' }}</a>
+                                        <div class="overflow-hidden">
+                                            <h6 class="fw-bold mb-0 text-dark text-truncate" style="font-size: 13.5px; max-width: 220px;">
+                                                <a href="{{ $product ? route('pembeli.produk.detail', $product->id_product) : '#' }}" class="text-dark text-decoration-none">{{ $product->title ?? 'Produk Digital' }}</a>
                                             </h6>
                                             <span class="text-muted small">Rp {{ number_format($item->price, 0, ',', '.') }}</span>
                                         </div>
@@ -91,8 +90,8 @@
                                 @if($order->payment_status === 'paid')
                                     <td class="text-center">
                                         @if($product && $product->file)
-                                            <a href="{{ route('pembeli.download.file', $item->id_order_item) }}" class="btn btn-success btn-sm fw-bold px-2 py-1">
-                                                <i class="bi bi-download me-1"></i> Unduh File
+                                            <a href="{{ route('pembeli.download.file', $item->id_order_item) }}" class="btn btn-success btn-sm fw-bold px-2 py-1 rounded-2">
+                                                <i class="bi bi-download me-1"></i> Unduh
                                             </a>
                                         @else
                                             <span class="badge bg-secondary">TIDAK ADA FILE</span>
@@ -109,38 +108,33 @@
 
     {{-- KOLOM KANAN: RINGKASAN PEMBAYARAN --}}
     <div class="col-lg-4">
-        <div class="card-box p-4 position-sticky" style="top: 90px;">
-            <h6 class="fw-bold mb-3 border-bottom pb-2">Rincian Pembayaran</h6>
-
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted small">Metode Pembayaran</span>
-                <strong class="small text-dark">{{ $order->payment_method ?? 'Transfer / Online' }}</strong>
+        <div class="card-box p-4">
+            <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">Ringkasan Tagihan</h6>
+            
+            <div class="d-flex justify-content-between mb-2 small text-muted">
+                <span>Subtotal Produk:</span>
+                <span class="text-dark fw-semibold">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
             </div>
-
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted small">Total Harga Item</span>
-                <span class="small font-weight-bold">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
+            <div class="d-flex justify-content-between mb-3 small text-muted">
+                <span>Biaya Layanan:</span>
+                <span class="text-success fw-semibold">Rp 0</span>
             </div>
-
+            
             <hr class="my-3">
-
+            
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <strong class="text-dark">Total Pembayaran</strong>
-                <strong class="text-primary fs-5">Rp {{ number_format($order->total_price, 0, ',', '.') }}</strong>
+                <strong class="text-dark">Total Pembayaran:</strong>
+                <span class="h4 fw-extrabold text-primary mb-0">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
             </div>
 
-            @if ($order->payment_status === 'paid')
-                <div class="alert alert-success small mb-0">
-                    <i class="bi bi-check-circle-fill me-1"></i> Transaksi telah berhasil diverifikasi oleh sistem.
+            <div class="p-3 bg-light rounded-3 small text-muted mt-3">
+                <div class="d-flex align-items-center gap-2 mb-1 text-dark fw-bold">
+                    <i class="bi bi-shield-check text-success"></i> Jaminan Akses File
                 </div>
-            @else
-                <div class="alert alert-warning small mb-0">
-                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Menunggu konfirmasi pembayaran dari sistem.
-                </div>
-            @endif
+                File produk yang telah dibayar dapat diakses selamanya di menu <strong>Download Saya</strong>.
+            </div>
         </div>
     </div>
-
 </div>
 
 @endsection

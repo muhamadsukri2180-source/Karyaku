@@ -2,1150 +2,164 @@
 
 @section('title', 'Marketplace - Karyaku')
 
-@section('content')
-
+@push('styles')
 <style>
-    :root {
-        --primary: #2563eb;
-        --primary-dark: #1e3a8a;
-        --primary-darker: #14225c;
-        --primary-light: #eff6ff;
-        --primary-soft: #dbeafe;
-
-        --coral: #ff7a59;
-        --coral-dark: #f0623f;
-
-        --white: #ffffff;
-        --text-dark: #1e293b;
-        --text-muted: #64748b;
-
-        --border-color: #e5edff;
-
-        --shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
-        --shadow-hover: 0 16px 34px rgba(37, 99, 235, 0.16);
-    }
-
-    /* =====================================================
-       MARKETPLACE WRAPPER
-    ===================================================== */
-
-    .marketplace-page {
-        width: 100%;
-        font-family: 'Poppins', sans-serif;
-    }
-
-    /* =====================================================
-       HEADER
-    ===================================================== */
-
-    .market-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-
-        gap: 20px;
-        margin-bottom: 24px;
-
-        flex-wrap: wrap;
-    }
-
-    .market-header h2 {
-        margin: 0;
-        color: var(--text-dark);
-
-        font-size: 25px;
-        font-weight: 800;
-    }
-
-    .market-header p {
-        margin: 5px 0 0;
-
-        color: var(--text-muted);
-
-        font-size: 13px;
-    }
-
-    /* =====================================================
-       SEARCH
-    ===================================================== */
-
-    .market-search {
-        width: 100%;
-        max-width: 520px;
-    }
-
-    .search-combo {
-        display: flex;
-
-        overflow: hidden;
-
-        background: white;
-
-        border-radius: 12px;
-
-        border: 1px solid var(--border-color);
-
-        box-shadow: var(--shadow);
-    }
-
-    .search-combo input {
-        flex: 1;
-
-        min-width: 0;
-
-        border: 0;
-        outline: 0;
-
-        padding: 12px 15px;
-
-        font-size: 12px;
-
-        color: var(--text-dark);
-    }
-
-    .search-combo input::placeholder {
-        color: #94a3b8;
-    }
-
-    .search-combo button {
-        width: 90px;
-
-        border: 0;
-
-        background: var(--coral);
-
-        color: white;
-
-        font-size: 12px;
-        font-weight: 700;
-
-        transition: .2s;
-    }
-
-    .search-combo button:hover {
-        background: var(--coral-dark);
-    }
-
-    /* =====================================================
-       TOOLBAR
-    ===================================================== */
-
-    .market-toolbar {
-        display: flex;
-
-        align-items: center;
-        justify-content: space-between;
-
-        gap: 15px;
-
-        margin-bottom: 18px;
-
-        flex-wrap: wrap;
-    }
-
-    .filter-pills {
-        display: flex;
-
-        align-items: center;
-
-        gap: 8px;
-
-        flex-wrap: wrap;
-    }
-
-    .filter-pill {
-        display: inline-flex;
-        align-items: center;
-
-        border: 1px solid var(--border-color);
-
-        background: white;
-
-        color: var(--text-dark);
-
-        padding: 8px 15px;
-
+    .market-banner {
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
         border-radius: 20px;
-
-        font-size: 11px;
-
-        font-weight: 600;
-
-        cursor: pointer;
-
-        transition: .2s;
-    }
-
-    .filter-pill:hover,
-    .filter-pill.active {
-        background: var(--primary);
-
-        color: white;
-
-        border-color: var(--primary);
-    }
-
-    .sort-wrapper {
-        display: flex;
-
-        align-items: center;
-
-        gap: 8px;
-    }
-
-    .sort-wrapper label {
-        color: var(--text-muted);
-
-        font-size: 11px;
-
-        font-weight: 600;
-    }
-
-    .sort-select {
-        min-width: 145px;
-
-        border: 1px solid var(--border-color);
-
-        background: white;
-
-        color: var(--text-dark);
-
-        border-radius: 10px;
-
-        padding: 8px 12px;
-
-        font-size: 11px;
-
-        font-weight: 600;
-
-        outline: none;
-
+        padding: 28px 32px;
+        color: #ffffff;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
         box-shadow: var(--shadow);
-
-        cursor: pointer;
+    }
+    .market-banner::after {
+        content: '';
+        position: absolute;
+        right: -30px;
+        top: -30px;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+        pointer-events: none;
     }
 
-    .result-count {
-        color: var(--text-muted);
-
-        font-size: 11px;
-
-        white-space: nowrap;
-    }
-
-    /* =====================================================
-       CATEGORY
-    ===================================================== */
-
-    .category-section {
-        margin-bottom: 22px;
-    }
-
-    .category-scroll {
+    .cat-chips-scroll {
         display: flex;
-
         gap: 8px;
-
         overflow-x: auto;
-
-        padding: 3px 2px 8px;
-
+        padding-bottom: 10px;
+        margin-bottom: 24px;
         scrollbar-width: thin;
     }
-
-    .category-scroll::-webkit-scrollbar {
-        height: 5px;
-    }
-
-    .category-scroll::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-
-        border-radius: 20px;
-    }
-
-    .category-pill {
-        flex-shrink: 0;
-
-        display: inline-flex;
-
-        align-items: center;
-
-        gap: 6px;
-
-        border: 1px solid var(--border-color);
-
-        background: white;
-
-        color: var(--text-dark);
-
-        padding: 8px 14px;
-
-        border-radius: 20px;
-
-        font-size: 10px;
-
-        font-weight: 600;
-
-        transition: .2s;
-
+    .cat-chip {
         white-space: nowrap;
-    }
-
-    .category-pill:hover {
-        background: var(--primary-light);
-
-        color: var(--primary);
-
-        border-color: var(--primary-soft);
-    }
-
-    .category-pill.active {
-        background: var(--primary);
-
-        color: white;
-
-        border-color: var(--primary);
-
-        box-shadow: 0 6px 16px rgba(37, 99, 235, .18);
-    }
-
-    /* =====================================================
-       PRODUCT GRID
-    ===================================================== */
-
-    .product-grid {
-        display: grid;
-
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-
-        gap: 18px;
-    }
-
-    /* =====================================================
-       PRODUCT CARD
-    ===================================================== */
-
-    .product-card {
-        position: relative;
-
-        background: white;
-
-        border-radius: 15px;
-
-        overflow: hidden;
-
+        padding: 8px 16px;
+        border-radius: 30px;
+        background: #ffffff;
         border: 1px solid var(--border-color);
-
-        box-shadow: var(--shadow);
-
-        transition: .25s;
-
-        min-width: 0;
-    }
-
-    .product-card:hover {
-        transform: translateY(-5px);
-
-        box-shadow: var(--shadow-hover);
-    }
-
-    /* =====================================================
-       PRODUCT IMAGE
-    ===================================================== */
-
-    .product-thumb {
-        height: 165px;
-
-        position: relative;
-
-        overflow: hidden;
-
-        background: #eaf1ff;
-    }
-
-    .product-thumb img {
-        width: 100%;
-        height: 100%;
-
-        object-fit: cover;
-
-        display: block;
-
-        transition: .4s;
-    }
-
-    .product-card:hover .product-thumb img {
-        transform: scale(1.06);
-    }
-
-    /* =====================================================
-       CATEGORY BADGE
-    ===================================================== */
-
-    .cat-badge {
-        position: absolute;
-
-        top: 9px;
-        left: 9px;
-
-        padding: 4px 9px;
-
-        background: rgba(20, 34, 92, .85);
-
-        color: white;
-
-        border-radius: 20px;
-
-        font-size: 9px;
-
-        font-weight: 700;
-
-        z-index: 2;
-    }
-
-    /* =====================================================
-       WISHLIST
-    ===================================================== */
-
-    .wish-btn {
-        position: absolute;
-
-        top: 8px;
-        right: 8px;
-
-        width: 31px;
-        height: 31px;
-
-        border: 0;
-
-        border-radius: 50%;
-
-        background: rgba(255, 255, 255, .94);
-
-        color: #64748b;
-
-        display: flex;
-
+        color: var(--text-dark);
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: var(--transition);
+        display: inline-flex;
         align-items: center;
-        justify-content: center;
-
-        z-index: 3;
-
-        transition: .2s;
-
-        cursor: pointer;
-    }
-
-    .wish-btn:hover,
-    .wish-btn.active {
-        color: var(--coral);
-
-        transform: scale(1.05);
-    }
-
-    /* =====================================================
-       PRODUCT BODY
-    ===================================================== */
-
-    .product-body {
-        padding: 12px;
-
-        display: flex;
-
-        flex-direction: column;
-
         gap: 6px;
     }
-
-    .product-body h6 {
-        margin: 0;
-
-        min-height: 38px;
-
-        font-size: 12px;
-
-        line-height: 1.5;
-
-        font-weight: 600;
-    }
-
-    .product-body h6 a {
-        color: var(--text-dark);
-
-        text-decoration: none;
-
-        transition: .2s;
-    }
-
-    .product-body h6 a:hover {
+    .cat-chip:hover {
+        background: var(--primary-light);
+        border-color: #bfdbfe;
         color: var(--primary);
     }
-
-    /* =====================================================
-       PRICE
-    ===================================================== */
-
-    .product-price {
-        color: var(--coral);
-
-        font-size: 15px;
-
-        font-weight: 800;
+    .cat-chip.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
     }
 
-    /* =====================================================
-       META
-    ===================================================== */
-
-    .product-meta {
+    .filter-bar {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 14px 18px;
+        margin-bottom: 24px;
         display: flex;
-
         align-items: center;
-
         justify-content: space-between;
-
-        gap: 5px;
-
-        color: var(--text-muted);
-
-        font-size: 9px;
+        gap: 16px;
+        flex-wrap: wrap;
     }
 
-    .product-meta span {
-        white-space: nowrap;
-    }
-
-    .product-meta i {
-        color: #94a3b8;
-    }
-
-    /* =====================================================
-       SELLER
-    ===================================================== */
-
-    .product-seller {
-        display: flex;
-
-        align-items: center;
-
-        gap: 6px;
-
-        color: var(--text-muted);
-
-        font-size: 9px;
-
-        min-width: 0;
-    }
-
-    .product-seller img {
-        width: 20px;
-        height: 20px;
-
-        border-radius: 50%;
-
-        flex-shrink: 0;
-    }
-
-    .product-seller span {
-        overflow: hidden;
-
-        text-overflow: ellipsis;
-
-        white-space: nowrap;
-    }
-
-    /* =====================================================
-       ADD CART
-    ===================================================== */
-
-    .btn-add-cart {
-        width: 100%;
-
-        margin-top: 5px;
-
-        border: 0;
-
-        border-radius: 9px;
-
-        background: var(--primary-light);
-
-        color: var(--primary);
-
-        padding: 8px;
-
-        font-size: 10px;
-
-        font-weight: 700;
-
-        transition: .2s;
-
-        cursor: pointer;
-    }
-
-    .btn-add-cart:hover {
-        background: var(--primary);
-
-        color: white;
-
-        transform: translateY(-1px);
-    }
-
-    /* =====================================================
-       EMPTY STATE
-    ===================================================== */
-
-    .empty-product {
-        grid-column: 1 / -1;
-
-        background: white;
-
-        border-radius: 18px;
-
-        border: 1px solid var(--border-color);
-
-        box-shadow: var(--shadow);
-
-        padding: 70px 20px;
-
-        text-align: center;
-    }
-
-    .empty-icon {
-        width: 65px;
-        height: 65px;
-
-        margin: 0 auto 15px;
-
-        border-radius: 50%;
-
-        background: var(--primary-light);
-
-        color: var(--primary);
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        font-size: 27px;
-    }
-
-    .empty-product h5 {
-        color: var(--text-dark);
-
-        font-size: 16px;
-
-        font-weight: 700;
-
-        margin-bottom: 7px;
-    }
-
-    .empty-product p {
-        color: var(--text-muted);
-
-        font-size: 12px;
-
-        margin-bottom: 18px;
-    }
-
-    .btn-reset {
-        display: inline-flex;
-
-        align-items: center;
-
-        gap: 6px;
-
-        border: 1px solid var(--primary);
-
-        color: var(--primary);
-
-        background: white;
-
-        padding: 8px 15px;
-
-        border-radius: 9px;
-
-        font-size: 11px;
-
-        font-weight: 700;
-
-        text-decoration: none;
-
-        transition: .2s;
-    }
-
-    .btn-reset:hover {
-        background: var(--primary);
-
-        color: white;
-    }
-
-    /* =====================================================
-       PAGINATION
-    ===================================================== */
-
-    .market-pagination {
-        margin-top: 25px;
-    }
-
-    .market-pagination nav {
-        display: flex;
-
-        justify-content: center;
-    }
-
-    .market-pagination .pagination {
-        margin-bottom: 0;
-
-        gap: 4px;
-    }
-
-    .market-pagination .page-link {
-        border-radius: 8px !important;
-
-        border: 1px solid var(--border-color);
-
-        color: var(--primary);
-
-        font-size: 11px;
-
-        padding: 7px 11px;
-    }
-
-    .market-pagination .page-item.active .page-link {
-        background: var(--primary);
-
-        border-color: var(--primary);
-
-        color: white;
-    }
-
-    .market-pagination .page-link:hover {
-        background: var(--primary-light);
-
-        color: var(--primary);
-    }
-
-    /* =====================================================
-       ALERT
-    ===================================================== */
-
-    .market-alert {
-        border: 0;
-
-        border-radius: 10px;
-
-        font-size: 11px;
-
-        box-shadow: var(--shadow);
-    }
-
-    /* =====================================================
-       RESPONSIVE
-    ===================================================== */
-
-    @media(max-width: 1250px) {
-
-        .product-grid {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-        }
-
-    }
-
-    @media(max-width: 1000px) {
-
-        .product-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-
-        .market-header {
-            align-items: flex-start;
-        }
-
-        .market-search {
-            max-width: 100%;
-        }
-
-    }
-
-    @media(max-width: 700px) {
-
-        .product-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-
-            gap: 12px;
-        }
-
-        .product-thumb {
-            height: 140px;
-        }
-
-        .market-header h2 {
-            font-size: 21px;
-        }
-
-        .market-header p {
-            font-size: 11px;
-        }
-
-        .market-toolbar {
-            align-items: flex-start;
-        }
-
-        .sort-wrapper {
-            width: 100%;
-
-            justify-content: space-between;
-        }
-
-        .sort-select {
-            flex: 1;
-        }
-
-    }
-
-    @media(max-width: 450px) {
-
-        .product-grid {
-            gap: 10px;
-        }
-
-        .product-thumb {
-            height: 125px;
-        }
-
-        .product-body {
-            padding: 10px;
-        }
-
-        .product-body h6 {
-            font-size: 11px;
-        }
-
-        .product-price {
-            font-size: 13px;
-        }
-
-        .product-meta {
-            font-size: 8px;
-        }
-
-        .product-seller {
-            font-size: 8px;
-        }
-
-        .btn-add-cart {
-            font-size: 9px;
-        }
-
-        .search-combo button {
-            width: 65px;
-        }
-
+    @media(max-width: 576px) {
+        .market-banner { padding: 20px 18px; }
+        .filter-bar { padding: 12px 14px; }
     }
 </style>
+@endpush
 
+@section('content')
 
-<div class="marketplace-page">
-
-    {{-- =====================================================
-         HEADER
-    ====================================================== --}}
-
-    <div class="market-header">
-        <div>
-            <h2>Marketplace</h2>
-            <p>
-                Temukan berbagai barang dan jasa digital dari kreator Karyaku.
-            </p>
+    {{-- Banner Marketplace --}}
+    <div class="market-banner">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <span class="badge bg-white bg-opacity-25 text-white px-3 py-1 rounded-pill small fw-bold mb-2">
+                    <i class="bi bi-shop me-1"></i> Katalog Resmi
+                </span>
+                <h3 class="fw-extrabold mb-1">Jelajahi Marketplace Digital</h3>
+                <p class="text-white-50 mb-0 small">Temukan aset visual, desain grafis, 3D model, UI/UX, dan berkas kreatif langsung dari kreator.</p>
+            </div>
+            <div class="d-none d-md-block">
+                <i class="bi bi-grid-3x3-gap-fill fs-1 text-white opacity-50"></i>
+            </div>
         </div>
     </div>
 
-
-    {{-- =====================================================
-         SESSION MESSAGE
-    ====================================================== --}}
-
-    @if(session('success'))
-
-        <div class="alert alert-success market-alert mb-3">
-            <i class="bi bi-check-circle-fill me-2"></i>
-
-            {{ session('success') }}
-        </div>
-
-    @endif
-
-
-    @if(session('error'))
-
-        <div class="alert alert-danger market-alert mb-3">
-            <i class="bi bi-exclamation-circle-fill me-2"></i>
-
-            {{ session('error') }}
-        </div>
-
-    @endif
-
-
-    {{-- =====================================================
-         CATEGORY
-    ====================================================== --}}
-
-    <div class="category-section">
-
-        <div class="category-scroll">
-
-            {{-- SEMUA --}}
-
-            <a
-                href="{{ route('pembeli.marketplace', request()->except(['category', 'page'])) }}"
-                class="category-pill {{ !request('category') ? 'active' : '' }}"
-            >
-                <i class="bi bi-grid-fill"></i>
-                Semua Kategori
+    {{-- Kategori Horizontal Chips --}}
+    <div class="cat-chips-scroll">
+        <a href="{{ route('pembeli.marketplace', request()->except('category', 'page')) }}" 
+           class="cat-chip {{ !request('category') ? 'active' : '' }}">
+            <i class="bi bi-grid-fill"></i> Semua Kategori
+        </a>
+        @foreach ($categories as $cat)
+            <a href="{{ route('pembeli.marketplace', array_merge(request()->except('page'), ['category' => $cat->id_category])) }}" 
+               class="cat-chip {{ request('category') == $cat->id_category ? 'active' : '' }}">
+                <span>{{ $cat->name }}</span>
             </a>
-
-
-            {{-- DATABASE CATEGORY --}}
-
-            @foreach($categories as $cat)
-
-                <a
-                    href="{{ route(
-                        'pembeli.marketplace',
-                        array_merge(
-                            request()->except('page'),
-                            ['category' => $cat->id_category]
-                        )
-                    ) }}"
-                    class="category-pill {{ request('category') == $cat->id_category ? 'active' : '' }}"
-                >
-
-                    <i class="bi bi-tag-fill"></i>
-
-                    {{ $cat->name }}
-
-                </a>
-
-            @endforeach
-
-        </div>
-
+        @endforeach
     </div>
 
-
-    {{-- =====================================================
-         TOOLBAR
-    ====================================================== --}}
-
-    <div class="market-toolbar">
-
-        <div class="filter-pills">
-
-            {{-- TERLARIS --}}
-
-            <a
-                href="{{ route(
-                    'pembeli.marketplace',
-                    array_merge(
-                        request()->except('page', 'sort'),
-                        ['sort' => 'terlaris']
-                    )
-                ) }}"
-                class="filter-pill {{ request('sort', 'terlaris') == 'terlaris' ? 'active' : '' }}"
-            >
-                <i class="bi bi-fire me-1"></i>
-                Terlaris
-            </a>
-
-
-            {{-- TERBARU --}}
-
-            <a
-                href="{{ route(
-                    'pembeli.marketplace',
-                    array_merge(
-                        request()->except('page', 'sort'),
-                        ['sort' => 'terbaru']
-                    )
-                ) }}"
-                class="filter-pill {{ request('sort') == 'terbaru' ? 'active' : '' }}"
-            >
-                <i class="bi bi-stars me-1"></i>
-                Terbaru
-            </a>
-
-
-            {{-- TERMURAH --}}
-
-            <a
-                href="{{ route(
-                    'pembeli.marketplace',
-                    array_merge(
-                        request()->except('page', 'sort'),
-                        ['sort' => 'termurah']
-                    )
-                ) }}"
-                class="filter-pill {{ request('sort') == 'termurah' ? 'active' : '' }}"
-            >
-                <i class="bi bi-arrow-down me-1"></i>
-                Harga Terendah
-            </a>
-
-
-            {{-- TERMAHAL --}}
-
-            <a
-                href="{{ route(
-                    'pembeli.marketplace',
-                    array_merge(
-                        request()->except('page', 'sort'),
-                        ['sort' => 'termahal']
-                    )
-                ) }}"
-                class="filter-pill {{ request('sort') == 'termahal' ? 'active' : '' }}"
-            >
-                <i class="bi bi-arrow-up me-1"></i>
-                Harga Tertinggi
-            </a>
-
+    {{-- Filter & Sorting Bar --}}
+    <div class="filter-bar">
+        <div class="d-flex align-items-center gap-2">
+            <span class="fw-bold text-dark small">Menampilkan {{ $products->total() }} Produk</span>
+            @if(request('q'))
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                    Pencarian: "{{ request('q') }}"
+                    <a href="{{ route('pembeli.marketplace', request()->except('q', 'page')) }}" class="text-primary ms-1"><i class="bi bi-x"></i></a>
+                </span>
+            @endif
         </div>
 
-
-        {{-- RESULT COUNT --}}
-
-        <div class="result-count">
-
-            <i class="bi bi-box-seam me-1"></i>
-
-            {{ $products->total() }} produk
-
-        </div>
-
+        <form action="{{ route('pembeli.marketplace') }}" method="GET" class="d-flex align-items-center gap-2 ms-auto">
+            @if(request('q')) <input type="hidden" name="q" value="{{ request('q') }}"> @endif
+            @if(request('category')) <input type="hidden" name="category" value="{{ request('category') }}"> @endif
+            
+            <label for="sortSelect" class="small text-muted fw-semibold text-nowrap d-none d-sm-inline">Urutkan:</label>
+            <select name="sort" id="sortSelect" class="form-select form-select-sm rounded-3 border-secondary-subtle" style="min-width: 140px;" onchange="this.form.submit()">
+                <option value="terlaris" {{ request('sort') == 'terlaris' ? 'selected' : '' }}>🔥 Terlaris</option>
+                <option value="terbaru" {{ request('sort') == 'terbaru' ? 'selected' : '' }}>✨ Terbaru</option>
+                <option value="termurah" {{ request('sort') == 'termurah' ? 'selected' : '' }}>💲 Harga Terendah</option>
+                <option value="termahal" {{ request('sort') == 'termahal' ? 'selected' : '' }}>💎 Harga Tertinggi</option>
+            </select>
+        </form>
     </div>
 
-
-    {{-- =====================================================
-         PRODUCT GRID
-    ====================================================== --}}
-
-    <div class="product-grid mb-4">
-        @forelse($products as $product)
+    {{-- Grid Produk --}}
+    <div class="product-grid" id="marketProductGrid">
+        @forelse ($products as $product)
             @include('pembeli.partials.product-card', ['product' => $product])
         @empty
-            {{-- EMPTY STATE FULL WIDTH --}}
-            <div class="empty-product w-100 py-5 text-center bg-white rounded-4 border border-light shadow-sm my-3" style="grid-column: 1 / -1;">
-                <div class="empty-icon mb-3">
-                    <i class="bi bi-search display-4 text-muted"></i>
-                </div>
-                <h5 class="fw-bold text-dark fs-5 mb-2">Produk Tidak Ditemukan</h5>
-                <p class="text-muted small mb-4">Tidak ada produk yang sesuai dengan pencarian atau filter yang kamu pilih.</p>
-                <a href="{{ route('pembeli.marketplace') }}" class="btn btn-primary btn-sm px-4 py-2 rounded-3 fw-bold">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Pencarian
+            <div class="w-100 text-center py-5 bg-white rounded-4 border shadow-sm" style="grid-column: 1 / -1;">
+                <i class="bi bi-search display-4 text-muted mb-3 d-block"></i>
+                <h5 class="fw-bold text-dark">Tidak Ada Produk yang Ditemukan</h5>
+                <p class="text-muted small mb-3">Coba gunakan kata kunci lain atau pilih kategori yang berbeda.</p>
+                <a href="{{ route('pembeli.marketplace') }}" class="btn btn-primary btn-sm px-3 py-2 fw-semibold rounded-3">
+                    <i class="bi bi-arrow-repeat me-1"></i> Reset Filter Pencarian
                 </a>
             </div>
         @endforelse
     </div>
 
-
-    {{-- =====================================================
-         PAGINATION
-    ====================================================== --}}
-
-    @if($products->hasPages())
-
-        <div class="market-pagination">
-
-            {{ $products->appends(request()->query())->links() }}
-
+    {{-- Pagination --}}
+    @if ($products->hasPages())
+        <div class="d-flex justify-content-center mt-5">
+            {{ $products->links() }}
         </div>
-
     @endif
-
-
-</div>
-
-
-{{-- =====================================================
-     JAVASCRIPT
-====================================================== --}}
-
-<script>
-
-    document.addEventListener('DOMContentLoaded', function () {
-
-        /*
-        |--------------------------------------------------------------------------
-        | WISHLIST BUTTON
-        |--------------------------------------------------------------------------
-        */
-
-        document.querySelectorAll('.wish-btn').forEach(function (button) {
-
-            button.addEventListener('click', function () {
-
-                this.classList.add('active');
-
-            });
-
-        });
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | ADD TO CART FEEDBACK
-        |--------------------------------------------------------------------------
-        */
-
-        document.querySelectorAll('.btn-add-cart').forEach(function (button) {
-
-            const form = button.closest('form');
-
-            if (!form) {
-                return;
-            }
-
-
-            form.addEventListener('submit', function () {
-
-                button.disabled = true;
-
-                button.innerHTML =
-                    '<i class="bi bi-check2-circle me-1"></i> Menambahkan...';
-
-            });
-
-        });
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | AUTO HIDE ALERT
-        |--------------------------------------------------------------------------
-        */
-
-        setTimeout(function () {
-
-            document.querySelectorAll('.market-alert').forEach(function (alert) {
-
-                alert.style.transition = 'opacity .4s';
-
-                alert.style.opacity = '0';
-
-                setTimeout(function () {
-
-                    alert.remove();
-
-                }, 400);
-
-            });
-
-        }, 3000);
-
-    });
-
-</script>
 
 @endsection
