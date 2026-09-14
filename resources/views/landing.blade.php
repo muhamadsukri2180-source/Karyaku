@@ -229,27 +229,10 @@
 
                 <!-- MASUK -->
                 <a href="{{ url('/auth/login') }}"
-                   class="hidden sm:inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
-
+                   class="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 text-xs font-bold text-white bg-accent hover:bg-accentHover rounded-lg transition shadow-lg shadow-orange-900/20 ">
                     <i class="fa-solid fa-right-to-bracket"></i>
 
                     Masuk
-                </a>
-
-                <!-- MASUK SEBAGAI PENJUAL / DAFTAR PENJUAL -->
-                <a href="{{ url('/auth/login?role=penjual') }}"
-                   class="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 text-xs font-bold text-white bg-accent hover:bg-accentHover rounded-lg transition shadow-lg shadow-orange-900/20">
-
-                    <i class="fa-solid fa-store"></i>
-
-                    <span class="hidden sm:inline">
-                        Masuk sebagai Penjual
-                    </span>
-
-                    <span class="sm:hidden">
-                        Penjual
-                    </span>
-
                 </a>
 
                 <!-- MOBILE -->

@@ -284,12 +284,12 @@ Route::middleware(['auth', 'suspended'])->group(function () {
 Route::middleware(['auth', 'suspended', 'role:customer_service'])->prefix('cs')->name('cs.')->group(function () {
     Route::get('/dashboard', [CsController::class, 'dashboard'])->name('dashboard');
 
-    Route::get('/tiket', [CsController::class, 'tiket'])->name('tiket');
-    Route::get('/tiket/{id}', [CsController::class, 'tiketDetail'])->name('tiket.detail');
-    Route::post('/tiket/{id}/balas', [CsController::class, 'balasTiket'])->name('tiket.balas');
 
     Route::get('/laporan', [CsController::class, 'laporan'])->name('laporan');
     Route::post('/laporan/{id}/tindak', [CsController::class, 'tindakLaporan'])->name('laporan.tindak');
+    Route::post('/laporan/user/{id}/tindak', [CsController::class, 'tindakUserLaporan'])->name('laporan.user.tindak');
+    Route::post('/laporan/produk/{id}/tindak', [CsController::class, 'tindakProdukLaporan'])->name('laporan.produk.tindak');
+    Route::post('/laporan/appeal/{id}/tindak', [CsController::class, 'tindakAppeal'])->name('laporan.appeal.tindak');
 
     Route::get('/transaksi', [CsController::class, 'transaksi'])->name('transaksi');
     Route::get('/transaksi/{id}', [CsController::class, 'transaksiDetail'])->name('transaksi.detail');

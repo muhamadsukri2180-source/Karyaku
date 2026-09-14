@@ -88,10 +88,6 @@
                     <i class="fa-solid fa-chart-pie w-4 text-center"></i><span>Dashboard</span>
                 </a>
 
-                <a href="{{ route('cs.tiket') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all">
-                    <i class="fa-solid fa-headset w-4 text-center"></i><span>Tiket Bantuan</span>
-                </a>
-
                 <a href="{{ route('cs.laporan') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl active-menu transition-all">
                     <i class="fa-solid fa-triangle-exclamation w-4 text-center"></i><span>Laporan & Moderasi</span>
                 </a>
@@ -184,16 +180,20 @@
                                 <tr class="hover:bg-slate-50 transition-colors bg-white">
                                     <td class="py-3 px-6 text-xs font-semibold text-slate-700">{{ $report->reporter->name ?? 'User #'.$report->user_id }}</td>
                                     <td class="py-3 px-6 text-xs font-semibold text-slate-700">
-                                        {{ $report->reportedUser->name ?? 'Laporan Umum' }}
+                                        @if($report->reportedUser)
+                                            {{ $report->reportedUser->name }}
+                                        @else
+                                            <span class="italic text-slate-400">Laporan Umum</span>
+                                        @endif
                                     </td>
-                                    <td class="py-3 px-6"><p class="text-xs text-slate-700 font-medium">{{ $report->reason }}</p></td>
-                                    <td class="py-3 px-6"><p class="text-xs text-slate-600 w-48 truncate">{{ $report->description ?? '-' }}</p></td>
+                                    <td class="py-3 px-6"><span class="inline-block bg-sky-50 border border-sky-200 text-sky-700 text-[10px] font-bold px-2 py-1 rounded-lg">{{ $report->reason }}</span></td>
+                                    <td class="py-3 px-6"><p class="text-xs text-slate-600 max-w-[180px] break-words" title="{{ $report->description }}">{{ $report->description ? \Illuminate\Support\Str::limit($report->description, 60) : '-' }}</p></td>
                                     <td class="py-3 px-6"><span class="text-[10px] font-bold px-2 py-1 rounded-md border {{ $statusColor }}">{{ ucfirst($report->status) }}</span></td>
-                                    <td class="py-3 px-6 text-xs text-slate-600">{{ optional($report->created_at)->format('d M Y - H:i') }}</td>
+                                    <td class="py-3 px-6 text-xs text-slate-500 whitespace-nowrap">{{ optional($report->created_at)->format('d M Y') }}<br><span class="text-[10px]">{{ optional($report->created_at)->format('H:i') }}</span></td>
                                     <td class="py-3 px-6">
                                         <div class="flex justify-center">
                                             @if(in_array($report->status, ['pending', 'escalated']))
-                                            <button type="button" onclick="openTindakModal('user', '{{ $report->id_report }}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer">
+                                            <button type="button" onclick="openTindakModal('user', '{{ $report->id }}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer">
                                                 <i class="fa-solid fa-gavel"></i> Tindak Lanjut
                                             </button>
                                             @else
@@ -247,13 +247,18 @@
                                         <p class="text-xs font-semibold text-slate-700">{{ $report->product->title ?? 'Produk dihapus' }}</p>
                                         <p class="text-[10px] text-slate-500">{{ $report->product->seller->name ?? '-' }}</p>
                                     </td>
-                                    <td class="py-3 px-6"><p class="text-xs text-slate-600 w-56 truncate">{{ $report->reason }}</p></td>
+                                    <td class="py-3 px-6">
+                                        <span class="inline-block bg-orange-50 border border-orange-200 text-orange-700 text-[10px] font-bold px-2 py-1 rounded-lg">{{ $report->reason }}</span>
+                                        @if($report->description)
+                                        <p class="text-[10px] text-slate-500 mt-1 max-w-[140px] break-words" title="{{ $report->description }}">{{ \Illuminate\Support\Str::limit($report->description, 50) }}</p>
+                                        @endif
+                                    </td>
                                     <td class="py-3 px-6"><span class="text-[10px] font-bold px-2 py-1 rounded-md border {{ $statusColor }}">{{ ucfirst($report->status) }}</span></td>
-                                    <td class="py-3 px-6 text-xs text-slate-600">{{ optional($report->created_at)->format('d M Y - H:i') }}</td>
+                                    <td class="py-3 px-6 text-xs text-slate-500 whitespace-nowrap">{{ optional($report->created_at)->format('d M Y') }}<br><span class="text-[10px]">{{ optional($report->created_at)->format('H:i') }}</span></td>
                                     <td class="py-3 px-6">
                                         <div class="flex justify-center">
-                                            @if($report->status === 'pending')
-                                            <button type="button" onclick="openTindakModal('produk', '{{ $report->id_report }}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer">
+                                            @if(in_array($report->status, ['pending', 'escalated']))
+                                            <button type="button" onclick="openTindakModal('produk', '{{ $report->id }}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer">
                                                 <i class="fa-solid fa-shield-halved"></i> Tindak Lanjut
                                             </button>
                                             @else
@@ -441,16 +446,18 @@
                 @csrf
                 <div>
                     <label class="text-xs font-bold text-slate-700 uppercase">Pilih Aksi</label>
-                    <select name="action" required class="mt-2 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700">
-                        <option value="peringatan">Kirim Peringatan</option>
-                        <option value="suspend">Suspend Akun / Takedown</option>
-                        <option value="eskalasi">Eskalasi ke Admin</option>
-                        <option value="abaikan">Abaikan Laporan</option>
+                    <select name="action" id="selectAksi" required class="mt-2 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700">
+                        <option value="peringatan">⚠️ Kirim Peringatan ke Terlapor</option>
+                        <option value="teguran">📢 Kirim Teguran ke Terlapor</option>
+                        <option value="suspend">🚫 Suspend Akun Terlapor</option>
+                        <option value="sembunyikan" id="optSembunyikan" style="display:none">🙈 Sembunyikan Produk</option>
+                        <option value="eskalasi">📤 Eskalasi ke Admin</option>
+                        <option value="abaikan">🗑️ Abaikan Laporan</option>
                     </select>
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-700 uppercase">Catatan CS</label>
-                    <textarea name="admin_notes" rows="3" required placeholder="Berikan catatan penanganan..." class="mt-2 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700"></textarea>
+                    <label class="text-xs font-bold text-slate-700 uppercase">Catatan CS <span class="text-red-500">*</span></label>
+                    <textarea name="admin_notes" rows="3" required placeholder="Berikan catatan penanganan..." class="mt-2 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 resize-none"></textarea>
                 </div>
                 <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-md transition">Simpan Tindakan</button>
             </form>
@@ -529,19 +536,27 @@
         const modalTitle = document.getElementById('modalTitle');
 
         function openTindakModal(type, id) {
-            formTindak.action = type === 'produk' ? "{{ url('cs/laporan/produk') }}/" + id : "{{ url('cs/laporan/user') }}/" + id;
-            modalTitle.textContent = type === 'produk' ? "Tindak Lanjut Laporan Produk" : "Tindak Lanjut Laporan Pengguna";
+            const optSembunyikan = document.getElementById('optSembunyikan');
+            if (type === 'produk') {
+                formTindak.action = "{{ url('cs/laporan/produk') }}/" + id + "/tindak";
+                modalTitle.textContent = "Tindak Lanjut Laporan Produk";
+                if (optSembunyikan) optSembunyikan.style.display = '';
+            } else {
+                formTindak.action = "{{ url('cs/laporan/user') }}/" + id + "/tindak";
+                modalTitle.textContent = "Tindak Lanjut Laporan Pengguna";
+                if (optSembunyikan) optSembunyikan.style.display = 'none';
+            }
             tindakModal.classList.remove('hidden');
         }
-        function closeTindakModal() { tindakModal.classList.add('hidden'); }
+        function closeTindakModal() { tindakModal.classList.add('hidden'); formTindak.reset(); }
 
         const appealModal = document.getElementById('appealModal');
         const formAppeal = document.getElementById('formAppeal');
 
         function openAppealModal(appeal) {
-            formAppeal.action = "{{ url('cs/laporan/appeal') }}/" + appeal.id_appeal;
-            document.getElementById('appealUserName').textContent = "Pemohon: " + (appeal.user ? appeal.user.name : 'User');
-            document.getElementById('appealUserReason').textContent = "Alasan: \"" + appeal.reason + "\"";
+            formAppeal.action = "{{ url('cs/laporan/appeal') }}/" + appeal.id + "/tindak";
+            document.getElementById('appealUserName').textContent = "Pemohon: " + (appeal.user ? appeal.user.name : 'User #' + appeal.user_id);
+            document.getElementById('appealUserReason').textContent = "Alasan banding: \"" + (appeal.reason || '-') + "\"";
             appealModal.classList.remove('hidden');
         }
         function closeAppealModal() { appealModal.classList.add('hidden'); }

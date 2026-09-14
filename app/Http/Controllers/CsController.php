@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\AccountAppeal;
-use App\Models\CustomerService;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Product;
@@ -19,7 +18,6 @@ class CsController extends Controller
     {
         $totalLaporanMasuk = Report::where('status', 'pending')->count();
         $laporanSelesai = Report::whereIn('status', ['reviewed', 'dismissed'])->count();
-        $totalTiketPending = CustomerService::where('status', 'pending')->count();
 
         $recentReports = Report::select(['user_id', 'reported_user_id', 'product_id', 'reason', 'status', 'created_at'])
             ->with([
@@ -29,90 +27,49 @@ class CsController extends Controller
             ])
             ->latest('created_at')->limit(5)->get();
 
-        $recentTickets = CustomerService::select(['id', 'user_id', 'subject', 'status', 'created_at'])
-            ->with(['user:id_user,name,email'])
-            ->latest('created_at')->limit(5)->get();
-
         return view('cs.dashboard', compact(
             'totalLaporanMasuk',
             'laporanSelesai',
-            'totalTiketPending',
-            'recentReports',
-            'recentTickets'
+            'recentReports'
         ));
     }
 
-    public function tiket(Request $request)
-    {
-        $search = $request->query('search');
-        $status = $request->query('status');
-
-        $tickets = CustomerService::select('id', 'user_id', 'subject', 'status', 'created_at')
-            ->with('user:id_user,name,email')
-            ->when($status, fn ($q) => $q->where('status', $status))
-            ->when($search, function ($q) use ($search) {
-                $q->where(fn ($query) => $query->where('subject', 'like', "%{$search}%")
-                    ->orWhereHas('user', fn ($qq) => $qq->where('name', 'like', "%{$search}%")));
-            })
-            ->latest()->paginate(10)->withQueryString();
-
-        return view('cs.tiket', compact('tickets'));
-    }
-
-    public function tiketDetail(string|int $id)
-    {
-        return response()->json(CustomerService::with('user:id_user,name,email,avatar')->findOrFail($id));
-    }
-
-    public function balasTiket(Request $request, string|int $id)
-    {
-        $request->validate([
-            'status'     => 'required|string|in:pending,in_progress,resolved,closed',
-            'admin_note' => 'required|string|max:1000',
-        ]);
-
-        DB::transaction(function () use ($request, $id) {
-            $ticket = CustomerService::findOrFail($id);
-            $ticket->update($request->only(['status', 'admin_note']));
-
-            if ($targetUserId = $ticket->user_id ?? $ticket->id_user ?? null) {
-                Notification::create([
-                    'user_id'     => $targetUserId,
-                    'name'        => 'Balasan Tiket Bantuan: ' . $ticket->subject,
-                    'description' => 'CS memberikan respon: ' . $request->admin_note,
-                    'is_read'     => false,
-                ]);
-            }
-        });
-
-        return redirect()->back()->with('success', 'Tiket bantuan berhasil diperbarui dan notifikasi dikirim ke pengguna.');
-    }
 
     public function laporan(Request $request)
     {
         $search = $request->query('search');
 
-        $reportsUser = Report::select('id', 'user_id', 'reported_user_id', 'reason', 'status', 'created_at')
+        // Semua laporan yang BUKAN laporan produk (termasuk laporan umum/lainnya tanpa reported_user_id)
+        $reportsUser = Report::select('id_report as id', 'user_id', 'reported_user_id', 'reason', 'description', 'status', 'created_at')
             ->with(['reporter:id_user,name', 'reportedUser:id_user,name'])
-            ->whereNull('product_id')->whereIn('status', ['pending', 'escalated'])
-            ->when($search, fn ($q) => $q->where(fn ($query) => $query->whereHas('reporter', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
-                ->orWhereHas('reportedUser', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))))
+            ->whereNull('product_id')
+            ->whereIn('status', ['pending', 'escalated'])
+            ->when($search, fn ($q) => $q->where(fn ($query) => $query
+                ->whereHas('reporter', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('reportedUser', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
+                ->orWhere('reason', 'like', "%{$search}%")
+            ))
             ->latest()->paginate(10, ['*'], 'page_user')->withQueryString();
 
-        $reportsProduk = Report::select('id', 'user_id', 'product_id', 'reason', 'status', 'created_at')
+        // Laporan khusus produk/penjual
+        $reportsProduk = Report::select('id_report as id', 'user_id', 'product_id', 'reason', 'description', 'status', 'created_at')
             ->with(['reporter:id_user,name', 'product:id_product,seller_id,title', 'product.seller:id_user,name'])
-            ->whereNotNull('product_id')->whereIn('status', ['pending', 'escalated'])
-            ->when($search, fn ($q) => $q->where(fn ($query) => $query->whereHas('reporter', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
-                ->orWhereHas('product', fn ($qq) => $qq->where('title', 'like', "%{$search}%"))))
+            ->whereNotNull('product_id')
+            ->whereIn('status', ['pending', 'escalated'])
+            ->when($search, fn ($q) => $q->where(fn ($query) => $query
+                ->whereHas('reporter', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('product', fn ($qq) => $qq->where('title', 'like', "%{$search}%"))
+                ->orWhere('reason', 'like', "%{$search}%")
+            ))
             ->latest()->paginate(10, ['*'], 'page_produk')->withQueryString();
 
-        $reportsAppeal = AccountAppeal::select('id', 'user_id', 'reason', 'status', 'created_at', 'reviewed_by')
-            ->with(['user:id_user,name,id_role', 'user.role:id_role,name', 'reviewer:id_user,name'])
+        $reportsAppeal = AccountAppeal::select('id', 'user_id', 'reason', 'proof_image', 'status', 'created_at', 'reviewed_by', 'admin_note')
+            ->with(['user:id_user,name,id_role,suspend_reason', 'user.role:id_role,role_name', 'reviewer:id_user,name'])
             ->latest()->paginate(10, ['*'], 'page_banding')->withQueryString();
 
         $pendingAppealCount = AccountAppeal::where('status', 'pending')->count();
 
-        $riwayat = Report::select('id', 'user_id', 'reported_user_id', 'product_id', 'status', 'admin_note', 'updated_at')
+        $riwayat = Report::select('id_report as id', 'user_id', 'reported_user_id', 'product_id', 'reason', 'status', 'admin_note', 'reviewed_at', 'updated_at')
             ->with(['reporter:id_user,name', 'reportedUser:id_user,name', 'product:id_product,title'])
             ->whereIn('status', ['reviewed', 'dismissed'])
             ->latest()->paginate(10, ['*'], 'page_riwayat')->withQueryString();

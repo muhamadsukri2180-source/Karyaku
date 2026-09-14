@@ -65,10 +65,6 @@
                 <i class="fa-solid fa-chart-pie w-4 text-center group-hover:text-white transition-colors"></i><span>Dashboard</span>
             </a>
 
-            <a href="{{ route('cs.tiket') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                <i class="fa-solid fa-headset w-4 text-center group-hover:text-white transition-colors"></i><span>Tiket Bantuan</span>
-            </a>
-
             <a href="{{ route('cs.laporan') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
                 <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-white transition-colors"></i><span>Laporan & Moderasi</span>
             </a>
