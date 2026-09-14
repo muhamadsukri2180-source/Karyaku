@@ -104,6 +104,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // 6. Transaksi & Keuangan
     Route::get('/transactions', [AdminController::class, 'transactions'])->name('transactions');
     Route::get('/transactions/export', [AdminController::class, 'exportTransactions'])->name('transactions.export');
+    Route::get('/transactions/{id}', [AdminController::class, 'transactionDetail'])->name('transactions.detail');
     Route::get('/laporan-keuangan', [AdminController::class, 'laporanKeuangan'])->name('laporan.keuangan');
     Route::get('/laporan-keuangan/export-excel', [AdminController::class, 'exportLaporanKeuanganExcel'])->name('laporan.keuangan.export');
 
@@ -174,6 +175,7 @@ Route::middleware(['auth', 'suspended', 'role:verifikator,admin'])
         Route::get('/produk/{id}', [VerifikatorController::class, 'showProduk'])->name('produk.show');
         Route::get('/pembayaran', [VerifikatorController::class, 'pembayaran'])->name('pembayaran');
         Route::get('/pembayaran/{id}', [VerifikatorController::class, 'showPembayaran'])->name('pembayaran.show');
+        Route::get('/transaksi-pembayaran/{id}', [VerifikatorController::class, 'showTransaksiPembayaran'])->name('transaksi_pembayaran.show');
         Route::get('/laporan', [VerifikatorController::class, 'laporan'])->name('laporan');
         Route::get('/laporan/{id}', [VerifikatorController::class, 'showLaporan'])->name('laporan.show');
 
@@ -183,6 +185,8 @@ Route::middleware(['auth', 'suspended', 'role:verifikator,admin'])
         Route::post('/produk/{id}/reject', [VerifikatorController::class, 'rejectProduk'])->name('produk.reject');
         Route::post('/pembayaran/{id}/approve', [VerifikatorController::class, 'approvePembayaran'])->name('pembayaran.approve');
         Route::post('/pembayaran/{id}/reject', [VerifikatorController::class, 'rejectPembayaran'])->name('pembayaran.reject');
+        Route::post('/transaksi-pembayaran/{id}/approve', [VerifikatorController::class, 'approveTransaksiPembayaran'])->name('transaksi_pembayaran.approve');
+        Route::post('/transaksi-pembayaran/{id}/reject', [VerifikatorController::class, 'rejectTransaksiPembayaran'])->name('transaksi_pembayaran.reject');
         Route::post('/laporan/{id}/action', [VerifikatorController::class, 'actionLaporan'])->name('laporan.action');
 
         Route::get('/profile', [VerifikatorController::class, 'profile'])->name('profile');
@@ -243,6 +247,7 @@ Route::middleware(['auth', 'suspended', 'role:pembeli,penjual'])->prefix('pembel
 
     Route::get('/pesanan', [PembeliController::class, 'pesananIndex'])->name('pesanan');
     Route::get('/pesanan/{id}', [PembeliController::class, 'pesananDetail'])->name('pesanan.detail');
+    Route::post('/pesanan/{id}/bayar', [PembeliController::class, 'uploadPembayaran'])->name('pesanan.bayar');
 
     Route::get('/download', [PembeliController::class, 'downloadIndex'])->name('download');
     Route::get('/download/{id_order_item}/file', [PembeliController::class, 'downloadFile'])->name('download.file');
@@ -293,6 +298,11 @@ Route::middleware(['auth', 'suspended', 'role:customer_service'])->prefix('cs')-
 
     Route::get('/transaksi', [CsController::class, 'transaksi'])->name('transaksi');
     Route::get('/transaksi/{id}', [CsController::class, 'transaksiDetail'])->name('transaksi.detail');
+
+    //penambahan route untuk fitur cek transaksi
+     Route::post('/transaksi/pendaftaran/{id}/approve', [CsController::class, 'approvePendaftaran'])->name('transaksi.pendaftaran.approve');
+    Route::post('/transaksi/pendaftaran/{id}/reject', [CsController::class, 'rejectPendaftaran'])->name('transaksi.pendaftaran.reject');
+
 
     Route::get('/notifikasi', [CsController::class, 'notifikasi'])->name('notifikasi');
 });

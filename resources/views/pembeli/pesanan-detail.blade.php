@@ -12,8 +12,23 @@
     <p class="text-muted mb-0 small">Kode Transaksi: <strong>#{{ $order->kode_order ?? $order->id_order }}</strong> &middot; {{ $order->created_at->format('d M Y, H:i') }} WIB</p>
 </div>
 
+{{-- ALERT MESSAGE --}}
+@if (session('success'))
+    <div class="alert alert-success alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
+@if (session('error'))
+    <div class="alert alert-danger alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
 <div class="row g-4 mb-4">
-    {{-- KOLOM KIRI: RINCIAN ITEM & DOWNLOAD --}}
+    {{-- KOLOM KIRI: RINCIAN ITEM & STATUS --}}
     <div class="col-lg-8">
         {{-- STATUS BANNER --}}
         <div class="card-box p-4 mb-4 border shadow-sm rounded-4">
@@ -26,9 +41,13 @@
                         <h6 class="fw-bold mb-1">Status Pesanan: <span class="text-capitalize text-primary">{{ $order->status }}</span></h6>
                         <p class="mb-0 small text-muted">Status Pembayaran: 
                             @if ($order->payment_status === 'paid')
-                                <strong class="text-success"><i class="bi bi-check-circle-fill"></i> LUNAS</strong>
+                                <strong class="text-success"><i class="bi bi-check-circle-fill"></i> LUNAS (Terverifikasi Verifikator)</strong>
+                            @elseif ($order->payment_status === 'pending')
+                                <strong class="text-warning"><i class="bi bi-clock-fill"></i> MENUNGGU VERIFIKASI VERIFIKATOR</strong>
+                            @elseif (in_array($order->payment_status, ['failed', 'rejected']))
+                                <strong class="text-danger"><i class="bi bi-x-circle-fill"></i> DITOLAK VERIFIKATOR</strong>
                             @else
-                                <strong class="text-danger"><i class="bi bi-clock-fill"></i> BELUM LUNAS</strong>
+                                <strong class="text-danger"><i class="bi bi-exclamation-circle-fill"></i> BELUM DIBAYAR</strong>
                             @endif
                         </p>
                     </div>
@@ -40,7 +59,78 @@
                     </a>
                 @endif
             </div>
+
+            @if($order->payment_status === 'pending')
+                <div class="mt-3 p-3 bg-warning-subtle border border-warning rounded-3 small text-dark">
+                    <i class="bi bi-info-circle-fill me-1 text-warning"></i>
+                    Bukti pembayaran Anda telah dikirim dan sedang diperiksa oleh tim Verifikator platform. Mohon tunggu proses konfirmasi agar berkas dapat diunduh.
+                </div>
+            @elseif(in_array($order->payment_status, ['failed', 'rejected']))
+                <div class="mt-3 p-3 bg-danger-subtle border border-danger rounded-3 small text-danger">
+                    <i class="bi bi-exclamation-octagon-fill me-1"></i>
+                    Catatan Penolakan Verifikator: <strong>{{ $order->rejection_note ?? 'Bukti transfer tidak dapat diverifikasi.' }}</strong>
+                    <br>Silakan unggah kembali foto resi transfer yang valid di bawah ini.
+                </div>
+            @endif
         </div>
+
+        {{-- FORM UNGGAH BUKTI PEMBAYARAN JIKA BELUM LUNAS --}}
+        @if ($order->payment_status !== 'paid')
+            <div class="card-box p-4 mb-4 border shadow-sm rounded-4 border-primary">
+                <h6 class="fw-bold mb-3 text-dark border-bottom pb-2">
+                    <i class="bi bi-credit-card-2-front-fill text-primary me-2"></i> Instruksi & Konfirmasi Pembayaran
+                </h6>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="badge bg-primary mb-2">BCA</span>
+                            <h6 class="fw-bold text-dark mb-1">0862398284994</h6>
+                            <p class="mb-0 small text-muted">a.n PT Karyaku Digital Kreatif</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="badge bg-danger mb-2">QRIS All Bank & E-Wallet</span>
+                            <h6 class="fw-bold text-dark mb-1">NMID: ID102003920192</h6>
+                            <p class="mb-0 small text-muted">KARYAKU QRIS RESMI</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form action="{{ route('pembeli.pesanan.bayar', $order->id_order) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-dark">Metode Pembayaran Digunakan <span class="text-danger">*</span></label>
+                            <select name="payment_method" class="form-select form-select-sm rounded-3" required>
+                                <option value="">-- Pilih Metode --</option>
+                                <option value="Bank BCA" {{ old('payment_method', $order->payment_method) === 'Bank BCA' ? 'selected' : '' }}>Transfer Bank BCA</option>
+                                <option value="Bank BNI" {{ old('payment_method', $order->payment_method) === 'Bank BNI' ? 'selected' : '' }}>Transfer Bank BNI</option>
+                                <option value="Bank Mandiri" {{ old('payment_method', $order->payment_method) === 'Bank Mandiri' ? 'selected' : '' }}>Transfer Bank Mandiri</option>
+                                <option value="Bank BRI" {{ old('payment_method', $order->payment_method) === 'Bank BRI' ? 'selected' : '' }}>Transfer Bank BRI</option>
+                                <option value="QRIS" {{ old('payment_method', $order->payment_method) === 'QRIS' ? 'selected' : '' }}>Scan QRIS</option>
+                                <option value="GoPay" {{ old('payment_method', $order->payment_method) === 'GoPay' ? 'selected' : '' }}>E-Wallet GoPay</option>
+                                <option value="DANA" {{ old('payment_method', $order->payment_method) === 'DANA' ? 'selected' : '' }}>E-Wallet DANA</option>
+                                <option value="OVO" {{ old('payment_method', $order->payment_method) === 'OVO' ? 'selected' : '' }}>E-Wallet OVO</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-dark">Upload Resi / Bukti Transfer <span class="text-danger">*</span></label>
+                            <input type="file" name="payment_proof" class="form-control form-control-sm rounded-3" accept="image/*" required>
+                            <span class="text-muted text-xs">Format JPG, PNG, WEBP (Maks 4 MB).</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 text-end">
+                        <button type="submit" class="btn btn-primary fw-bold px-4 py-2 rounded-3 text-white">
+                            <i class="bi bi-send-fill me-1"></i> Kirim Bukti Pembayaran ke Verifikator
+                        </button>
+                    </div>
+                </form>
+            </div>
+        @endif
 
         {{-- DAFTAR PRODUK YANG DIBELI --}}
         <div class="card-box p-4 mb-4">
@@ -129,9 +219,9 @@
 
             <div class="p-3 bg-light rounded-3 small text-muted mt-3">
                 <div class="d-flex align-items-center gap-2 mb-1 text-dark fw-bold">
-                    <i class="bi bi-shield-check text-success"></i> Jaminan Akses File
+                    <i class="bi bi-shield-check text-success"></i> Jaminan Verifikasi Platform
                 </div>
-                File produk yang telah dibayar dapat diakses selamanya di menu <strong>Download Saya</strong>.
+                Transaksi Anda diverifikasi langsung oleh <strong>Tim Verifikator</strong>. File dapat diunduh begitu status diverifikasi lunas.
             </div>
         </div>
     </div>

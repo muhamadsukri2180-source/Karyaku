@@ -386,11 +386,51 @@ class PembeliController extends Controller
 
     public function pesananDetail($id)
     {
-        $order = Order::with(['items.product.seller', 'items.product.category'])
+        $order = Order::with(['items.product.seller', 'items.product.category', 'verifier'])
             ->where('buyer_id', Auth::id())
             ->findOrFail($id);
 
         return view('pembeli.pesanan-detail', compact('order'));
+    }
+
+    public function uploadPembayaran(Request $request, $id)
+    {
+        $order = Order::where('buyer_id', Auth::id())->findOrFail($id);
+
+        $request->validate([
+            'payment_method' => 'required|string|max:100',
+            'payment_proof'  => 'required|image|mimes:jpeg,png,jpg,webp|max:4096',
+        ], [
+            'payment_method.required' => 'Silakan pilih metode pembayaran.',
+            'payment_proof.required'  => 'Foto resi / bukti transfer wajib dilampirkan.',
+            'payment_proof.image'     => 'Bukti pembayaran harus berupa berkas gambar.',
+            'payment_proof.max'       => 'Ukuran bukti pembayaran tidak boleh lebih dari 4 MB.',
+        ]);
+
+        if ($request->hasFile('payment_proof')) {
+            if ($order->payment_proof && Storage::disk('public')->exists($order->payment_proof)) {
+                Storage::disk('public')->delete($order->payment_proof);
+            }
+            $proofPath = $request->file('payment_proof')->store('order-payments', 'public');
+
+            $order->update([
+                'payment_method'       => $request->payment_method,
+                'payment_proof'        => $proofPath,
+                'payment_submitted_at' => now(),
+                'payment_status'       => 'pending',
+                'status'               => 'diproses',
+                'rejection_note'       => null,
+            ]);
+
+            Notification::create([
+                'user_id'     => $order->buyer_id,
+                'name'        => '⏳ Bukti Pembayaran Dikirim',
+                'description' => 'Bukti pembayaran untuk transaksi #' . $order->kode_order . ' telah berhasil dikirim. Menunggu verifikasi tim Verifikator.',
+                'is_read'     => false,
+            ]);
+        }
+
+        return back()->with('success', 'Bukti pembayaran berhasil diunggah! Tim Verifikator kami akan mengecek dan memverifikasi transaksi Anda secepatnya.');
     }
 
     // =========================================================

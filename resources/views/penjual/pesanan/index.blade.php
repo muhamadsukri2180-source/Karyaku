@@ -73,9 +73,13 @@
                             <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
                                 <span class="badge" style="font-size: 10px; background:#f1f5f9; color:#64748b;">ORDER #{{ $order->id_order ?? $item->order_id }}</span>
                                 @if($isPaid)
-                                    <span class="badge" style="background:#ecfdf5; color:#16a34a;"><i class="bi bi-check-circle-fill me-1"></i> Pembayaran Lunas</span>
+                                    <span class="badge" style="background:#ecfdf5; color:#16a34a;"><i class="bi bi-shield-check me-1"></i> Lunas (Terverifikasi)</span>
+                                @elseif(($order->payment_status ?? '') === 'pending')
+                                    <span class="badge" style="background:#fef3c7; color:#d97706;"><i class="bi bi-hourglass-split me-1"></i> Sedang Diverifikasi Verifikator</span>
+                                @elseif(in_array(($order->payment_status ?? ''), ['failed', 'rejected']))
+                                    <span class="badge" style="background:#ffe4e6; color:#e11d48;"><i class="bi bi-x-circle me-1"></i> Pembayaran Ditolak</span>
                                 @else
-                                    <span class="badge" style="background:#fff7ed; color:#f59e0b;"><i class="bi bi-clock-fill me-1"></i> Menunggu Pembayaran</span>
+                                    <span class="badge" style="background:#f1f5f9; color:#64748b;"><i class="bi bi-clock-fill me-1"></i> Menunggu Pembayaran Pembeli</span>
                                 @endif
                                 <span style="font-size: 11px; color:var(--text-muted);">&bull; {{ $item->created_at->translatedFormat('d M Y, H:i') }}</span>
                             </div>
@@ -90,13 +94,7 @@
                             <h5 class="fw-bold mb-0" style="color:var(--primary);">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</h5>
                         </div>
                         <div class="d-flex gap-2">
-                            @if(!$isPaid)
-                                <form action="{{ route('penjual.pesanan.konfirmasi', $item->id_order_item) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin mengonfirmasi pembelian ini? Pembeli akan mendapatkan akses unduh berkas digital.');">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm fw-bold rounded-3" style="background:#16a34a; color:#fff;"><i class="bi bi-check-circle-fill me-1"></i> Konfirmasi Pembelian</button>
-                                </form>
-                            @endif
-                            <a href="{{ route('penjual.pesanan.detail', $item->id_order_item) }}" class="btn btn-sm fw-semibold rounded-3" style="border:1px solid var(--primary); color:var(--primary);"><i class="bi bi-eye me-1"></i> Detail</a>
+                            <a href="{{ route('penjual.pesanan.detail', $item->id_order_item) }}" class="btn btn-sm fw-semibold rounded-3" style="border:1px solid var(--primary); color:var(--primary);"><i class="bi bi-eye me-1"></i> Detail Pesanan</a>
                         </div>
                     </div>
                 </div>

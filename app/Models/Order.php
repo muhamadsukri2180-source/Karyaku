@@ -15,16 +15,29 @@ class Order extends Model
         'buyer_id',
         'total_price',
         'status',         // pending, diproses, selesai, dibatalkan
-        'payment_status', // unpaid, paid, failed
+        'payment_status', // unpaid, pending, paid, failed, rejected
+        'payment_method',
+        'payment_proof',
+        'payment_submitted_at',
+        'verifier_id',
+        'verified_at',
+        'rejection_note',
     ];
 
     protected $casts = [
-        'total_price' => 'decimal:2',
+        'total_price'          => 'decimal:2',
+        'payment_submitted_at' => 'datetime',
+        'verified_at'           => 'datetime',
     ];
 
     public function buyer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'buyer_id', 'id_user');
+    }
+
+    public function verifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verifier_id', 'id_user');
     }
 
     public function items(): HasMany
@@ -35,5 +48,16 @@ class Order extends Model
     public function getKodeOrderAttribute(): string
     {
         return 'ORD-' . str_pad($this->id_order, 6, '0', STR_PAD_LEFT);
+    }
+
+    public function getPaymentProofUrlAttribute(): ?string
+    {
+        if (!$this->payment_proof) {
+            return null;
+        }
+        if (str_starts_with($this->payment_proof, 'http://') || str_starts_with($this->payment_proof, 'https://')) {
+            return $this->payment_proof;
+        }
+        return asset('storage/' . ltrim($this->payment_proof, '/'));
     }
 }

@@ -126,7 +126,7 @@
                             <span class="text-xs font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-full border border-sky-200">
                                 {{ $product->category->name ?? 'Kategori Umum' }}
                             </span>
-                            <h2 class="text-xl font-extrabold text-slate-900 font-display mt-2">{{ $product->name ?? $product->title ?? '-' }}</h2>
+                            <h2 class="text-xl font-extrabold text-slate-900 font-display mt-2">{{ $product->title ?? $product->name ?? '-' }}</h2>
                         </div>
                         <div class="text-left md:text-right">
                             <span class="text-[10px] font-bold uppercase text-slate-400 block tracking-wider">Harga Ditentukan</span>
@@ -137,11 +137,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                         <div class="p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
                             <span class="text-slate-400 font-bold block uppercase text-[10px]">Nama Penjual</span>
-                            <span class="font-extrabold text-slate-800 text-sm block mt-0.5">{{ $product->user->name ?? '-' }}</span>
+                            <span class="font-extrabold text-slate-800 text-sm block mt-0.5">{{ $product->seller->name ?? $product->user->name ?? '-' }}</span>
                         </div>
                         <div class="p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
                             <span class="text-slate-400 font-bold block uppercase text-[10px]">Email Penjual</span>
-                            <span class="font-bold text-slate-800 text-sm block mt-0.5">{{ $product->user->email ?? '-' }}</span>
+                            <span class="font-bold text-slate-800 text-sm block mt-0.5">{{ $product->seller->email ?? $product->user->email ?? '-' }}</span>
                         </div>
                     </div>
 
@@ -152,11 +152,11 @@
                         </div>
                     </div>
 
-                    @if($product->image || $product->cover_image)
+                    @if($product->thumbnail || $product->file)
                     <div>
                         <h4 class="text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">Pratinjau Gambar Sampel</h4>
                         <div class="bg-slate-100 border border-slate-200 rounded-xl p-2 max-w-md">
-                            <img src="{{ asset('storage/' . ($product->image ?? $product->cover_image)) }}" class="w-full h-auto rounded-lg shadow-sm">
+                            <img src="{{ $product->thumbnail_url }}" class="w-full h-auto rounded-lg shadow-sm">
                         </div>
                     </div>
                     @endif

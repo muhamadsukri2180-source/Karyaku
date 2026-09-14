@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\AccountAppeal;
+use App\Models\IdentityVerification;
+use App\Models\Membership;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Report;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +22,7 @@ class CsController extends Controller
         $totalLaporanMasuk = Report::where('status', 'pending')->count();
         $laporanSelesai = Report::whereIn('status', ['reviewed', 'dismissed'])->count();
 
-        $recentReports = Report::select(['user_id', 'reported_user_id', 'product_id', 'reason', 'status', 'created_at'])
+        $recentReports = Report::select(['id_report', 'user_id', 'reported_user_id', 'product_id', 'reason', 'status', 'created_at'])
             ->with([
                 'reporter:id_user,name',
                 'reportedUser:id_user,name',
@@ -40,7 +43,7 @@ class CsController extends Controller
         $search = $request->query('search');
 
         // Semua laporan yang BUKAN laporan produk (termasuk laporan umum/lainnya tanpa reported_user_id)
-        $reportsUser = Report::select('id_report as id', 'user_id', 'reported_user_id', 'reason', 'description', 'status', 'created_at')
+        $reportsUser = Report::select('id_report', 'id_report as id', 'user_id', 'reported_user_id', 'reason', 'description', 'status', 'created_at')
             ->with(['reporter:id_user,name', 'reportedUser:id_user,name'])
             ->whereNull('product_id')
             ->whereIn('status', ['pending', 'escalated'])
@@ -49,10 +52,10 @@ class CsController extends Controller
                 ->orWhereHas('reportedUser', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))
                 ->orWhere('reason', 'like', "%{$search}%")
             ))
-            ->latest()->paginate(10, ['*'], 'page_user')->withQueryString();
+            ->latest('id_report')->paginate(10, ['*'], 'page_user')->withQueryString();
 
         // Laporan khusus produk/penjual
-        $reportsProduk = Report::select('id_report as id', 'user_id', 'product_id', 'reason', 'description', 'status', 'created_at')
+        $reportsProduk = Report::select('id_report', 'id_report as id', 'user_id', 'product_id', 'reason', 'description', 'status', 'created_at')
             ->with(['reporter:id_user,name', 'product:id_product,seller_id,title', 'product.seller:id_user,name'])
             ->whereNotNull('product_id')
             ->whereIn('status', ['pending', 'escalated'])
@@ -61,18 +64,18 @@ class CsController extends Controller
                 ->orWhereHas('product', fn ($qq) => $qq->where('title', 'like', "%{$search}%"))
                 ->orWhere('reason', 'like', "%{$search}%")
             ))
-            ->latest()->paginate(10, ['*'], 'page_produk')->withQueryString();
+            ->latest('id_report')->paginate(10, ['*'], 'page_produk')->withQueryString();
 
-        $reportsAppeal = AccountAppeal::select('id', 'user_id', 'reason', 'proof_image', 'status', 'created_at', 'reviewed_by', 'admin_note')
-            ->with(['user:id_user,name,id_role,suspend_reason', 'user.role:id_role,role_name', 'reviewer:id_user,name'])
-            ->latest()->paginate(10, ['*'], 'page_banding')->withQueryString();
+        $reportsAppeal = AccountAppeal::select('id_appeal', 'id_appeal as id', 'user_id', 'reason', 'proof_image', 'status', 'created_at', 'reviewed_by', 'admin_note')
+            ->with(['user:id_user,name,email,id_role,suspend_reason', 'user.role:id_role,role_name', 'reviewer:id_user,name'])
+            ->latest('id_appeal')->paginate(10, ['*'], 'page_banding')->withQueryString();
 
         $pendingAppealCount = AccountAppeal::where('status', 'pending')->count();
 
-        $riwayat = Report::select('id_report as id', 'user_id', 'reported_user_id', 'product_id', 'reason', 'status', 'admin_note', 'reviewed_at', 'updated_at')
+        $riwayat = Report::select('id_report', 'id_report as id', 'user_id', 'reported_user_id', 'product_id', 'reason', 'status', 'admin_note', 'reviewed_at', 'updated_at')
             ->with(['reporter:id_user,name', 'reportedUser:id_user,name', 'product:id_product,title'])
             ->whereIn('status', ['reviewed', 'dismissed'])
-            ->latest()->paginate(10, ['*'], 'page_riwayat')->withQueryString();
+            ->latest('id_report')->paginate(10, ['*'], 'page_riwayat')->withQueryString();
 
         return view('cs.laporan', compact('reportsUser', 'reportsProduk', 'reportsAppeal', 'pendingAppealCount', 'riwayat'));
     }
@@ -195,41 +198,168 @@ class CsController extends Controller
     public function transaksi(Request $request)
     {
         $search = $request->query('search');
+        $tabPendaftaran = $request->query('tab_pendaftaran', 'pending');
 
-        $orders = Order::select('id_order', 'buyer_id', 'total_price', 'status', 'created_at')
+        // Transaksi jual-beli produk (dibaca via kode_order, id_order tidak pernah ditampilkan/dicari)
+        $orders = Order::select('id_order', 'buyer_id', 'total_price', 'status', 'payment_status', 'created_at')
             ->with([
                 'buyer:id_user,name',
-                'items:id,order_id,product_id',
+                'items:id_order_item,order_id,product_id',
                 'items.product:id_product,seller_id,title',
                 'items.product.seller:id_user,name'
             ])
-            ->when($search, fn ($q) => $q->where(fn ($query) => $query->where('id_order', 'like', "%{$search}%")
-                ->orWhereHas('buyer', fn ($qq) => $qq->where('name', 'like', "%{$search}%"))))
-            ->latest()->paginate(15)->withQueryString();
+            ->when($search, fn ($q) => $q->whereHas('buyer', fn ($qq) => $qq->where('name', 'like', "%{$search}%")))
+            ->latest('id_order')->paginate(10, ['*'], 'page_pesanan')->withQueryString();
 
-        return view('cs.transaksi', compact('orders'));
+        // Transaksi pendaftaran / pembayaran menjadi penjual (butuh persetujuan CS)
+        $sellerQuery = IdentityVerification::select([
+                'id_identity_verification', 'user_id', 'membership_id', 'verifier_id',
+                'status', 'payment_method', 'payment_amount', 'notes', 'submitted_at', 'verified_at',
+            ])
+            ->with(['user:id_user,name,email', 'membership:id_membership,name,price', 'verifier:id_user,name'])
+            ->whereNotNull('payment_method')
+            ->when($search, fn ($q) => $q->whereHas('user', fn ($qq) => $qq->where('name', 'like', "%{$search}%")));
+
+        if ($tabPendaftaran === 'history') {
+            $sellerQuery->whereIn('status', ['approved', 'rejected']);
+        } else {
+            $sellerQuery->where('status', 'pending');
+        }
+
+        $sellerTransactions = $sellerQuery->latest('id_identity_verification')
+            ->paginate(10, ['*'], 'page_pendaftaran')->withQueryString();
+
+        $pendingSellerCount = IdentityVerification::whereNotNull('payment_method')->where('status', 'pending')->count();
+
+        return view('cs.transaksi', compact('orders', 'sellerTransactions', 'tabPendaftaran', 'pendingSellerCount'));
     }
 
     public function transaksiDetail(string|int $id)
     {
         return response()->json(Order::with([
             'buyer:id_user,name,email,phone',
-            'items:id,order_id,product_id,quantity,price',
+            'items:id_order_item,order_id,product_id,quantity,price,subtotal',
             'items.product:id_product,seller_id,title,price',
             'items.product.seller:id_user,name'
         ])->findOrFail($id));
     }
 
+    /**
+     * CS menyetujui transaksi pembayaran pendaftaran seorang pembeli menjadi penjual.
+     * Menyetujui akan mengubah role user menjadi "penjual" dan mengaktifkan membership-nya.
+     */
+    public function approvePendaftaran(string|int $id)
+    {
+        try {
+            DB::transaction(function () use ($id) {
+                $verification = IdentityVerification::lockForUpdate()->findOrFail($id);
+
+                if ($verification->status !== 'pending') {
+                    throw new \RuntimeException('Pengajuan ini sudah diproses sebelumnya.');
+                }
+
+                $sellerRole = Role::where('role_name', 'penjual')->firstOrFail();
+                $user = User::where('id_user', $verification->user_id)->lockForUpdate()->firstOrFail();
+
+                $userData = ['id_role' => $sellerRole->id_role, 'status' => 'active'];
+
+                if ($verification->membership_id && $membership = Membership::find($verification->membership_id)) {
+                    $userData['id_membership'] = $membership->id_membership;
+                    $durationDays = $membership->duration_days ?? 30;
+
+                    $isSamePlanActive = ($user->id_membership == $membership->id_membership)
+                        && $user->membership_expires_at
+                        && $user->membership_expires_at->isFuture();
+
+                    $userData['membership_expires_at'] = $isSamePlanActive
+                        ? $user->membership_expires_at->copy()->addDays($durationDays)
+                        : now()->addDays($durationDays);
+                }
+
+                $user->update($userData);
+                $verification->update([
+                    'status'      => 'approved',
+                    'verifier_id' => Auth::id(),
+                    'verified_at' => now(),
+                ]);
+
+                $membershipName = $verification->membership->name ?? 'Membership Penjual';
+                Notification::create([
+                    'user_id'     => $verification->user_id,
+                    'name'        => '💎 Pembayaran Paket Disetujui',
+                    'description' => 'Selamat! Pembayaran paket ' . $membershipName . ' Anda telah disetujui oleh CS. Akun Anda kini aktif sebagai penjual.',
+                    'is_read'     => false,
+                ]);
+            });
+
+            return redirect()->route('cs.transaksi')->with('success', 'Pendaftaran menjadi penjual berhasil disetujui.');
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', 'Gagal menyetujui pendaftaran: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * CS menolak transaksi pembayaran pendaftaran seorang pembeli menjadi penjual.
+     */
+    public function rejectPendaftaran(Request $request, string|int $id)
+    {
+        $validated = $request->validate([
+            'notes' => 'required|string|max:500',
+        ], [
+            'notes.required' => 'Catatan / alasan penolakan wajib diisi.',
+        ]);
+
+        try {
+            DB::transaction(function () use ($id, $validated) {
+                $verification = IdentityVerification::lockForUpdate()->findOrFail($id);
+
+                if ($verification->status !== 'pending') {
+                    throw new \RuntimeException('Pengajuan ini sudah diproses sebelumnya.');
+                }
+
+                $verification->update([
+                    'status'      => 'rejected',
+                    'notes'       => $validated['notes'],
+                    'verifier_id' => Auth::id(),
+                    'verified_at' => now(),
+                ]);
+
+                $membershipName = $verification->membership->name ?? 'Paket Membership';
+                Notification::create([
+                    'user_id'     => $verification->user_id,
+                    'name'        => '❌ Pembayaran / Verifikasi Ditolak',
+                    'description' => 'Pembayaran/pengajuan paket ' . $membershipName . ' Anda ditolak oleh CS. Catatan: ' . $validated['notes'],
+                    'is_read'     => false,
+                ]);
+            });
+
+            return redirect()->route('cs.transaksi')->with('success', 'Pendaftaran menjadi penjual berhasil ditolak.');
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', 'Gagal menolak pendaftaran: ' . $e->getMessage());
+        }
+    }
+
     public function notifikasi()
     {
-    $notifications = Notification::where(function ($q) {
-            $q->whereNull('user_id')
-            ->orWhere('user_id', Auth::id());
-        })
-        ->latest()
-        ->paginate(10);
+        $userId = Auth::id();
 
-    return view('cs.notifikasi', compact('notifications'));
+        $notifications = Notification::where(function ($q) use ($userId) {
+                $q->whereNull('user_id')
+                ->orWhere('user_id', $userId);
+            })
+            ->latest()
+            ->paginate(10);
+
+        $unreadCount = Notification::where(function ($q) use ($userId) {
+                $q->whereNull('user_id')
+                ->orWhere('user_id', $userId);
+            })
+            ->where('is_read', false)
+            ->count();
+
+        return view('cs.notifikasi', compact('notifications', 'unreadCount'));
     }
 
 }

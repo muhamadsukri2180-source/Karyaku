@@ -150,8 +150,8 @@
                                 <tbody class="text-xs divide-y divide-slate-100">
                                     @forelse($products as $product)
                                     <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="py-3.5 px-6 font-bold text-slate-800">{{ $product->name ?? $product->title ?? '-' }}</td>
-                                        <td class="py-3.5 px-6 text-xs text-slate-600 font-semibold">{{ $product->user->name ?? '-' }}</td>
+                                        <td class="py-3.5 px-6 font-bold text-slate-800">{{ $product->title ?? $product->name ?? '-' }}</td>
+                                        <td class="py-3.5 px-6 text-xs text-slate-600 font-semibold">{{ $product->seller->name ?? $product->user->name ?? '-' }}</td>
                                         <td class="py-3.5 px-6">
                                             <span class="bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-md font-bold text-[10px]">
                                                 {{ $product->category->name ?? '-' }}

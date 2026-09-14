@@ -87,11 +87,19 @@
                     </span>
                     @if ($isPaid)
                         <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1.5 rounded-pill fw-bold" style="font-size: 11px;">
-                            <i class="bi bi-check-circle-fill me-1"></i> Lunas
+                            <i class="bi bi-check-circle-fill me-1"></i> Lunas (Terverifikasi)
+                        </span>
+                    @elseif($order->payment_status === 'pending')
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2.5 py-1.5 rounded-pill fw-bold" style="font-size: 11px;">
+                            <i class="bi bi-clock-fill me-1"></i> Menunggu Verifikasi
+                        </span>
+                    @elseif(in_array($order->payment_status, ['failed', 'rejected']))
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1.5 rounded-pill fw-bold" style="font-size: 11px;">
+                            <i class="bi bi-x-circle-fill me-1"></i> Transfer Ditolak
                         </span>
                     @else
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1.5 rounded-pill fw-bold" style="font-size: 11px;">
-                            <i class="bi bi-clock-fill me-1"></i> Belum Bayar
+                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2.5 py-1.5 rounded-pill fw-bold" style="font-size: 11px;">
+                            <i class="bi bi-exclamation-circle-fill me-1"></i> Belum Bayar
                         </span>
                     @endif
                 </div>

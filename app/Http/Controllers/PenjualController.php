@@ -178,7 +178,7 @@ class PenjualController extends Controller
             'images'         => $galleryPaths,
             'video'          => $videoPath,
             'file'           => $filePath,
-            'status'         => 'active',
+            'status'         => 'pending',
             'rejection_note' => null,
             'is_promoted'    => false,
             'view_count'     => 0,
@@ -186,7 +186,7 @@ class PenjualController extends Controller
         ]);
 
         return redirect()->route('penjual.produk.index')
-            ->with('success', 'Produk berhasil diunggah dan sudah langsung aktif di marketplace!');
+            ->with('success', 'Produk berhasil diunggah! Produk Anda saat ini berada dalam antrean verifikasi oleh Verifikator sebelum diterbitkan di marketplace.');
     }
 
     // ================= 4. EDIT & UPDATE PRODUK =================
@@ -252,12 +252,12 @@ class PenjualController extends Controller
 
         $product->fill($validated);
         if (in_array($product->status, ['rejected', 'inactive', 'blocked'])) {
-            $product->status = 'active';
+            $product->status = 'pending';
             $product->rejection_note = null;
         }
         $product->save();
 
-        return redirect()->route('penjual.produk.index')->with('success', 'Data produk berhasil diperbarui.');
+        return redirect()->route('penjual.produk.index')->with('success', 'Data produk berhasil diperbarui dan diajukan ulang untuk verifikasi.');
     }
 
     // ================= 5. HAPUS PRODUK =================
@@ -571,25 +571,7 @@ class PenjualController extends Controller
 
     public function pesananKonfirmasi($id)
     {
-        $orderItem = OrderItem::with(['product', 'order'])
-            ->whereHas('product', fn($q) => $q->where('seller_id', Auth::id()))
-            ->findOrFail($id);
-
-        if ($order = $orderItem->order) {
-            $order->update([
-                'payment_status' => 'paid',
-                'status' => 'selesai'
-            ]);
-
-            Notification::create([
-                'user_id'     => $order->buyer_id,
-                'name'        => '✅ Pesanan Dikonfirmasi Penjual',
-                'description' => 'Pesanan #' . $order->id_order . ' telah dikonfirmasi oleh penjual. Anda kini dapat mengunduh berkasnya!',
-                'is_read'     => false,
-            ]);
-        }
-
-        return back()->with('success', 'Pesanan pembelian berhasil dikonfirmasi dan selesai.');
+        return back()->with('info', 'Pemeriksaan dan verifikasi bukti pembayaran dilakukan oleh tim Verifikator platform untuk menjamin keamanan transaksi.');
     }
 
     // ================= 9. KEUANGAN & PENARIKAN SALDO =================

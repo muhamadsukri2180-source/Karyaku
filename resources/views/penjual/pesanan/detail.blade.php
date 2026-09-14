@@ -63,27 +63,35 @@
 
     <div class="col-lg-4">
         <div class="kk-card p-4">
-            <h6 class="fw-bold mb-3 pb-2" style="color:var(--text-dark); border-bottom:1px solid var(--border-color);"><i class="bi bi-credit-card me-2" style="color:var(--primary);"></i>Status Pembayaran</h6>
+            <h6 class="fw-bold mb-3 pb-2" style="color:var(--text-dark); border-bottom:1px solid var(--border-color);"><i class="bi bi-shield-check me-2" style="color:var(--primary);"></i>Status Verifikasi Pembayaran</h6>
             <div class="mb-3 text-center">
                 @if($isPaid)
                     <div class="p-3 rounded-3" style="background:#ecfdf5; border:1px solid #bbf7d0; color:#16a34a;">
                         <i class="bi bi-check-circle-fill fs-2 d-block mb-1"></i>
-                        <h6 class="fw-bold mb-0">LUNAS</h6>
-                        <small>Pembeli telah membayar & dapat mengunduh berkas.</small>
+                        <h6 class="fw-bold mb-0">LUNAS & TERVERIFIKASI</h6>
+                        <small class="d-block mt-1">Diverifikasi oleh Verifikator Platform. Saldo telah bertambah.</small>
+                    </div>
+                @elseif(($order->payment_status ?? '') === 'pending')
+                    <div class="p-3 rounded-3 mb-2" style="background:#fef3c7; border:1px solid #fde68a; color:#b45309;">
+                        <i class="bi bi-hourglass-split fs-2 d-block mb-1"></i>
+                        <h6 class="fw-bold mb-0">SEDANG DIVERIFIKASI</h6>
+                        <small class="d-block mt-1">Pembeli telah mengirim bukti transfer. Menunggu verifikasi tim Verifikator.</small>
+                    </div>
+                @elseif(in_array(($order->payment_status ?? ''), ['failed', 'rejected']))
+                    <div class="p-3 rounded-3 mb-2" style="background:#ffe4e6; border:1px solid #fecdd3; color:#e11d48;">
+                        <i class="bi bi-x-circle-fill fs-2 d-block mb-1"></i>
+                        <h6 class="fw-bold mb-0">PEMBAYARAN DITOLAK</h6>
+                        <small class="d-block mt-1">Bukti transfer ditolak oleh Verifikator.</small>
                     </div>
                 @else
-                    <div class="p-3 rounded-3 mb-3" style="background:#fff7ed; border:1px solid #fed7aa; color:#f59e0b;">
+                    <div class="p-3 rounded-3 mb-2" style="background:#f1f5f9; border:1px solid #e2e8f0; color:#64748b;">
                         <i class="bi bi-clock-history fs-2 d-block mb-1"></i>
-                        <h6 class="fw-bold mb-0">MENUNGGU KONFIRMASI</h6>
-                        <small>Silakan konfirmasi pesanan jika pembayaran pembeli telah Anda terima.</small>
+                        <h6 class="fw-bold mb-0">MENUNGGU PEMBAYARAN</h6>
+                        <small class="d-block mt-1">Pembeli belum mengirimkan bukti pembayaran.</small>
                     </div>
-                    <form action="{{ route('penjual.pesanan.konfirmasi', $orderItem->id_order_item) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin mengonfirmasi pesanan ini? Pembeli akan langsung dapat mengunduh berkas digital.');">
-                        @csrf
-                        <button type="submit" class="btn btn-sm w-100 fw-bold py-2 shadow-sm mb-2 rounded-3" style="background:#16a34a; color:#fff;"><i class="bi bi-check-circle-fill me-1"></i> Konfirmasi Pembelian</button>
-                    </form>
                 @endif
             </div>
-            <div class="small mb-3" style="color:var(--text-muted);">Saldo hasil penjualan dari pesanan lunas akan otomatis masuk ke <strong>Saldo Tersedia</strong> Anda dan siap ditarik kapan saja.</div>
+            <div class="small mb-3" style="color:var(--text-muted);">Verifikasi bukti transfer dilakukan sepenuhnya oleh <strong>Tim Verifikator</strong> untuk menjamin keamanan transaksi. Pembeli akan otomatis mendapatkan akses download dan saldo pendapatan Anda bertambah saat verifikasi berhasil.</div>
             <a href="{{ route('penjual.keuangan.index') }}" class="btn btn-sm w-100 fw-semibold rounded-3" style="border:1px solid var(--primary); color:var(--primary);"><i class="bi bi-wallet2 me-1"></i> Cek Saldo & Penarikan</a>
         </div>
     </div>

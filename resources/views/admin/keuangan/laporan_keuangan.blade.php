@@ -232,20 +232,14 @@
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <main class="flex-1 flex flex-col min-w-0 w-full">
             <!-- TOP NAVBAR -->
-            <header id="topNavbar" class="h-16 bg-white/80 backdrop-blur-md border-b border-sky-100 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30 shadow-sm no-print">
-                <div class="flex items-center gap-3">
-                    <button id="sidebarOpenBtn" class="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-sky-50"><i class="fa-solid fa-bars text-lg"></i></button>
+            <header id="topNavbar" class="bg-gradient-to-r from-white via-sky-50/50 to-blue-50/50 backdrop-blur-xl border-b border-sky-200 px-6 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm no-print">
+                <div class="flex items-center gap-4">
+                    <button id="sidebarToggleBtn" class="lg:hidden w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition border border-sky-200 shadow-sm"><i class="fa-solid fa-bars text-base"></i></button>
                     <div>
-                        <div class="flex items-center gap-2 text-xs text-slate-400">
-                            <a href="{{ route('admin.dashboard') }}" class="hover:text-sky">Dashboard</a>
-                            <span>/</span>
-                            <span>Keuangan</span>
-                            <span>/</span>
-                            <span class="text-sky font-semibold">Laporan Keuangan Bulanan</span>
-                        </div>
-                        <h2 class="text-lg font-display font-bold text-slate-800 leading-tight">Laporan Keuangan</h2>
+                        <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900">Laporan Keuangan</h2>
+                        <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Rangkuman transaksi, komisi platform 5%, dan rekapitulasi arus kas bulanan.</p>
                     </div>
                 </div>
 
@@ -341,10 +335,10 @@
                 </div>
             </header>
 
-            <div class="p-4 lg:p-8 space-y-6">
+            <div class="p-6 sm:p-8 space-y-6 overflow-y-auto no-scrollbar" id="mainScreenWrapper">
 
                 <!-- FILTER CONTROLS CARD -->
-                <div class="bg-white/90 backdrop-blur-md rounded-2xl p-5 border border-sky-100 shadow-sm filter-box">
+                <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl p-5 sm:p-6 shadow-sm filter-box">
                     <form action="{{ route('admin.laporan.keuangan') }}" method="GET" class="flex flex-col lg:flex-row items-end lg:items-center justify-between gap-4">
                         <input type="hidden" name="filter_type" value="bulanan">
                         
@@ -409,80 +403,56 @@
                 </div>
 
                 <!-- FINANCIAL SUMMARY KPI CARDS -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     <!-- 1. Total Pemasukan Bruto -->
-                    <div class="bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-white rounded-2xl p-5 border border-emerald-500/20 shadow-sm relative overflow-hidden card-hover">
-                        <div class="absolute -right-3 -bottom-3 w-20 h-20 bg-emerald-500/10 rounded-full blur-xl pointer-events-none"></div>
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Total Pemasukan (Bruto)</span>
-                            <div class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/30">
-                                <i class="fa-solid fa-arrow-trend-up text-sm"></i>
-                            </div>
+                    <div class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100/60 border-l-4 border-emerald-500 border-y border-r border-emerald-200 p-5 rounded-2xl card-hover shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div><span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Total Pemasukan (Bruto)</span><div class="text-3xl font-black text-slate-900 mt-1">Rp {{ number_format($summary['total_pemasukan'], 0, ',', '.') }}</div></div>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/30"><i class="fa-solid fa-arrow-trend-up text-lg"></i></div>
                         </div>
-                        <h3 class="text-2xl font-display font-extrabold text-slate-800 mb-1">
-                            Rp {{ number_format($summary['total_pemasukan'], 0, ',', '.') }}
-                        </h3>
-                        <div class="flex items-center justify-between text-xs text-slate-500 mt-3 pt-3 border-t border-emerald-500/15">
+                        <div class="flex items-center justify-between text-xs text-slate-500 mt-3 pt-3 border-t border-emerald-200">
                             <span class="flex items-center gap-1 font-semibold text-emerald-600">
                                 <i class="fa-solid fa-circle-check text-[10px]"></i> {{ $summary['total_orders_paid'] }} Transaksi Lunas
                             </span>
-                            <span class="text-[11px] text-slate-400">Gross Sales</span>
+                            <span class="text-[11px] text-slate-400 font-bold">Gross Sales</span>
                         </div>
                     </div>
 
                     <!-- 2. Komisi Platform (5%) -->
-                    <div class="bg-gradient-to-br from-sky-500/10 via-sky-500/5 to-white rounded-2xl p-5 border border-sky-500/20 shadow-sm relative overflow-hidden card-hover">
-                        <div class="absolute -right-3 -bottom-3 w-20 h-20 bg-sky-500/10 rounded-full blur-xl pointer-events-none"></div>
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-sky-700">Komisi Platform (5%)</span>
-                            <div class="w-9 h-9 rounded-xl bg-sky text-white flex items-center justify-center shadow-md shadow-sky/30">
-                                <i class="fa-solid fa-coins text-sm"></i>
-                            </div>
+                    <div class="bg-gradient-to-br from-blue-50 via-white to-blue-100/60 border-l-4 border-blue-500 border-y border-r border-blue-200 p-5 rounded-2xl card-hover shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div><span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Komisi Platform (5%)</span><div class="text-3xl font-black text-slate-900 mt-1">Rp {{ number_format($summary['total_komisi_platform'], 0, ',', '.') }}</div></div>
+                            <div class="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/30"><i class="fa-solid fa-coins text-lg"></i></div>
                         </div>
-                        <h3 class="text-2xl font-display font-extrabold text-slate-800 mb-1">
-                            Rp {{ number_format($summary['total_komisi_platform'], 0, ',', '.') }}
-                        </h3>
-                        <div class="flex items-center justify-between text-xs text-slate-500 mt-3 pt-3 border-t border-sky-500/15">
-                            <span class="font-semibold text-sky-600">Pendapatan Platform</span>
-                            <span class="text-[11px] text-slate-400">Rate 5.0%</span>
+                        <div class="flex items-center justify-between text-xs text-slate-500 mt-3 pt-3 border-t border-blue-200">
+                            <span class="font-semibold text-blue-600">Pendapatan Platform</span>
+                            <span class="text-[11px] text-slate-400 font-bold">Rate 5.0%</span>
                         </div>
                     </div>
 
                     <!-- 3. Total Penarikan Disetujui -->
-                    <div class="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white rounded-2xl p-5 border border-amber-500/20 shadow-sm relative overflow-hidden card-hover">
-                        <div class="absolute -right-3 -bottom-3 w-20 h-20 bg-amber-500/10 rounded-full blur-xl pointer-events-none"></div>
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700">Penarikan Saldo Penjual</span>
-                            <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/30">
-                                <i class="fa-solid fa-money-bill-transfer text-sm"></i>
-                            </div>
+                    <div class="bg-gradient-to-br from-amber-50 via-white to-amber-100/60 border-l-4 border-amber-500 border-y border-r border-amber-200 p-5 rounded-2xl card-hover shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div><span class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Penarikan Saldo Penjual</span><div class="text-3xl font-black text-slate-900 mt-1">Rp {{ number_format($summary['total_penarikan_disetujui'], 0, ',', '.') }}</div></div>
+                            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/30"><i class="fa-solid fa-money-bill-transfer text-lg"></i></div>
                         </div>
-                        <h3 class="text-2xl font-display font-extrabold text-slate-800 mb-1">
-                            Rp {{ number_format($summary['total_penarikan_disetujui'], 0, ',', '.') }}
-                        </h3>
-                        <div class="flex items-center justify-between text-xs text-slate-500 mt-3 pt-3 border-t border-amber-500/15">
+                        <div class="flex items-center justify-between text-xs text-slate-500 mt-3 pt-3 border-t border-amber-200">
                             <span class="flex items-center gap-1 font-semibold text-amber-600">
                                 <i class="fa-solid fa-check-double text-[10px]"></i> {{ $summary['count_penarikan_disetujui'] }} Pencairan Selesai
                             </span>
-                            <span class="text-[11px] text-slate-400">Total Payout</span>
+                            <span class="text-[11px] text-slate-400 font-bold">Total Payout</span>
                         </div>
                     </div>
 
                     <!-- 4. Saldo Bersih / Arus Kas Net -->
-                    <div class="bg-gradient-to-br from-indigo-500/10 via-indigo-500/5 to-white rounded-2xl p-5 border border-indigo-500/20 shadow-sm relative overflow-hidden card-hover">
-                        <div class="absolute -right-3 -bottom-3 w-20 h-20 bg-indigo-500/10 rounded-full blur-xl pointer-events-none"></div>
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Arus Kas Bersih (Net)</span>
-                            <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/30">
-                                <i class="fa-solid fa-scale-balanced text-sm"></i>
-                            </div>
+                    <div class="bg-gradient-to-br from-indigo-50 via-white to-indigo-100/60 border-l-4 border-indigo-500 border-y border-r border-indigo-200 p-5 rounded-2xl card-hover shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div><span class="text-[11px] font-bold text-indigo-900 uppercase tracking-wider">Arus Kas Bersih (Net)</span><div class="text-3xl font-black text-slate-900 mt-1">Rp {{ number_format($summary['saldo_bersih'], 0, ',', '.') }}</div></div>
+                            <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-md shadow-indigo-500/30"><i class="fa-solid fa-scale-balanced text-lg"></i></div>
                         </div>
-                        <h3 class="text-2xl font-display font-extrabold {{ $summary['saldo_bersih'] >= 0 ? 'text-indigo-700' : 'text-rose-600' }} mb-1">
-                            Rp {{ number_format($summary['saldo_bersih'], 0, ',', '.') }}
-                        </h3>
-                        <div class="flex items-center justify-between text-xs text-slate-500 mt-3 pt-3 border-t border-indigo-500/15">
+                        <div class="flex items-center justify-between text-xs text-slate-500 mt-3 pt-3 border-t border-indigo-200">
                             <span class="font-semibold text-indigo-600">Pemasukan - Pencairan</span>
-                            <span class="text-[11px] text-slate-400">Net Flow</span>
+                            <span class="text-[11px] text-slate-400 font-bold">Net Flow</span>
                         </div>
                     </div>
                 </div>

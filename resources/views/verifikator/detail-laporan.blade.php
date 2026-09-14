@@ -132,7 +132,7 @@
                         </div>
                         <div class="p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
                             <span class="text-slate-400 font-bold block uppercase text-[10px]">Entitas Dilaporkan</span>
-                            <strong class="text-rose-600 text-sm block mt-0.5">{{ $report->product->name ?? $report->reportedUser->name ?? '-' }}</strong>
+                            <strong class="text-rose-600 text-sm block mt-0.5">{{ $report->product->title ?? $report->product->name ?? $report->reportedUser->name ?? '-' }}</strong>
                         </div>
                     </div>
 

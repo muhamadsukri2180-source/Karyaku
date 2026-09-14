@@ -574,36 +574,144 @@ class AdminController extends Controller
     | 8. TRANSAKSI & KEUANGAN
     |--------------------------------------------------------------------------
     */
-    public function transactions(Request $request)
+    private function buildOrderQuery(Request $request)
     {
-        $search = $request->query('search');
-        $orders = Order::with(['buyer', 'items.product.seller'])
-            ->when($search, fn($q) => $q->whereHas('buyer', fn($qq) => $qq->where('name', 'like', "%$search%")))
-            ->latest()->paginate(15)->withQueryString();
+        $search = trim($request->query('search', ''));
+        $status = $request->query('status');
 
-        return view('admin.keuangan.riwayat_pesanan', [
-            'orders' => $orders, 'totalTransaksi' => Order::count(),
-            'totalCommission' => Order::where('payment_status', 'paid')->sum('total_price') * 0.05,
-            'sedangDiproses' => Order::whereIn('status', ['pending', 'diproses'])->count(),
-            'orderSelesai' => Order::where('status', 'selesai')->count(),
-            'dibatalkan' => Order::where('status', 'dibatalkan')->count()
-        ]);
+        $query = Order::with(['buyer', 'verifier', 'items.product.seller']);
+
+        if (!empty($search)) {
+            $cleanSearch = ltrim(str_ireplace('ORD-', '', $search), '0');
+            $query->where(function ($q) use ($search, $cleanSearch) {
+                if (is_numeric($cleanSearch) && $cleanSearch > 0) {
+                    $q->orWhere('id_order', (int)$cleanSearch);
+                }
+                $q->orWhere('id_order', 'like', "%{$search}%")
+                  ->orWhereHas('buyer', function ($b) use ($search) {
+                      $b->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('items.product', function ($p) use ($search) {
+                      $p->where('title', 'like', "%{$search}%")
+                        ->orWhereHas('seller', function ($s) use ($search) {
+                            $s->where('name', 'like', "%{$search}%")
+                              ->orWhere('email', 'like', "%{$search}%");
+                        });
+                  });
+            });
+        }
+
+        if (!empty($status)) {
+            if ($status === 'pending_verif') {
+                $query->where('payment_status', 'pending_verification');
+            } elseif ($status === 'diproses') {
+                $query->where('status', 'diproses')->where('payment_status', '!=', 'pending_verification');
+            } elseif ($status === 'selesai') {
+                $query->where(function($q) {
+                    $q->where('status', 'selesai')->orWhere('payment_status', 'paid');
+                });
+            } elseif ($status === 'dibatalkan') {
+                $query->where(function($q) {
+                    $q->where('status', 'dibatalkan')->orWhere('payment_status', 'rejected');
+                });
+            }
+        }
+
+        return $query->latest();
     }
 
-    public function exportTransactions()
+    public function transactions(Request $request)
     {
-        $orders = Order::with(['buyer', 'items'])->latest()->get();
+        $orders = $this->buildOrderQuery($request)->paginate(15)->withQueryString();
+
+        $totalTransaksi = Order::count();
+        $totalCommission = Order::where('payment_status', 'paid')->sum('total_price') * 0.05;
+        $sedangDiproses = Order::whereIn('status', ['pending', 'diproses'])
+            ->orWhereIn('payment_status', ['pending_verification', 'pending'])
+            ->count();
+        $orderSelesai = Order::where('status', 'selesai')
+            ->orWhere('payment_status', 'paid')
+            ->count();
+        $dibatalkan = Order::where('status', 'dibatalkan')
+            ->orWhere('payment_status', 'rejected')
+            ->count();
+
+        return view('admin.keuangan.riwayat_pesanan', compact(
+            'orders', 'totalTransaksi', 'totalCommission', 'sedangDiproses', 'orderSelesai', 'dibatalkan'
+        ));
+    }
+
+    public function exportTransactions(Request $request)
+    {
+        $orders = $this->buildOrderQuery($request)->get();
+
         return response()->stream(function () use ($orders) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Pembeli', 'Total', 'Status Pembayaran', 'Status Order', 'Tanggal']);
-            foreach ($orders as $o) fputcsv($handle, [$o->buyer->name ?? '-', $o->total_price, $o->payment_status, $o->status, $o->created_at->format('Y-m-d H:i')]);
+            fprintf($handle, "\xEF\xBB\xBF");
+            fputcsv($handle, [
+                'ID Pesanan',
+                'Tanggal Pesanan',
+                'Nama Pembeli',
+                'Email Pembeli',
+                'Produk / Layanan',
+                'Kreator / Penjual',
+                'Total Nilai (Rp)',
+                'Metode Pembayaran',
+                'Status Pembayaran',
+                'Status Order'
+            ]);
+
+            foreach ($orders as $o) {
+                $firstItem = $o->items->first();
+                $productTitle = $firstItem?->product?->title ?? '-';
+                if ($o->items->count() > 1) {
+                    $productTitle .= ' (+' . ($o->items->count() - 1) . ' item lainnya)';
+                }
+                $sellerName = $firstItem?->product?->seller?->name ?? '-';
+
+                fputcsv($handle, [
+                    'ORD-' . str_pad($o->id_order, 6, '0', STR_PAD_LEFT),
+                    $o->created_at ? $o->created_at->format('d/m/Y H:i') : '-',
+                    $o->buyer->name ?? '-',
+                    $o->buyer->email ?? '-',
+                    $productTitle,
+                    $sellerName,
+                    (float) $o->total_price,
+                    strtoupper($o->payment_method ?? 'TRANSFER'),
+                    strtoupper($o->payment_status ?? '-'),
+                    strtoupper($o->status ?? '-')
+                ]);
+            }
             fclose($handle);
-        }, 200, ['Content-Type' => 'text/csv', 'Content-Disposition' => 'attachment; filename=riwayat-pesanan-' . now()->format('Ymd_His') . '.csv']);
+        }, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename=riwayat-pesanan-' . now()->format('Ymd_His') . '.csv',
+        ]);
     }
 
     public function transactionDetail(string|int $id)
     {
-        return response()->json(Order::with(['buyer', 'items.product.seller'])->findOrFail($id));
+        $order = Order::with(['buyer', 'verifier', 'items.product.seller'])->findOrFail($id);
+
+        $proofUrl = null;
+        if ($order->payment_proof) {
+            if (str_starts_with($order->payment_proof, 'http://') || str_starts_with($order->payment_proof, 'https://')) {
+                $proofUrl = $order->payment_proof;
+            } else {
+                $path = ltrim($order->payment_proof, '/');
+                if (str_starts_with($path, 'public/')) $path = preg_replace('/^public\//', '', $path);
+                if (str_starts_with($path, 'storage/')) $proofUrl = asset($path);
+                else $proofUrl = asset('storage/' . $path);
+            }
+        }
+
+        $orderData = $order->toArray();
+        $orderData['kode_order'] = 'ORD-' . str_pad($order->id_order, 6, '0', STR_PAD_LEFT);
+        $orderData['payment_proof_url'] = $proofUrl;
+        $orderData['created_at_formatted'] = $order->created_at ? $order->created_at->format('d M Y, H:i') : '-';
+
+        return response()->json($orderData);
     }
 
     /*
@@ -641,63 +749,7 @@ class AdminController extends Controller
         return back()->with('success', 'Penarikan ditolak.');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | 10. MEMBERSHIP CARD MANAGEMENT
-    |--------------------------------------------------------------------------
-    */
-    public function memberships()
-    {
-        return view('admin.membership.paket_membership', [
-            'memberships' => Membership::withCount('users')->get(),
-            'totalPelangganAktif' => User::whereNotNull('id_membership')->count(),
-            'diamondCount' => User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Diamond%'))->count(),
-            'silverCount'  => User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Silver%'))->count(),
-            'bronzeCount'  => User::whereHas('membership', fn($q) => $q->where('name', 'LIKE', '%Bronze%'))->count(),
-        ]);
-    }
 
-    private function prepareMembershipData(Request $request)
-    {
-        if ($request->has('price')) $request->merge(['price' => str_replace('.', '', $request->price)]);
-        
-        $b = [];
-        if ($request->filled('max_upload')) $b[] = "Maksimal Upload: {$request->max_upload} karya";
-        if ($request->boolean('feat_max_products') && $request->filled('val_max_products')) $b[] = "Batas Jasa/Barang: {$request->val_max_products} item";
-        if ($request->boolean('feat_max_ads') && $request->filled('val_max_ads')) $b[] = "Iklan Promosi: {$request->val_max_ads} slot";
-        if ($request->boolean('feat_verified_badge')) $b[] = 'Lencana Kreator Terverifikasi';
-        if ($request->boolean('feat_priority_cs')) $b[] = 'Dukungan CS Prioritas 24/7';
-        if ($request->filled('custom_benefit')) $b[] = $request->custom_benefit;
-
-        foreach ($request->custom_features ?? [] as $feat) {
-            if (!empty($feat['name']) && (!isset($feat['checked']) || $feat['checked'])) {
-                $b[] = trim($feat['name']) . (!empty($feat['val']) ? ': ' . trim($feat['val']) : '');
-            }
-        }
-        $request->merge(['benefit' => $b ? implode(' | ', array_unique($b)) : 'Fitur standar keanggotaan']);
-    }
-
-    public function storeMembership(Request $request)
-    {
-        $this->prepareMembershipData($request);
-        Membership::create($request->validate(['name' => 'required|string|max:255', 'price' => 'required|numeric|min:0', 'duration_days' => 'required|integer|min:1', 'max_upload' => 'required|integer|min:0', 'benefit' => 'required|string']));
-        return back()->with('success', 'Paket membership ditambahkan.');
-    }
-
-    public function updateMembership(Request $request, string|int $id)
-    {
-        $this->prepareMembershipData($request);
-        Membership::findOrFail($id)->update($request->validate(['name' => 'required|string|max:255', 'price' => 'required|numeric|min:0', 'duration_days' => 'required|integer|min:1', 'max_upload' => 'required|integer|min:0', 'benefit' => 'required|string']));
-        return back()->with('success', 'Paket membership diperbarui.');
-    }
-
-    public function deleteMembership(string|int $id)
-    {
-        $m = Membership::findOrFail($id);
-        if ($m->users()->exists()) return back()->with('error', 'Paket tidak dapat dihapus karena masih ada pelanggan aktif.');
-        $m->delete();
-        return back()->with('success', 'Paket dihapus.');
-    }
 
     /*
     |--------------------------------------------------------------------------
@@ -1830,5 +1882,112 @@ class AdminController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             'Cache-Control' => 'max-age=0',
         ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 8. PAKET MEMBERSHIP MANAGEMENT (BRONZE, SILVER, DIAMOND)
+    |--------------------------------------------------------------------------
+    */
+    public function memberships()
+    {
+        $this->autoSeedMemberships();
+
+        $memberships = Membership::withCount('users')->orderBy('price', 'asc')->get();
+        return view('admin.membership.paket_membership', compact('memberships'));
+    }
+
+    private function autoSeedMemberships()
+    {
+        $defaultMemberships = [
+            [
+                'name'          => 'Bronze Plan',
+                'price'         => 25000,
+                'duration_days' => 30,
+                'max_upload'    => 5,
+                'benefit'       => 'Kuota Upload Produk (5 Karya) | Dukungan Layanan Customer Service Standard',
+            ],
+            [
+                'name'          => 'Silver Plan',
+                'price'         => 50000,
+                'duration_days' => 30,
+                'max_upload'    => 20,
+                'benefit'       => 'Kuota Upload Produk (20 Karya) | Fitur Promosi & Iklan Video Produk | Laporan Keuangan & Statistik Penjualan',
+            ],
+            [
+                'name'          => 'Diamond Plan',
+                'price'         => 150000,
+                'duration_days' => 30,
+                'max_upload'    => 999,
+                'benefit'       => 'Kuota Upload Produk (Tanpa Batas / Unlimited) | Fitur Promosi & Iklan Video Produk | Lencana / Badge Kreator Terverifikasi (Centang Biru) | Prioritas Layanan Customer Service 24/7 | Laporan Keuangan & Statistik Penjualan | Bebas Biaya Komisi Platform',
+            ],
+        ];
+
+        foreach ($defaultMemberships as $item) {
+            Membership::firstOrCreate(
+                ['name' => $item['name']],
+                $item
+            );
+        }
+    }
+
+    public function storeMembership(Request $request)
+    {
+        $validated = $request->validate([
+            'name'          => 'required|string|max:100',
+            'price'         => 'required',
+            'duration_days' => 'required|integer|min:1',
+            'max_upload'    => 'required|integer|min:1',
+            'benefits'      => 'nullable|array',
+            'benefits.*'    => 'string',
+        ]);
+
+        $cleanPrice = (float) str_replace(['.', ','], ['', '.'], $validated['price']);
+        $benefitString = !empty($validated['benefits']) ? implode(' | ', $validated['benefits']) : 'Fitur Kuota Upload Produk (Sesuai Limit)';
+
+        Membership::create([
+            'name'          => $validated['name'],
+            'price'         => $cleanPrice,
+            'duration_days' => $validated['duration_days'],
+            'max_upload'    => $validated['max_upload'],
+            'benefit'       => $benefitString,
+        ]);
+
+        return redirect()->route('admin.memberships')->with('success', 'Paket membership baru berhasil disimpan.');
+    }
+
+    public function updateMembership(Request $request, $id)
+    {
+        $membership = Membership::findOrFail($id);
+
+        $validated = $request->validate([
+            'name'          => 'required|string|max:100',
+            'price'         => 'required',
+            'duration_days' => 'required|integer|min:1',
+            'max_upload'    => 'required|integer|min:1',
+            'benefits'      => 'nullable|array',
+            'benefits.*'    => 'string',
+        ]);
+
+        $cleanPrice = (float) str_replace(['.', ','], ['', '.'], $validated['price']);
+        $benefitString = !empty($validated['benefits']) ? implode(' | ', $validated['benefits']) : 'Fitur Kuota Upload Produk (Sesuai Limit)';
+
+        $membership->update([
+            'name'          => $validated['name'],
+            'price'         => $cleanPrice,
+            'duration_days' => $validated['duration_days'],
+            'max_upload'    => $validated['max_upload'],
+            'benefit'       => $benefitString,
+        ]);
+
+        return redirect()->route('admin.memberships')->with('success', 'Data paket membership berhasil diperbarui.');
+    }
+
+    public function deleteMembership($id)
+    {
+        $membership = Membership::findOrFail($id);
+        $membership->delete();
+
+        return redirect()->route('admin.memberships')->with('success', 'Paket membership berhasil dihapus.');
     }
 }
