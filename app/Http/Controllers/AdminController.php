@@ -13,9 +13,6 @@ use PhpOffice\PhpSpreadsheet\Style\{Alignment, Border, Fill, Font, NumberFormat}
 
 class AdminController extends Controller
 {
-    /**
-     * HELPER: Pengirim Notifikasi Cepat
-     */
     private function sendNotif($targetUserId, $title, $description)
     {
         if ($targetUserId) {
@@ -27,12 +24,6 @@ class AdminController extends Controller
             ]);
         }
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 1. DASHBOARD SYSTEM
-    |--------------------------------------------------------------------------
-    */
     public function dashboard(Request $request)
     {
         $year = (int) $request->query('year', now()->year);
@@ -93,12 +84,6 @@ class AdminController extends Controller
         $chartData = array_map(fn($m) => (int) ($chartRaw[$m] ?? 0), range(1, 12));
         return response()->json(['year' => $year, 'data' => $chartData]);
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 2. MAINTENANCE MODE & BACKUP DATABASE
-    |--------------------------------------------------------------------------
-    */
     public function maintenance()
     {
         $statusFile = storage_path('framework/maintenance_mode.json');
@@ -130,7 +115,6 @@ class AdminController extends Controller
                 'created_at' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file)),
             ])->sortByDesc('created_at')->values();
 
-        // Riwayat pembersihan cache terakhir
         $cacheClearedFile = storage_path('framework/cache_cleared_at.json');
         $lastCacheClearedAt = null;
         if (file_exists($cacheClearedFile)) {
@@ -252,12 +236,6 @@ class AdminController extends Controller
         Storage::disk('local')->delete('backups/' . basename($filename));
         return back()->with('success', 'File backup berhasil dihapus.');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 3. MANAJEMEN PENGGUNA (AKUN PENGGUNA)
-    |--------------------------------------------------------------------------
-    */
     public function users(Request $request)
     {
         $search = $request->query('search');
@@ -321,7 +299,7 @@ class AdminController extends Controller
 
         if ($user->status === 'blocked') {
             $user->update(['status' => 'active', 'suspended_until' => null, 'suspend_reason' => null]);
-            $this->sendNotif($user->id_user, '✅ Akun Diaktifkan Kembali', 'Akun Anda telah diaktifkan kembali oleh Admin.');
+            $this->sendNotif($user->id_user, 'Akun Diaktifkan Kembali', 'Akun Anda telah diaktifkan kembali oleh Admin.');
             return back()->with('success', 'Akun pengguna "' . $user->name . '" berhasil diaktifkan kembali.');
         }
 
@@ -343,15 +321,9 @@ class AdminController extends Controller
         }
         $user->save();
 
-        $this->sendNotif($user->id_user, '⚠️ Status Akun Ditangguhkan', 'Akun Anda dinonaktifkan sementara (' . $durationText . '). Alasan: ' . $reason);
+        $this->sendNotif($user->id_user, 'Status Akun Ditangguhkan', 'Akun Anda dinonaktifkan sementara (' . $durationText . '). Alasan: ' . $reason);
         return back()->with('success', 'Akun "' . $user->name . '" berhasil disuspend (' . $durationText . ').');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 4. AKUN VERIFIKATOR & VERIFIKASI IDENTITAS
-    |--------------------------------------------------------------------------
-    */
     public function verifikator()
     {
         $verifikatorRole = Role::where('role_name', 'verifikator')->first();
@@ -427,7 +399,7 @@ class AdminController extends Controller
             $user->update($userData);
             
             $membershipName = $membership->name ?? 'Paket Penjual';
-            $this->sendNotif($user->id_user, '💎 Paket Penjual / Membership Disetujui', 'Selamat! Verifikasi pendaftaran/pembayaran paket ' . $membershipName . ' Anda telah disetujui.');
+            $this->sendNotif($user->id_user, 'Paket Penjual / Membership Disetujui', 'Selamat! Verifikasi pendaftaran/pembayaran paket ' . $membershipName . ' Anda telah disetujui.');
             DB::commit();
             return back()->with('success', 'Pengajuan disetujui. Akun penjual / paket membership berhasil diperbarui.');
         } catch (\Throwable $e) {
@@ -443,16 +415,10 @@ class AdminController extends Controller
         if (!$verif || $verif->status !== 'pending') return back()->with('error', 'Pengajuan tidak valid atau sudah diproses.');
 
         $verif->update(['status' => 'rejected', 'verifier_id' => auth()->id(), 'notes' => $request->notes, 'verified_at' => now()]);
-        $this->sendNotif($verif->user_id ?? $verif->id_user ?? null, '❌ Pendaftaran Penjual Ditolak', 'Pengajuan ditolak. Alasan: ' . ($request->notes ?? 'Dokumen tidak sesuai.'));
+        $this->sendNotif($verif->user_id ?? $verif->id_user ?? null, 'Pendaftaran Penjual Ditolak', 'Pengajuan ditolak. Alasan: ' . ($request->notes ?? 'Dokumen tidak sesuai.'));
         
         return back()->with('success', 'Pengajuan identitas berhasil ditolak.');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 5. AKUN & LAYANAN CUSTOMER SERVICE
-    |--------------------------------------------------------------------------
-    */
     public function serviceAccounts()
     {
         $roleCs = Role::where('role_name', 'customer_service')->first();
@@ -478,6 +444,30 @@ class AdminController extends Controller
         return back()->with('success', 'Akun Customer Service berhasil ditambahkan!');
     }
 
+    public function updateServiceAccount(Request $request, string|int $id)
+    {
+        $user = User::findOrFail($id);
+        $validated = $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email,' . $id . ',id_user',
+            'password' => 'nullable|min:6',
+            'status'   => 'required|in:active,blocked',
+        ]);
+
+        $data = [
+            'name'   => $validated['name'],
+            'email'  => $validated['email'],
+            'status' => $validated['status'],
+        ];
+
+        if (!empty($validated['password'])) {
+            $data['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($data);
+        return back()->with('success', 'Akun Customer Service berhasil diperbarui!');
+    }
+
     public function deleteServiceAccount(string|int $id)
     {
         User::findOrFail($id)->delete();
@@ -491,23 +481,32 @@ class AdminController extends Controller
         $this->sendNotif($ticket->user_id ?? $ticket->id_user ?? null, 'Pembaharuan Tiket Pengaduan', 'Status tiket ' . $ticket->subject . ' menjadi: ' . strtoupper($request->status));
         return back()->with('success', 'Status keluhan berhasil diperbarui!');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 6. KATALOG: DAFTAR JASA
-    |--------------------------------------------------------------------------
-    */
     public function products(Request $request)
     {
         $search = $request->query('search');
-        $products = Product::with(['category', 'seller'])
-            ->when($search, fn($q) => $q->where('title', 'like', "%$search%"))
-            ->latest()->paginate(15)->withQueryString();
+        $tab    = $request->query('tab', 'pending');
+
+        $query = Product::with(['category', 'seller'])
+            ->when($search, fn($q) => $q->where('title', 'like', "%$search%"));
+
+        if ($tab === 'pending') {
+            $query->where('status', 'pending');
+        } elseif ($tab === 'active') {
+            $query->where('status', 'active');
+        }
+
+        $products = $query->latest()->paginate(15)->withQueryString();
+
+        $pendingCount = Product::where('status', 'pending')->count();
+        $activeCount  = Product::where('status', 'active')->count();
+        $allCount     = Product::count();
 
         return view('admin.katalog.daftar_jasa', [
-            'products' => $products,
-            'pendingCount' => Product::where('status', 'pending')->count(),
-            'activeCount'  => Product::where('status', 'active')->count()
+            'products'     => $products,
+            'tab'          => $tab,
+            'pendingCount' => $pendingCount,
+            'activeCount'  => $activeCount,
+            'allCount'     => $allCount,
         ]);
     }
 
@@ -515,7 +514,7 @@ class AdminController extends Controller
     {
         $product = Product::findOrFail($id);
         $product->update(['status' => 'active']);
-        $this->sendNotif($product->user_id ?? $product->id_user ?? null, '✅ Produk Disetujui', 'Produk "' . $product->title . '" telah disetujui.');
+        $this->sendNotif($product->seller_id, 'Produk Disetujui', 'Produk "' . $product->title . '" telah disetujui.');
         return back()->with('success', 'Produk berhasil disetujui.');
     }
 
@@ -523,7 +522,7 @@ class AdminController extends Controller
     {
         $product = Product::findOrFail($id);
         $product->update(['status' => 'inactive']);
-        $this->sendNotif($product->user_id ?? $product->id_user ?? null, '⚠️ Produk Disembunyikan', 'Produk "' . $product->title . '" telah dinonaktifkan oleh Admin.');
+        $this->sendNotif($product->seller_id, 'Produk Disembunyikan', 'Produk "' . $product->title . '" telah dinonaktifkan oleh Admin.');
         return back()->with('success', 'Produk berhasil di-takedown.');
     }
 
@@ -532,12 +531,6 @@ class AdminController extends Controller
         Product::where('id_product', $id)->delete();
         return back()->with('success', 'Produk dihapus permanen.');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 7. KATEGORI JASA
-    |--------------------------------------------------------------------------
-    */
     public function categories()
     {
         $categories = Category::withCount('products')->latest()->get();
@@ -569,11 +562,6 @@ class AdminController extends Controller
         return back()->with('success', 'Kategori dihapus.');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | 8. TRANSAKSI & KEUANGAN
-    |--------------------------------------------------------------------------
-    */
     private function buildOrderQuery(Request $request)
     {
         $search = trim($request->query('search', ''));
@@ -737,7 +725,7 @@ class AdminController extends Controller
     {
         $w = Withdrawal::findOrFail($id);
         $w->update(['status' => 'processed', 'processed_by' => auth()->id(), 'processed_at' => now()]);
-        $this->sendNotif($w->user_id ?? $w->id_user ?? null, '💸 Penarikan Saldo Berhasil', 'Penarikan Rp' . number_format($w->amount, 0, ',', '.') . ' berhasil diproses.');
+        $this->sendNotif($w->user_id ?? $w->id_user ?? null, 'Penarikan Saldo Berhasil', 'Penarikan Rp' . number_format($w->amount, 0, ',', '.') . ' berhasil diproses.');
         return back()->with('success', 'Penarikan saldo diproses.');
     }
 
@@ -745,17 +733,9 @@ class AdminController extends Controller
     {
         $w = Withdrawal::findOrFail($id);
         $w->update(['status' => 'rejected', 'notes' => $request->notes, 'processed_by' => auth()->id(), 'processed_at' => now()]);
-        $this->sendNotif($w->user_id ?? $w->id_user ?? null, '❌ Penarikan Saldo Ditolak', 'Penarikan ditolak. Catatan: ' . ($request->notes ?? 'Data tidak valid.'));
+        $this->sendNotif($w->user_id ?? $w->id_user ?? null, 'Penarikan Saldo Ditolak', 'Penarikan ditolak. Catatan: ' . ($request->notes ?? 'Data tidak valid.'));
         return back()->with('success', 'Penarikan ditolak.');
     }
-
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | 11. PELANGGARAN & BANDING
-    |--------------------------------------------------------------------------
-    */
     public function pelanggaran()
     {
         return view('admin.sistem.pelanggaran', [
@@ -773,7 +753,7 @@ class AdminController extends Controller
         $r->update(['status' => $req['action'] === 'abaikan' ? 'dismissed' : 'reviewed', 'admin_note' => $req['admin_notes'], 'reviewed_at' => now(), 'reviewed_by' => auth()->id()]);
 
         if ($req['action'] === 'suspend' && $r->reported_user_id) User::where('id_user', $r->reported_user_id)->update(['status' => 'blocked']);
-        if ($req['action'] === 'peringatan') $this->sendNotif($r->reported_user_id, '⚠️ Peringatan Laporan', 'Peringatan Admin: ' . $req['admin_notes']);
+        if ($req['action'] === 'peringatan' && $r->reported_user_id) $this->sendNotif($r->reported_user_id, 'Peringatan Laporan', 'Peringatan Admin: ' . $req['admin_notes']);
         
         $this->sendNotif($r->user_id ?? $r->id_user ?? null, 'Status Laporan Anda', 'Telah ditindaklanjuti. Catatan: ' . $req['admin_notes']);
         return back()->with('success', 'Tindakan berhasil diproses.');
@@ -782,11 +762,19 @@ class AdminController extends Controller
     public function tindakProdukPelanggaran(Request $request, string|int $id)
     {
         $req = $request->validate(['action' => 'required|in:peringatan,suspend,abaikan', 'admin_notes' => 'required|string|max:500']);
-        $r = Report::findOrFail($id);
-        $r->update(['status' => $req['action'] === 'abaikan' ? 'dismissed' : 'reviewed', 'admin_note' => $req['admin_notes'], 'reviewed_at' => now(), 'reviewed_by' => auth()->id()]);
+        $r = Report::with('product')->findOrFail($id);
+        $sellerId = $r->reported_user_id ?? ($r->product->seller_id ?? null);
+
+        $r->update([
+            'reported_user_id' => $sellerId,
+            'status'           => $req['action'] === 'abaikan' ? 'dismissed' : 'reviewed',
+            'admin_note'       => $req['admin_notes'],
+            'reviewed_at'       => now(),
+            'reviewed_by'       => auth()->id(),
+        ]);
 
         if ($req['action'] === 'suspend' && $r->product_id) Product::where('id_product', $r->product_id)->update(['status' => 'inactive']);
-        if ($req['action'] === 'peringatan') $this->sendNotif($r->product->user_id ?? $r->product->id_user ?? null, '⚠️ Peringatan Produk', 'Peringatan Admin: ' . $req['admin_notes']);
+        if ($req['action'] === 'peringatan' && $sellerId) $this->sendNotif($sellerId, 'Peringatan Produk', 'Peringatan Admin: ' . $req['admin_notes']);
         
         $this->sendNotif($r->user_id ?? $r->id_user ?? null, 'Status Laporan Anda', 'Telah ditindaklanjuti. Catatan: ' . $req['admin_notes']);
         return back()->with('success', 'Tindakan berhasil diproses.');
@@ -803,13 +791,13 @@ class AdminController extends Controller
             $a->update(['status' => 'approved', 'admin_note' => $note ?: 'Disetujui. Akun aktif kembali.', 'reviewed_at' => now(), 'reviewed_by' => auth()->id()]);
             if ($u) {
                 $u->update(['status' => 'active', 'suspended_until' => null, 'suspend_reason' => null]);
-                $this->sendNotif($u->id_user, '🎉 Banding Disetujui', 'Banding disetujui. ' . ($note ? 'Catatan: ' . $note : ''));
+                $this->sendNotif($u->id_user, 'Banding Disetujui', 'Banding disetujui. ' . ($note ? 'Catatan: ' . $note : ''));
             }
             return back()->with('success', 'Banding disetujui.');
         } 
         
         $a->update(['status' => 'rejected', 'admin_note' => $note ?: 'Banding ditolak.', 'reviewed_at' => now(), 'reviewed_by' => auth()->id()]);
-        $this->sendNotif($u?->id_user, '❌ Banding Ditolak', 'Banding ditolak. Catatan: ' . ($note ?: 'Alasan tidak mencukupi.'));
+        $this->sendNotif($u?->id_user, 'Banding Ditolak', 'Banding ditolak. Catatan: ' . ($note ?: 'Alasan tidak mencukupi.'));
         return back()->with('success', 'Banding ditolak.');
     }
 
@@ -821,11 +809,6 @@ class AdminController extends Controller
         return back()->with('success', 'Riwayat banding dihapus.');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | 12. PROFILE & 13. SECURITY
-    |--------------------------------------------------------------------------
-    */
     public function profile() { return view('admin.profile', ['admin' => auth()->user()]); }
 
     public function updateProfile(Request $request)
@@ -878,16 +861,10 @@ class AdminController extends Controller
         return back()->with('success', 'Log IP dihapus.');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | 14. OPTIMASI & CACHE
-    |--------------------------------------------------------------------------
-    */
     public function clearCache(Request $request)
     {
         $step = $request->input('step');
 
-        // Jika request menjalankan step tertentu secara asinkronus (AJAX)
         if ($step) {
             try {
                 switch ($step) {
@@ -945,7 +922,6 @@ class AdminController extends Controller
             }
         }
 
-        // Eksekusi penuh (Full run)
         $res = [];
         $tasks = [
             'App Cache' => function () {
@@ -1008,21 +984,13 @@ class AdminController extends Controller
         }
         return back()->with('success', 'Optimasi selesai! ' . implode(' • ', $res));
     }
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | 15. KELOLA NOTIFIKASI (KIRIM MANUAL KE PENGGUNA TERTENTU / SEMUA)
-    |--------------------------------------------------------------------------
-    */
+    
     public function notifikasi()
     {
         $notifications = Notification::with('targetUser')
             ->latest()
             ->paginate(15);
 
-        // Dropdown daftar SEMUA pengguna (kecuali Admin) untuk dipilih tujuan notifikasi.
-        // View tinggal loop $allUsers, otomatis nambah kalau ada pengguna baru daftar.
         $allUsers = User::with('role')
             ->whereHas('role', fn ($q) => $q->where('role_name', '!=', 'admin'))
             ->orderBy('name')
@@ -1060,15 +1028,6 @@ class AdminController extends Controller
         return back()->with('success', 'Notifikasi berhasil dihapus.');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | 16. LAPORAN KEUANGAN & EKSPOR EXCEL (BULANAN & CUSTOM)
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Helper privat: mengolah rentang tanggal filter laporan keuangan (bulanan / mingguan / custom)
-     */
     private function getFinancialReportDateRange(Request $request): array
     {
         $filterType = $request->input('filter_type', 'bulanan'); // 'bulanan', 'mingguan', 'custom'
@@ -1104,16 +1063,13 @@ class AdminController extends Controller
             $year  = (int) $startDate->year;
             $periodLabel = 'Periode ' . $startDate->format('d M Y') . ' s/d ' . $endDate->format('d M Y');
         } else {
-            // Default bulanan
             $filterType = 'bulanan';
             $inputMonth = (int) $request->input('month', now()->month);
             $inputYear  = (int) $request->input('year', now()->year);
 
-            // Validasi ketat: Tahun tidak boleh kurang dari 2026 dan tidak boleh melebihi tahun saat ini (now()->year)
             $year  = min(max($inputYear, $launchYear), $maxYear);
             $month = min(max($inputMonth, 1), 12);
 
-            // Jika berada di tahun berjalan saat ini, batasi bulan tidak boleh melompat ke masa depan
             if ($year === $currentYear && $month > (int) now()->month) {
                 $month = (int) now()->month;
             }
@@ -1123,20 +1079,13 @@ class AdminController extends Controller
             $periodLabel = ($monthNames[$month] ?? 'Bulan ' . $month) . ' ' . $year;
         }
 
-        // Hitung navigasi bulan sebelumnya dan bulan berikutnya
         $currentMonthCarbon = Carbon::createFromDate($year, $month, 1);
         $prevCarbon = $currentMonthCarbon->copy()->subMonth();
         $nextCarbon = $currentMonthCarbon->copy()->addMonth();
 
-        // Batas navigasi:
-        // has_prev: tidak bisa mundur sebelum Januari 2026 (tahun launching)
         $hasPrev = !($prevCarbon->year < $launchYear);
-        // has_next: tidak bisa maju ke bulan/tahun masa depan yang belum tiba
         $hasNext = !($nextCarbon->year > $currentYear || ($nextCarbon->year === $currentYear && $nextCarbon->month > (int) now()->month));
 
-        // Hanya menampilkan rentang dari 2026 s/d tahun saat ini (now()->year).
-        // Pada tahun 2026 saat ini, HANYA tahun 2026 yang tampil.
-        // Ketika sistem masuk ke tahun 2027, opsi 2027 akan OTOMATIS muncul sendiri tanpa perlu ditambah manual.
         $availableYears = range($launchYear, $maxYear);
 
         return [
@@ -1158,9 +1107,6 @@ class AdminController extends Controller
         ];
     }
 
-    /**
-     * Laporan Keuangan Bulanan & Analisis Finansial Admin
-     */
     public function laporanKeuangan(Request $request)
     {
         $dateRange = $this->getFinancialReportDateRange($request);
@@ -1168,7 +1114,6 @@ class AdminController extends Controller
         $endDate   = $dateRange['end_date'];
         $status    = $request->input('status', 'all');
 
-        // Query Order (Penjualan / Pemasukan)
         $orderQuery = Order::with(['buyer', 'items.product.seller'])
             ->whereBetween('created_at', [$startDate, $endDate]);
 
@@ -1178,13 +1123,11 @@ class AdminController extends Controller
 
         $orders = $orderQuery->latest('created_at')->get();
 
-        // Query Withdrawals (Pencairan Saldo Penjual)
         $withdrawals = Withdrawal::with('user')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->latest('created_at')
             ->get();
 
-        // Kalkulasi Statistik Finansial
         $totalPemasukan          = (float) $orders->where('payment_status', 'paid')->sum('total_price');
         $totalKomisiPlatform     = (float) ($totalPemasukan * 0.05); // Komisi 5% platform
         $totalOrdersPaid         = (int) $orders->where('payment_status', 'paid')->count();
@@ -1202,7 +1145,6 @@ class AdminController extends Controller
         $rataRataTransaksi       = $totalOrdersPaid > 0 ? ($totalPemasukan / $totalOrdersPaid) : 0;
         $successRate             = $totalOrdersCount > 0 ? round(($totalOrdersPaid / $totalOrdersCount) * 100, 1) : 0;
 
-        // Breakdown Per Hari (Daily Breakdown) untuk Chart & Tabel Rekapitulasi
         $daysInPeriod = $startDate->diffInDays($endDate) + 1;
         $dailyBreakdown = [];
         $chartLabels = [];
@@ -1278,7 +1220,6 @@ class AdminController extends Controller
             'success_rate'              => $successRate,
         ];
 
-        // Jika dipanggil via JSON / API / AJAX
         if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'status'         => 'success',
@@ -1293,9 +1234,6 @@ class AdminController extends Controller
         return view('admin.keuangan.laporan_keuangan', compact('summary', 'orders', 'withdrawals', 'dateRange', 'dailyBreakdown', 'chartData'));
     }
 
-    /**
-     * Ekspor Laporan Keuangan ke Berkas Excel (.xlsx) Berwarna & Rapi
-     */
     public function exportLaporanKeuanganExcel(Request $request)
     {
         $dateRange = $this->getFinancialReportDateRange($request);
@@ -1303,7 +1241,6 @@ class AdminController extends Controller
         $endDate   = $dateRange['end_date'];
         $status    = $request->input('status', 'all');
 
-        // Query Transactions
         $orderQuery = Order::with(['buyer', 'items.product.seller'])
             ->whereBetween('created_at', [$startDate, $endDate]);
 
@@ -1313,13 +1250,11 @@ class AdminController extends Controller
 
         $orders = $orderQuery->latest('created_at')->get();
 
-        // Query Withdrawals
         $withdrawals = Withdrawal::with('user')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->latest('created_at')
             ->get();
 
-        // Aggregations
         $totalPemasukan          = (float) $orders->where('payment_status', 'paid')->sum('total_price');
         $totalKomisiPlatform     = (float) ($totalPemasukan * 0.05);
         $totalPenarikanDisetujui = (float) $withdrawals->whereIn('status', ['approved', 'selesai', 'success', 'processed'])->sum('amount');
@@ -1327,18 +1262,13 @@ class AdminController extends Controller
         $totalOrdersPaid         = (int) $orders->where('payment_status', 'paid')->count();
         $totalOrdersCount        = (int) $orders->count();
 
-        // Inisialisasi PhpSpreadsheet
         $spreadsheet = new Spreadsheet();
         $spreadsheet->getDefaultStyle()->getFont()->setName('Segoe UI')->setSize(10);
 
-        // =========================================================================
-        // SHEET 1: RINGKASAN & TRANSAKSI PENJUALAN
-        // =========================================================================
         $sheetOrders = $spreadsheet->getActiveSheet();
         $sheetOrders->setTitle('Transaksi Penjualan');
         $sheetOrders->setShowGridLines(true);
 
-        // 1. BANNER HEADER UTAMA (Navy Blue & Sky Blue)
         $sheetOrders->mergeCells('A1:I1');
         $sheetOrders->setCellValue('A1', 'LAPORAN KEUANGAN KARYAKU MARKETPLACE');
         $sheetOrders->getStyle('A1')->applyFromArray([
@@ -1348,7 +1278,6 @@ class AdminController extends Controller
         ]);
         $sheetOrders->getRowDimension(1)->setRowHeight(38);
 
-        // Subtitle / Periode info
         $sheetOrders->mergeCells('A2:I2');
         $sheetOrders->setCellValue('A2', 'Periode: ' . $dateRange['period_label'] . ' (' . $startDate->format('d/m/Y') . ' - ' . $endDate->format('d/m/Y') . ')  |  Dicetak pada: ' . now()->format('d/m/Y H:i') . ' WIB');
         $sheetOrders->getStyle('A2')->applyFromArray([
@@ -1358,8 +1287,6 @@ class AdminController extends Controller
         ]);
         $sheetOrders->getRowDimension(2)->setRowHeight(24);
 
-        // 2. KARTU STATISTIK RINGKASAN (KPI METRIC BOXES)
-        // Header Kartu (Row 4)
         $sheetOrders->mergeCells('A4:B4');
         $sheetOrders->setCellValue('A4', 'TOTAL PEMASUKAN (LUNAS)');
         $sheetOrders->mergeCells('C4:D4');
@@ -1369,7 +1296,6 @@ class AdminController extends Controller
         $sheetOrders->mergeCells('G4:I4');
         $sheetOrders->setCellValue('G4', 'SALDO BERSIH (NET INFLOW)');
 
-        // Nilai Kartu (Row 5)
         $sheetOrders->mergeCells('A5:B5');
         $sheetOrders->setCellValue('A5', $totalPemasukan);
         $sheetOrders->mergeCells('C5:D5');
@@ -1379,7 +1305,6 @@ class AdminController extends Controller
         $sheetOrders->mergeCells('G5:I5');
         $sheetOrders->setCellValue('G5', $saldoBersih);
 
-        // Styling Kartu 1: Pemasukan (Emerald Green)
         $sheetOrders->getStyle('A4:B4')->applyFromArray([
             'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '065F46']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
@@ -1392,7 +1317,6 @@ class AdminController extends Controller
             'numberFormat' => ['formatCode' => '"Rp "#,##0']
         ]);
 
-        // Styling Kartu 2: Komisi (Sky Blue)
         $sheetOrders->getStyle('C4:D4')->applyFromArray([
             'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '0369A1']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
@@ -1405,7 +1329,6 @@ class AdminController extends Controller
             'numberFormat' => ['formatCode' => '"Rp "#,##0']
         ]);
 
-        // Styling Kartu 3: Penarikan (Amber)
         $sheetOrders->getStyle('E4:F4')->applyFromArray([
             'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '92400E']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
@@ -1418,7 +1341,6 @@ class AdminController extends Controller
             'numberFormat' => ['formatCode' => '"Rp "#,##0']
         ]);
 
-        // Styling Kartu 4: Saldo Bersih (Violet / Indigo)
         $sheetOrders->getStyle('G4:I4')->applyFromArray([
             'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '4338CA']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
@@ -1431,15 +1353,12 @@ class AdminController extends Controller
             'numberFormat' => ['formatCode' => '"Rp "#,##0']
         ]);
 
-        // Border keliling kartu ringkasan
         $sheetOrders->getStyle('A4:I5')->applyFromArray([
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CBD5E1']]]
         ]);
         $sheetOrders->getRowDimension(4)->setRowHeight(20);
         $sheetOrders->getRowDimension(5)->setRowHeight(28);
 
-        // 3. TABEL DATA TRANSAKSI PENJUALAN
-        // Judul Bagian Tabel
         $sheetOrders->mergeCells('A7:I7');
         $sheetOrders->setCellValue('A7', 'RINCIAN TRANSAKSI PENJUALAN (ORDERS)');
         $sheetOrders->getStyle('A7')->applyFromArray([
@@ -1448,7 +1367,6 @@ class AdminController extends Controller
         ]);
         $sheetOrders->getRowDimension(7)->setRowHeight(22);
 
-        // Header Kolom Tabel Transaksi (Row 8)
         $orderHeaders = [
             'A8' => 'No',
             'B8' => 'Kode Order',
@@ -1473,7 +1391,6 @@ class AdminController extends Controller
         ]);
         $sheetOrders->getRowDimension(8)->setRowHeight(26);
 
-        // Data Rows Transaksi
         $rowOrder = 9;
         $noOrder = 1;
 
@@ -1579,10 +1496,6 @@ class AdminController extends Controller
         }
         $sheetOrders->getColumnDimension('E')->setAutoSize(false)->setWidth(35);
 
-
-        // =========================================================================
-        // SHEET 2: DETAIL PENARIKAN SALDO (WITHDRAWALS)
-        // =========================================================================
         $sheetWd = $spreadsheet->createSheet();
         $sheetWd->setTitle('Penarikan Saldo');
         $sheetWd->setShowGridLines(true);
@@ -1647,7 +1560,6 @@ class AdminController extends Controller
                 $sheetWd->setCellValue('D' . $rowWd, $w->user->name ?? 'Penjual #' . $w->user_id);
                 $sheetWd->setCellValue('E' . $rowWd, strtoupper($w->bank_name ?? '-'));
                 
-                // Pastikan No Rekening diset sebagai string
                 $sheetWd->setCellValueExplicit('F' . $rowWd, (string) $w->bank_account_number, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
                 
                 $sheetWd->setCellValue('G' . $rowWd, $w->bank_account_name ?? '-');
@@ -1671,7 +1583,6 @@ class AdminController extends Controller
                 
                 $sheetWd->getStyle('H' . $rowWd)->getNumberFormat()->setFormatCode('"Rp "#,##0');
 
-                // Styling Status Penarikan
                 $wStatus = strtolower($w->status);
                 if (in_array($wStatus, ['processed', 'approved', 'selesai', 'success'])) {
                     $sheetWd->getStyle('J' . $rowWd)->applyFromArray([
@@ -1705,7 +1616,6 @@ class AdminController extends Controller
             $rowWd++;
         }
 
-        // Total Penarikan Row
         $sheetWd->mergeCells('A' . $rowWd . ':G' . $rowWd);
         $sheetWd->setCellValue('A' . $rowWd, 'TOTAL PENARIKAN SALDO:');
         if ($withdrawals->count() > 0) {
@@ -1732,15 +1642,9 @@ class AdminController extends Controller
             $sheetWd->getColumnDimension($col)->setAutoSize(true);
         }
 
-
-        // =========================================================================
-        // SHEET 3: REKAPITULASI HARIAN (DAILY BREAKDOWN)
-        // =========================================================================
         $sheetDaily = $spreadsheet->createSheet();
         $sheetDaily->setTitle('Rekap Harian');
         $sheetDaily->setShowGridLines(true);
-
-        // Header Banner Rekap Harian (Indigo Theme)
         $sheetDaily->mergeCells('A1:H1');
         $sheetDaily->setCellValue('A1', 'REKAPITULASI ARUS KAS HARIAN');
         $sheetDaily->getStyle('A1')->applyFromArray([
@@ -1759,7 +1663,6 @@ class AdminController extends Controller
         ]);
         $sheetDaily->getRowDimension(2)->setRowHeight(22);
 
-        // Kolom Header Rekap (Row 4)
         $dailyHeaders = [
             'A4' => 'No',
             'B4' => 'Tanggal',
@@ -1836,7 +1739,6 @@ class AdminController extends Controller
             $rowDaily++;
         }
 
-        // Total Rekap Row
         $sheetDaily->mergeCells('A' . $rowDaily . ':C' . $rowDaily);
         $sheetDaily->setCellValue('A' . $rowDaily, 'TOTAL PERIODE:');
         $sheetDaily->setCellValue('D' . $rowDaily, '=SUM(D4:D' . ($rowDaily - 1) . ')');
@@ -1866,11 +1768,8 @@ class AdminController extends Controller
         foreach (range('A', 'H') as $col) {
             $sheetDaily->getColumnDimension($col)->setAutoSize(true);
         }
-
-        // Set active sheet ke sheet 1 saat dibuka
         $spreadsheet->setActiveSheetIndex(0);
 
-        // Export Download Response
         $monthClean = str_replace(' ', '_', $dateRange['month_name']);
         $filename = 'Laporan_Keuangan_Karyaku_' . $monthClean . '_' . $dateRange['year'] . '.xlsx';
 
@@ -1883,52 +1782,14 @@ class AdminController extends Controller
             'Cache-Control' => 'max-age=0',
         ]);
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 8. PAKET MEMBERSHIP MANAGEMENT (BRONZE, SILVER, DIAMOND)
-    |--------------------------------------------------------------------------
-    */
     public function memberships()
     {
-        $this->autoSeedMemberships();
-
         $memberships = Membership::withCount('users')->orderBy('price', 'asc')->get();
-        return view('admin.membership.paket_membership', compact('memberships'));
-    }
+        $totalPaket = $memberships->count();
+        $totalPenjualBerlangganan = User::whereNotNull('id_membership')->count();
+        $paketTerlaris = $memberships->sortByDesc('users_count')->first();
 
-    private function autoSeedMemberships()
-    {
-        $defaultMemberships = [
-            [
-                'name'          => 'Bronze Plan',
-                'price'         => 25000,
-                'duration_days' => 30,
-                'max_upload'    => 5,
-                'benefit'       => 'Kuota Upload Produk (5 Karya) | Dukungan Layanan Customer Service Standard',
-            ],
-            [
-                'name'          => 'Silver Plan',
-                'price'         => 50000,
-                'duration_days' => 30,
-                'max_upload'    => 20,
-                'benefit'       => 'Kuota Upload Produk (20 Karya) | Fitur Promosi & Iklan Video Produk | Laporan Keuangan & Statistik Penjualan',
-            ],
-            [
-                'name'          => 'Diamond Plan',
-                'price'         => 150000,
-                'duration_days' => 30,
-                'max_upload'    => 999,
-                'benefit'       => 'Kuota Upload Produk (Tanpa Batas / Unlimited) | Fitur Promosi & Iklan Video Produk | Lencana / Badge Kreator Terverifikasi (Centang Biru) | Prioritas Layanan Customer Service 24/7 | Laporan Keuangan & Statistik Penjualan | Bebas Biaya Komisi Platform',
-            ],
-        ];
-
-        foreach ($defaultMemberships as $item) {
-            Membership::firstOrCreate(
-                ['name' => $item['name']],
-                $item
-            );
-        }
+        return view('admin.membership.paket_membership', compact('memberships', 'totalPaket', 'totalPenjualBerlangganan', 'paketTerlaris'));
     }
 
     public function storeMembership(Request $request)

@@ -28,7 +28,7 @@
                 </div>
                 <div class="form-check">
                     <input class="form-check-input target-type" type="radio" name="target_type" id="tUser" value="pengguna" {{ old('target_type') == 'pengguna' ? 'checked' : '' }}>
-                    <label class="form-check-label small fw-medium" for="tUser">Pengguna / Penjual</label>
+                    <label class="form-check-label small fw-medium" for="tUser">Pengguna (Pembeli / Penjual)</label>
                 </div>
                 <div class="form-check">
                     <input class="form-check-input target-type" type="radio" name="target_type" id="tLain" value="lainnya" {{ old('target_type') == 'lainnya' ? 'checked' : '' }}>
@@ -52,7 +52,7 @@
 
         {{-- Dropdown Pengguna --}}
         <div class="mb-3 d-none" id="groupUser">
-            <label class="form-label small fw-semibold">Pilih Pengguna / Penjual Yang Dilaporkan <span class="text-danger">*</span></label>
+            <label class="form-label small fw-semibold">Pilih Pengguna Yang Dilaporkan (Pembeli / Penjual) <span class="text-danger">*</span></label>
             <select name="reported_user_id" class="form-select rounded-3">
                 <option value="">-- Pilih Pengguna --</option>
                 @foreach ($users as $u)

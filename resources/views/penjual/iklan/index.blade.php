@@ -31,10 +31,27 @@
         <h4 class="mb-1"><i class="bi bi-megaphone-fill text-warning me-2"></i>Iklan & Promosi Produk</h4>
         <p class="small mb-0">Publikasikan iklan video produk Anda (Maksimal 10 detik & Maksimal 10 MB) untuk ditayangkan langsung pada Dashboard Pembeli Karyaku.</p>
     </div>
-    <button type="button" class="btn btn-primary fw-bold px-4 py-2 rounded-3 shadow-sm flex-shrink-0" data-bs-toggle="modal" data-bs-target="#createAdModal">
+    <button type="button" class="btn btn-primary fw-bold px-4 py-2 rounded-3 shadow-sm flex-shrink-0 {{ !$bisaIklan ? 'disabled' : '' }}" data-bs-toggle="modal" data-bs-target="#createAdModal" {{ !$bisaIklan ? 'disabled' : '' }}>
         <i class="bi bi-plus-lg me-1"></i> Tambah Iklan Baru
     </button>
 </div>
+
+@if(!$bisaIklan)
+    <div class="alert alert-warning border-0 shadow-sm rounded-4 p-3 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-warning text-dark rounded-circle p-2 d-flex align-items-center justify-content-center" style="width:42px;height:42px;flex-shrink:0;">
+                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            </div>
+            <div>
+                <h6 class="fw-bold mb-1 text-dark">Paket Membership Inaktif / Kadaluarsa</h6>
+                <p class="small mb-0 text-muted">Fitur publikasi iklan video produk hanya dapat digunakan oleh penjual dengan paket membership aktif.</p>
+            </div>
+        </div>
+        <a href="{{ route('penjual.membership.index') }}" class="btn btn-warning btn-sm fw-bold px-4 py-2 rounded-3 text-dark">
+            <i class="bi bi-star-fill me-1"></i> Beli / Perpanjang Paket
+        </a>
+    </div>
+@endif
 
 {{-- ATURAN UNGGAH IKLAN VIDEO --}}
 <div class="ad-rules-box p-3.5 p-md-4 mb-4 shadow-sm">
@@ -186,11 +203,11 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-dark mb-1">
-                            Unggah Video Iklan (Maksimal 10 MB & Maksimal 10 Detik)
+                            Unggah Video Iklan (Format Landscape 16:9, Maksimal 10 MB & Maksimal 10 Detik)
                         </label>
                         <input type="file" name="ad_video" class="form-control form-control-sm rounded-3" accept="video/mp4,video/webm,video/ogg,video/quicktime" onchange="validateAdVideo(this)">
                         <div class="form-text text-danger small d-none video-error-msg" style="font-size:10px;"></div>
-                        <span class="form-text text-muted small d-block" style="font-size:10.5px;">Format yang didukung: MP4, WebM, OGG, MOV. Maks 10MB & 10 Detik.</span>
+                        <span class="form-text text-muted small d-block" style="font-size:10.5px;">Format yang didukung: MP4, WebM, OGG, MOV (Ukuran Landscape 16:9, Maks 10MB & 10 Detik).</span>
                     </div>
                 </div>
                 <div class="modal-footer border-top p-3">

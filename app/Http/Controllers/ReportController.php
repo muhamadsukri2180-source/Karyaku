@@ -38,6 +38,9 @@ class ReportController extends Controller
         $users = User::select('id_user', 'name', 'id_role')
             ->with(['role:id_role,role_name'])
             ->where('id_user', '!=', $userId)
+            ->whereHas('role', function ($q) {
+                $q->whereIn('role_name', ['penjual', 'pembeli']);
+            })
             ->orderBy('name')
             ->get();
 
@@ -74,6 +77,11 @@ class ReportController extends Controller
             $reportedUserId = $validated['reported_user_id'];
             if ($reportedUserId == $userId) {
                 return back()->withInput()->with('error', 'Kamu tidak dapat melaporkan akun sendiri.');
+            }
+
+            $targetUser = User::with('role')->find($reportedUserId);
+            if ($targetUser && !in_array(strtolower($targetUser->role->role_name ?? ''), ['penjual', 'pembeli'])) {
+                return back()->withInput()->with('error', 'Akun pengurus platform (Admin, Verifikator, Customer Service) tidak dapat dilaporkan. Hanya akun Penjual dan Pembeli yang dapat dilaporkan.');
             }
         }
 

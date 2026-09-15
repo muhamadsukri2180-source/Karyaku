@@ -34,5 +34,19 @@ class AppServiceProvider extends ServiceProvider
                 $config
             );
         });
+
+        \Illuminate\Support\Facades\View::composer('verifikator.*', function ($view) {
+            try {
+                $pendingKtp = \App\Models\IdentityVerification::where('status', 'pending')->count();
+                $pendingProduk = \App\Models\Product::where('status', 'pending')->count();
+                $pendingPembayaran = \App\Models\IdentityVerification::where('status', 'pending')->whereNotNull('payment_method')->count() 
+                    + \App\Models\Order::where('payment_status', 'pending')->whereNotNull('payment_proof')->count();
+                $laporanMasuk = \App\Models\Report::where('status', 'pending')->count();
+
+                $view->with(compact('pendingKtp', 'pendingProduk', 'pendingPembayaran', 'laporanMasuk'));
+            } catch (\Throwable $e) {
+                // Fallback if database not initialized
+            }
+        });
     }
 }

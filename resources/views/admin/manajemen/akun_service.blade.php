@@ -244,6 +244,7 @@
                                 <tr class="bg-sky-50/80 border-b border-sky-100 text-sky-900 text-[11px] uppercase tracking-wider font-bold">
                                     <th class="py-4 px-6">Informasi Petugas</th>
                                     <th class="py-4 px-6">Peran</th>
+                                    <th class="py-4 px-6">Status Bertugas</th>
                                     <th class="py-4 px-6 text-center">Aksi</th>
                                 </tr>
                             </thead>
@@ -251,11 +252,12 @@
                                 @forelse($csUsers as $cs)
                                     @php
                                         $initialsCs = collect(explode(' ', trim($cs->name)))->map(fn($w)=>mb_strtoupper(mb_substr($w,0,1)))->take(2)->implode('');
+                                        $isCsActive = $cs->status === 'active';
                                     @endphp
                                     <tr class="hover:bg-sky-50/50 transition-colors bg-white">
                                         <td class="py-3 px-6">
                                             <div class="flex items-center gap-3">
-                                                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-sky-500 to-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">{{ $initialsCs ?: '??' }}</div>
+                                                <img src="{{ $cs->avatar ? asset('storage/' . $cs->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($cs->name) . '&background=E0F2FE&color=0369A1&bold=true' }}" alt="{{ $cs->name }}" class="w-9 h-9 rounded-full object-cover border border-sky-200 shadow-sm">
                                                 <div>
                                                     <p class="font-bold text-slate-800 text-xs">{{ $cs->name }}</p>
                                                     <p class="text-[10px] text-slate-500 font-medium">{{ $cs->email }}</p>
@@ -268,19 +270,27 @@
                                             </span>
                                         </td>
                                         <td class="py-3 px-6">
-                                            <form action="{{ route('admin.manajemen.akun_service.destroy', $cs->id_user) }}" method="POST" id="del-cs-{{ $cs->id_user }}">
-                                                @csrf @method('DELETE')
-                                                <div class="flex items-center justify-center">
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold {{ $isCsActive ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200' }} border shadow-sm">
+                                                <span class="w-1.5 h-1.5 rounded-full {{ $isCsActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' }}"></span> {{ $isCsActive ? 'Aktif Bertugas' : 'Off / Tidak Bertugas' }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-6">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <button type="button" onclick="openEditCsModal('{{ $cs->id_user }}', '{{ addslashes($cs->name) }}', '{{ addslashes($cs->email) }}', '{{ $cs->status }}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Edit CS">
+                                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                                </button>
+                                                <form action="{{ route('admin.manajemen.akun_service.destroy', $cs->id_user) }}" method="POST" id="del-cs-{{ $cs->id_user }}">
+                                                    @csrf @method('DELETE')
                                                     <button type="button" onclick="confirmDeleteCs('del-cs-{{ $cs->id_user }}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Hapus Akun">
                                                         <i class="fa-solid fa-trash text-xs"></i>
                                                     </button>
-                                                </div>
-                                            </form>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="3" class="py-10 text-center text-sm text-slate-500">Belum ada akun Customer Service terdaftar.</td>
+                                        <td colspan="4" class="py-10 text-center text-sm text-slate-500">Belum ada akun Customer Service terdaftar.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -408,6 +418,46 @@
         </div>
     </div>
 
+    <!-- MODAL EDIT AKUN CS -->
+    <div id="editCsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+        <div id="editCsModalContent" class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl transform scale-95 transition-transform duration-300 border border-sky-100">
+            <div class="flex items-center justify-between pb-4 border-b border-sky-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm"><i class="fa-solid fa-pen-to-square"></i></div>
+                    <h4 class="font-extrabold text-slate-900 text-base font-display">Edit Akun Customer Service</h4>
+                </div>
+                <button type="button" onclick="closeEditCsModal()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="editCsForm" action="" method="POST" class="space-y-4 mt-4">
+                @csrf
+                @method('PUT')
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap Petugas <span class="text-red-500">*</span></label>
+                    <input type="text" name="name" id="editCsName" required class="w-full px-3.5 py-2.5 rounded-xl border border-sky-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Email Petugas CS <span class="text-red-500">*</span></label>
+                    <input type="email" name="email" id="editCsEmail" required class="w-full px-3.5 py-2.5 rounded-xl border border-sky-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Password Baru (Opsional)</label>
+                    <input type="password" name="password" placeholder="Kosongkan jika tidak ingin merubah" class="w-full px-3.5 py-2.5 rounded-xl border border-sky-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Status Bertugas <span class="text-red-500">*</span></label>
+                    <select name="status" id="editCsStatus" required class="w-full px-3.5 py-2.5 rounded-xl border border-sky-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500">
+                        <option value="active">Aktif Bertugas</option>
+                        <option value="blocked">Off / Tidak Bertugas</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-3">
+                    <button type="button" onclick="closeEditCsModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- SCRIPTS -->
     <script>
         const sidebar = document.getElementById('sidebar');
@@ -466,6 +516,30 @@
             csModalContent.classList.remove('scale-100');
             csModalContent.classList.add('scale-95');
             setTimeout(() => { csModal.classList.add('hidden'); }, 300);
+        }
+
+        const editCsModal = document.getElementById('editCsModal');
+        const editCsModalContent = document.getElementById('editCsModalContent');
+
+        function openEditCsModal(id, name, email, status) {
+            document.getElementById('editCsForm').action = '/admin/manajemen/akun-service/' + id;
+            document.getElementById('editCsName').value = name;
+            document.getElementById('editCsEmail').value = email;
+            document.getElementById('editCsStatus').value = status;
+
+            editCsModal.classList.remove('hidden');
+            setTimeout(() => {
+                editCsModal.classList.remove('opacity-0');
+                editCsModalContent.classList.remove('scale-95');
+                editCsModalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeEditCsModal() {
+            editCsModal.classList.add('opacity-0');
+            editCsModalContent.classList.remove('scale-100');
+            editCsModalContent.classList.add('scale-95');
+            setTimeout(() => { editCsModal.classList.add('hidden'); }, 300);
         }
 
         function confirmDeleteCs(formId) {

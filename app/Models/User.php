@@ -183,6 +183,9 @@ class User extends Authenticatable
 
     public function canUploadProduct(): bool
     {
+        if (!$this->isMembershipActive() && $this->id_membership) {
+            return false;
+        }
         $max = $this->getMaxUploadLimit();
         $current = Product::where('seller_id', $this->id_user)->count();
         return $current < $max;
@@ -190,11 +193,7 @@ class User extends Authenticatable
 
     public function canUseAds(): bool
     {
-        if (!$this->isMembershipActive()) {
-            return false;
-        }
-        $name = strtolower($this->membership?->name ?? '');
-        return str_contains($name, 'diamond') || str_contains($name, 'gold') || str_contains($name, 'platinum');
+        return $this->isMembershipActive();
     }
 
     /* =========================================================================

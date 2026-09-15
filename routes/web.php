@@ -21,7 +21,16 @@ use App\Http\Controllers\CsController;
 // 1. PUBLIC / LANDING PAGE
 // ==========================================
 Route::get('/', function () {
-    return view('landing');
+    $memberships = \App\Models\Membership::orderBy('price', 'asc')->get();
+    $bestProducts = \App\Models\Product::with(['seller', 'category'])
+        ->where('status', 'active')
+        ->orderByDesc('is_promoted')
+        ->orderByDesc('sold_count')
+        ->orderByDesc('id_product')
+        ->take(6)
+        ->get();
+
+    return view('landing', compact('memberships', 'bestProducts'));
 })->name('landing');
 
 
@@ -87,6 +96,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // 4. Manajemen Akun & Layanan Customer Service
     Route::get('/manajemen/akun-service', [AdminController::class, 'serviceAccounts'])->name('manajemen.akun_service');
     Route::post('/manajemen/akun-service', [AdminController::class, 'storeServiceAccount'])->name('manajemen.akun_service.store');
+    Route::put('/manajemen/akun-service/{id}', [AdminController::class, 'updateServiceAccount'])->name('manajemen.akun_service.update');
     Route::delete('/manajemen/akun-service/{id}', [AdminController::class, 'deleteServiceAccount'])->name('manajemen.akun_service.destroy');
     Route::put('/manajemen/ticket/{id}', [AdminController::class, 'updateTicketStatus'])->name('manajemen.ticket.update');
 

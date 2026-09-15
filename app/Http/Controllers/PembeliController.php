@@ -51,23 +51,27 @@ class PembeliController extends Controller
         // Rotasi iklan & produk populer setiap 3 jam agar selalu fresh & variatif
         $hourSeed = (int) floor(now()->timestamp / 10800); // 10.800 detik = 3 jam
 
-        // 1. Iklan yang dipromosikan oleh penjual (Aktif & Belum Kedaluwarsa)
+        // 1. Iklan video yang dipromosikan oleh penjual (Aktif, Memiliki Video & Belum Kedaluwarsa)
         $promotedProducts = Product::with(['category', 'seller'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
             ->where('status', 'active')
             ->where('is_promoted', true)
+            ->whereNotNull('video')
+            ->where('video', '!=', '')
             ->where(fn ($q) => $q->whereNull('promoted_until')->orWhere('promoted_until', '>=', now()))
             ->inRandomOrder($hourSeed)
             ->take(8)
             ->get();
 
-        // Jika penjual belum ada yang pasang iklan promosi, fallback ke karya aktif dengan rotasi
+        // Jika penjual belum ada yang pasang iklan video promosi, fallback ke karya aktif yang memiliki video
         if ($promotedProducts->isEmpty()) {
             $promotedProducts = Product::with(['category', 'seller'])
                 ->withAvg('reviews', 'rating')
                 ->withCount('reviews')
                 ->where('status', 'active')
+                ->whereNotNull('video')
+                ->where('video', '!=', '')
                 ->inRandomOrder($hourSeed)
                 ->take(6)
                 ->get();
@@ -424,7 +428,7 @@ class PembeliController extends Controller
 
             Notification::create([
                 'user_id'     => $order->buyer_id,
-                'name'        => '⏳ Bukti Pembayaran Dikirim',
+                'name'        => 'Bukti Pembayaran Dikirim',
                 'description' => 'Bukti pembayaran untuk transaksi #' . $order->kode_order . ' telah berhasil dikirim. Menunggu verifikasi tim Verifikator.',
                 'is_read'     => false,
             ]);
@@ -539,10 +543,11 @@ class PembeliController extends Controller
     public function peringatanIndex()
     {
         $userId = Auth::id();
-        $peringatan = \App\Models\Report::where('reported_user_id', $userId)
-            ->whereIn('status', ['reviewed', 'escalated'])
+        $peringatan = \App\Models\Report::with(['product', 'reporter'])
+            ->where('reported_user_id', $userId)
+            ->whereIn('status', ['reviewed', 'resolved', 'escalated'])
             ->whereNotNull('admin_note')
-            ->latest('reviewed_at')
+            ->latest('updated_at')
             ->paginate(10);
 
         return view('pembeli.peringatan', compact('peringatan'));

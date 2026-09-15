@@ -109,9 +109,6 @@
                 <h3 class="fw-extrabold text-dark mt-1 mb-2">{{ $product->title }}</h3>
 
                 <div class="d-flex align-items-center gap-3 text-muted mb-3 flex-wrap" style="font-size: 13px;">
-                    <span class="text-warning fw-bold d-inline-flex align-items-center gap-1">
-                        <i class="bi bi-star-fill"></i> {{ number_format($avgRating, 1) }} ({{ $totalReviews }} Ulasan)
-                    </span>
                     <span><i class="bi bi-eye text-primary me-1"></i> {{ number_format($product->view_count ?? 0) }} dilihat</span>
                     <span><i class="bi bi-bag-check text-success me-1"></i> Terjual {{ number_format($product->sold_count ?? 0) }}</span>
                 </div>

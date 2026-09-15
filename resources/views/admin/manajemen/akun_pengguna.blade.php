@@ -271,7 +271,7 @@
                                     <tr class="hover:bg-sky-50/50 transition-colors bg-white">
                                         <td class="py-3 px-6">
                                             <div class="flex items-center gap-3">
-                                                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-sky-500 to-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">{{ $initialsRow ?: '??' }}</div>
+                                                <img src="{{ $user->avatar ? asset('storage/' . $user->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=E0F2FE&color=0369A1&bold=true' }}" alt="{{ $user->name }}" class="w-9 h-9 rounded-full object-cover border border-sky-200 shadow-sm">
                                                 <div>
                                                     <p class="font-bold text-slate-800 text-xs">{{ $user->name }}</p>
                                                     @if(!empty($user->phone))
@@ -288,7 +288,7 @@
                                         <td class="py-3 px-6"><p class="text-xs font-semibold text-slate-700">{{ $user->created_at->translatedFormat('d M Y') }}</p></td>
                                         <td class="py-3 px-6">
                                             <span class="text-[10px] font-bold {{ $statusColor }} px-2.5 py-1 rounded-md flex items-center w-max gap-1.5 border">
-                                                <i class="fa-solid fa-circle text-[6px]"></i> {{ ucfirst($user->status) }}
+                                                <i class="fa-solid fa-circle text-[6px]"></i> {{ $user->status === 'active' ? 'Aktif' : ($user->status === 'blocked' ? 'Ditangguhkan' : 'Nonaktif') }}
                                             </span>
                                         </td>
                                         <td class="py-3 px-6">

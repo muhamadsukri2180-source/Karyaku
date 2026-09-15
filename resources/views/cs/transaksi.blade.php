@@ -183,9 +183,9 @@
                         <div class="flex items-center gap-2">
                             <div class="flex bg-slate-100 rounded-xl p-1 text-xs font-bold">
                                 <a href="{{ route('cs.transaksi', array_merge(request()->except('tab_pendaftaran'), ['tab_pendaftaran' => 'pending'])) }}"
-                                   class="px-3 py-1.5 rounded-lg {{ $tabPendaftaran === 'pending' ? 'bg-sky-600 text-white shadow' : 'text-slate-500 hover:text-sky-600' }}">Menunggu</a>
+                                class="px-3 py-1.5 rounded-lg {{ $tabPendaftaran === 'pending' ? 'bg-sky-600 text-white shadow' : 'text-slate-500 hover:text-sky-600' }}">Menunggu</a>
                                 <a href="{{ route('cs.transaksi', array_merge(request()->except('tab_pendaftaran'), ['tab_pendaftaran' => 'history'])) }}"
-                                   class="px-3 py-1.5 rounded-lg {{ $tabPendaftaran === 'history' ? 'bg-sky-600 text-white shadow' : 'text-slate-500 hover:text-sky-600' }}">Riwayat</a>
+                                class="px-3 py-1.5 rounded-lg {{ $tabPendaftaran === 'history' ? 'bg-sky-600 text-white shadow' : 'text-slate-500 hover:text-sky-600' }}">Riwayat</a>
                             </div>
                         </div>
                     </div>

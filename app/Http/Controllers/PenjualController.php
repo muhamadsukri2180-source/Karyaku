@@ -46,7 +46,7 @@ class PenjualController extends Controller
             if (!$hasNotifiedToday) {
                 Notification::create([
                     'user_id'     => $user->id_user,
-                    'name'        => '⚠️ Peringatan Perpanjangan Paket',
+                    'name'        => 'Peringatan Perpanjangan Paket',
                     'description' => "Masa aktif paket membership {$membershipName} Anda akan segera berakhir dalam {$remainingDays} hari lagi. Segera perpanjang paket Anda agar kuota dan fitur toko tidak terbatasi.",
                     'is_read'     => false,
                 ]);
@@ -121,6 +121,11 @@ class PenjualController extends Controller
     {
         $user = Auth::user();
 
+        if (!$user->isMembershipActive() && $user->id_membership) {
+            return redirect()->route('penjual.membership.index')
+                ->with('error', 'Masa aktif paket membership Anda telah berakhir. Silakan perpanjang paket membership Anda untuk dapat menambah produk baru.');
+        }
+
         if (!$user->canUploadProduct()) {
             return redirect()->route('penjual.produk.index')
                 ->with('error', 'Kuota upload produk Anda sudah penuh (' . $user->getMaxUploadLimit() . ' produk). Silakan tingkatkan paket membership Anda.');
@@ -134,9 +139,14 @@ class PenjualController extends Controller
     {
         $user = Auth::user();
 
+        if (!$user->isMembershipActive() && $user->id_membership) {
+            return redirect()->route('penjual.membership.index')
+                ->with('error', 'Masa aktif paket membership Anda telah berakhir. Silakan perpanjang paket membership Anda untuk mengunggah produk baru.');
+        }
+
         if (!$user->canUploadProduct()) {
             return redirect()->route('penjual.produk.index')
-                ->with('error', 'Gagal mengunggah. Batas kuota upload produk paket Anda telah tercapai.');
+                ->with('error', 'Gagal mengunggah. Batas kuota upload produk paket Anda (' . $user->getMaxUploadLimit() . ' produk) telah tercapai.');
         }
 
         $validated = $request->validate([
@@ -282,7 +292,7 @@ class PenjualController extends Controller
     public function iklanIndex()
     {
         $user = Auth::user();
-        $bisaIklan = true; // Izinkan penjual mempublikasikan iklan video
+        $bisaIklan = $user->canUseAds();
         $activeProducts = Product::where('seller_id', $user->id_user)->where('status', 'active')->orderBy('title')->get();
         $promotedProducts = Product::where('seller_id', $user->id_user)->where('is_promoted', true)->latest('id_product')->get();
 
@@ -292,6 +302,12 @@ class PenjualController extends Controller
     public function iklanStore(Request $request, $id = null)
     {
         $user = Auth::user();
+
+        if (!$user->canUseAds()) {
+            return redirect()->route('penjual.membership.index')
+                ->with('error', 'Fitur promosi iklan hanya tersedia untuk penjual dengan paket membership aktif. Silakan perpanjang atau beli paket membership terlebih dahulu.');
+        }
+
         $productId = $id ?: $request->input('product_id');
 
         if (!$productId) {
@@ -306,8 +322,8 @@ class PenjualController extends Controller
         $request->validate([
             'ad_video' => 'nullable|file|mimes:mp4,webm,ogg,mov,qt|max:10240',
         ], [
-            'ad_video.mimes' => 'Video iklan harus berformat MP4, WebM, OGG, atau MOV.',
-            'ad_video.max'   => 'Ukuran video iklan tidak boleh lebih dari 10 MB (maksimal durasi 10 detik).',
+            'ad_video.mimes' => 'Video iklan harus berformat MP4, WebM, OGG, atau MOV (ukuran landscape 16:9, maksimal 10 detik).',
+            'ad_video.max'   => 'Ukuran file video iklan tidak boleh lebih dari 10 MB (maksimal durasi 10 detik).',
         ]);
 
         $updateData = [
@@ -505,7 +521,7 @@ class PenjualController extends Controller
 
         Notification::create([
             'user_id'     => $user->id_user,
-            'name'        => '⏳ Pembayaran Paket Terkirim',
+            'name'        => 'Pembayaran Paket Terkirim',
             'description' => 'Bukti transfer pembayaran paket ' . $membership->name . ' sebesar Rp ' . number_format($membership->price, 0, ',', '.') . ' telah dikirimkan. Menunggu verifikasi admin.',
             'is_read'     => false,
         ]);
@@ -643,6 +659,9 @@ class PenjualController extends Controller
         $users = User::select('id_user', 'name', 'id_role')
             ->with(['role:id_role,role_name'])
             ->where('id_user', '!=', $user->id_user)
+            ->whereHas('role', function ($q) {
+                $q->whereIn('role_name', ['penjual', 'pembeli']);
+            })
             ->orderBy('name')
             ->get();
 
@@ -689,6 +708,11 @@ class PenjualController extends Controller
             if ($reportedUserId == $user->id_user) {
                 return back()->withInput()->with('error', 'Kamu tidak dapat melaporkan akun sendiri.');
             }
+
+            $targetUser = User::with('role')->find($reportedUserId);
+            if ($targetUser && !in_array(strtolower($targetUser->role->role_name ?? ''), ['penjual', 'pembeli'])) {
+                return back()->withInput()->with('error', 'Akun pengurus platform (Admin, Verifikator, Customer Service) tidak dapat dilaporkan. Hanya akun Penjual dan Pembeli yang dapat dilaporkan.');
+            }
         }
 
         Report::create([
@@ -704,13 +728,14 @@ class PenjualController extends Controller
             ->with('success', 'Laporan berhasil dikirim! Tim verifikator, admin, dan CS akan meninjau laporan kamu.');
     }
 
-     public function peringatanIndex()
+    public function peringatanIndex()
     {
         $userId = Auth::id();
-        $peringatan = \App\Models\Report::where('reported_user_id', $userId)
-            ->whereIn('status', ['reviewed', 'escalated'])
+        $peringatan = \App\Models\Report::with(['product', 'reporter'])
+            ->where('reported_user_id', $userId)
+            ->whereIn('status', ['reviewed', 'resolved', 'escalated'])
             ->whereNotNull('admin_note')
-            ->latest('reviewed_at')
+            ->latest('updated_at')
             ->paginate(10);
 
         return view('penjual.peringatan', compact('peringatan'));

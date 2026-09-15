@@ -118,7 +118,7 @@ class VerifikatorController extends Controller
                 $membershipName = $verification->membership->name ?? 'Membership Penjual';
                 Notification::create([
                     'user_id'     => $verification->user_id,
-                    'name'        => '💎 Pembayaran Paket Disetujui',
+                    'name'        => 'Pembayaran Paket Disetujui',
                     'description' => 'Selamat! Pembayaran paket ' . $membershipName . ' Anda telah disetujui. Paket telah aktif hingga ' . ($user->fresh()->membership_expires_at ? $user->fresh()->membership_expires_at->translatedFormat('d F Y H:i') : '-') . '.',
                     'is_read'     => false,
                 ]);
@@ -148,7 +148,7 @@ class VerifikatorController extends Controller
                 $membershipName = $verification->membership->name ?? 'Paket Membership';
                 Notification::create([
                     'user_id'     => $verification->user_id,
-                    'name'        => '❌ Pembayaran / Verifikasi Ditolak',
+                    'name'        => 'Pembayaran / Verifikasi Ditolak',
                     'description' => 'Pembayaran/pengajuan paket ' . $membershipName . ' Anda ditolak. Catatan: ' . $note,
                     'is_read'     => false,
                 ]);
@@ -197,7 +197,7 @@ class VerifikatorController extends Controller
 
                 Notification::create([
                     'user_id'     => $product->seller_id ?? $product->user_id,
-                    'name'        => '✅ Produk Disetujui',
+                    'name'        => 'Produk Disetujui',
                     'description' => 'Produk "' . ($product->title ?? $product->name) . '" Anda telah diverifikasi dan diterbitkan.',
                     'is_read'     => false,
                 ]);
@@ -225,7 +225,7 @@ class VerifikatorController extends Controller
 
                 Notification::create([
                     'user_id'     => $product->seller_id ?? $product->user_id,
-                    'name'        => '❌ Produk Ditolak',
+                    'name'        => 'Produk Ditolak',
                     'description' => 'Produk "' . ($product->title ?? $product->name) . '" ditolak. Catatan: ' . $validated['rejection_note'],
                     'is_read'     => false,
                 ]);
@@ -317,7 +317,7 @@ class VerifikatorController extends Controller
                 // Notifikasi untuk Pembeli
                 Notification::create([
                     'user_id'     => $order->buyer_id,
-                    'name'        => '✅ Transaksi Pembelian Disetujui',
+                    'name'        => 'Transaksi Pembelian Disetujui',
                     'description' => 'Pembayaran untuk pesanan #' . $order->kode_order . ' sebesar Rp ' . number_format($order->total_price, 0, ',', '.') . ' telah diverifikasi oleh Verifikator. Berkas karya digital kini sudah dapat Anda unduh.',
                     'is_read'     => false,
                 ]);
@@ -333,7 +333,7 @@ class VerifikatorController extends Controller
                 foreach (array_keys($sellerIds) as $sellerId) {
                     Notification::create([
                         'user_id'     => $sellerId,
-                        'name'        => '💰 Transaksi Masuk Diverifikasi',
+                        'name'        => 'Transaksi Masuk Diverifikasi',
                         'description' => 'Pembayaran pesanan #' . $order->kode_order . ' telah diverifikasi oleh Verifikator platform. Saldo pendapatan Anda telah diperbarui.',
                         'is_read'     => false,
                     ]);
@@ -368,7 +368,7 @@ class VerifikatorController extends Controller
 
                 Notification::create([
                     'user_id'     => $order->buyer_id,
-                    'name'        => '❌ Bukti Pembayaran Ditolak',
+                    'name'        => 'Bukti Pembayaran Ditolak',
                     'description' => 'Bukti pembayaran pesanan #' . $order->kode_order . ' ditolak oleh Verifikator. Alasan: ' . $validated['rejection_note'] . '. Silakan kirimkan bukti transfer yang valid.',
                     'is_read'     => false,
                 ]);
@@ -415,18 +415,19 @@ class VerifikatorController extends Controller
 
         try {
             DB::transaction(function () use ($id, $validated) {
-                $report = Report::lockForUpdate()->findOrFail($id);
+                $report = Report::with('product')->lockForUpdate()->findOrFail($id);
                 if ($report->status !== 'pending') throw new \RuntimeException('Laporan ini sudah diproses sebelumnya.');
 
                 $action = $validated['action'];
                 $note = $validated['note'] ?? null;
+                $targetUserId = $report->reported_user_id ?? ($report->product->seller_id ?? null);
 
                 if ($action === 'warning') {
                     $report->status = 'resolved';
-                    if ($report->reported_user_id) {
+                    if ($targetUserId) {
                         Notification::create([
-                            'user_id'     => $report->reported_user_id,
-                            'name'        => '⚠️ Peringatan Pelanggaran',
+                            'user_id'     => $targetUserId,
+                            'name'        => 'Peringatan Pelanggaran',
                             'description' => 'Akun Anda mendapatkan teguran terkait laporan: ' . ($note ?? 'Pelanggaran ketentuan platform.'),
                             'is_read'     => false,
                         ]);
@@ -434,10 +435,10 @@ class VerifikatorController extends Controller
                 } elseif ($action === 'takedown') {
                     $report->status = 'resolved';
                     if ($report->product_id) Product::where('id_product', $report->product_id)->update(['status' => 'inactive']);
-                    if ($report->reported_user_id) {
+                    if ($targetUserId) {
                         Notification::create([
-                            'user_id'     => $report->reported_user_id,
-                            'name'        => '⛔ Tindakan Disiplin (Takedown)',
+                            'user_id'     => $targetUserId,
+                            'name'        => 'Tindakan Disiplin (Takedown)',
                             'description' => 'Produk/Konten Anda telah diturunkan karena terbukti melanggar aturan.',
                             'is_read'     => false,
                         ]);
@@ -447,8 +448,11 @@ class VerifikatorController extends Controller
                 }
 
                 $report->update([
-                    'action_taken' => $action,
-                    'admin_note'   => $note,
+                    'reported_user_id' => $targetUserId,
+                    'action_taken'     => $action,
+                    'admin_note'       => $note,
+                    'reviewed_by'      => Auth::id(),
+                    'reviewed_at'      => now(),
                 ]);
             });
 

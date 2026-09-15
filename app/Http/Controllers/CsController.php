@@ -88,7 +88,9 @@ class CsController extends Controller
         ]);
 
         $message = DB::transaction(function () use ($request, $id) {
-            $report = Report::findOrFail($id);
+            $report = Report::with('product')->findOrFail($id);
+            $targetUserId = $report->reported_user_id ?? ($report->product->seller_id ?? null);
+
             $status = match ($request->action) {
                 'abaikan'  => 'dismissed',
                 'eskalasi' => 'escalated',
@@ -96,24 +98,25 @@ class CsController extends Controller
             };
 
             $report->update([
-                'status'      => $status,
-                'admin_note'  => $request->admin_notes,
-                'reviewed_by' => Auth::id(),
-                'reviewed_at' => now(),
+                'reported_user_id' => $targetUserId,
+                'status'           => $status,
+                'admin_note'       => $request->admin_notes,
+                'reviewed_by'      => Auth::id(),
+                'reviewed_at'      => now(),
             ]);
 
-            if ($request->action === 'suspend' && $report->reported_user_id) {
-                User::where('id_user', $report->reported_user_id)->update(['status' => 'blocked']);
+            if ($request->action === 'suspend' && $targetUserId) {
+                User::where('id_user', $targetUserId)->update(['status' => 'blocked']);
             }
 
             if (in_array($request->action, ['sembunyikan', 'suspend']) && $report->product_id) {
                 Product::where('id_product', $report->product_id)->update(['status' => 'inactive']);
             }
 
-            if (in_array($request->action, ['peringatan', 'teguran']) && ($targetUserId = $report->reported_user_id ?? ($report->product->seller_id ?? null))) {
+            if (in_array($request->action, ['peringatan', 'teguran']) && $targetUserId) {
                 Notification::create([
                     'user_id'     => $targetUserId,
-                    'name'        => '⚠️ Peringatan Laporan Pelanggaran',
+                    'name'        => 'Peringatan Laporan Pelanggaran',
                     'description' => 'Akun/Jasa Anda menerima peringatan dari CS: ' . $request->admin_notes,
                     'is_read'     => false,
                 ]);
@@ -179,7 +182,7 @@ class CsController extends Controller
 
                 Notification::create([
                     'user_id'     => $user->id_user,
-                    'name'        => $isApproved ? '🎉 Banding Disetujui & Akun Aktif' : '❌ Pengajuan Banding Ditolak',
+                    'name'        => $isApproved ? 'Banding Disetujui & Akun Aktif' : 'Pengajuan Banding Ditolak',
                     'description' => $isApproved 
                         ? 'Pengajuan banding Anda telah disetujui oleh CS. Akun Anda telah diaktifkan kembali. ' . ($request->admin_notes ? 'Catatan CS: ' . $request->admin_notes : '')
                         : 'Pengajuan banding akun Anda ditolak oleh CS. Catatan CS: ' . ($request->admin_notes ?: 'Alasan pembelaan atau bukti tidak mencukupi.'),
@@ -286,7 +289,7 @@ class CsController extends Controller
                 $membershipName = $verification->membership->name ?? 'Membership Penjual';
                 Notification::create([
                     'user_id'     => $verification->user_id,
-                    'name'        => '💎 Pembayaran Paket Disetujui',
+                    'name'        => 'Pembayaran Paket Disetujui',
                     'description' => 'Selamat! Pembayaran paket ' . $membershipName . ' Anda telah disetujui oleh CS. Akun Anda kini aktif sebagai penjual.',
                     'is_read'     => false,
                 ]);
@@ -328,7 +331,7 @@ class CsController extends Controller
                 $membershipName = $verification->membership->name ?? 'Paket Membership';
                 Notification::create([
                     'user_id'     => $verification->user_id,
-                    'name'        => '❌ Pembayaran / Verifikasi Ditolak',
+                    'name'        => 'Pembayaran / Verifikasi Ditolak',
                     'description' => 'Pembayaran/pengajuan paket ' . $membershipName . ' Anda ditolak oleh CS. Catatan: ' . $validated['notes'],
                     'is_read'     => false,
                 ]);

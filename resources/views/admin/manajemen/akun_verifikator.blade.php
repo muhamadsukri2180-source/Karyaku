@@ -276,7 +276,7 @@
                                     <tr class="verif-row hover:bg-sky-50/50 transition-colors bg-white" data-name="{{ strtolower($v->name) }}">
                                         <td class="py-3 px-6">
                                             <div class="flex items-center gap-3">
-                                                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-sky-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">{{ $initialsRow ?: '??' }}</div>
+                                                <img src="{{ $v->avatar ? asset('storage/' . $v->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($v->name) . '&background=E0F2FE&color=0369A1&bold=true' }}" alt="{{ $v->name }}" class="w-9 h-9 rounded-full object-cover border border-sky-200 shadow-sm">
                                                 <div>
                                                     <p class="font-bold text-slate-800 text-xs">{{ $v->name }}</p>
                                                     <p class="text-[10px] text-slate-500 font-medium">Verifikator</p>
@@ -287,7 +287,7 @@
                                         <td class="py-3 px-6 text-xs font-bold text-sky-700">{{ number_format($v->total_checked, 0, ',', '.') }} Berkas</td>
                                         <td class="py-3 px-6">
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold {{ $isActive ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200' }} border shadow-sm">
-                                                <span class="w-1.5 h-1.5 rounded-full {{ $isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' }}"></span> {{ $isActive ? 'Bertugas' : 'Nonaktif' }}
+                                                <span class="w-1.5 h-1.5 rounded-full {{ $isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' }}"></span> {{ $isActive ? 'Aktif Bertugas' : 'Nonaktif' }}
                                             </span>
                                         </td>
                                         <td class="py-3 px-6">
@@ -404,6 +404,9 @@
                                         <!-- AKSI -->
                                         <td class="py-3 px-6">
                                             <div class="flex items-center justify-center gap-2">
+                                                <button type="button" onclick="openSellerReviewModal('{{ $verificationId }}', '{{ addslashes($userName) }}', '{{ addslashes($userEmail) }}', '{{ $item->nik ?? '-' }}', '{{ addslashes($item->membership->name ?? 'Bronze') }}', 'Rp {{ number_format($item->payment_amount, 0, ',', '.') }}', '{{ addslashes($item->payment_method ?? 'Transfer Bank') }}', '{{ addslashes($item->bank_name ?? '-') }}', '{{ addslashes($item->account_number ?? '-') }}', '{{ addslashes($item->account_name ?? '-') }}', '{{ !empty($item->identity_document) ? asset('storage/' . $item->identity_document) : '' }}', '{{ !empty($item->payment_proof) ? asset('storage/' . $item->payment_proof) : '' }}', '{{ route('admin.users.approveSeller', ['id' => $verificationId]) }}')" class="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 border border-sky-200 hover:bg-sky-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Tinjau Detail Identitas & Pembayaran">
+                                                    <i class="fa-solid fa-eye text-xs"></i>
+                                                </button>
                                                 <button type="button" onclick="confirmApprove('{{ route('admin.users.approveSeller', ['id' => $verificationId]) }}', '{{ addslashes($userName) }}')" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-xs font-bold shadow-sm flex items-center gap-1.5">
                                                     <i class="fa-solid fa-check"></i> Setujui
                                                 </button>
@@ -536,6 +539,91 @@
         </div>
     </div>
 
+    <!-- MODAL: TINJAU DETAIL PENDAFTARAN PENJUAL -->
+    <div id="sellerReviewModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300 mx-4 overflow-hidden border border-slate-200" id="sellerReviewModalContent">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-sky-50/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-id-card text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 font-display text-base">Tinjau Identitas Penjual</h3>
+                        <p class="text-[10px] text-slate-500 font-semibold">Periksa NIK, KTP, dan Rekening Bank sebelum verifikasi.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeModal('sellerReviewModal')" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto text-xs">
+                <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200/80">
+                    <div>
+                        <span class="text-slate-400 font-bold block text-[10px] uppercase">PEMOHON</span>
+                        <span id="srName" class="font-extrabold text-slate-800 text-sm block">User</span>
+                        <span id="srEmail" class="text-slate-500 text-[11px] block">email</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 font-bold block text-[10px] uppercase">NOMOR NIK (KTP)</span>
+                        <span id="srNik" class="font-mono font-extrabold text-indigo-600 text-sm block mt-0.5">-</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200/80">
+                    <div>
+                        <span class="text-slate-400 font-bold block text-[10px] uppercase">PAKET MEMBERSHIP</span>
+                        <span id="srPlan" class="font-bold text-sky-700 block">Bronze</span>
+                        <span id="srAmount" class="font-extrabold text-amber-700 block mt-0.5">Rp 0</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 font-bold block text-[10px] uppercase">REKENING PENCAIRAN</span>
+                        <span id="srBank" class="font-bold text-slate-800 block">Bank</span>
+                        <span id="srAccount" class="font-mono text-slate-600 block mt-0.5">1234</span>
+                    </div>
+                </div>
+
+                <div class="space-y-4 pt-2">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-slate-500 font-bold block text-[11px] uppercase tracking-wider">Foto KTP / Identitas</span>
+                            <button type="button" id="srKtpZoomBtn" onclick="const img=document.getElementById('srKtpImg'); if(img && img.src) window.open(img.src, '_blank')" class="text-[11px] text-sky-600 hover:text-sky-700 font-semibold hidden flex items-center gap-1">
+                                <i class="fa-solid fa-up-right-from-square"></i> Buka Gambar Penuh
+                            </button>
+                        </div>
+                        <div id="srKtpContainer" class="w-full min-h-[160px] max-h-64 rounded-xl bg-slate-900/5 border border-slate-200 overflow-hidden flex items-center justify-center p-2">
+                            <img id="srKtpImg" src="" class="w-full max-h-56 object-contain hidden cursor-pointer transition-transform hover:scale-[1.01]" onclick="if(this.src) window.open(this.src, '_blank')" title="Klik untuk melihat gambar ukuran penuh">
+                            <span id="srKtpEmpty" class="text-slate-400 font-semibold text-xs">Foto KTP tidak tersedia</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-slate-500 font-bold block text-[11px] uppercase tracking-wider">Foto Bukti Pembayaran / Transfer</span>
+                            <button type="button" id="srProofZoomBtn" onclick="const img=document.getElementById('srProofImg'); if(img && img.src) window.open(img.src, '_blank')" class="text-[11px] text-sky-600 hover:text-sky-700 font-semibold hidden flex items-center gap-1">
+                                <i class="fa-solid fa-up-right-from-square"></i> Buka Gambar Penuh
+                            </button>
+                        </div>
+                        <div id="srProofContainer" class="w-full min-h-[160px] max-h-64 rounded-xl bg-slate-900/5 border border-slate-200 overflow-hidden flex items-center justify-center p-2">
+                            <img id="srProofImg" src="" class="w-full max-h-56 object-contain hidden cursor-pointer transition-transform hover:scale-[1.01]" onclick="if(this.src) window.open(this.src, '_blank')" title="Klik untuk melihat gambar ukuran penuh">
+                            <span id="srProofEmpty" class="text-slate-400 font-semibold text-xs">Bukti pembayaran tidak tersedia</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2">
+                <button type="button" id="srApproveBtn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-check"></i> Setujui & Aktifkan Penjual
+                </button>
+                <button type="button" id="srRejectBtn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-xmark"></i> Tolak
+                </button>
+                <button type="button" onclick="closeModal('sellerReviewModal')" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition-all">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- SCRIPTS -->
     <script>
         const sidebar = document.getElementById('sidebar');
@@ -604,6 +692,57 @@
             content.classList.remove('scale-100');
             content.classList.add('scale-95');
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function openSellerReviewModal(id, name, email, nik, plan, amount, method, bank, account, accountName, ktpUrl, proofUrl, approveUrl) {
+            document.getElementById('srName').textContent = name;
+            document.getElementById('srEmail').textContent = email;
+            document.getElementById('srNik').textContent = nik || '-';
+            document.getElementById('srPlan').textContent = plan || 'Bronze';
+            document.getElementById('srAmount').textContent = amount || 'Rp 0';
+            document.getElementById('srBank').textContent = (bank || '-') + ' (a.n ' + (accountName || '-') + ')';
+            document.getElementById('srAccount').textContent = account || '-';
+
+            const ktpImg = document.getElementById('srKtpImg');
+            const ktpEmpty = document.getElementById('srKtpEmpty');
+            const ktpZoomBtn = document.getElementById('srKtpZoomBtn');
+            if (ktpUrl && ktpUrl.trim() !== '') {
+                ktpImg.src = ktpUrl;
+                ktpImg.classList.remove('hidden');
+                ktpEmpty.classList.add('hidden');
+                if (ktpZoomBtn) ktpZoomBtn.classList.remove('hidden');
+            } else {
+                ktpImg.src = '';
+                ktpImg.classList.add('hidden');
+                ktpEmpty.classList.remove('hidden');
+                if (ktpZoomBtn) ktpZoomBtn.classList.add('hidden');
+            }
+
+            const proofImg = document.getElementById('srProofImg');
+            const proofEmpty = document.getElementById('srProofEmpty');
+            const proofZoomBtn = document.getElementById('srProofZoomBtn');
+            if (proofUrl && proofUrl.trim() !== '') {
+                proofImg.src = proofUrl;
+                proofImg.classList.remove('hidden');
+                proofEmpty.classList.add('hidden');
+                if (proofZoomBtn) proofZoomBtn.classList.remove('hidden');
+            } else {
+                proofImg.src = '';
+                proofImg.classList.add('hidden');
+                proofEmpty.classList.remove('hidden');
+                if (proofZoomBtn) proofZoomBtn.classList.add('hidden');
+            }
+
+            document.getElementById('srApproveBtn').onclick = function() {
+                closeModal('sellerReviewModal');
+                confirmApprove(approveUrl, name);
+            };
+            document.getElementById('srRejectBtn').onclick = function() {
+                closeModal('sellerReviewModal');
+                openRejectModal(id, name);
+            };
+
+            openModal('sellerReviewModal');
         }
 
         function openEditVerifierModal(v) {

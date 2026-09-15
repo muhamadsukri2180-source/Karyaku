@@ -11,12 +11,12 @@
         margin-bottom: 32px;
     }
 
-    /* Left Ad Hero Card (Full Bleed Video / Media) */
+    /* Left Ad Hero Card (Full Bleed Video Banner Landscape 16:9) */
     .ad-hero-wrapper {
         position: relative;
         width: 100%;
-        height: 100%;
-        min-height: 380px;
+        aspect-ratio: 16 / 9;
+        max-height: 420px;
         background: #000000;
         border-radius: 24px;
         overflow: hidden;
@@ -52,7 +52,7 @@
     .ad-media-full {
         width: 100%;
         height: 100%;
-        min-height: 380px;
+        aspect-ratio: 16 / 9;
         object-fit: cover;
         display: block;
         transition: transform 0.4s ease;
@@ -496,10 +496,10 @@
          1. TOP HERO SECTION: FULL-BLEED SELLER AD (LEFT) + POPULAR PRODUCTS (RIGHT)
          ========================================================================= --}}
     @php
-        // Iklan Penjual (Live dari database & rotasi otomatis per 3 jam)
+        // Iklan Penjual (HANYA BERUPA VIDEO LANDSCAPE, maks 10 detik)
         $sellerAds = isset($promotedProducts) && $promotedProducts->count() > 0 
-            ? $promotedProducts 
-            : ($rekomendasi ?? collect())->take(6);
+            ? $promotedProducts->filter(fn($ad) => !empty($ad->video_url))->values()
+            : collect();
 
         // Produk Populer & Terlaris untuk kolom kanan
         $popList = isset($popularProducts) && $popularProducts->count() > 0 
@@ -512,44 +512,37 @@
 
     <section class="top-hero-section">
         <div class="row g-3 align-items-stretch">
-            {{-- KOLOM KIRI: CARD IKLAN PENJUAL (FULL SCREEN VIDEO / MEDIA BANNER) --}}
+            {{-- KOLOM KIRI: CARD IKLAN PENJUAL (KHUSUS VIDEO LANDSCAPE MAKS 10 DETIK) --}}
             <div class="col-12 col-lg-7">
                 <div class="ad-hero-wrapper" id="adHeroBanner">
                     <div class="ad-hero-track" id="adHeroTrack">
                         @forelse($sellerAds as $idx => $ad)
                             @php
                                 $adUrl = route('pembeli.produk.detail', $ad->id_product);
-                                $adThumb = $ad->image_url;
                             @endphp
                             <div class="ad-hero-slide" data-slide-index="{{ $idx }}">
                                 <a href="{{ $adUrl }}" class="ad-fullscreen-link" title="{{ $ad->title }}">
-                                    @if($ad->video_url)
-                                        <video src="{{ $ad->video_url }}" autoplay muted loop playsinline class="ad-media-full"></video>
-                                    @else
-                                        <img src="{{ $adThumb }}" alt="{{ $ad->title }}" class="ad-media-full" onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($ad->title) }}&background=10b981&color=fff&size=512&bold=true'">
-                                    @endif
+                                    <video src="{{ $ad->video_url }}" autoplay muted loop playsinline class="ad-media-full" ontimeupdate="if(this.currentTime>=10){ this.currentTime=0; }"></video>
 
-                                    {{-- Tag Iklan Minimalis di Pojok --}}
+                                    {{-- Tag Iklan Video Landscape Minimalis di Pojok --}}
                                     <div class="ad-tag-floating">
                                         <span class="ad-badge-clean">
-                                            <i class="bi bi-megaphone-fill text-warning me-1"></i> Iklan
+                                            <i class="bi bi-camera-reels-fill text-warning me-1"></i> Iklan Video (10s Landscape)
                                         </span>
                                     </div>
                                 </a>
 
-                                @if($ad->video_url)
-                                    <button type="button" class="ad-sound-btn" onclick="event.preventDefault(); event.stopPropagation(); toggleAdSound(this);" title="Nyalakan/Matikan Suara">
-                                        <i class="bi bi-volume-mute-fill"></i>
-                                    </button>
-                                @endif
+                                <button type="button" class="ad-sound-btn" onclick="event.preventDefault(); event.stopPropagation(); toggleAdSound(this);" title="Nyalakan/Matikan Suara">
+                                    <i class="bi bi-volume-mute-fill"></i>
+                                </button>
                             </div>
                         @empty
                             <div class="ad-hero-slide" data-slide-index="0">
                                 <a href="{{ route('pembeli.marketplace') }}" class="ad-fullscreen-link">
                                     <div class="ad-placeholder-full">
-                                        <i class="bi bi-play-circle-fill display-3 mb-2"></i>
-                                        <h5 class="fw-bold">Marketplace Karya Digital</h5>
-                                        <p class="small text-white-50 mb-0">Klik untuk jelajahi semua karya terbaru</p>
+                                        <i class="bi bi-film display-3 mb-2 text-warning"></i>
+                                        <h5 class="fw-bold">Iklan Video Promosi Produk</h5>
+                                        <p class="small text-white-50 mb-0">Hanya menampilkan iklan berformat video landscape (Maksimal 10 detik)</p>
                                     </div>
                                 </a>
                             </div>

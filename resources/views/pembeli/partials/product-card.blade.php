@@ -32,9 +32,6 @@
         </h6>
 
         <div class="d-flex align-items-center justify-content-between mb-2 text-muted" style="font-size: 11px;">
-            <span class="fw-semibold text-warning d-inline-flex align-items-center gap-1">
-                <i class="bi bi-star-fill"></i> {{ number_format($product->avg_rating ?? 5.0, 1) }}
-            </span>
             <span class="text-muted">
                 <i class="bi bi-bag-check me-1"></i> {{ $product->sold_count ?? 0 }} Terjual
             </span>

@@ -44,7 +44,7 @@
                     <div class="d-flex gap-3 flex-wrap mt-1">
                         <div class="form-check">
                             <input class="form-check-input target-type" type="radio" name="target_type" id="tPengguna" value="pengguna" {{ old('target_type', 'pengguna') == 'pengguna' ? 'checked' : '' }}>
-                            <label class="form-check-label small fw-medium" for="tPengguna">Pembeli / Pengguna</label>
+                            <label class="form-check-label small fw-medium" for="tPengguna">Pengguna (Pembeli / Penjual)</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input target-type" type="radio" name="target_type" id="tProduk" value="produk" {{ old('target_type') == 'produk' ? 'checked' : '' }}>
@@ -60,7 +60,7 @@
 
                 {{-- Dropdown Pengguna --}}
                 <div class="mb-3" id="groupUser">
-                    <label class="form-label fw-bold small text-dark">Pilih Pengguna Yang Dilaporkan <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold small text-dark">Pilih Pengguna Yang Dilaporkan (Pembeli / Penjual) <span class="text-danger">*</span></label>
                     <select name="reported_user_id" class="form-select @error('reported_user_id') is-invalid @enderror">
                         <option value="">-- Pilih Pengguna --</option>
                         @foreach ($users as $u)

@@ -160,7 +160,7 @@
                     <button id="sidebarToggleBtn" class="lg:hidden w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition border border-sky-200 shadow-sm"><i class="fa-solid fa-bars text-base"></i></button>
                     <div>
                         <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900">Paket Membership</h2>
-                        <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Kelola paket langganan premium kreator (Bronze, Silver, & Diamond).</p>
+                        <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Kelola paket langganan premium kreator.</p>
                     </div>
                 </div>
             </header>
@@ -170,44 +170,37 @@
                 <!-- SUMMARY CARDS -->
                 @php
                     $allMemberships = $memberships ?? collect();
-                    $totalPelangganAktif = $allMemberships->sum('users_count');
-                    
-                    $diamondCount = $allMemberships->filter(fn($item) => stripos($item->name, 'Diamond') !== false)->sum('users_count');
-                    $silverCount = $allMemberships->filter(fn($item) => stripos($item->name, 'Silver') !== false)->sum('users_count');
-                    $bronzeCount = $allMemberships->filter(fn($item) => stripos($item->name, 'Bronze') !== false)->sum('users_count');
+                    $totPaketCount = $totalPaket ?? $allMemberships->count();
+                    $totSubscribers = $totalPenjualBerlangganan ?? $allMemberships->sum('users_count');
+                    $topPackageName = isset($paketTerlaris) && $paketTerlaris ? $paketTerlaris->name : '-';
                 @endphp
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 p-4 rounded-2xl shadow-sm">
-                        <span class="text-[10px] font-extrabold text-emerald-800 uppercase tracking-widest block">Total Pelanggan</span>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div class="bg-gradient-to-br from-sky-50 to-white border border-sky-200 p-5 rounded-2xl shadow-sm">
+                        <span class="text-[10px] font-extrabold text-sky-800 uppercase tracking-widest block">Total Membership</span>
                         <div class="flex items-end justify-between mt-2">
-                            <div class="text-3xl font-black text-slate-900">{{ $totalPelangganAktif }}</div>
-                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold"><i class="fa-solid fa-users text-sm"></i></div>
+                            <div class="text-3xl font-black text-slate-900">{{ $totPaketCount }}</div>
+                            <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center font-bold shadow-sm"><i class="fa-solid fa-crown text-lg"></i></div>
                         </div>
+                        <p class="text-[10px] text-slate-500 font-medium mt-2">Total pilihan paket yang tersedia</p>
                     </div>
 
-                    <div class="bg-gradient-to-br from-blue-50 to-white border border-blue-200 p-4 rounded-2xl shadow-sm">
-                        <span class="text-[10px] font-extrabold text-blue-800 uppercase tracking-widest block">Diamond Plan</span>
+                    <div class="bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 p-5 rounded-2xl shadow-sm">
+                        <span class="text-[10px] font-extrabold text-emerald-800 uppercase tracking-widest block">Penjual Berlangganan</span>
                         <div class="flex items-end justify-between mt-2">
-                            <div class="text-3xl font-black text-slate-900">{{ $diamondCount }}</div>
-                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold"><i class="fa-regular fa-gem text-sm"></i></div>
+                            <div class="text-3xl font-black text-slate-900">{{ $totSubscribers }}</div>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold shadow-sm"><i class="fa-solid fa-users text-lg"></i></div>
                         </div>
+                        <p class="text-[10px] text-slate-500 font-medium mt-2">Aktif menggunakan paket</p>
                     </div>
 
-                    <div class="bg-gradient-to-br from-slate-100 to-white border border-slate-300 p-4 rounded-2xl shadow-sm">
-                        <span class="text-[10px] font-extrabold text-slate-600 uppercase tracking-widest block">Silver Plan</span>
+                    <div class="bg-gradient-to-br from-amber-50 to-white border border-amber-200 p-5 rounded-2xl shadow-sm">
+                        <span class="text-[10px] font-extrabold text-amber-800 uppercase tracking-widest block">Paket Terlaris</span>
                         <div class="flex items-end justify-between mt-2">
-                            <div class="text-3xl font-black text-slate-900">{{ $silverCount }}</div>
-                            <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold"><i class="fa-solid fa-medal text-sm"></i></div>
+                            <div class="text-xl font-extrabold text-slate-900 truncate max-w-[180px]">{{ $topPackageName }}</div>
+                            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-bold shadow-sm"><i class="fa-solid fa-fire text-lg"></i></div>
                         </div>
-                    </div>
-
-                    <div class="bg-gradient-to-br from-orange-50 to-white border border-orange-200 p-4 rounded-2xl shadow-sm">
-                        <span class="text-[10px] font-extrabold text-orange-800 uppercase tracking-widest block">Bronze Plan</span>
-                        <div class="flex items-end justify-between mt-2">
-                            <div class="text-3xl font-black text-slate-900">{{ $bronzeCount }}</div>
-                            <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center font-bold"><i class="fa-solid fa-award text-sm"></i></div>
-                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium mt-2">Paling banyak diminati kreator</p>
                     </div>
                 </div>
 
@@ -215,8 +208,8 @@
                 <div class="bg-white border border-sky-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-5 border-b border-sky-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
-                            <h3 class="font-extrabold text-slate-900 text-lg font-display">Daftar Paket Membership (Auto)</h3>
-                            <p class="text-xs text-slate-500 font-medium mt-0.5">Paket Bronze, Silver, dan Diamond dibuat otomatis. Klik tombol edit untuk mengatur centang benefit.</p>
+                            <h3 class="font-extrabold text-slate-900 text-lg font-display">Daftar Paket Membership</h3>
+                            <p class="text-xs text-slate-500 font-medium mt-0.5">Kelola paket membership yang dapat dibeli oleh penjual.</p>
                         </div>
                         
                         <button type="button" onclick="openAddModal()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer">

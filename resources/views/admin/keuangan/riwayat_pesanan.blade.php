@@ -399,8 +399,8 @@
                         proofHtml = `
                             <div class="mt-4 p-3.5 rounded-xl bg-sky-50/80 border border-sky-200">
                                 <p class="font-bold text-slate-900 text-xs mb-2 flex items-center gap-1.5"><i class="fa-solid fa-file-invoice-dollar text-sky-600"></i> Bukti Transfer Pembayaran:</p>
-                                <a href="${data.payment_proof_url}" target="_blank" class="block group relative rounded-lg overflow-hidden border border-sky-300 max-h-48">
-                                    <img src="${data.payment_proof_url}" alt="Bukti Transfer" class="w-full object-cover max-h-48 group-hover:scale-105 transition-all">
+                                <a href="${data.payment_proof_url}" target="_blank" class="block group relative rounded-lg overflow-hidden border border-sky-300 max-h-48 bg-slate-900/5">
+                                    <img src="${data.payment_proof_url}" alt="Bukti Transfer" class="w-full object-contain max-h-48 group-hover:scale-105 transition-all">
                                     <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-white text-xs font-bold gap-1">
                                         <i class="fa-solid fa-up-right-from-square"></i> Lihat Bukti Penuh
                                     </div>

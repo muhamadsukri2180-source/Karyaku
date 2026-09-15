@@ -807,18 +807,18 @@
                 </span>
 
                 <h2 class="font-display text-2xl sm:text-3xl font-bold mt-2 mb-2">
-                    Karya & Jasa Pilihan
+                    Karya & Jasa Paling Laris
                 </h2>
 
                 <p class="text-textMuted text-sm sm:text-base">
-                    Karya menarik dari kreator Karyaku.
+                    Daftar karya digital terpopuler yang telah diunggah oleh para penjual di Karyaku.
                 </p>
 
             </div>
 
-            <a href="#"
-               class="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-borderSoft font-bold text-sm hover:bg-slate-50">
-                Lihat Semua
+            <a href="{{ route('pembeli.marketplace') }}"
+               class="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-borderSoft font-bold text-sm hover:bg-slate-50 transition">
+                Lihat Semua Produk
                 <i class="fa-solid fa-arrow-right text-xs"></i>
             </a>
 
@@ -827,157 +827,69 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
+            @forelse($bestProducts ?? [] as $prod)
+                <div class="reveal group border border-borderSoft rounded-xl overflow-hidden bg-white hover:shadow-lg transition flex flex-col justify-between">
 
-            <!-- PRODUCT 1 -->
+                    <div class="relative aspect-[4/3] overflow-hidden bg-slate-100">
 
-            <div class="reveal group border border-borderSoft rounded-xl overflow-hidden bg-white hover:shadow-lg transition">
+                        @if($prod->is_promoted)
+                            <div class="absolute top-3 left-3 z-10 bg-white px-3 py-1.5 rounded-md shadow-sm text-[10px] font-bold text-amber-600">
+                                <i class="fa-solid fa-bolt text-amber-500 mr-1"></i>
+                                DIPROMOSIKAN
+                            </div>
+                        @endif
 
-                <div class="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                        <a href="{{ route('pembeli.produk.detail', $prod->id_product) }}">
+                            <img src="{{ $prod->image_url }}"
+                                 alt="{{ $prod->title }}"
+                                 class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        </a>
 
-                    <div class="absolute top-3 left-3 z-10 bg-white px-3 py-1.5 rounded-md shadow-sm text-[10px] font-bold">
-                        <i class="fa-solid fa-bolt text-accent mr-1"></i>
-                        DIPROMOSIKAN
                     </div>
 
-                    <img
-                        src="https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=600&q=80"
-                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                    <div class="p-5 flex-1 flex flex-col justify-between">
 
-                </div>
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <div class="flex items-center gap-2 overflow-hidden">
+                                    <div class="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0">
+                                        {{ strtoupper(substr($prod->seller->name ?? 'K', 0, 1)) }}
+                                    </div>
+                                    <span class="text-xs font-bold text-textMuted truncate">
+                                        {{ $prod->seller->name ?? 'Penjual Karyaku' }}
+                                    </span>
+                                </div>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-primary flex-shrink-0">
+                                    {{ $prod->category->name ?? 'Digital' }}
+                                </span>
+                            </div>
 
-                <div class="p-5">
-
-                    <div class="flex items-center gap-2 mb-2">
-
-                        <div class="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-primary text-xs">
-                            <i class="fa-solid fa-user"></i>
+                            <h4 class="font-bold mb-3 line-clamp-2 text-slate-800 hover:text-primary transition">
+                                <a href="{{ route('pembeli.produk.detail', $prod->id_product) }}">
+                                    {{ $prod->title }}
+                                </a>
+                            </h4>
                         </div>
 
-                        <span class="text-xs font-bold text-textMuted">
-                            Dinda Studio
-                        </span>
-
-                    </div>
-
-                    <h4 class="font-bold mb-4">
-                        Desain Poster Promosi Kafe Modern
-                    </h4>
-
-                    <div class="pt-4 border-t border-borderSoft flex justify-between">
-
-                        <span class="text-sm font-bold">
-                            <i class="fa-solid fa-star text-yellow-400"></i>
-                            4.9
-                            <span class="text-textMuted text-xs">
-                                (120)
+                        <div class="pt-4 border-t border-borderSoft flex justify-between items-center mt-3">
+                            <span class="text-xs text-textMuted font-semibold">
+                                <i class="fa-solid fa-bag-shopping text-accent mr-1"></i>
+                                Terjual <strong>{{ $prod->sold_count }}</strong>
                             </span>
-                        </span>
-
-                        <span class="font-mono font-bold text-primary">
-                            Rp75.000
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- PRODUCT 2 -->
-
-            <div class="reveal group border border-borderSoft rounded-xl overflow-hidden bg-white hover:shadow-lg transition">
-
-                <div class="aspect-[4/3] overflow-hidden bg-slate-100">
-
-                    <img
-                        src="https://images.unsplash.com/photo-1618172193622-ae2d025f4032?auto=format&fit=crop&w=600&q=80"
-                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-
-                </div>
-
-                <div class="p-5">
-
-                    <div class="flex items-center gap-2 mb-2">
-
-                        <div class="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-primary text-xs">
-                            <i class="fa-solid fa-user"></i>
+                            <span class="font-mono font-bold text-primary text-base">
+                                Rp{{ number_format($prod->price, 0, ',', '.') }}
+                            </span>
                         </div>
 
-                        <span class="text-xs font-bold text-textMuted">
-                            Rangga 3D
-                        </span>
-
-                    </div>
-
-                    <h4 class="font-bold mb-4">
-                        Model 3D Karakter Game
-                    </h4>
-
-                    <div class="pt-4 border-t border-borderSoft flex justify-between">
-
-                        <span class="text-sm font-bold">
-                            <i class="fa-solid fa-star text-yellow-400"></i>
-                            5.0
-                        </span>
-
-                        <span class="font-mono font-bold text-primary">
-                            Rp480.000
-                        </span>
-
                     </div>
 
                 </div>
-
-            </div>
-
-
-            <!-- PRODUCT 3 -->
-
-            <div class="reveal group border border-borderSoft rounded-xl overflow-hidden bg-white hover:shadow-lg transition">
-
-                <div class="aspect-[4/3] overflow-hidden bg-slate-100">
-
-                    <img
-                        src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=600&q=80"
-                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-
+            @empty
+                <div class="col-span-full text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <i class="fa-solid fa-box-open text-4xl text-slate-300 mb-3 block"></i>
+                    <p class="text-slate-500 text-sm font-semibold">Belum ada produk penjual yang dipublikasikan saat ini.</p>
                 </div>
-
-                <div class="p-5">
-
-                    <div class="flex items-center gap-2 mb-2">
-
-                        <div class="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-primary text-xs">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-
-                        <span class="text-xs font-bold text-textMuted">
-                            Kirana Design
-                        </span>
-
-                    </div>
-
-                    <h4 class="font-bold mb-4">
-                        Paket Logo & Brand Identity
-                    </h4>
-
-                    <div class="pt-4 border-t border-borderSoft flex justify-between">
-
-                        <span class="text-sm font-bold">
-                            <i class="fa-solid fa-star text-yellow-400"></i>
-                            4.8
-                        </span>
-
-                        <span class="font-mono font-bold text-primary">
-                            Rp150.000
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
+            @endforelse
 
         </div>
 
@@ -1322,197 +1234,160 @@
         </div>
 
         <!-- PACKAGES -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-7 items-stretch">
-            <!-- ================================================= -->
-            <!-- BRONZE (Tema Cokelat / Bronze) -->
-            <!-- ================================================= -->
-            <div class="package-card reveal bg-gradient-to-b from-amber-900 via-amber-950 to-stone-900 text-amber-50 border-2 border-amber-600/60 rounded-3xl p-7 shadow-xl flex flex-col relative overflow-hidden">
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <div class="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-4 border border-amber-500/30">
-                            <i class="fa-solid fa-medal text-xl"></i>
-                        </div>
-                        <h3 class="font-display text-xl font-bold text-amber-100">Bronze</h3>
-                        <p class="text-sm text-amber-200/70 mt-1">Cocok untuk penjual pemula</p>
-                    </div>
-                    <span class="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-bold uppercase">Starter</span>
-                </div>
-                <div class="mb-7">
-                    <span class="text-3xl font-display font-extrabold text-amber-400">15+</span>
-                    <span class="text-amber-200/70 text-sm">produk</span>
-                </div>
-                <div class="space-y-4 flex-grow">
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-amber-500/20 text-amber-400"><i class="fa-solid fa-check text-xs"></i></span>
-                        Maksimal 15 produk
-                    </div>
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-amber-500/20 text-amber-400"><i class="fa-solid fa-check text-xs"></i></span>
-                        1 slot iklan
-                    </div>
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-amber-500/20 text-amber-400"><i class="fa-solid fa-check text-xs"></i></span>
-                        Profil toko
-                    </div>
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-amber-500/20 text-amber-400"><i class="fa-solid fa-check text-xs"></i></span>
-                        Dashboard penjualan
-                    </div>
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-amber-500/20 text-amber-400"><i class="fa-solid fa-check text-xs"></i></span>
-                        Statistik dasar
-                    </div>
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-amber-500/20 text-amber-400"><i class="fa-solid fa-check text-xs"></i></span>
-                        Badge Bronze
-                    </div>
-                    <div class="flex gap-3 text-sm text-amber-200/30">
-                        <span class="check-icon bg-amber-900/40 text-amber-200/30"><i class="fa-solid fa-xmark text-xs"></i></span>
-                        Prioritas pencarian
-                    </div>
-                    <div class="flex gap-3 text-sm text-amber-200/30">
-                        <span class="check-icon bg-amber-900/40 text-amber-200/30"><i class="fa-solid fa-xmark text-xs"></i></span>
-                        Analitik lanjutan
-                    </div>
-                </div>
-                <a href="{{ url('/auth/login?role=penjual&package=bronze') }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-extrabold text-sm transition-all duration-200 shadow-lg shadow-amber-500/20 focus:ring-4 focus:ring-amber-500/30">Pilih Bronze</a>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 items-stretch">
+            @forelse($memberships ?? [] as $index => $membership)
+                @php
+                    $total = count($memberships);
+                    if ($total == 1) {
+                        $tier = 'gold';
+                    } elseif ($total == 2) {
+                        $tier = $index == 0 ? 'bronze' : 'gold';
+                    } else {
+                        if ($index == 0) {
+                            $tier = 'bronze';
+                        } elseif ($index == 1) {
+                            $tier = 'silver';
+                        } else {
+                            $tier = 'gold';
+                        }
+                    }
+                @endphp
 
-            <!-- ================================================= -->
-            <!-- PLATINUM (Tema Silver / Platinum Slate) -->
-            <!-- ================================================= -->
-            <div class="package-card popular-package reveal bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 text-slate-100 border-2 border-slate-400/80 rounded-3xl p-7 relative flex flex-col shadow-2xl">
-                <!-- POPULAR BADGE -->
-                <div class="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span class="px-5 py-2 rounded-full bg-slate-200 text-slate-950 text-xs font-bold shadow-lg flex items-center gap-1">
-                        <i class="fa-solid fa-fire text-amber-600"></i>
-                        PALING POPULER
-                    </span>
-                </div>
-                <div class="flex justify-between items-start mb-6 mt-2">
-                    <div>
-                        <div class="w-12 h-12 rounded-xl bg-slate-700/60 text-slate-200 flex items-center justify-center mb-4 border border-slate-500/40">
-                            <i class="fa-solid fa-gem text-xl"></i>
-                        </div>
-                        <h3 class="font-display text-xl font-bold text-slate-100">Platinum</h3>
-                        <p class="text-sm text-slate-300/80 mt-1">Untuk toko yang berkembang</p>
-                    </div>
-                    <span class="px-3 py-1 rounded-full bg-slate-700/60 border border-slate-500/40 text-slate-200 text-[10px] font-bold uppercase">Pro</span>
-                </div>
-                <div class="mb-7">
-                    <span class="text-3xl font-display font-extrabold text-slate-200">35+</span>
-                    <span class="text-slate-300/80 text-sm">produk</span>
-                </div>
-                <div class="space-y-4 flex-grow">
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
-                        Minimal hingga 35+ produk
-                    </div>
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
-                        3 slot iklan aktif
-                    </div>
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
-                        Profil toko profesional
-                    </div>
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
-                        Dashboard penjualan
-                    </div>
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
-                        Statistik & analitik
-                    </div>
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
-                        Badge Platinum
-                    </div>
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
-                        Prioritas pencarian
-                    </div>
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
-                        Produk lebih mudah ditemukan
-                    </div>
-                    <div class="flex gap-3 text-sm">
-                        <span class="check-icon bg-slate-700/60 text-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
-                        Dukungan penjual
-                    </div>
-                </div>
-                <a href="{{ url('/auth/login?role=penjual&package=platinum') }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-slate-200 hover:bg-white text-slate-950 font-extrabold text-sm transition-all duration-200 shadow-lg shadow-slate-200/20 focus:ring-4 focus:ring-slate-300/30">Pilih Platinum</a>
-            </div>
-
-            <!-- ================================================= -->
-            <!-- DIAMOND (Tema Biru Gelap / Navy) -->
-            <!-- ================================================= -->
-            <div class="package-card reveal bg-gradient-to-b from-blue-950 via-slate-950 to-blue-950 text-white border-2 border-sky-400/70 rounded-3xl p-7 relative flex flex-col overflow-hidden shadow-2xl">
-                <div class="absolute -right-20 -top-20 w-56 h-56 bg-sky-500/20 rounded-full blur-3xl"></div>
-                <div class="relative z-10 flex flex-col h-full">
-                    <div class="flex justify-between items-start mb-6">
+                @if($tier === 'bronze')
+                    {{-- PAKET PALING RENDAH - THEME COKELAT / BRONZE --}}
+                    <div class="package-card reveal bg-gradient-to-b from-stone-900 via-amber-950 to-stone-950 text-white border-2 border-amber-700/80 rounded-3xl p-7 relative flex flex-col justify-between overflow-hidden shadow-xl hover:shadow-amber-900/30">
                         <div>
-                            <div class="w-12 h-12 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center mb-4 border border-sky-500/30">
-                                <i class="fa-solid fa-crown text-xl"></i>
+                            <div class="flex justify-between items-start mb-6">
+                                <div>
+                                    <div class="w-12 h-12 rounded-xl bg-amber-900/50 text-amber-400 flex items-center justify-center mb-4 border border-amber-700/60 shadow-inner">
+                                        <i class="fa-solid fa-shield-halved text-xl"></i>
+                                    </div>
+                                    <h3 class="font-display text-xl font-bold text-amber-100">{{ $membership->name }}</h3>
+                                    <p class="text-sm text-amber-200/60 mt-1">Masa aktif {{ $membership->duration_days }} Hari</p>
+                                </div>
+                                <span class="px-3.5 py-1.5 rounded-full bg-amber-900/60 border border-amber-600/60 text-amber-300 text-xs font-bold font-mono">
+                                    Rp {{ number_format($membership->price, 0, ',', '.') }}
+                                </span>
                             </div>
-                            <h3 class="font-display text-xl font-bold text-sky-100">Diamond</h3>
-                            <p class="text-sm text-slate-400 mt-1">Untuk toko profesional</p>
+                            <div class="mb-7 p-3 rounded-2xl bg-amber-950/60 border border-amber-800/40 flex items-center justify-between">
+                                <div>
+                                    <span class="text-slate-400 text-xs block">Limit Upload Produk</span>
+                                    <span class="text-2xl font-display font-extrabold text-amber-400">
+                                        {{ $membership->max_upload >= 999 ? '999+' : $membership->max_upload }} Karya
+                                    </span>
+                                </div>
+                                <span class="px-2.5 py-1 rounded bg-amber-900/80 text-amber-300 text-[10px] font-bold uppercase tracking-wider border border-amber-700/50">Bronze</span>
+                            </div>
+                            <div class="space-y-3 flex-grow">
+                                @foreach(explode(' | ', $membership->benefit) as $benefitItem)
+                                    @if(trim($benefitItem))
+                                        <div class="flex gap-3 text-sm">
+                                            <span class="check-icon bg-amber-800/40 text-amber-400 shrink-0 border border-amber-700/50"><i class="fa-solid fa-check text-xs"></i></span>
+                                            <span class="text-stone-300">{{ trim($benefitItem) }}</span>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
                         </div>
-                        <span class="px-3 py-1 rounded-full bg-sky-500/20 border border-sky-500/30 text-sky-300 text-[10px] font-bold uppercase">Ultimate</span>
+                        <a href="{{ url('/auth/login?role=penjual&package=' . \Illuminate\Support\Str::slug($membership->name)) }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-amber-50 font-extrabold text-sm transition-all duration-200 shadow-lg shadow-amber-900/40 focus:ring-4 focus:ring-amber-600/30">
+                            Pilih {{ $membership->name }}
+                        </a>
                     </div>
-                    <div class="mb-7">
-                        <span class="text-3xl font-display font-extrabold text-sky-400">50+</span>
-                        <span class="text-slate-400 text-sm">produk</span>
+
+                @elseif($tier === 'silver')
+                    {{-- PAKET SEDANG - THEME SILVER / PERAK --}}
+                    <div class="package-card reveal bg-gradient-to-b from-slate-900 via-zinc-900 to-slate-950 text-white border-2 border-slate-300/80 rounded-3xl p-7 relative flex flex-col justify-between overflow-hidden shadow-xl hover:shadow-slate-500/20">
+                        <div>
+                            <div class="flex justify-between items-start mb-6">
+                                <div>
+                                    <div class="w-12 h-12 rounded-xl bg-slate-800/80 text-slate-200 flex items-center justify-center mb-4 border border-slate-400/60 shadow-inner">
+                                        <i class="fa-solid fa-medal text-xl"></i>
+                                    </div>
+                                    <h3 class="font-display text-xl font-bold text-slate-100">{{ $membership->name }}</h3>
+                                    <p class="text-sm text-slate-400 mt-1">Masa aktif {{ $membership->duration_days }} Hari</p>
+                                </div>
+                                <span class="px-3.5 py-1.5 rounded-full bg-slate-800/80 border border-slate-400/60 text-slate-200 text-xs font-bold font-mono">
+                                    Rp {{ number_format($membership->price, 0, ',', '.') }}
+                                </span>
+                            </div>
+                            <div class="mb-7 p-3 rounded-2xl bg-slate-800/50 border border-slate-700/60 flex items-center justify-between">
+                                <div>
+                                    <span class="text-slate-400 text-xs block">Limit Upload Produk</span>
+                                    <span class="text-2xl font-display font-extrabold text-slate-200">
+                                        {{ $membership->max_upload >= 999 ? '999+' : $membership->max_upload }} Karya
+                                    </span>
+                                </div>
+                                <span class="px-2.5 py-1 rounded bg-slate-700 text-slate-200 text-[10px] font-bold uppercase tracking-wider border border-slate-500/50">Silver</span>
+                            </div>
+                            <div class="space-y-3 flex-grow">
+                                @foreach(explode(' | ', $membership->benefit) as $benefitItem)
+                                    @if(trim($benefitItem))
+                                        <div class="flex gap-3 text-sm">
+                                            <span class="check-icon bg-slate-700/60 text-slate-200 shrink-0 border border-slate-500/50"><i class="fa-solid fa-check text-xs"></i></span>
+                                            <span class="text-slate-300">{{ trim($benefitItem) }}</span>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                        <a href="{{ url('/auth/login?role=penjual&package=' . \Illuminate\Support\Str::slug($membership->name)) }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-slate-200 hover:bg-white text-slate-950 font-extrabold text-sm transition-all duration-200 shadow-lg shadow-slate-400/30 focus:ring-4 focus:ring-slate-300/30">
+                            Pilih {{ $membership->name }}
+                        </a>
                     </div>
-                    <div class="space-y-4 flex-grow">
-                        <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
-                            50+ produk
+
+                @else
+                    {{-- PAKET PALING MAHAL - THEME EMAS / GOLD --}}
+                    <div class="package-card reveal bg-gradient-to-b from-amber-950 via-slate-950 to-yellow-950 text-white border-2 border-yellow-400 rounded-3xl p-7 relative flex flex-col justify-between overflow-hidden shadow-2xl shadow-yellow-500/10 z-10">
+                        <div class="absolute -right-12 -top-12 w-32 h-32 bg-yellow-400/10 rounded-full blur-2xl pointer-events-none"></div>
+                        <div class="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
+                            <i class="fa-solid fa-crown mr-1"></i> Best Value
                         </div>
-                        <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
-                            10+ slot iklan
+                        <div>
+                            <div class="flex justify-between items-start mb-6">
+                                <div>
+                                    <div class="w-12 h-12 rounded-xl bg-yellow-400/20 text-yellow-400 flex items-center justify-center mb-4 border border-yellow-400/50 shadow-inner">
+                                        <i class="fa-solid fa-crown text-xl"></i>
+                                    </div>
+                                    <h3 class="font-display text-xl font-bold text-yellow-100">{{ $membership->name }}</h3>
+                                    <p class="text-sm text-yellow-200/60 mt-1">Masa aktif {{ $membership->duration_days }} Hari</p>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="px-3.5 py-1.5 rounded-full bg-yellow-400/20 border border-yellow-400/50 text-yellow-300 text-sm font-bold font-mono inline-block">
+                                    Rp {{ number_format($membership->price, 0, ',', '.') }}
+                                </span>
+                            </div>
+                            <div class="mb-7 p-3 rounded-2xl bg-yellow-950/50 border border-yellow-500/40 flex items-center justify-between">
+                                <div>
+                                    <span class="text-yellow-200/70 text-xs block">Limit Upload Produk</span>
+                                    <span class="text-2xl font-display font-extrabold text-yellow-400">
+                                        {{ $membership->max_upload >= 999 ? '999+' : $membership->max_upload }} Karya
+                                    </span>
+                                </div>
+                                <span class="px-2.5 py-1 rounded bg-yellow-500/30 border border-yellow-400/40 text-yellow-300 text-[10px] font-bold uppercase tracking-wider">Gold</span>
+                            </div>
+                            <div class="space-y-3 flex-grow">
+                                @foreach(explode(' | ', $membership->benefit) as $benefitItem)
+                                    @if(trim($benefitItem))
+                                        <div class="flex gap-3 text-sm">
+                                            <span class="check-icon bg-yellow-400/20 text-yellow-400 shrink-0 border border-yellow-400/50"><i class="fa-solid fa-check text-xs"></i></span>
+                                            <span class="text-yellow-100/90">{{ trim($benefitItem) }}</span>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
                         </div>
-                        <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
-                            Profil toko premium
-                        </div>
-                        <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
-                            Dashboard profesional
-                        </div>
-                        <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
-                            Analitik penjualan lengkap
-                        </div>
-                        <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
-                            Badge Diamond
-                        </div>
-                        <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
-                            Prioritas pencarian tertinggi
-                        </div>
-                        <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
-                            Prioritas promosi
-                        </div>
-                        <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
-                            Statistik pelanggan
-                        </div>
-                        <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
-                            Dukungan prioritas
-                        </div>
-                        <div class="flex gap-3 text-sm">
-                            <span class="check-icon bg-sky-500/20 text-sky-400"><i class="fa-solid fa-check text-xs"></i></span>
-                            Fitur toko premium
-                        </div>
+                        <a href="{{ url('/auth/login?role=penjual&package=' . \Illuminate\Support\Str::slug($membership->name)) }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 hover:from-yellow-300 hover:to-amber-300 text-slate-950 font-extrabold text-sm transition-all duration-200 shadow-xl shadow-yellow-500/30 focus:ring-4 focus:ring-yellow-400/40">
+                            Pilih {{ $membership->name }}
+                        </a>
                     </div>
-                    <a href="{{ url('/auth/login?role=penjual&package=diamond') }}" class="shine inline-block relative z-10 mt-8 w-full text-center py-3.5 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-extrabold text-sm transition-all duration-200 shadow-lg shadow-sky-400/30 focus:ring-4 focus:ring-sky-400/30">Pilih Diamond</a>
+                @endif
+            @empty
+                <div class="col-span-full text-center py-12 bg-white rounded-3xl border border-slate-200">
+                    <i class="fa-solid fa-box-open text-4xl text-slate-300 mb-3"></i>
+                    <p class="text-slate-500 font-medium text-sm">Belum ada paket membership yang dibuat oleh Admin.</p>
                 </div>
-            </div>
+            @endforelse
         </div>
 
         <!-- SMALL NOTE -->

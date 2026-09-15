@@ -137,7 +137,6 @@
                                 <span><i class="bi bi-boxes me-1"></i> Stok: <strong>{{ $prod->stock }}</strong></span>
                                 <span><i class="bi bi-eye me-1"></i> {{ $prod->view_count }}</span>
                                 <span><i class="bi bi-bag-check me-1"></i> Terjual {{ $prod->sold_count }}</span>
-                                <span><i class="bi bi-star-fill text-warning me-1"></i> {{ $prod->avg_rating }}</span>
                             </div>
                         </div>
                     </div>
