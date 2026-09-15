@@ -9,6 +9,8 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Report;
+use App\Models\User;
 use App\Models\Withdrawal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -619,4 +621,99 @@ class PenjualController extends Controller
 
         return back()->with('success', 'Permintaan penarikan saldo berhasil diajukan.');
     }
+
+
+
+        // ================= LAPORAN DARI PENJUAL =================
+    // Fitur ini memungkinkan penjual mengirim laporan (mis. laporan terhadap
+    // pembeli/pengguna lain atau produk bermasalah). Laporan yang masuk akan
+    // otomatis terhubung & bisa ditindaklanjuti oleh role verifikator, admin,
+    // dan customer service, karena semuanya membaca dari tabel `reports` yang sama.
+    public function laporanIndex(Request $request)
+    {
+        $user = Auth::user();
+
+        $products = Product::select('id_product', 'title', 'seller_id')
+            ->with(['seller:id_user,name'])
+            ->where('status', 'active')
+            ->where('seller_id', '!=', $user->id_user)
+            ->orderBy('title')
+            ->get();
+
+        $users = User::select('id_user', 'name', 'id_role')
+            ->with(['role:id_role,role_name'])
+            ->where('id_user', '!=', $user->id_user)
+            ->orderBy('name')
+            ->get();
+
+        $reports = Report::with([
+                'product:id_product,title,seller_id',
+                'reportedUser:id_user,name',
+            ])
+            ->where('user_id', $user->id_user)
+            ->latest('id_report')
+            ->paginate(8)
+            ->withQueryString();
+
+        return view('penjual.laporan.index', compact('products', 'users', 'reports'));
+    }
+
+    public function laporanStore(Request $request)
+    {
+        $validated = $request->validate([
+            'target_type'      => 'required|in:produk,pengguna,lainnya',
+            'product_id'       => 'nullable|required_if:target_type,produk|integer|exists:products,id_product',
+            'reported_user_id' => 'nullable|required_if:target_type,pengguna|integer|exists:users,id_user',
+            'reason'           => 'required|string|max:255',
+            'description'      => 'nullable|string|max:2000',
+        ]);
+
+        $user = Auth::user();
+        $productId = null;
+        $reportedUserId = null;
+
+        if ($validated['target_type'] === 'produk') {
+            $productId = $validated['product_id'];
+            $product = Product::select('id_product', 'seller_id')->where('id_product', $productId)->first();
+
+            if (!$product) {
+                return back()->withInput()->with('error', 'Produk yang ingin dilaporkan tidak ditemukan.');
+            }
+
+            $reportedUserId = $product->seller_id;
+            if ($reportedUserId == $user->id_user) {
+                return back()->withInput()->with('error', 'Kamu tidak dapat melaporkan produk milik akun sendiri.');
+            }
+        } elseif ($validated['target_type'] === 'pengguna') {
+            $reportedUserId = $validated['reported_user_id'];
+            if ($reportedUserId == $user->id_user) {
+                return back()->withInput()->with('error', 'Kamu tidak dapat melaporkan akun sendiri.');
+            }
+        }
+
+        Report::create([
+            'user_id'          => $user->id_user,
+            'product_id'       => $productId,
+            'reported_user_id' => $reportedUserId,
+            'reason'           => $validated['reason'],
+            'description'      => $validated['description'] ?? null,
+            'status'           => 'pending',
+        ]);
+
+        return redirect()->route('penjual.laporan.index')
+            ->with('success', 'Laporan berhasil dikirim! Tim verifikator, admin, dan CS akan meninjau laporan kamu.');
+    }
+
+     public function peringatanIndex()
+    {
+        $userId = Auth::id();
+        $peringatan = \App\Models\Report::where('reported_user_id', $userId)
+            ->whereIn('status', ['reviewed', 'escalated'])
+            ->whereNotNull('admin_note')
+            ->latest('reviewed_at')
+            ->paginate(10);
+
+        return view('penjual.peringatan', compact('peringatan'));
+    }
+
 }

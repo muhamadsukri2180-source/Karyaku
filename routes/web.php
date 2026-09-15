@@ -222,6 +222,13 @@ Route::middleware(['auth', 'suspended', 'role:penjual'])->prefix('penjual')->nam
 
     Route::get('/keuangan', [PenjualController::class, 'keuanganIndex'])->name('keuangan.index');
     Route::post('/keuangan/tarik', [PenjualController::class, 'penarikanStore'])->name('keuangan.tarik');
+
+    // BARU: fitur Laporan untuk penjual
+    Route::get('/laporan', [PenjualController::class, 'laporanIndex'])->name('laporan.index');
+    Route::post('/laporan', [PenjualController::class, 'laporanStore'])->name('laporan.store');
+
+    // BARU: Peringatan Saya
+    Route::get('/peringatan', [PenjualController::class, 'peringatanIndex'])->name('peringatan');
 });
 
 
