@@ -62,7 +62,7 @@
                 <div class="mb-3" id="groupUser">
                     <label class="form-label fw-bold small text-dark">Pilih Pengguna Yang Dilaporkan (Pembeli / Penjual) <span class="text-danger">*</span></label>
                     <select name="reported_user_id" class="form-select @error('reported_user_id') is-invalid @enderror">
-                        <option value="">-- Pilih Pengguna --</option>
+                        <option value=""> Pilih Pengguna </option>
                         @foreach ($users as $u)
                             <option value="{{ $u->id_user }}" {{ old('reported_user_id') == $u->id_user ? 'selected' : '' }}>
                                 {{ $u->name }} ({{ $u->role->role_name ?? '-' }})
@@ -76,7 +76,7 @@
                 <div class="mb-3 d-none" id="groupProduk">
                     <label class="form-label fw-bold small text-dark">Pilih Produk Yang Dilaporkan <span class="text-danger">*</span></label>
                     <select name="product_id" class="form-select @error('product_id') is-invalid @enderror">
-                        <option value="">-- Pilih Produk --</option>
+                        <option value=""> Pilih Produk </option>
                         @foreach ($products as $product)
                             <option value="{{ $product->id_product }}" {{ old('product_id') == $product->id_product ? 'selected' : '' }}>
                                 {{ $product->title }} (Penjual: {{ $product->seller->name ?? '-' }})
@@ -89,7 +89,7 @@
                 <div class="mb-3">
                     <label class="form-label fw-bold small text-dark">Alasan Laporan <span class="text-danger">*</span></label>
                     <select name="reason" class="form-select @error('reason') is-invalid @enderror" required>
-                        <option value="">-- Pilih Alasan --</option>
+                        <option value=""> Pilih Alasan </option>
                         <option value="Penipuan / tidak membayar pesanan" {{ old('reason') == 'Penipuan / tidak membayar pesanan' ? 'selected' : '' }}>Penipuan / tidak membayar pesanan</option>
                         <option value="Perilaku tidak sopan" {{ old('reason') == 'Perilaku tidak sopan' ? 'selected' : '' }}>Perilaku tidak sopan</option>
                         <option value="Penyalahgunaan chat/komplain" {{ old('reason') == 'Penyalahgunaan chat/komplain' ? 'selected' : '' }}>Penyalahgunaan chat/komplain</option>

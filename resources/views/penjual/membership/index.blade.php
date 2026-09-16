@@ -215,7 +215,7 @@
     <h5 class="fw-bold mb-0" style="color:var(--text-dark);">
         <i class="bi bi-stars text-warning me-2"></i>Katalog Paket Pilihan
     </h5>
-    <span class="small text-muted">Pilih paket untuk melakukan perpanjangan atau upgrade kuota</span>
+
 </div>
 
 <div class="row g-4 mb-5">

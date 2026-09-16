@@ -102,6 +102,36 @@
             transition: transform .5s ease;
         }
 
+        /* PACKAGE CARD - KONTRAS LEMBUT */
+        .package-card {
+            min-height: 100%;
+        }
+
+        .package-bronze {
+            border-color: #d6a77a !important;
+        }
+
+        .package-bronze:hover {
+            border-color: #b9824f !important;
+        }
+
+        .package-silver {
+            border-color: #cbd5e1 !important;
+        }
+
+        .package-silver:hover {
+            border-color: #94a3b8 !important;
+        }
+
+        .package-premium {
+            border-color: #60a5fa !important;
+        }
+
+        .package-premium:hover {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 18px 40px rgba(37, 99, 235, .14);
+        }
+
         .package-card {
             transition:
                 transform .3s ease,
@@ -176,7 +206,7 @@
         <div class="flex justify-between items-center">
 
             <!-- LOGO -->
-            <a href="#hero" class="flex items-center gap-2.5">
+           <a href="{{ url('/images/logo.jpeg') }}" class="flex items-center gap-3">
 
                 <div class="w-9 h-9 rounded-lg bg-white text-primary flex items-center justify-center shadow-sm">
                     <i class="fa-solid fa-layer-group"></i>
@@ -1218,7 +1248,6 @@
 <!-- ========================================================= -->
 <section id="paket-penjual" class="py-20 lg:py-28 bg-bgLight border-y border-borderSoft">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- HEADER -->
         <div class="text-center max-w-3xl mx-auto mb-14 reveal">
             <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 text-primary text-xs font-bold uppercase tracking-widest">
                 <i class="fa-solid fa-crown"></i>
@@ -1233,7 +1262,6 @@
             </p>
         </div>
 
-        <!-- PACKAGES -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 items-stretch">
             @forelse($memberships ?? [] as $index => $membership)
                 @php
@@ -1254,134 +1282,129 @@
                 @endphp
 
                 @if($tier === 'bronze')
-                    {{-- PAKET PALING RENDAH - THEME COKELAT / BRONZE --}}
-                    <div class="package-card reveal bg-gradient-to-b from-stone-900 via-amber-950 to-stone-950 text-white border-2 border-amber-700/80 rounded-3xl p-7 relative flex flex-col justify-between overflow-hidden shadow-xl hover:shadow-amber-900/30">
+                    {{-- PAKET BIASA: WARNA HANYA DI BINGKAI --}}
+                    <div class="package-card package-bronze reveal bg-white text-slate-900 border-2 border-amber-300 rounded-3xl p-7 relative flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-lg hover:border-amber-400">
                         <div>
                             <div class="flex justify-between items-start mb-6">
                                 <div>
-                                    <div class="w-12 h-12 rounded-xl bg-amber-900/50 text-amber-400 flex items-center justify-center mb-4 border border-amber-700/60 shadow-inner">
+                                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center mb-4 border border-amber-200">
                                         <i class="fa-solid fa-shield-halved text-xl"></i>
                                     </div>
-                                    <h3 class="font-display text-xl font-bold text-amber-100">{{ $membership->name }}</h3>
-                                    <p class="text-sm text-amber-200/60 mt-1">Masa aktif {{ $membership->duration_days }} Hari</p>
+                                    <h3 class="font-display text-xl font-bold text-slate-800">{{ $membership->name }}</h3>
+                                    <p class="text-sm text-slate-500 mt-1">Masa aktif {{ $membership->duration_days }} Hari</p>
                                 </div>
-                                <span class="px-3.5 py-1.5 rounded-full bg-amber-900/60 border border-amber-600/60 text-amber-300 text-xs font-bold font-mono">
+                                <span class="px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold font-mono">
                                     Rp {{ number_format($membership->price, 0, ',', '.') }}
                                 </span>
                             </div>
-                            <div class="mb-7 p-3 rounded-2xl bg-amber-950/60 border border-amber-800/40 flex items-center justify-between">
+                            <div class="mb-7 p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                                 <div>
-                                    <span class="text-slate-400 text-xs block">Limit Upload Produk</span>
-                                    <span class="text-2xl font-display font-extrabold text-amber-400">
-                                        {{ $membership->max_upload >= 999 ? '999+' : $membership->max_upload }} Karya
-                                    </span>
+                                    <span class="text-slate-500 text-xs block">Limit Upload Produk</span>
+                                    <span class="text-2xl font-display font-extrabold text-amber-700">{{ $membership->max_upload >= 999 ? '999+' : $membership->max_upload }} Karya</span>
                                 </div>
-                                <span class="px-2.5 py-1 rounded bg-amber-900/80 text-amber-300 text-[10px] font-bold uppercase tracking-wider border border-amber-700/50">Bronze</span>
+                                <span class="px-2.5 py-1 rounded bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider border border-amber-200">Bronze</span>
                             </div>
                             <div class="space-y-3 flex-grow">
                                 @foreach(explode(' | ', $membership->benefit) as $benefitItem)
                                     @if(trim($benefitItem))
                                         <div class="flex gap-3 text-sm">
-                                            <span class="check-icon bg-amber-800/40 text-amber-400 shrink-0 border border-amber-700/50"><i class="fa-solid fa-check text-xs"></i></span>
-                                            <span class="text-stone-300">{{ trim($benefitItem) }}</span>
+                                            <span class="check-icon bg-amber-50 text-amber-700 shrink-0 border border-amber-200"><i class="fa-solid fa-check text-xs"></i></span>
+                                            <span class="text-slate-600">{{ trim($benefitItem) }}</span>
                                         </div>
                                     @endif
                                 @endforeach
                             </div>
                         </div>
-                        <a href="{{ url('/auth/login?role=penjual&package=' . \Illuminate\Support\Str::slug($membership->name)) }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-amber-50 font-extrabold text-sm transition-all duration-200 shadow-lg shadow-amber-900/40 focus:ring-4 focus:ring-amber-600/30">
+                        <a href="{{ url('/auth/login?role=penjual&package=' . \Illuminate\Support\Str::slug($membership->name)) }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-extrabold text-sm transition-all duration-200 focus:ring-4 focus:ring-amber-200/50">
                             Pilih {{ $membership->name }}
                         </a>
                     </div>
 
                 @elseif($tier === 'silver')
-                    {{-- PAKET SEDANG - THEME SILVER / PERAK --}}
-                    <div class="package-card reveal bg-gradient-to-b from-slate-900 via-zinc-900 to-slate-950 text-white border-2 border-slate-300/80 rounded-3xl p-7 relative flex flex-col justify-between overflow-hidden shadow-xl hover:shadow-slate-500/20">
+                    {{-- PAKET BIASA: WARNA HANYA DI BINGKAI --}}
+                    <div class="package-card package-silver reveal bg-white text-slate-900 border-2 border-slate-300 rounded-3xl p-7 relative flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-lg hover:border-slate-400">
                         <div>
                             <div class="flex justify-between items-start mb-6">
                                 <div>
-                                    <div class="w-12 h-12 rounded-xl bg-slate-800/80 text-slate-200 flex items-center justify-center mb-4 border border-slate-400/60 shadow-inner">
+                                    <div class="w-12 h-12 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center mb-4 border border-slate-200">
                                         <i class="fa-solid fa-medal text-xl"></i>
                                     </div>
-                                    <h3 class="font-display text-xl font-bold text-slate-100">{{ $membership->name }}</h3>
-                                    <p class="text-sm text-slate-400 mt-1">Masa aktif {{ $membership->duration_days }} Hari</p>
+                                    <h3 class="font-display text-xl font-bold text-slate-800">{{ $membership->name }}</h3>
+                                    <p class="text-sm text-slate-500 mt-1">Masa aktif {{ $membership->duration_days }} Hari</p>
                                 </div>
-                                <span class="px-3.5 py-1.5 rounded-full bg-slate-800/80 border border-slate-400/60 text-slate-200 text-xs font-bold font-mono">
+                                <span class="px-3.5 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold font-mono">
                                     Rp {{ number_format($membership->price, 0, ',', '.') }}
                                 </span>
                             </div>
-                            <div class="mb-7 p-3 rounded-2xl bg-slate-800/50 border border-slate-700/60 flex items-center justify-between">
+                            <div class="mb-7 p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                                 <div>
-                                    <span class="text-slate-400 text-xs block">Limit Upload Produk</span>
-                                    <span class="text-2xl font-display font-extrabold text-slate-200">
-                                        {{ $membership->max_upload >= 999 ? '999+' : $membership->max_upload }} Karya
-                                    </span>
+                                    <span class="text-slate-500 text-xs block">Limit Upload Produk</span>
+                                    <span class="text-2xl font-display font-extrabold text-slate-700">{{ $membership->max_upload >= 999 ? '999+' : $membership->max_upload }} Karya</span>
                                 </div>
-                                <span class="px-2.5 py-1 rounded bg-slate-700 text-slate-200 text-[10px] font-bold uppercase tracking-wider border border-slate-500/50">Silver</span>
+                                <span class="px-2.5 py-1 rounded bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider border border-slate-200">Silver</span>
                             </div>
                             <div class="space-y-3 flex-grow">
                                 @foreach(explode(' | ', $membership->benefit) as $benefitItem)
                                     @if(trim($benefitItem))
                                         <div class="flex gap-3 text-sm">
-                                            <span class="check-icon bg-slate-700/60 text-slate-200 shrink-0 border border-slate-500/50"><i class="fa-solid fa-check text-xs"></i></span>
-                                            <span class="text-slate-300">{{ trim($benefitItem) }}</span>
+                                            <span class="check-icon bg-slate-50 text-slate-600 shrink-0 border border-slate-200"><i class="fa-solid fa-check text-xs"></i></span>
+                                            <span class="text-slate-600">{{ trim($benefitItem) }}</span>
                                         </div>
                                     @endif
                                 @endforeach
                             </div>
                         </div>
-                        <a href="{{ url('/auth/login?role=penjual&package=' . \Illuminate\Support\Str::slug($membership->name)) }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-slate-200 hover:bg-white text-slate-950 font-extrabold text-sm transition-all duration-200 shadow-lg shadow-slate-400/30 focus:ring-4 focus:ring-slate-300/30">
+                        <a href="{{ url('/auth/login?role=penjual&package=' . \Illuminate\Support\Str::slug($membership->name)) }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 font-extrabold text-sm transition-all duration-200 focus:ring-4 focus:ring-slate-200/60">
                             Pilih {{ $membership->name }}
                         </a>
                     </div>
 
                 @else
-                    {{-- PAKET PALING MAHAL - THEME EMAS / GOLD --}}
-                    <div class="package-card reveal bg-gradient-to-b from-amber-950 via-slate-950 to-yellow-950 text-white border-2 border-yellow-400 rounded-3xl p-7 relative flex flex-col justify-between overflow-hidden shadow-2xl shadow-yellow-500/10 z-10">
-                        <div class="absolute -right-12 -top-12 w-32 h-32 bg-yellow-400/10 rounded-full blur-2xl pointer-events-none"></div>
-                        <div class="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
-                            <i class="fa-solid fa-crown mr-1"></i> Best Value
+                    {{-- PAKET PREMIUM: SATU BINGKAI PREMIUM, TIDAK TERLALU MENCOLOK --}}
+                    <div class="package-card package-premium reveal bg-gradient-to-b from-blue-50 via-white to-white text-slate-900 border-2 border-blue-400 rounded-3xl p-7 relative flex flex-col justify-between overflow-hidden shadow-lg shadow-blue-900/10 z-10">
+                        <div class="absolute -right-16 -top-16 w-40 h-40 bg-blue-100/70 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="absolute top-4 right-4 bg-white border border-blue-200 text-blue-700 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                            <i class="fa-solid fa-crown mr-1"></i> Premium
                         </div>
                         <div>
                             <div class="flex justify-between items-start mb-6">
                                 <div>
-                                    <div class="w-12 h-12 rounded-xl bg-yellow-400/20 text-yellow-400 flex items-center justify-center mb-4 border border-yellow-400/50 shadow-inner">
+                                    <div class="w-12 h-12 rounded-xl bg-blue-100 text-primary flex items-center justify-center mb-4 border border-blue-200">
                                         <i class="fa-solid fa-crown text-xl"></i>
                                     </div>
-                                    <h3 class="font-display text-xl font-bold text-yellow-100">{{ $membership->name }}</h3>
-                                    <p class="text-sm text-yellow-200/60 mt-1">Masa aktif {{ $membership->duration_days }} Hari</p>
+                                    <h3 class="font-display text-xl font-bold text-slate-900">{{ $membership->name }}</h3>
+                                    <p class="text-sm text-slate-500 mt-1">Masa aktif {{ $membership->duration_days }} Hari</p>
                                 </div>
                             </div>
                             <div class="mb-4">
-                                <span class="px-3.5 py-1.5 rounded-full bg-yellow-400/20 border border-yellow-400/50 text-yellow-300 text-sm font-bold font-mono inline-block">
+                                <span class="px-3.5 py-1.5 rounded-full bg-white border border-blue-200 text-primary text-sm font-bold font-mono inline-block shadow-sm">
                                     Rp {{ number_format($membership->price, 0, ',', '.') }}
                                 </span>
                             </div>
-                            <div class="mb-7 p-3 rounded-2xl bg-yellow-950/50 border border-yellow-500/40 flex items-center justify-between">
+                            <div class="mb-7 p-3 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-between">
                                 <div>
-                                    <span class="text-yellow-200/70 text-xs block">Limit Upload Produk</span>
-                                    <span class="text-2xl font-display font-extrabold text-yellow-400">
-                                        {{ $membership->max_upload >= 999 ? '999+' : $membership->max_upload }} Karya
-                                    </span>
+                                    <span class="text-slate-500 text-xs block">Limit Upload Produk</span>
+                                    <span class="text-2xl font-display font-extrabold text-primary">{{ $membership->max_upload >= 999 ? '999+' : $membership->max_upload }} Karya</span>
                                 </div>
-                                <span class="px-2.5 py-1 rounded bg-yellow-500/30 border border-yellow-400/40 text-yellow-300 text-[10px] font-bold uppercase tracking-wider">Gold</span>
+                                <span class="px-2.5 py-1 rounded bg-white border border-blue-200 text-primary text-[10px] font-bold uppercase tracking-wider">Premium</span>
                             </div>
                             <div class="space-y-3 flex-grow">
                                 @foreach(explode(' | ', $membership->benefit) as $benefitItem)
                                     @if(trim($benefitItem))
                                         <div class="flex gap-3 text-sm">
-                                            <span class="check-icon bg-yellow-400/20 text-yellow-400 shrink-0 border border-yellow-400/50"><i class="fa-solid fa-check text-xs"></i></span>
-                                            <span class="text-yellow-100/90">{{ trim($benefitItem) }}</span>
+                                            <span class="check-icon bg-blue-50 text-primary shrink-0 border border-blue-200"><i class="fa-solid fa-check text-xs"></i></span>
+                                            <span class="text-slate-700">{{ trim($benefitItem) }}</span>
                                         </div>
                                     @endif
                                 @endforeach
                             </div>
                         </div>
-                        <a href="{{ url('/auth/login?role=penjual&package=' . \Illuminate\Support\Str::slug($membership->name)) }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 hover:from-yellow-300 hover:to-amber-300 text-slate-950 font-extrabold text-sm transition-all duration-200 shadow-xl shadow-yellow-500/30 focus:ring-4 focus:ring-yellow-400/40">
+                        <a href="{{ url('/auth/login?role=penjual&package=' . \Illuminate\Support\Str::slug($membership->name)) }}" class="shine inline-block mt-8 w-full text-center py-3.5 rounded-xl bg-primary hover:bg-primaryHover text-white font-extrabold text-sm transition-all duration-200 shadow-md shadow-blue-900/15 focus:ring-4 focus:ring-blue-200/70">
                             Pilih {{ $membership->name }}
                         </a>
                     </div>
                 @endif
+
             @empty
                 <div class="col-span-full text-center py-12 bg-white rounded-3xl border border-slate-200">
                     <i class="fa-solid fa-box-open text-4xl text-slate-300 mb-3"></i>
@@ -1390,7 +1413,6 @@
             @endforelse
         </div>
 
-        <!-- SMALL NOTE -->
         <div class="text-center mt-8 text-xs text-textMuted reveal">
             <i class="fa-solid fa-circle-info mr-1"></i>
             Batas produk dan slot iklan mengikuti paket aktif penjual.

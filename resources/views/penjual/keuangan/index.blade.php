@@ -76,7 +76,7 @@
                 <div class="mb-3">
                     <label class="form-label fw-bold small text-dark">Bank / E-Wallet <span class="text-danger">*</span></label>
                     <select name="bank_name" class="form-select @error('bank_name') is-invalid @enderror" required>
-                        <option value="">-- Pilih Bank / E-Wallet --</option>
+                        <option value=""> Pilih Bank / E-Wallet </option>
                         <optgroup label="Bank Nasional">
                             <option value="BCA" {{ old('bank_name') == 'BCA' ? 'selected' : '' }}>BCA</option>
                             <option value="BRI" {{ old('bank_name') == 'BRI' ? 'selected' : '' }}>BRI</option>
