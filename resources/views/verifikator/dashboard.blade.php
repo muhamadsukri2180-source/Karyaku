@@ -170,7 +170,7 @@
                                         <tr class="hover:bg-slate-50 transition-colors">
                                             <td class="py-3.5 px-6">
                                                 <p class="font-bold text-slate-800 text-xs">{{ $registration->user->name ?? '-' }}</p>
-                                                <p class="text-[11px] text-slate-400 font-medium">{{ $registration->user->email ?? '-' }}</p>
+                                                <p class="text-[11px] text-slate-400 font-medium">@safeEmail($registration->user->email ?? '-')</p>
                                             </td>
                                             <td class="py-3.5 px-6 font-semibold text-slate-700">
                                                 <span class="bg-sky-50 text-sky-700 border border-sky-200 px-2.5 py-0.5 rounded-lg font-bold text-[10px]">

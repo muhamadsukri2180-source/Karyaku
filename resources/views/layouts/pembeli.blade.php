@@ -788,7 +788,7 @@
                 <div class="user-dropdown">
                     <div class="px-3 py-2 border-bottom mb-1">
                         <div class="fw-bold text-dark text-truncate">{{ $navUser->name ?? 'Pembeli' }}</div>
-                        <div class="text-muted small text-truncate">{{ $navUser->email ?? '' }}</div>
+                        <div class="text-muted small text-truncate">@safeEmail($navUser->email ?? '')</div>
                     </div>
                     <a href="{{ route('pembeli.profile') }}"><i class="bi bi-person-fill text-primary"></i> Pengaturan Profil</a>
                     <a href="{{ route('reports.create') }}"><i class="bi bi-flag-fill text-danger"></i> Laporkan Pelanggaran</a>
@@ -839,35 +839,181 @@
 </header>
 
 <main class="main-content">
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show border-0 rounded-4 shadow-sm mb-4" role="alert">
-            <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-check-circle-fill fs-5 text-success"></i>
-                <div class="fw-semibold">{{ session('success') }}</div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    @if (session('error') || $errors->any())
-        <div class="alert alert-danger alert-dismissible fade show border-0 rounded-4 shadow-sm mb-4" role="alert">
-            <div class="d-flex align-items-start gap-2">
-                <i class="bi bi-exclamation-triangle-fill fs-5 text-danger mt-1"></i>
-                <div>
-                    @if(session('error'))
-                        <div class="fw-bold">{{ session('error') }}</div>
-                    @endif
-                    @foreach ($errors->all() as $error)
-                        <div class="small">{{ $error }}</div>
-                    @endforeach
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
     @yield('content')
 </main>
+
+{{-- ========== CUSTOM TOAST NOTIFICATION ========== --}}
+<style>
+    .karyaku-toast-wrap {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        pointer-events: none;
+    }
+    .karyaku-toast {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        min-width: 300px;
+        max-width: 380px;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 16px 40px rgba(15,23,42,0.16), 0 4px 12px rgba(15,23,42,0.08);
+        border: 1px solid var(--border-color);
+        padding: 14px 16px;
+        pointer-events: all;
+        position: relative;
+        overflow: hidden;
+        transform: translateX(120%);
+        opacity: 0;
+        transition: transform 0.38s cubic-bezier(0.34,1.56,0.64,1), opacity 0.28s ease;
+    }
+    .karyaku-toast.show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    .karyaku-toast.hide {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+    .karyaku-toast .toast-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    .karyaku-toast.toast-success .toast-icon { background: #ecfdf5; color: #10b981; }
+    .karyaku-toast.toast-error   .toast-icon { background: #fef2f2; color: #ef4444; }
+    .karyaku-toast.toast-warning .toast-icon { background: #fffbeb; color: #f59e0b; }
+    .karyaku-toast.toast-info    .toast-icon { background: #eff6ff; color: #3b82f6; }
+    .karyaku-toast .toast-body {
+        flex: 1;
+        min-width: 0;
+    }
+    .karyaku-toast .toast-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 2px;
+        line-height: 1.3;
+    }
+    .karyaku-toast .toast-msg {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+    .karyaku-toast .toast-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 16px;
+        padding: 0;
+        cursor: pointer;
+        line-height: 1;
+        flex-shrink: 0;
+        transition: color .15s;
+    }
+    .karyaku-toast .toast-close:hover { color: var(--text-dark); }
+    .karyaku-toast .toast-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        border-radius: 0 0 16px 16px;
+        animation: toastProgress 4s linear forwards;
+    }
+    .karyaku-toast.toast-success .toast-progress { background: #10b981; }
+    .karyaku-toast.toast-error   .toast-progress { background: #ef4444; }
+    .karyaku-toast.toast-warning .toast-progress { background: #f59e0b; }
+    .karyaku-toast.toast-info    .toast-progress { background: #3b82f6; }
+    @keyframes toastProgress {
+        from { width: 100%; }
+        to   { width: 0%; }
+    }
+    @media (max-width: 576px) {
+        .karyaku-toast-wrap { top: 12px; right: 12px; left: 12px; }
+        .karyaku-toast { min-width: unset; max-width: 100%; }
+    }
+</style>
+
+<div class="karyaku-toast-wrap" id="toastWrap"></div>
+
+<script>
+    function showKaryakuToast(type, title, message, duration) {
+        duration = duration || 4000;
+        const icons = {
+            success: 'bi-check-circle-fill',
+            error:   'bi-exclamation-triangle-fill',
+            warning: 'bi-exclamation-circle-fill',
+            info:    'bi-info-circle-fill'
+        };
+        const titles = { success: 'Berhasil!', error: 'Gagal!', warning: 'Peringatan', info: 'Info' };
+        const wrap = document.getElementById('toastWrap');
+        const toast = document.createElement('div');
+        toast.className = 'karyaku-toast toast-' + type;
+        toast.innerHTML =
+            '<div class="toast-icon"><i class="bi ' + icons[type] + '"></i></div>' +
+            '<div class="toast-body">' +
+              '<div class="toast-title">' + (title || titles[type]) + '</div>' +
+              (message ? '<div class="toast-msg">' + message + '</div>' : '') +
+            '</div>' +
+            '<button class="toast-close" data-toast-close><i class="bi bi-x-lg"></i></button>' +
+            '<div class="toast-progress"></div>';
+        toast.querySelector('[data-toast-close]').addEventListener('click', function() {
+            dismissToast(toast);
+        });
+        wrap.appendChild(toast);
+        requestAnimationFrame(() => { requestAnimationFrame(() => { toast.classList.add('show'); }); });
+        const timer = setTimeout(() => dismissToast(toast), duration);
+        toast._timer = timer;
+    }
+    function dismissToast(toast) {
+        if (!toast || toast._dismissed) return;
+        toast._dismissed = true;
+        clearTimeout(toast._timer);
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 400);
+    }
+
+    @if(session('success'))
+        document.addEventListener('DOMContentLoaded', function() {
+            showKaryakuToast('success', 'Berhasil!', @json(session('success')));
+        });
+    @endif
+    @if(session('error'))
+        document.addEventListener('DOMContentLoaded', function() {
+            showKaryakuToast('error', 'Gagal!', @json(session('error')));
+        });
+    @endif
+    @if($errors->any())
+        document.addEventListener('DOMContentLoaded', function() {
+            const errs = @json($errors->all());
+            errs.forEach(function(err) {
+                showKaryakuToast('error', 'Validasi Gagal', err);
+            });
+        });
+    @endif
+    @if(session('warning'))
+        document.addEventListener('DOMContentLoaded', function() {
+            showKaryakuToast('warning', 'Peringatan', @json(session('warning')));
+        });
+    @endif
+    @if(session('info'))
+        document.addEventListener('DOMContentLoaded', function() {
+            showKaryakuToast('info', 'Info', @json(session('info')));
+        });
+    @endif
+</script>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>

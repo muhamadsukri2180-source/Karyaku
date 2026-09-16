@@ -199,7 +199,7 @@
                                 <tr class="hover:bg-slate-50">
                                     <td class="py-3 px-5 text-xs">
                                         <p class="font-semibold text-slate-800">{{ $trx->user->name ?? '-' }}</p>
-                                        <p class="text-[10px] text-slate-400">{{ $trx->user->email ?? '-' }}</p>
+                                        <p class="text-[10px] text-slate-400">@safeEmail($trx->user->email ?? '-')</p>
                                     </td>
                                     <td class="py-3 px-5 text-xs">{{ $trx->membership->name ?? '-' }}</td>
                                     <td class="py-3 px-5 text-xs font-bold" style="color:#FF7A59;">Rp{{ number_format($trx->payment_amount ?? ($trx->membership->price ?? 0), 0, ',', '.') }}</td>

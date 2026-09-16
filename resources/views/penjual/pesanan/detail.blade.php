@@ -54,7 +54,7 @@
             <h6 class="fw-bold mb-3 pb-2" style="color:var(--text-dark); border-bottom:1px solid var(--border-color);"><i class="bi bi-person-vcard me-2" style="color:var(--primary);"></i>Data Pelanggan (Pembeli)</h6>
             <div class="row g-3 small">
                 <div class="col-sm-6"><span class="info-label">Nama Pembeli:</span><strong class="fs-6" style="color:var(--text-dark);">{{ $buyer->name ?? 'Pengguna' }}</strong></div>
-                <div class="col-sm-6"><span class="info-label">Email:</span><strong style="color:var(--text-dark);">{{ $buyer->email ?? '-' }}</strong></div>
+                <div class="col-sm-6"><span class="info-label">Email:</span><strong style="color:var(--text-dark);">@safeEmail($buyer->email ?? '-')</strong></div>
                 <div class="col-sm-6"><span class="info-label">No. Telepon / WhatsApp:</span><strong style="color:var(--text-dark);">{{ $buyer->phone ?? '-' }}</strong></div>
                 <div class="col-sm-6"><span class="info-label">Waktu Transaksi:</span><strong style="color:var(--text-dark);">{{ $orderItem->created_at->translatedFormat('d F Y, H:i') }} WIB</strong></div>
             </div>

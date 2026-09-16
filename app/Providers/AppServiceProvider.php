@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Blade;
 use League\Flysystem\Filesystem;
 use Masbug\Flysystem\GoogleDriveAdapter;
 
@@ -47,6 +48,23 @@ class AppServiceProvider extends ServiceProvider
             } catch (\Throwable $e) {
                 // Fallback if database not initialized
             }
+        });
+
+        // Blade directive: @safeEmail($email) — hides bcrypt hashes & non-email strings
+        Blade::directive('safeEmail', function ($expression) {
+            return "<?php
+                \$_safeEmailVal = {$expression};
+                echo (!empty(\$_safeEmailVal)
+                    && is_string(\$_safeEmailVal)
+                    && str_contains(\$_safeEmailVal, '@')
+                    && !str_starts_with(\$_safeEmailVal, '\$2y\$')
+                    && !str_starts_with(\$_safeEmailVal, '\$2a\$')
+                    && !str_starts_with(\$_safeEmailVal, '\$2b\$')
+                    && !str_starts_with(\$_safeEmailVal, '\$argon')
+                    && !str_starts_with(\$_safeEmailVal, '$'))
+                    ? e(\$_safeEmailVal)
+                    : '-';
+            ?>";
         });
     }
 }

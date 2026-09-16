@@ -140,7 +140,7 @@
 
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold text-muted mb-1">Email Terdaftar</label>
-                        <input type="email" class="form-control rounded-3 bg-light" value="{{ $user->email }}" readonly>
+                        <input type="email" class="form-control rounded-3 bg-light" value="{{ (!empty($user->email) && !str_starts_with($user->email, '$') && str_contains($user->email, '@')) ? $user->email : '' }}" readonly>
                     </div>
 
                     <div class="col-md-6">

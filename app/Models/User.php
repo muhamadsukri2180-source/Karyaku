@@ -50,6 +50,14 @@ class User extends Authenticatable
         return $this->hasMany(AccountAppeal::class, 'user_id', 'id_user');
     }
 
+    public function getSafeEmailAttribute(): string
+    {
+        if (empty($this->email) || str_starts_with($this->email, '$') || !str_contains($this->email, '@')) {
+            return '-';
+        }
+        return $this->email;
+    }
+
     public function isCurrentlySuspended(): bool
     {
         if ($this->status !== 'blocked') {

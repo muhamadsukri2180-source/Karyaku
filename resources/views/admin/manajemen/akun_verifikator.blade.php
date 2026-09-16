@@ -283,7 +283,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="py-3 px-6 text-xs font-semibold text-slate-700">{{ $v->email }}</td>
+                                        <td class="py-3 px-6 text-xs font-semibold text-slate-700">@safeEmail($v->email)</td>
                                         <td class="py-3 px-6 text-xs font-bold text-sky-700">{{ number_format($v->total_checked, 0, ',', '.') }} Berkas</td>
                                         <td class="py-3 px-6">
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold {{ $isActive ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200' }} border shadow-sm">
@@ -352,7 +352,7 @@
                                                 </div>
                                                 <div>
                                                     <p class="font-bold text-slate-800 text-xs">{{ $userName }}</p>
-                                                    @if(!empty($userEmail) && !str_starts_with($userEmail, '$2y$') && !str_starts_with($userEmail, '$2a$'))
+                                                    @if(!empty($userEmail) && !str_starts_with($userEmail, '$') && str_contains($userEmail, '@'))
                                                         <p class="text-[10px] text-slate-500 font-medium">{{ $userEmail }}</p>
                                                     @elseif(!empty($item->user?->phone))
                                                         <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-phone text-[9px] mr-1 text-slate-400"></i>{{ $item->user->phone }}</p>
@@ -696,7 +696,8 @@
 
         function openSellerReviewModal(id, name, email, nik, plan, amount, method, bank, account, accountName, ktpUrl, proofUrl, approveUrl) {
             document.getElementById('srName').textContent = name;
-            document.getElementById('srEmail').textContent = email;
+            const displayEmail = (email && !email.startsWith('$') && email.includes('@')) ? email : '-';
+            document.getElementById('srEmail').textContent = displayEmail;
             document.getElementById('srNik').textContent = nik || '-';
             document.getElementById('srPlan').textContent = plan || 'Bronze';
             document.getElementById('srAmount').textContent = amount || 'Rp 0';

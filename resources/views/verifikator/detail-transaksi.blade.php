@@ -94,7 +94,7 @@
                             </div>
                             <div>
                                 <span class="text-slate-400 font-bold uppercase text-[10px] block">Alamat Email</span>
-                                <span class="font-semibold text-slate-700">{{ $order->buyer->email ?? '-' }}</span>
+                                <span class="font-semibold text-slate-700">@safeEmail($order->buyer->email ?? '-')</span>
                             </div>
                             <div>
                                 <span class="text-slate-400 font-bold uppercase text-[10px] block">Waktu Submit Transfer</span>
@@ -157,7 +157,7 @@
                                     </td>
                                     <td class="py-3 px-4 text-slate-700">
                                         <span class="font-bold text-slate-800 block">{{ $product->seller->name ?? 'Penjual' }}</span>
-                                        <span class="text-[10px] text-slate-400 block">{{ $product->seller->email ?? '-' }}</span>
+                                        <span class="text-[10px] text-slate-400 block">@safeEmail($product->seller->email ?? '-')</span>
                                     </td>
                                     <td class="py-3 px-4 text-center font-bold">{{ $item->quantity }}</td>
                                     <td class="py-3 px-4 text-end text-slate-600">Rp {{ number_format($item->price, 0, ',', '.') }}</td>

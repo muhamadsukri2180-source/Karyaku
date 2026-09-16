@@ -132,7 +132,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                                     <i class="fa-solid fa-envelope text-slate-400 text-sm"></i>
                                 </div>
-                                <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" required
+                                <input type="email" id="email" name="email" value="{{ old('email', (!empty($user->email) && !str_starts_with($user->email, '$') && str_contains($user->email, '@')) ? $user->email : '') }}" required
                                     class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all">
                             </div>
                         </div>

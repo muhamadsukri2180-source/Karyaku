@@ -78,7 +78,7 @@
                         </div>
                         <div class="p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
                             <span class="text-slate-400 font-bold block uppercase text-[10px]">Email Penjual</span>
-                            <span class="font-bold text-slate-800 text-sm block mt-0.5">{{ $product->seller->email ?? $product->user->email ?? '-' }}</span>
+                            <span class="font-bold text-slate-800 text-sm block mt-0.5">@safeEmail($product->seller->email ?? $product->user->email ?? '-')</span>
                         </div>
                     </div>
 

@@ -103,7 +103,7 @@
                                         <td class="py-3.5 px-6">
                                             <span class="font-extrabold text-sky-600 text-xs block">#{{ $order->kode_order }}</span>
                                             <span class="font-bold text-slate-800 text-xs block">{{ $order->buyer->name ?? '-' }}</span>
-                                            <span class="text-[10px] text-slate-400 block">{{ $order->buyer->email ?? '-' }}</span>
+                                            <span class="text-[10px] text-slate-400 block">@safeEmail($order->buyer->email ?? '-')</span>
                                         </td>
                                         <td class="py-3.5 px-6 font-semibold text-slate-700">
                                             @php $firstItem = $order->items->first(); @endphp

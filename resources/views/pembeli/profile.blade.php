@@ -20,7 +20,7 @@
                  style="width: 90px; height: 90px;">
 
             <h5 class="fw-bold text-dark mb-1">{{ $user->name }}</h5>
-            <p class="text-muted small mb-2">{{ $user->email }}</p>
+            <p class="text-muted small mb-2">@safeEmail($user->email)</p>
 
             <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1.5 rounded-pill text-capitalize fw-bold" style="font-size: 11px;">
                 <i class="bi bi-person-fill me-1"></i> Peran: {{ $user->role->role_name ?? 'Pembeli' }}
@@ -63,7 +63,7 @@
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Alamat Email <span class="text-danger">*</span></label>
                         <input type="email" name="email" class="form-control rounded-3 @error('email') is-invalid @enderror" 
-                               value="{{ old('email', $user->email) }}" required>
+                               value="{{ old('email', (!empty($user->email) && !str_starts_with($user->email, '$') && str_contains($user->email, '@')) ? $user->email : '') }}" required>
                         @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 

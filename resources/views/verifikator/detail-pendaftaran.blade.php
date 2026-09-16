@@ -71,7 +71,7 @@
 
                         <div class="p-3.5 bg-slate-50/80 border border-slate-100 rounded-xl">
                             <span class="text-slate-400 font-bold block uppercase text-[10px] tracking-wider">Email</span>
-                            <span class="font-bold text-slate-800 text-sm mt-0.5 block">{{ $registration->user->email ?? '-' }}</span>
+                            <span class="font-bold text-slate-800 text-sm mt-0.5 block">@safeEmail($registration->user->email ?? '-')</span>
                         </div>
 
                         <div class="p-3.5 bg-slate-50/80 border border-slate-100 rounded-xl">

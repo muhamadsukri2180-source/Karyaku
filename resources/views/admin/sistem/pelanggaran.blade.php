@@ -371,7 +371,7 @@
                                             </div>
                                             <div>
                                                 <p class="font-bold text-slate-800 text-xs">{{ $appeal->user->name ?? 'User #'.$appeal->user_id }}</p>
-                                                @if(!empty($appeal->user?->email) && !str_starts_with($appeal->user->email, '$2y$') && !str_starts_with($appeal->user->email, '$2a$'))
+                                                @if(!empty($appeal->user?->email) && !str_starts_with($appeal->user->email, '$') && str_contains($appeal->user->email, '@'))
                                                     <p class="text-[10px] text-slate-500">{{ $appeal->user->email }}</p>
                                                 @elseif(!empty($appeal->user?->phone))
                                                     <p class="text-[10px] text-slate-500">{{ $appeal->user->phone }}</p>
@@ -611,7 +611,7 @@
 
         function openAppealModal(appeal) {
             formAppeal.action = "{{ url('admin/pelanggaran/appeal') }}/" + appeal.id_appeal;
-            const userEmail = (appeal.user && appeal.user.email && !appeal.user.email.startsWith('$2y$')) ? ' (' + appeal.user.email + ')' : (appeal.user && appeal.user.phone ? ' (' + appeal.user.phone + ')' : '');
+            const userEmail = (appeal.user && appeal.user.email && !appeal.user.email.startsWith('$') && appeal.user.email.includes('@')) ? ' (' + appeal.user.email + ')' : (appeal.user && appeal.user.phone ? ' (' + appeal.user.phone + ')' : '');
             appealUserName.textContent = "Pemohon: " + (appeal.user ? appeal.user.name : 'User') + userEmail;
             appealUserReason.textContent = "Alasan Pembelaan: \"" + appeal.reason + "\"";
             

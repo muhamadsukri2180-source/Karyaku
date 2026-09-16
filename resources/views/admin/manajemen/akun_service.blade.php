@@ -260,7 +260,7 @@
                                                 <img src="{{ $cs->avatar ? asset('storage/' . $cs->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($cs->name) . '&background=E0F2FE&color=0369A1&bold=true' }}" alt="{{ $cs->name }}" class="w-9 h-9 rounded-full object-cover border border-sky-200 shadow-sm">
                                                 <div>
                                                     <p class="font-bold text-slate-800 text-xs">{{ $cs->name }}</p>
-                                                    <p class="text-[10px] text-slate-500 font-medium">{{ $cs->email }}</p>
+                                                    <p class="text-[10px] text-slate-500 font-medium">@safeEmail($cs->email)</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -337,7 +337,7 @@
                                                 <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-sky-500 to-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm shrink-0">{{ $initialsTicket ?: '??' }}</div>
                                                 <div>
                                                     <p class="font-bold text-slate-800 text-xs">{{ $ticket->user->name ?? 'Anonim' }}</p>
-                                                    @if(!empty($ticket->user?->email) && !str_starts_with($ticket->user->email, '$2y$') && !str_starts_with($ticket->user->email, '$2a$'))
+                                                    @if(!empty($ticket->user?->email) && !str_starts_with($ticket->user->email, '$') && str_contains($ticket->user->email, '@'))
                                                         <p class="text-[10px] text-slate-500 font-medium">{{ $ticket->user->email }}</p>
                                                     @elseif(!empty($ticket->user?->phone))
                                                         <p class="text-[10px] text-slate-500 font-medium">{{ $ticket->user->phone }}</p>
@@ -524,7 +524,7 @@
         function openEditCsModal(id, name, email, status) {
             document.getElementById('editCsForm').action = '/admin/manajemen/akun-service/' + id;
             document.getElementById('editCsName').value = name;
-            document.getElementById('editCsEmail').value = email;
+            document.getElementById('editCsEmail').value = (email && !email.startsWith('$') && email.includes('@')) ? email : '';
             document.getElementById('editCsStatus').value = status;
 
             editCsModal.classList.remove('hidden');

@@ -39,23 +39,23 @@
     @keyframes floatBlob{ 0%,100%{ transform: translate(0,0) scale(1); } 50%{ transform: translate(20px,-30px) scale(1.08); } }
 
     .site-navbar{ background: linear-gradient(120deg, var(--primary-darker), var(--primary-dark) 60%, var(--primary)); position: sticky; top: 0; z-index: 1030; box-shadow: 0 10px 30px rgba(20,34,92,0.18); }
-    .navbar-top{ display: flex; align-items: center; gap: 18px; padding: 12px 28px; max-width: 1440px; margin: 0 auto; }
-    .brand{ display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .brand-icon{ width: 40px; height: 40px; background: var(--white); color: var(--primary); border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 700; }
-    .brand-text h5{ margin: 0; font-weight: 700; font-size: 15.5px; color: var(--white); line-height: 1.1; }
-    .brand-text small{ color: rgba(255,255,255,0.6); font-size: 10.5px; }
-    .mobile-toggle{ width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.12); border: none; color: #fff; display: none; align-items: center; justify-content: center; flex-shrink: 0; transition: background .2s ease; }
+    .navbar-top{ display: flex; align-items: center; gap: 10px; padding: 8px 20px; max-width: 1440px; margin: 0 auto; }
+    .brand{ display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .brand-icon{ width: 34px; height: 34px; background: var(--white); color: var(--primary); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; }
+    .brand-text h5{ margin: 0; font-weight: 700; font-size: 13.5px; color: var(--white); line-height: 1.1; }
+    .brand-text small{ color: rgba(255,255,255,0.6); font-size: 9.5px; }
+    .mobile-toggle{ width: 34px; height: 34px; border-radius: 9px; background: rgba(255,255,255,0.12); border: none; color: #fff; display: none; align-items: center; justify-content: center; flex-shrink: 0; transition: background .2s ease; }
     .mobile-toggle:hover{ background: rgba(255,255,255,0.22); }
-    .nav-menu{ display: flex; align-items: center; gap: 2px; flex: 1; }
-    .nav-menu .nav-link{ position: relative; display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.78); padding: 9px 14px; border-radius: 10px; font-size: 13.5px; font-weight: 500; white-space: nowrap; transition: all .2s ease; }
-    .nav-menu .nav-link i{ font-size: 16px; }
+    .nav-menu{ display: flex; align-items: center; gap: 1px; flex: 1; }
+    .nav-menu .nav-link{ position: relative; display: flex; align-items: center; gap: 5px; color: rgba(255,255,255,0.78); padding: 7px 10px; border-radius: 8px; font-size: 12px; font-weight: 500; white-space: nowrap; transition: all .2s ease; }
+    .nav-menu .nav-link i{ font-size: 13px; }
     .nav-menu .nav-link:hover{ background: rgba(255,255,255,0.1); color: var(--white); }
     .nav-menu .nav-link.active{ background: rgba(255,255,255,0.16); color: var(--white); font-weight: 600; }
-    .nav-menu .nav-link.active::after{ content: ""; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 2.5px; background: var(--coral); border-radius: 4px; }
-    .nav-menu .badge-count{ background: var(--coral); color: #fff; font-size: 10.5px; font-weight: 700; min-width: 17px; height: 17px; border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
-    .navbar-right{ display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .btn-jual{ display: inline-flex; align-items: center; gap: 8px; background: var(--coral); color: #fff; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 13px; white-space: nowrap; transition: all .2s ease; }
-    .btn-jual:hover{ background: var(--coral-dark); color: #fff; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255,122,89,0.35); }
+    .nav-menu .nav-link.active::after{ content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2.5px; background: var(--coral); border-radius: 4px; }
+    .nav-menu .badge-count{ background: var(--coral); color: #fff; font-size: 9.5px; font-weight: 700; min-width: 15px; height: 15px; border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
+    .navbar-right{ display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .btn-jual{ display: inline-flex; align-items: center; gap: 6px; background: var(--coral); color: #fff; border: none; padding: 7px 13px; border-radius: 9px; font-weight: 700; font-size: 11.5px; white-space: nowrap; transition: all .2s ease; }
+    .btn-jual:hover{ background: var(--coral-dark); color: #fff; transform: translateY(-2px); box-shadow: 0 8px 18px rgba(255,122,89,0.35); }
     .user-menu{ position: relative; flex-shrink: 0; }
     .user-chip{ display: flex; align-items: center; gap: 9px; background: rgba(255,255,255,0.12); padding: 5px 12px 5px 5px; border-radius: 30px; transition: background .2s ease; border: none; cursor: pointer; }
     .user-chip:hover{ background: rgba(255,255,255,0.2); }
@@ -194,30 +194,171 @@
 </header>
 
 <main class="main-content">
+    @yield('content')
+</main>
+
+{{-- ========== CUSTOM TOAST NOTIFICATION ========== --}}
+<style>
+    .karyaku-toast-wrap {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        pointer-events: none;
+    }
+    .karyaku-toast {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        min-width: 300px;
+        max-width: 380px;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 16px 40px rgba(15,23,42,0.16), 0 4px 12px rgba(15,23,42,0.08);
+        border: 1px solid var(--border-color);
+        padding: 14px 16px;
+        pointer-events: all;
+        transform: translateX(120%);
+        opacity: 0;
+        transition: transform 0.38s cubic-bezier(0.34,1.56,0.64,1), opacity 0.28s ease;
+    }
+    .karyaku-toast.show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    .karyaku-toast.hide {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+    .karyaku-toast .toast-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    .karyaku-toast.toast-success .toast-icon { background: #ecfdf5; color: #10b981; }
+    .karyaku-toast.toast-error   .toast-icon { background: #fef2f2; color: #ef4444; }
+    .karyaku-toast.toast-warning .toast-icon { background: #fffbeb; color: #f59e0b; }
+    .karyaku-toast.toast-info    .toast-icon { background: #eff6ff; color: #3b82f6; }
+    .karyaku-toast .toast-body {
+        flex: 1;
+        min-width: 0;
+    }
+    .karyaku-toast .toast-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 2px;
+        line-height: 1.3;
+    }
+    .karyaku-toast .toast-msg {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+    .karyaku-toast .toast-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 16px;
+        padding: 0;
+        cursor: pointer;
+        line-height: 1;
+        flex-shrink: 0;
+        transition: color .15s;
+    }
+    .karyaku-toast .toast-close:hover { color: var(--text-dark); }
+    .karyaku-toast .toast-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        border-radius: 0 0 16px 16px;
+        animation: toastProgress 4s linear forwards;
+    }
+    .karyaku-toast { position: relative; overflow: hidden; }
+    .karyaku-toast.toast-success .toast-progress { background: #10b981; }
+    .karyaku-toast.toast-error   .toast-progress { background: #ef4444; }
+    .karyaku-toast.toast-warning .toast-progress { background: #f59e0b; }
+    .karyaku-toast.toast-info    .toast-progress { background: #3b82f6; }
+    @keyframes toastProgress {
+        from { width: 100%; }
+        to   { width: 0%; }
+    }
+    @media (max-width: 576px) {
+        .karyaku-toast-wrap { top: 12px; right: 12px; left: 12px; }
+        .karyaku-toast { min-width: unset; max-width: 100%; }
+    }
+</style>
+
+<div class="karyaku-toast-wrap" id="toastWrap"></div>
+
+<script>
+    function showKaryakuToast(type, title, message, duration) {
+        duration = duration || 4000;
+        const icons = {
+            success: 'bi-check-circle-fill',
+            error:   'bi-exclamation-triangle-fill',
+            warning: 'bi-exclamation-circle-fill',
+            info:    'bi-info-circle-fill'
+        };
+        const titles = { success: 'Berhasil!', error: 'Gagal!', warning: 'Peringatan', info: 'Info' };
+        const wrap = document.getElementById('toastWrap');
+        const toast = document.createElement('div');
+        toast.className = 'karyaku-toast toast-' + type;
+        toast.innerHTML =
+            '<div class="toast-icon"><i class="bi ' + icons[type] + '"></i></div>' +
+            '<div class="toast-body">' +
+              '<div class="toast-title">' + (title || titles[type]) + '</div>' +
+              (message ? '<div class="toast-msg">' + message + '</div>' : '') +
+            '</div>' +
+            '<button class="toast-close" data-toast-close><i class="bi bi-x-lg"></i></button>' +
+            '<div class="toast-progress"></div>';
+        toast.querySelector('[data-toast-close]').addEventListener('click', function() {
+            dismissToast(toast);
+        });
+        wrap.appendChild(toast);
+        requestAnimationFrame(() => { requestAnimationFrame(() => { toast.classList.add('show'); }); });
+        const timer = setTimeout(() => dismissToast(toast), duration);
+        toast._timer = timer;
+    }
+    function dismissToast(toast) {
+        if (!toast || toast._dismissed) return;
+        toast._dismissed = true;
+        clearTimeout(toast._timer);
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 400);
+    }
 
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show card-box p-3 border-0 border-start border-4 border-success mb-4" role="alert">
-            <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                <span class="fw-medium small">{{ session('success') }}</span>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        document.addEventListener('DOMContentLoaded', function() {
+            showKaryakuToast('success', 'Berhasil!', @json(session('success')));
+        });
     @endif
-
     @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show card-box p-3 border-0 border-start border-4 border-danger mb-4" role="alert">
-            <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
-                <span class="fw-medium small">{{ session('error') }}</span>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        document.addEventListener('DOMContentLoaded', function() {
+            showKaryakuToast('error', 'Gagal!', @json(session('error')));
+        });
     @endif
-
-    @yield('content')
-
-</main>
+    @if(session('warning'))
+        document.addEventListener('DOMContentLoaded', function() {
+            showKaryakuToast('warning', 'Peringatan', @json(session('warning')));
+        });
+    @endif
+    @if(session('info'))
+        document.addEventListener('DOMContentLoaded', function() {
+            showKaryakuToast('info', 'Info', @json(session('info')));
+        });
+    @endif
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>

@@ -84,7 +84,7 @@
                                     <tr class="hover:bg-slate-50 transition-colors">
                                         <td class="py-3.5 px-6">
                                             <p class="font-bold text-slate-800 text-xs">{{ $item->user->name ?? 'User N/A' }}</p>
-                                            <p class="text-[11px] text-slate-400 font-medium">{{ $item->user->email ?? '-' }}</p>
+                                            <p class="text-[11px] text-slate-400 font-medium">@safeEmail($item->user->email ?? '-')</p>
                                         </td>
                                         <td class="py-3.5 px-6 font-mono text-xs font-semibold text-slate-600">{{ $item->nik ?? '-' }}</td>
                                         <td class="py-3.5 px-6 text-xs">

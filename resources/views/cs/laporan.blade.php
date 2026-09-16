@@ -323,7 +323,7 @@
                                             </div>
                                             <div>
                                                 <p class="font-bold text-slate-800 text-xs">{{ $appeal->user->name ?? 'User #'.$appeal->user_id }}</p>
-                                                <p class="text-[10px] text-slate-500">{{ $appeal->user->email ?? '-' }}</p>
+                                                <p class="text-[10px] text-slate-500">@safeEmail($appeal->user->email ?? '-')</p>
                                             </div>
                                         </div>
                                     </td>

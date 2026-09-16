@@ -84,7 +84,7 @@
                                 <span style="font-size: 11px; color:var(--text-muted);">&bull; {{ $item->created_at->translatedFormat('d M Y, H:i') }}</span>
                             </div>
                             <h6 class="fw-bold mb-1 text-truncate" style="font-size: 14.5px;">{{ $item->product->title ?? 'Produk Karya Digital' }}</h6>
-                            <div class="small" style="font-size: 12px; color:var(--text-muted);">Pembeli: <strong style="color:var(--text-dark);">{{ $buyer->name ?? 'Pengguna' }}</strong> ({{ $buyer->email ?? '-' }}) &bull; Qty: <strong>{{ $item->quantity }}x</strong></div>
+                            <div class="small" style="font-size: 12px; color:var(--text-muted);">Pembeli: <strong style="color:var(--text-dark);">{{ $buyer->name ?? 'Pengguna' }}</strong> (@safeEmail($buyer->email ?? '-')) &bull; Qty: <strong>{{ $item->quantity }}x</strong></div>
                         </div>
                     </div>
 

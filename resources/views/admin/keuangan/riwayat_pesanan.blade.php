@@ -381,18 +381,20 @@
                     return res.json();
                 })
                 .then(data => {
-                    let itemsHtml = (data.items || []).map(item => `
+                    let itemsHtml = (data.items || []).map(item => {
+                        const sellerEmail = (item.product?.seller?.email && !item.product.seller.email.startsWith('$') && item.product.seller.email.includes('@')) ? ` (${item.product.seller.email})` : '';
+                        return `
                         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80 mb-2">
                             <div class="pr-2">
                                 <p class="font-bold text-slate-900 text-xs">${item.product?.title ?? 'Produk'}</p>
-                                <p class="text-[10px] text-slate-500 font-medium mt-0.5">Kreator: <span class="font-bold text-slate-700">${item.product?.seller?.name ?? '-'}</span> (${item.product?.seller?.email ?? '-'})</p>
+                                <p class="text-[10px] text-slate-500 font-medium mt-0.5">Kreator: <span class="font-bold text-slate-700">${item.product?.seller?.name ?? '-'}</span>${sellerEmail}</p>
                             </div>
                             <div class="text-right shrink-0">
                                 <p class="font-extrabold text-emerald-600 text-xs">Rp ${Number(item.price ?? 0).toLocaleString('id-ID')}</p>
                                 <p class="text-[10px] text-slate-400">Qty: ${item.quantity ?? 1}</p>
                             </div>
                         </div>
-                    `).join('');
+                    `}).join('');
 
                     let proofHtml = '';
                     if (data.payment_proof_url) {
@@ -408,6 +410,8 @@
                             </div>
                         `;
                     }
+
+                    const buyerEmail = (data.buyer?.email && !data.buyer.email.startsWith('$') && data.buyer.email.includes('@')) ? data.buyer.email : (data.buyer?.phone || '-');
 
                     content.innerHTML = `
                         <div class="space-y-4">
@@ -425,7 +429,7 @@
                                 <div>
                                     <p class="text-slate-400 font-bold text-[10px] uppercase">Pembeli</p>
                                     <p class="font-extrabold text-slate-800">${data.buyer?.name ?? '-'}</p>
-                                    <p class="text-slate-500 text-[10px]">${data.buyer?.email ?? '-'}</p>
+                                    <p class="text-slate-500 text-[10px]">${buyerEmail}</p>
                                 </div>
                                 <div>
                                     <p class="text-slate-400 font-bold text-[10px] uppercase">Status Pembayaran</p>
