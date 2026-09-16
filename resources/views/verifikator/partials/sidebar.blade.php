@@ -2,9 +2,11 @@
 <aside id="sidebar" class="w-[260px] bg-gradient-to-b from-skyDeep via-skyHover to-sky text-white flex flex-col shrink-0 border-r border-sky-400/20 shadow-2xl fixed lg:sticky top-0 h-screen z-50 closed lg:translate-x-0">
     <div class="p-6 border-b border-white/15 flex items-center justify-between">
         <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-white text-sky flex items-center justify-center text-lg font-bold shadow-lg"><i class="fa-solid fa-layer-group"></i></div>
+            <div class="w-9 h-9 rounded-xl bg-white overflow-hidden flex items-center justify-center shadow-lg">
+                <img src="{{ asset('image/logo.png') }}" alt="KaryaKu Logo" class="w-full h-full object-contain">
+            </div>
             <div>
-                <h1 class="font-display font-extrabold text-[17px] leading-none tracking-wide text-white">Karyaku</h1>
+                <h1 class="font-display font-extrabold text-[17px] leading-none tracking-wide text-white">KaryaKu</h1>
                 <span class="text-[9px] text-sky-200 font-bold uppercase tracking-[0.2em] mt-1 block">Verifikator Panel</span>
             </div>
         </div>

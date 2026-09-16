@@ -177,68 +177,7 @@
     </div>
 </div>
 
-{{-- ULASAN & RATING SECTION --}}
-<div class="card-box p-4 mb-4">
-    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
-        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-            <i class="bi bi-star-fill text-warning"></i> Ulasan Pembeli ({{ $totalReviews }})
-        </h6>
-        <div class="fw-bold text-warning fs-5">
-            <i class="bi bi-star-fill"></i> {{ number_format($avgRating, 1) }} / 5.0
-        </div>
-    </div>
 
-    {{-- Form Ulasan jika sudah pernah beli --}}
-    @if($hasBought)
-        <div class="p-3 bg-light rounded-4 mb-4 border">
-            <h6 class="fw-bold text-dark mb-2">
-                {{ $userReview ? 'Perbarui Ulasan Anda' : 'Tulis Ulasan & Beri Bintang' }}
-            </h6>
-            <form action="{{ route('pembeli.produk.review', $product->id_product) }}" method="POST">
-                @csrf
-                <div class="mb-2">
-                    <label class="small text-muted fw-semibold d-block mb-1">Pilih Rating Bintang:</label>
-                    <div class="rating-stars">
-                        @for($s = 5; $s >= 1; $s--)
-                            <input type="radio" id="star{{ $s }}" name="rating" value="{{ $s }}" {{ old('rating', $userReview->rating ?? 5) == $s ? 'checked' : '' }} required>
-                            <label for="star{{ $s }}" title="{{ $s }} Bintang"><i class="bi bi-star-fill"></i></label>
-                        @endfor
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <textarea name="comment" rows="3" class="form-control rounded-3" placeholder="Bagikan pengalaman Anda menggunakan karya ini...">{{ old('comment', $userReview->comment ?? '') }}</textarea>
-                </div>
-                <button type="submit" class="btn btn-primary btn-sm fw-bold px-4 py-2 rounded-3">
-                    <i class="bi bi-send-fill me-1"></i> Simpan Ulasan
-                </button>
-            </form>
-        </div>
-    @endif
-
-    {{-- List Ulasan --}}
-    @forelse($reviews as $review)
-        <div class="d-flex gap-3 py-3 {{ !$loop->last ? 'border-bottom' : '' }}">
-            <img src="https://ui-avatars.com/api/?name={{ urlencode($review->user->name ?? 'Pembeli') }}&background=eff6ff&color=2563eb&bold=true" 
-                 class="rounded-circle flex-shrink-0" style="width: 38px; height: 38px; object-fit: cover;" alt="Avatar">
-            <div class="flex-grow-1">
-                <div class="d-flex align-items-center justify-content-between mb-1">
-                    <strong class="text-dark small">{{ $review->user->name ?? 'Pembeli Karyaku' }}</strong>
-                    <span class="text-muted small" style="font-size: 11px;">{{ $review->created_at->diffForHumans() }}</span>
-                </div>
-                <div class="text-warning mb-1" style="font-size: 12px;">
-                    @for($i = 1; $i <= 5; $i++)
-                        <i class="bi {{ $i <= $review->rating ? 'bi-star-fill' : 'bi-star' }}"></i>
-                    @endfor
-                </div>
-                <p class="text-secondary small mb-0">{{ $review->comment ?: 'Tidak ada komentar teks.' }}</p>
-            </div>
-        </div>
-    @empty
-        <div class="text-center py-4 text-muted small">
-            Belum ada ulasan untuk produk ini. Jadilah yang pertama memberikan penilaian!
-        </div>
-    @endforelse
-</div>
 
 {{-- PRODUK LAIN DARI PENJUAL --}}
 @if(isset($produkLain) && $produkLain->count() > 0)

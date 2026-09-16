@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>@yield('title', 'Seller Center') - Karyaku</title>
+<title>@yield('title', 'Pusat Penjual') - Karyaku</title>
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -116,10 +116,12 @@
         </button>
 
         <a href="{{ route('penjual.dashboard') }}" class="brand">
-            <div class="brand-icon"><i class="bi bi-shop"></i></div>
+            <div class="brand-icon" style="background:transparent; padding:0; overflow:hidden; width:34px; height:34px;">
+                <img src="{{ asset('image/logo.png') }}" alt="KaryaKu Logo" style="width:34px; height:34px; object-fit:contain; border-radius:8px;">
+            </div>
             <div class="brand-text d-none d-sm-block">
-                <h5>Karyaku</h5>
-                <small>Seller Center</small>
+                <h5>KaryaKu</h5>
+                <small>Pusat Penjual</small>
             </div>
         </a>
 

@@ -107,8 +107,8 @@
 
         <!-- HEADER -->
         <div class="text-center mb-3">
-            <div class="w-8 h-8 mx-auto bg-gradient-to-br from-skyDeep to-sky rounded-lg flex items-center justify-center mb-1.5 shadow-md shadow-skyDeep/20 transform transition hover:scale-105 duration-300">
-                <i class="fa-solid fa-layer-group text-white text-[13px]"></i>
+            <div class="w-8 h-8 mx-auto bg-white rounded-lg overflow-hidden flex items-center justify-center mb-1.5 shadow-md shadow-skyDeep/20 transform transition hover:scale-105 duration-300 border border-slate-100">
+                <img src="{{ asset('image/logo.png') }}" alt="KaryaKu Logo" class="w-full h-full object-contain">
             </div>
             <h1 class="font-display text-[14px] font-extrabold text-slate-900 leading-tight tracking-tight">
                 Buat Akun Baru
@@ -136,13 +136,13 @@
             <!-- USERNAME -->
             <div class="group">
                 <label for="username" class="block text-[9.5px] font-bold text-slate-700 mb-0.5 ml-1 transition-colors group-focus-within:text-sky">
-                    Username
+                    Nama Pengguna
                 </label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
                         <i class="fa-solid fa-user text-slate-400 text-[10px] group-focus-within:text-sky transition-colors"></i>
                     </div>
-                    <input type="text" id="username" name="username" value="{{ old('username') }}" placeholder="Pilih username" autocomplete="off" required
+                    <input type="text" id="username" name="username" value="{{ old('username') }}" placeholder="Pilih nama pengguna" autocomplete="off" required
                         class="w-full pl-6 pr-2.5 py-1.5 rounded-lg bg-skyPale border border-slate-200 text-[10px] font-medium focus:bg-white focus:outline-none focus:border-sky focus:ring-2 focus:ring-sky/20 transition-all duration-300">
                 </div>
             </div>
@@ -187,13 +187,13 @@
                 <!-- PASSWORD -->
                 <div class="group">
                     <label for="password" class="block text-[9.5px] font-bold text-slate-700 mb-0.5 ml-1 transition-colors group-focus-within:text-sky">
-                        Password
+                        Kata Sandi
                     </label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-1.5 flex items-center pointer-events-none">
                             <i class="fa-solid fa-lock text-slate-400 text-[9px] group-focus-within:text-sky transition-colors"></i>
                         </div>
-                        <input type="password" id="password" name="password" placeholder="Min 8 char" minlength="8" autocomplete="new-password" required
+                        <input type="password" id="password" name="password" placeholder="Min 8 karakter" minlength="8" autocomplete="new-password" required
                             class="w-full pl-5 pr-5 py-1.5 rounded-lg bg-skyPale border border-slate-200 text-[9px] font-medium focus:bg-white focus:outline-none focus:border-sky focus:ring-2 focus:ring-sky/20 transition-all duration-300">
                         <button type="button" onclick="togglePassword('password', 'eye-icon-reg-pass')" class="absolute inset-y-0 right-0 pr-1.5 flex items-center text-slate-400 hover:text-sky transition focus:outline-none">
                             <i class="fa-solid fa-eye text-[9.5px]" id="eye-icon-reg-pass"></i>
@@ -205,7 +205,7 @@
                             <div id="strength-2" class="h-0.5 flex-1 rounded-full bg-slate-200"></div>
                             <div id="strength-3" class="h-0.5 flex-1 rounded-full bg-slate-200"></div>
                         </div>
-                        <p id="password-strength" class="text-[7.5px] font-bold text-slate-400 mt-0.5">Masukkan password</p>
+                        <p id="password-strength" class="text-[7.5px] font-bold text-slate-400 mt-0.5">Masukkan kata sandi</p>
                     </div>
                 </div>
 
@@ -230,7 +230,7 @@
 
             <!-- PASSWORD REQUIREMENTS -->
             <div class="bg-slate-50 border border-slate-200 rounded-lg p-1.5">
-                <p class="text-[8px] font-bold text-slate-600 mb-0.5">Password aman harus memiliki:</p>
+                <p class="text-[8px] font-bold text-slate-600 mb-0.5">Kata sandi aman harus memiliki:</p>
                 <div class="grid grid-cols-2 gap-y-0">
                     <span id="req-length" class="text-[7.5px] text-slate-400">○ Min 8 karakter</span>
                     <span id="req-lower" class="text-[7.5px] text-slate-400">○ Huruf kecil</span>
@@ -320,7 +320,7 @@
             updateRequirement('req-symbol', hasSymbol);
 
             if (password.length === 0) {
-                strengthText.textContent = 'Masukkan password';
+                strengthText.textContent = 'Masukkan kata sandi';
                 strengthText.className = 'text-[7.5px] font-bold text-slate-400 mt-0.5';
                 return;
             }
@@ -334,18 +334,18 @@
 
             if (score <= 2) {
                 bar1.className = 'h-0.5 flex-1 rounded-full bg-red-500';
-                strengthText.textContent = '🔴 Password Lemah';
+                strengthText.textContent = '🔴 Kata Sandi Lemah';
                 strengthText.className = 'text-[7.5px] font-bold text-red-500 mt-0.5';
             } else if (score <= 4) {
                 bar1.className = 'h-0.5 flex-1 rounded-full bg-yellow-400';
                 bar2.className = 'h-0.5 flex-1 rounded-full bg-yellow-400';
-                strengthText.textContent = '🟡 Password Sedang';
+                strengthText.textContent = '🟡 Kata Sandi Sedang';
                 strengthText.className = 'text-[7.5px] font-bold text-yellow-600 mt-0.5';
             } else {
                 bar1.className = 'h-0.5 flex-1 rounded-full bg-green-500';
                 bar2.className = 'h-0.5 flex-1 rounded-full bg-green-500';
                 bar3.className = 'h-0.5 flex-1 rounded-full bg-green-500';
-                strengthText.textContent = '🟢 Password Aman';
+                strengthText.textContent = '🟢 Kata Sandi Aman';
                 strengthText.className = 'text-[7.5px] font-bold text-green-600 mt-0.5';
             }
 
@@ -365,10 +365,10 @@
             }
 
             if (password === confirmation) {
-                matchText.textContent = '✓ Password cocok';
+                matchText.textContent = '✓ Kata sandi cocok';
                 matchText.className = 'text-[7.5px] font-bold text-green-600 mt-0.5';
             } else {
-                matchText.textContent = '✕ Password tidak cocok';
+                matchText.textContent = '✕ Kata sandi tidak cocok';
                 matchText.className = 'text-[7.5px] font-bold text-red-500 mt-0.5';
             }
         }
@@ -386,14 +386,14 @@
 
             if (!isStrong) {
                 event.preventDefault();
-                alert('Password belum aman. Gunakan minimal 8 karakter dengan huruf besar, huruf kecil, angka, dan simbol.');
+                alert('Kata sandi belum aman. Gunakan minimal 8 karakter dengan huruf besar, huruf kecil, angka, dan simbol.');
                 passwordInput.focus();
                 return;
             }
 
             if (password !== confirmation) {
                 event.preventDefault();
-                alert('Konfirmasi password tidak cocok.');
+                alert('Konfirmasi kata sandi tidak cocok.');
                 confirmationInput.focus();
                 return;
             }

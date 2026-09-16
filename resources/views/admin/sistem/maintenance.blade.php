@@ -47,9 +47,9 @@
         <aside id="sidebar" class="w-[260px] bg-gradient-to-b from-skyDeep via-skyHover to-sky text-white flex flex-col shrink-0 border-r border-sky-400/20 shadow-2xl fixed lg:sticky top-0 h-screen z-50 closed lg:translate-x-0">
             <div class="p-6 border-b border-white/15 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-white text-sky flex items-center justify-center text-lg font-bold shadow-lg"><i class="fa-solid fa-layer-group"></i></div>
+                    <div class="w-9 h-9 rounded-xl bg-white overflow-hidden flex items-center justify-center shadow-lg"><img src="{{ asset('image/logo.png') }}" alt="KaryaKu Logo" class="w-full h-full object-contain"></div>
                     <div>
-                        <h1 class="font-display font-extrabold text-[17px] leading-none tracking-wide text-white">Karyaku</h1>
+                        <h1 class="font-display font-extrabold text-[17px] leading-none tracking-wide text-white">KaryaKu</h1>
                         <span class="text-[9px] text-sky-200 font-bold uppercase tracking-[0.2em] mt-1 block">Admin Panel</span>
                     </div>
                 </div>
@@ -162,22 +162,10 @@
                 </a>
 
             </nav>
-            <div class="p-4 border-t border-white/15">
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-red-600/80 text-white hover:bg-red-700 text-xs font-bold transition-all duration-300 shadow-md">
-                        <i class="fa-solid fa-power-off"></i><span>Keluar Sistem</span>
-                    </button>
-                </form>
             </div>
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col min-w-0 w-full">
-            <header class="bg-white/70 backdrop-blur-xl border-b border-sky-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
-                <div class="flex items-center gap-4">
-                    <button id="sidebarToggleBtn" class="lg:hidden w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition border border-sky-200 shadow-sm"><i class="fa-solid fa-bars text-base"></i></button>
-                    <div>
                         <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900">Maintenance & Backup</h2>
                         <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Kelola status server dan cadangan data.</p>
                     </div>

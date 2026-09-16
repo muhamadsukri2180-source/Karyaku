@@ -206,15 +206,15 @@
         <div class="flex justify-between items-center">
 
             <!-- LOGO -->
-           <a href="{{ url('/images/logo.jpeg') }}" class="flex items-center gap-3">
+           <a href="{{ url('/') }}" class="flex items-center gap-3">
 
-                <div class="w-9 h-9 rounded-lg bg-white text-primary flex items-center justify-center shadow-sm">
-                    <i class="fa-solid fa-layer-group"></i>
+                <div class="w-9 h-9 rounded-lg bg-white overflow-hidden flex items-center justify-center shadow-sm">
+                    <img src="{{ asset('image/logo.png') }}" alt="KaryaKu Logo" class="w-full h-full object-contain">
                 </div>
 
                 <div>
                     <h1 class="text-lg font-bold text-white leading-none font-display">
-                        Karyaku<span class="text-accent">.</span>
+                        KaryaKu<span class="text-accent">.</span>
                     </h1>
 
                     <span class="text-[9px] text-blue-100 font-medium tracking-wide">
@@ -398,23 +398,15 @@
 
                 <div class="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
 
-                    <a href="#kategori"
+                    <a href="#paket-penjual"
                        class="inline-flex items-center justify-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl text-sm font-bold hover:bg-primaryHover transition shadow-lg shadow-primary/30">
 
-                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <i class="fa-solid fa-box-open"></i>
 
-                        Cari Jasa
+                        Lihat Paket
 
                     </a>
 
-
-                    <a href="#paket-penjual"
-                       class="inline-flex items-center justify-center gap-2 bg-white text-primary border border-blue-200 px-7 py-3.5 rounded-xl text-sm font-bold hover:bg-blue-50 transition shadow-sm">
-
-                        <i class="fa-solid fa-store"></i>
-
-                        Mulai Jualan
-                    </a>
                 </div>
             </div>
 
@@ -468,7 +460,7 @@
         <div class="mb-12 reveal">
 
             <span class="text-primary text-xs font-bold uppercase tracking-widest">
-                Explore
+                Jelajahi
             </span>
 
             <h2 class="font-display text-2xl sm:text-3xl font-bold text-textMain mt-2 mb-3">
@@ -833,7 +825,7 @@
             <div>
 
                 <span class="text-primary text-xs font-bold uppercase tracking-widest">
-                    Marketplace
+                    Toko Digital
                 </span>
 
                 <h2 class="font-display text-2xl sm:text-3xl font-bold mt-2 mb-2">
@@ -1139,7 +1131,7 @@
 
                     <i class="fa-solid fa-store text-orange-300"></i>
 
-                    Seller Center
+                    Pusat Penjual
 
                 </span>
 
@@ -1166,28 +1158,9 @@
                 </p>
 
 
-                <div class="flex flex-col sm:flex-row gap-3">
-
-                    <a href="{{ url('/auth/login?role=penjual') }}"
-                       class="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-accent hover:bg-accentHover rounded-xl font-bold text-sm transition shadow-lg">
-
-                        <i class="fa-solid fa-store"></i>
-
-                        Masuk sebagai Penjual
-
-                    </a>
-
-
-                    <a href="#paket-penjual"
-                       class="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl font-bold text-sm transition">
-
-                        Lihat Paket
-
-                        <i class="fa-solid fa-arrow-right"></i>
-
-                    </a>
-
-                </div>
+                <p class="text-blue-200 text-sm font-medium mt-2">
+                    Daftarkan dirimu sekarang dan mulai raih penghasilan dari karyamu bersama ribuan kreator Indonesia.
+                </p>
 
             </div>
 
@@ -1299,7 +1272,7 @@
                             </div>
                             <div class="mb-7 p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                                 <div>
-                                    <span class="text-slate-500 text-xs block">Limit Upload Produk</span>
+                                    <span class="text-slate-500 text-xs block">Batas Unggah Produk</span>
                                     <span class="text-2xl font-display font-extrabold text-amber-700">{{ $membership->max_upload >= 999 ? '999+' : $membership->max_upload }} Karya</span>
                                 </div>
                                 <span class="px-2.5 py-1 rounded bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider border border-amber-200">Bronze</span>
@@ -1338,7 +1311,7 @@
                             </div>
                             <div class="mb-7 p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                                 <div>
-                                    <span class="text-slate-500 text-xs block">Limit Upload Produk</span>
+                                    <span class="text-slate-500 text-xs block">Batas Unggah Produk</span>
                                     <span class="text-2xl font-display font-extrabold text-slate-700">{{ $membership->max_upload >= 999 ? '999+' : $membership->max_upload }} Karya</span>
                                 </div>
                                 <span class="px-2.5 py-1 rounded bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider border border-slate-200">Silver</span>
@@ -1383,7 +1356,7 @@
                             </div>
                             <div class="mb-7 p-3 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-between">
                                 <div>
-                                    <span class="text-slate-500 text-xs block">Limit Upload Produk</span>
+                                    <span class="text-slate-500 text-xs block">Batas Unggah Produk</span>
                                     <span class="text-2xl font-display font-extrabold text-primary">{{ $membership->max_upload >= 999 ? '999+' : $membership->max_upload }} Karya</span>
                                 </div>
                                 <span class="px-2.5 py-1 rounded bg-white border border-blue-200 text-primary text-[10px] font-bold uppercase tracking-wider">Premium</span>
@@ -1435,7 +1408,7 @@
                         Karyaku<span class="text-accent">.</span>
                     </span>
                     <p class="text-[10px] text-textMuted leading-tight">
-                        Digital Marketplace Indonesia
+                        Toko Digital Indonesia
                     </p>
                 </div>
             </div>

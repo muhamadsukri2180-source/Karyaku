@@ -45,9 +45,9 @@
         <aside id="sidebar" class="w-[260px] bg-gradient-to-b from-skyDeep via-skyHover to-sky text-white flex flex-col shrink-0 border-r border-sky-400/20 shadow-2xl fixed lg:sticky top-0 h-screen z-50 closed lg:translate-x-0">
             <div class="p-6 border-b border-white/15 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-white text-sky flex items-center justify-center text-lg font-bold shadow-lg shadow-skyDeep/20"><i class="fa-solid fa-layer-group"></i></div>
+                    <div class="w-9 h-9 rounded-xl bg-white overflow-hidden flex items-center justify-center shadow-lg shadow-skyDeep/20"><img src="{{ asset('image/logo.png') }}" alt="KaryaKu Logo" class="w-full h-full object-contain"></div>
                     <div>
-                        <h1 class="font-display font-extrabold text-[17px] leading-none tracking-wide text-white">Karyaku</h1>
+                        <h1 class="font-display font-extrabold text-[17px] leading-none tracking-wide text-white">KaryaKu</h1>
                         <span class="text-[9px] text-sky-200 font-bold uppercase tracking-[0.2em] mt-1 block">Admin Panel</span>
                     </div>
                 </div>
@@ -193,7 +193,7 @@
                     </div>
                     <div class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100/60 border-l-4 border-emerald-500 border-y border-r border-emerald-200 p-5 rounded-2xl card-hover shadow-sm">
                         <div class="flex justify-between items-start mb-2">
-                            <div><span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Order Selesai</span><div class="text-3xl font-black text-slate-900 mt-1">{{ number_format($orderSelesai, 0, ',', '.') }}</div></div>
+                            <div><span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Pesanan Selesai</span><div class="text-3xl font-black text-slate-900 mt-1">{{ number_format($orderSelesai, 0, ',', '.') }}</div></div>
                             <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/30"><i class="fa-solid fa-check-double text-lg"></i></div>
                         </div>
                     </div>
@@ -283,7 +283,7 @@
                                         </div>
                                         <div>
                                             @if ($order->status === 'selesai')
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Order Selesai</span>
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Pesanan Selesai</span>
                                             @elseif ($order->status === 'dibatalkan')
                                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 border border-red-200">Dibatalkan</span>
                                             @else

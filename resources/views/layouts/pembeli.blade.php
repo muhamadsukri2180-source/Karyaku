@@ -705,9 +705,11 @@
         </button>
 
         <a href="{{ route('pembeli.dashboard') }}" class="brand">
-            <div class="brand-icon"><i class="bi bi-bag-check-fill"></i></div>
+            <div class="brand-icon" style="background:transparent; padding:0; overflow:hidden;">
+                <img src="{{ asset('image/logo.png') }}" alt="KaryaKu Logo" style="width:34px; height:34px; object-fit:contain; border-radius:8px;">
+            </div>
             <div class="brand-text d-none d-sm-block">
-                <h5>Karyaku</h5>
+                <h5>KaryaKu</h5>
                 <small>Marketplace Pembeli</small>
             </div>
         </a>
@@ -715,7 +717,7 @@
         <nav class="nav-menu">
             <a href="{{ route('pembeli.dashboard') }}" class="nav-link {{ request()->routeIs('pembeli.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
             <a href="{{ route('pembeli.marketplace') }}" class="nav-link {{ request()->routeIs('pembeli.marketplace') ? 'active' : '' }}"><i class="bi bi-shop"></i> Marketplace</a>
-            <a href="{{ route('pembeli.wishlist') }}" class="nav-link {{ request()->routeIs('pembeli.wishlist') ? 'active' : '' }}"><i class="bi bi-heart-fill"></i> Wishlist @if($navWishlistCount > 0)<span class="badge-count">{{ $navWishlistCount }}</span>@endif</a>
+            <a href="{{ route('pembeli.wishlist') }}" class="nav-link {{ request()->routeIs('pembeli.wishlist') ? 'active' : '' }}"><i class="bi bi-heart-fill"></i> Disukai @if($navWishlistCount > 0)<span class="badge-count">{{ $navWishlistCount }}</span>@endif</a>
             <a href="{{ route('pembeli.keranjang') }}" class="nav-link {{ request()->routeIs('pembeli.keranjang') ? 'active' : '' }}"><i class="bi bi-cart-fill"></i> Keranjang @if($navCartCount > 0)<span class="badge-count">{{ $navCartCount }}</span>@endif</a>
             <a href="{{ route('pembeli.pesanan') }}" class="nav-link {{ request()->routeIs('pembeli.pesanan*') ? 'active' : '' }}"><i class="bi bi-receipt"></i> Pesanan</a>
             <a href="{{ route('pembeli.download') }}" class="nav-link {{ request()->routeIs('pembeli.download') ? 'active' : '' }}"><i class="bi bi-cloud-arrow-down-fill"></i> Download</a>
@@ -808,11 +810,11 @@
     <div class="mobile-menu-panel" id="mobileMenuPanel">
         <a href="{{ route('pembeli.dashboard') }}" class="nav-link {{ request()->routeIs('pembeli.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
         <a href="{{ route('pembeli.marketplace') }}" class="nav-link {{ request()->routeIs('pembeli.marketplace') ? 'active' : '' }}"><i class="bi bi-shop"></i> Marketplace</a>
-        <a href="{{ route('pembeli.wishlist') }}" class="nav-link {{ request()->routeIs('pembeli.wishlist') ? 'active' : '' }}"><i class="bi bi-heart-fill"></i> Wishlist @if($navWishlistCount > 0)<span class="badge-count ms-auto">{{ $navWishlistCount }}</span>@endif</a>
+        <a href="{{ route('pembeli.wishlist') }}" class="nav-link {{ request()->routeIs('pembeli.wishlist') ? 'active' : '' }}"><i class="bi bi-heart-fill"></i> Disukai @if($navWishlistCount > 0)<span class="badge-count ms-auto">{{ $navWishlistCount }}</span>@endif</a>
         <a href="{{ route('pembeli.keranjang') }}" class="nav-link {{ request()->routeIs('pembeli.keranjang') ? 'active' : '' }}"><i class="bi bi-cart-fill"></i> Keranjang @if($navCartCount > 0)<span class="badge-count ms-auto">{{ $navCartCount }}</span>@endif</a>
         <a href="{{ route('pembeli.pesanan') }}" class="nav-link {{ request()->routeIs('pembeli.pesanan*') ? 'active' : '' }}"><i class="bi bi-receipt"></i> Pesanan Saya</a>
         <a href="{{ route('pembeli.download') }}" class="nav-link {{ request()->routeIs('pembeli.download') ? 'active' : '' }}"><i class="bi bi-cloud-arrow-down-fill"></i> Download Saya</a>
-        <a href="{{ route('pembeli.profile') }}" class="nav-link {{ request()->routeIs('pembeli.profile') ? 'active' : '' }}"><i class="bi bi-person-fill"></i> Profile</a>
+        <a href="{{ route('pembeli.profile') }}" class="nav-link {{ request()->routeIs('pembeli.profile') ? 'active' : '' }}"><i class="bi bi-person-fill"></i> Profil</a>
         @if ($isPenjualNav)
             <a href="{{ route('penjual.dashboard') }}" class="nav-link text-warning"><i class="bi bi-speedometer2"></i> Dashboard Penjual</a>
         @else
@@ -1106,7 +1108,7 @@
                 }
             });
         })
-        .catch(() => alert('Gagal memperbarui wishlist. Coba lagi.'));
+        .catch(() => alert('Gagal memperbarui Disukai. Coba lagi.'));
     });
 </script>
 @stack('scripts')

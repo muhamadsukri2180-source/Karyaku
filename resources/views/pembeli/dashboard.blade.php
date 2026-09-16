@@ -554,7 +554,7 @@
                         <i class="bi bi-chevron-left"></i>
                     </button>
                     <div class="ad-next-wrapper">
-                        <span class="ad-next-pill">Next</span>
+                        <span class="ad-next-pill">Berikutnya</span>
                         <button type="button" class="ad-nav-arrow next" id="adHeroNext" aria-label="Iklan Berikutnya" style="position: static; transform: none;">
                             <i class="bi bi-chevron-right"></i>
                         </button>

@@ -109,8 +109,8 @@
 
         
         <div class="text-center mb-6">
-            <div class="w-12 h-12 mx-auto bg-gradient-to-br from-skyDeep to-sky rounded-xl flex items-center justify-center mb-3 shadow-md shadow-skyDeep/20 transform transition hover:scale-105 duration-300">
-                <i class="fa-solid fa-layer-group text-white text-xl"></i>
+            <div class="w-12 h-12 mx-auto bg-white rounded-xl overflow-hidden flex items-center justify-center mb-3 shadow-md shadow-skyDeep/20 transform transition hover:scale-105 duration-300 border border-slate-100">
+                <img src="{{ asset('image/logo.png') }}" alt="KaryaKu Logo" class="w-full h-full object-contain">
             </div>
             <h1 class="font-display text-xl font-extrabold text-slate-900 tracking-tight">Selamat Datang Kembali</h1>
             <p class="text-slate-500 text-[13px] mt-1 font-medium">Masuk ke akun Karyaku kamu</p>
@@ -138,20 +138,20 @@
         <form action="{{ route('auth.login.submit') }}" method="POST" class="space-y-4">
             @csrf
             <div class="group">
-                <label for="username" class="block text-[11px] font-bold text-slate-700 mb-1 ml-1 transition-colors group-focus-within:text-sky">Username</label>
+                <label for="username" class="block text-[11px] font-bold text-slate-700 mb-1 ml-1 transition-colors group-focus-within:text-sky">Nama Pengguna</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                         <i class="fa-solid fa-at text-slate-400 text-sm group-focus-within:text-sky transition-colors"></i>
                     </div>
                     <input type="text" id="username" name="username"
                         value="{{ old('username', session('registered_username')) }}"
-                        placeholder="Masukkan username" autocomplete="off" required
+                        placeholder="Masukkan nama pengguna" autocomplete="off" required
                         class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-skyPale border border-slate-200 text-xs font-medium focus:bg-white focus:outline-none focus:border-sky focus:ring-2 focus:ring-sky/20 transition-all duration-300">
                 </div>
             </div>
 
             <div class="group">
-                <label for="password" class="block text-[11px] font-bold text-slate-700 mb-1 ml-1 transition-colors group-focus-within:text-sky">Password</label>
+                <label for="password" class="block text-[11px] font-bold text-slate-700 mb-1 ml-1 transition-colors group-focus-within:text-sky">Kata Sandi</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                         <i class="fa-solid fa-lock text-slate-400 text-sm group-focus-within:text-sky transition-colors"></i>
