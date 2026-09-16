@@ -42,10 +42,21 @@
                 <tbody>
                     @foreach ($reports as $report)
                         @php
-                            $statusBadge = match($report->status) {
-                                'reviewed' => 'bg-success text-white',
-                                'dismissed' => 'bg-secondary text-white',
+                            // Status yang berarti laporan SUDAH ditindaklanjuti oleh verifikator/admin.
+                            // Controller (VerifikatorController@actionLaporan) menyimpan 'resolved',
+                            // bukan 'reviewed', jadi kita cek semua kemungkinan status "sudah ditangani" di sini.
+                            $handledStatuses = ['reviewed', 'resolved', 'action_taken', 'escalated'];
+
+                            $statusBadge = match(true) {
+                                in_array($report->status, $handledStatuses) => 'bg-success text-white',
+                                $report->status === 'dismissed' => 'bg-secondary text-white',
                                 default => 'bg-warning text-dark',
+                            };
+
+                            $statusLabel = match(true) {
+                                in_array($report->status, $handledStatuses) => 'Ditindaklanjuti',
+                                $report->status === 'dismissed' => 'Ditolak / Selesai',
+                                default => 'Sedang Ditinjau',
                             };
                         @endphp
                         <tr>
@@ -65,7 +76,7 @@
                             </td>
                             <td>
                                 <span class="badge {{ $statusBadge }} px-3 py-1.5 rounded-pill text-capitalize" style="font-size: 11px;">
-                                    {{ $report->status === 'reviewed' ? 'Ditindaklanjuti' : ($report->status === 'dismissed' ? 'Ditolak / Selesai' : 'Sedang Ditinjau') }}
+                                    {{ $statusLabel }}
                                 </span>
                             </td>
                             <td class="small text-muted">

@@ -247,8 +247,7 @@
                         class="w-2.5 h-2.5 border border-slate-300 rounded bg-skyPale focus:ring-1 focus:ring-sky/50 checked:bg-sky checked:border-sky transition-colors cursor-pointer">
                 </div>
                 <label for="terms" class="ml-1.5 text-[8.5px] text-slate-600 leading-[1.2] font-medium cursor-pointer">
-                    Saya menyetujui <a href="#" class="text-sky font-bold hover:underline">Syarat & Ketentuan</a> serta <a href="#" class="text-sky font-bold hover:underline">Kebijakan Privasi</a>.
-                </label>
+                    Saya Menyutujui 
             </div>
 
             <!-- SUBMIT -->

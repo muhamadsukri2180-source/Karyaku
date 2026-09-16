@@ -71,7 +71,7 @@
             @if($saldoTersedia < 20000)
                 <div class="alert p-3 small mb-3 rounded-3" style="background:#fff7ed; color:#b45309; border:1px solid #fed7aa;"><i class="bi bi-exclamation-triangle-fill me-1"></i> Saldo Anda belum mencapai minimum penarikan sebesar <strong>Rp 20.000</strong>.</div>
             @endif
-            <form action="{{ route('penjual.keuangan.tarik') }}" method="POST">
+            <form action="{{ route('penjual.keuangan.tarik') }}" method="POST" id="formPenarikan">
                 @csrf
                 <div class="mb-3">
                     <label class="form-label fw-bold small text-dark">Bank / E-Wallet <span class="text-danger">*</span></label>
@@ -111,7 +111,9 @@
                     <small style="font-size: 11px; color:var(--text-muted);">Saldo tersedia: Rp {{ number_format($saldoTersedia, 0, ',', '.') }} | Min penarikan: Rp 20.000</small>
                     @error('amount')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                 </div>
-                <button type="submit" class="btn fw-bold w-100 py-2 rounded-3" style="background:var(--primary); color:#fff;" {{ $saldoTersedia < 20000 ? 'disabled' : '' }} onclick="return confirm('Yakin ingin mengajukan penarikan dana?')"><i class="bi bi-send me-1"></i> Ajukan Penarikan</button>
+                <button type="submit" class="btn fw-bold w-100 py-2 rounded-3" style="background:var(--primary); color:#fff;" {{ $saldoTersedia < 20000 ? 'disabled' : '' }}>
+                    <i class="bi bi-send me-1"></i> Ajukan Penarikan
+                </button>
             </form>
         </div>
     </div>
@@ -149,5 +151,68 @@
         </div>
     </div>
 </div>
+
+{{-- SweetAlert2 (aman dipanggil lagi walaupun sudah ada di layout, browser akan skip jika sudah ter-load) --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const formPenarikan = document.getElementById('formPenarikan');
+
+        if (formPenarikan) {
+            formPenarikan.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                Swal.fire({
+                    title: 'Ajukan Penarikan Dana?',
+                    text: 'Pastikan data rekening dan nominal yang Anda masukkan sudah benar.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#2563eb',
+                    cancelButtonColor: '#94a3b8',
+                    confirmButtonText: 'Ya, Ajukan Sekarang',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        formPenarikan.submit();
+                    }
+                });
+            });
+        }
+
+        @if (session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: "{{ session('success') }}",
+                timer: 3000,
+                showConfirmButton: false
+            });
+        @endif
+
+        @if (session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal!',
+                text: "{{ session('error') }}",
+                confirmButtonColor: '#ef4444'
+            });
+        @endif
+
+        @if ($errors->any())
+            Swal.fire({
+                icon: 'warning',
+                title: 'Periksa Kembali Data Anda',
+                html: `<ul class="text-start small mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>• {{ $error }}</li>
+                        @endforeach
+                       </ul>`,
+                confirmButtonColor: '#2563eb'
+            });
+        @endif
+    });
+</script>
 
 @endsection

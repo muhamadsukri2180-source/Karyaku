@@ -166,10 +166,6 @@
                 </div>
             </div>
 
-           <div class="flex justify-end -mt-1">
-            <a href="{{ route('password.request') }}" class="text-[11px] font-bold text-sky hover:text-skyDeep transition-colors">Lupa password?</a>
-           </div>
-
             <button type="submit" class="btn-premium group w-full flex items-center justify-center gap-2 mt-3 font-bold shadow-md">
                 <span>Masuk Sekarang</span>
                 <i class="fa-solid fa-arrow-right text-xs opacity-80 group-hover:translate-x-1 group-hover:opacity-100 transition-all duration-300"></i>
