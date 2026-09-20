@@ -1,4 +1,4 @@
-@extends('layouts.penjual')
+﻿@extends('layouts.penjual')
 
 @section('title', 'Tambah Produk Baru')
 
@@ -314,7 +314,7 @@
                             >
 
                                 <option value="">
-                                    -- Pilih Kategori --
+                                    Pilih Kategori
                                 </option>
 
 
@@ -560,6 +560,7 @@
                             <input
                                 type="file"
                                 name="images[]"
+                                id="imagesInput"
                                 accept="image/png,image/jpeg,image/jpg,image/webp"
                                 multiple
                                 class="form-control @error('images') is-invalid @enderror @error('images.*') is-invalid @enderror"
@@ -590,6 +591,17 @@
 
                         @enderror
 
+                        {{-- PREVIEW GALERI --}}
+                        <div
+                            class="preview-box mt-2 text-center d-none"
+                            id="imagesPreviewContainer"
+                        >
+                            <small class="text-muted d-block mb-2">
+                                Preview Foto Pendukung
+                            </small>
+                            <div id="imagesPreviewList" class="d-flex flex-wrap gap-2 justify-content-center"></div>
+                        </div>
+
                     </div>
 
                 </div>
@@ -618,6 +630,7 @@
                             <input
                                 type="file"
                                 name="video"
+                                id="videoInput"
                                 accept="video/mp4,video/webm,video/ogg,video/quicktime"
                                 class="form-control @error('video') is-invalid @enderror"
                             >
@@ -638,6 +651,17 @@
                             </div>
 
                         @enderror
+
+                        {{-- PREVIEW VIDEO --}}
+                        <div
+                            class="preview-box mt-2 text-center d-none"
+                            id="videoPreviewContainer"
+                        >
+                            <small class="text-muted d-block mb-2">
+                                Preview Video
+                            </small>
+                            <video id="videoPreview" class="w-100 rounded-3" controls style="max-height: 200px;"></video>
+                        </div>
 
                     </div>
 
@@ -852,43 +876,95 @@ document.addEventListener('DOMContentLoaded', function () {
     const previewContainer = document.getElementById('previewContainer');
     const thumbPreview = document.getElementById('thumbPreview');
 
-    if (!thumbInput) {
-        return;
+
+
+    // =========================================================
+    // PREVIEW FOTO SAMPUL
+    // =========================================================
+    if (thumbInput) {
+        thumbInput.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (!file || !file.type.startsWith('image/')) {
+                previewContainer.classList.add('d-none');
+                thumbPreview.removeAttribute('src');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                thumbPreview.src = e.target.result;
+                previewContainer.classList.remove('d-none');
+            };
+            reader.readAsDataURL(file);
+        });
     }
 
-    thumbInput.addEventListener('change', function (event) {
+    // =========================================================
+    // PREVIEW FOTO PENDUKUNG (GALERI)
+    // =========================================================
+    const imagesInput = document.getElementById('imagesInput');
+    const imagesPreviewContainer = document.getElementById('imagesPreviewContainer');
+    const imagesPreviewList = document.getElementById('imagesPreviewList');
 
-        const file = event.target.files[0];
+    if (imagesInput) {
+        imagesInput.addEventListener('change', function (event) {
+            const files = event.target.files;
+            
+            // Clear existing previews
+            imagesPreviewList.innerHTML = '';
+            
+            if (!files || files.length === 0) {
+                imagesPreviewContainer.classList.add('d-none');
+                return;
+            }
+            
+            let hasImages = false;
 
-        if (!file) {
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    hasImages = true;
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'rounded-3 shadow-sm';
+                        img.style.height = '100px';
+                        img.style.objectFit = 'cover';
+                        imagesPreviewList.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
 
-            previewContainer.classList.add('d-none');
-            thumbPreview.removeAttribute('src');
+            if (hasImages) {
+                imagesPreviewContainer.classList.remove('d-none');
+            } else {
+                imagesPreviewContainer.classList.add('d-none');
+            }
+        });
+    }
 
-            return;
-        }
+    // =========================================================
+    // PREVIEW VIDEO
+    // =========================================================
+    const videoInput = document.getElementById('videoInput');
+    const videoPreviewContainer = document.getElementById('videoPreviewContainer');
+    const videoPreview = document.getElementById('videoPreview');
 
-        if (!file.type.startsWith('image/')) {
-
-            previewContainer.classList.add('d-none');
-            thumbPreview.removeAttribute('src');
-
-            return;
-        }
-
-        const reader = new FileReader();
-
-        reader.onload = function (e) {
-
-            thumbPreview.src = e.target.result;
-
-            previewContainer.classList.remove('d-none');
-
-        };
-
-        reader.readAsDataURL(file);
-
-    });
+    if (videoInput) {
+        videoInput.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            
+            if (!file || !file.type.startsWith('video/')) {
+                videoPreviewContainer.classList.add('d-none');
+                videoPreview.removeAttribute('src');
+                return;
+            }
+            
+            const fileURL = URL.createObjectURL(file);
+            videoPreview.src = fileURL;
+            videoPreviewContainer.classList.remove('d-none');
+        });
+    }
 
 });
 

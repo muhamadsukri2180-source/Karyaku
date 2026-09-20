@@ -1,4 +1,4 @@
-@extends('layouts.pembeli')
+﻿@extends('layouts.pembeli')
 @section('title', 'Daftar Sebagai Penjual - Karyaku')
 
 @push('styles')
@@ -205,7 +205,7 @@
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold text-dark mb-1">Bank <span class="text-danger">*</span></label>
                         <select name="bank_name" class="form-select rounded-3 @error('bank_name') is-invalid @enderror" required>
-                            <option value="">-- Pilih Bank --</option>
+                            <option value="">Pilih Bank</option>
                             @foreach ($banks as $bank)
                                 <option value="{{ $bank }}" {{ old('bank_name') === $bank ? 'selected' : '' }}>{{ $bank }}</option>
                             @endforeach
@@ -301,7 +301,7 @@
                 <div class="mb-3">
                     <label class="form-label small fw-semibold text-dark mb-1">Metode Transfer <span class="text-danger">*</span></label>
                     <select name="payment_method" class="form-select rounded-3 @error('payment_method') is-invalid @enderror" required>
-                        <option value="">-- Pilih Rekening Tujuan Transfer --</option>
+                        <option value="">Pilih Rekening Tujuan Transfer</option>
                         @foreach ($paymentMethods as $key => $label)
                             <option value="{{ $key }}" {{ old('payment_method') === $key ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach

@@ -1,4 +1,4 @@
-<!-- SIDEBAR VERIFIKATOR -->
+﻿<!SIDEBAR VERIFIKATOR>
 <aside id="sidebar" class="w-[260px] bg-gradient-to-b from-skyDeep via-skyHover to-sky text-white flex flex-col shrink-0 border-r border-sky-400/20 shadow-2xl fixed lg:sticky top-0 h-screen z-50 closed lg:translate-x-0">
     <div class="p-6 border-b border-white/15 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -30,12 +30,12 @@
     <nav class="flex-1 px-4 space-y-1.5 text-[13px] font-semibold text-sky-100 overflow-y-auto pb-4">
         <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-2">Navigasi Utama</p>
 
-        <!-- 1. Dashboard -->
+        <!1. Dashboard>
         <a href="{{ route('verifikator.dashboard') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all group {{ request()->routeIs('verifikator.dashboard') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }}">
             <i class="fa-solid fa-chart-pie w-4 text-center {{ request()->routeIs('verifikator.dashboard') ? 'text-white' : 'group-hover:text-white transition-colors' }}"></i><span>Dashboard</span>
         </a>
 
-        <!-- 2. Verifikasi Identitas -->
+        <!2. Verifikasi Identitas>
         <a href="{{ route('verifikator.identitas') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all group {{ request()->routeIs(['verifikator.identitas*', 'verifikator.pendaftaran*']) ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }}">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-id-card-clip w-4 text-center {{ request()->routeIs(['verifikator.identitas*', 'verifikator.pendaftaran*']) ? 'text-white' : 'group-hover:text-white transition-colors' }}"></i><span>Verifikasi Identitas</span>
@@ -45,7 +45,7 @@
             @endif
         </a>
 
-        <!-- 3. Verifikasi Produk -->
+        <!3. Verifikasi Produk>
         <a href="{{ route('verifikator.produk') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all group {{ request()->routeIs('verifikator.produk*') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }}">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-box-open w-4 text-center {{ request()->routeIs('verifikator.produk*') ? 'text-white' : 'group-hover:text-white transition-colors' }}"></i><span>Verifikasi Produk</span>
@@ -55,7 +55,7 @@
             @endif
         </a>
 
-        <!-- 4. Verifikasi Pembayaran -->
+        <!4. Verifikasi Pembayaran>
         <a href="{{ route('verifikator.pembayaran') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all group {{ request()->routeIs(['verifikator.pembayaran*', 'verifikator.transaksi_pembayaran*']) ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }}">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-receipt w-4 text-center {{ request()->routeIs(['verifikator.pembayaran*', 'verifikator.transaksi_pembayaran*']) ? 'text-white' : 'group-hover:text-white transition-colors' }}"></i><span>Verifikasi Pembayaran</span>
@@ -65,7 +65,7 @@
             @endif
         </a>
 
-        <!-- 5. Laporan Pelanggaran -->
+        <!5. Laporan Pelanggaran>
         <a href="{{ route('verifikator.laporan') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all group {{ request()->routeIs('verifikator.laporan*') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }}">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-triangle-exclamation w-4 text-center {{ request()->routeIs('verifikator.laporan*') ? 'text-white' : 'group-hover:text-white transition-colors' }}"></i><span>Laporan Pelanggaran</span>

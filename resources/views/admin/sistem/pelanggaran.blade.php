@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -475,7 +475,7 @@
                 <div>
                     <label class="text-xs font-bold text-slate-700 uppercase tracking-wide">Pilih Aksi</label>
                     <select name="action" id="actionSelect" required class="mt-2 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 focus:outline-none transition-all">
-                        <option value="">-- Pilih Tindakan --</option>
+                        <option value="">Pilih Tindakan</option>
                         <option value="peringatan">Kirim sebuah Peringatan</option>
                         <option value="suspend">Suspend Akun / Takedown</option>
                         <option value="abaikan">Abaikan Laporan</option>
@@ -514,7 +514,7 @@
                 <div>
                     <label class="text-xs font-bold text-slate-700 uppercase tracking-wide">Pilih Keputusan Banding <span class="text-red-500">*</span></label>
                     <select name="action" id="appealActionSelect" required class="mt-2 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all">
-                        <option value="">-- Pilih Keputusan --</option>
+                        <option value="">Pilih Keputusan</option>
                         <option value="setujui" class="text-emerald-600 font-bold">✓ Setujui Banding (Buka Blokir & Aktifkan Akun)</option>
                         <option value="tolak" class="text-red-600 font-bold">✕ Tolak Banding (Tetap Suspend)</option>
                     </select>

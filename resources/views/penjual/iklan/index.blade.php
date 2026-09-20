@@ -1,4 +1,4 @@
-@extends('layouts.penjual')
+﻿@extends('layouts.penjual')
 
 @section('title', 'Iklan & Promosi Produk')
 
@@ -194,7 +194,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-dark mb-1">Pilih Produk Aktif yang Ingin Diiklankan</label>
                         <select name="product_id" class="form-select form-select-sm rounded-3" required>
-                            <option value="">-- Pilih Produk Aktif --</option>
+                            <option value="">Pilih Produk Aktif</option>
                             @foreach($activeProducts as $p)
                                 <option value="{{ $p->id_product }}">{{ $p->title }} (Rp {{ number_format($p->price, 0, ',', '.') }}) {{ $p->is_promoted ? '[Iklan Aktif]' : '' }}</option>
                             @endforeach

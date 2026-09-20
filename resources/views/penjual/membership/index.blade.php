@@ -1,4 +1,4 @@
-@extends('layouts.penjual')
+﻿@extends('layouts.penjual')
 @section('title', 'Paket Membership Penjual')
 
 @section('content')
@@ -398,7 +398,7 @@
                                 Metode Pembayaran yang Digunakan <span class="text-danger">*</span>
                             </label>
                             <select class="form-select rounded-3 text-sm py-2.5" id="payment_method_input" name="payment_method" required onchange="onPaymentMethodChange(this.value)">
-                                <option value="">-- Pilih Metode Pembayaran --</option>
+                                <option value="">Pilih Metode Pembayaran</option>
                                 @foreach($paymentMethods as $key => $pm)
                                     <option value="{{ $pm['name'] }}" data-bank="{{ $key }}">{{ $pm['name'] }} ({{ $pm['type'] }})</option>
                                 @endforeach
