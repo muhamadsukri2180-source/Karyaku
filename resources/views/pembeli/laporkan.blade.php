@@ -1,4 +1,4 @@
-@extends('layouts.pembeli')
+﻿@extends('layouts.pembeli')
 @section('title', 'Laporkan Pelanggaran - Karyaku')
 
 @push('styles')
@@ -96,10 +96,17 @@
         </div>
 
         {{-- Dropdown Produk --}}
+<<<<<<< HEAD
         <div class="mb-4" id="groupProduk">
             <label class="form-label small fw-bold text-dark">Pilih Produk Yang Dilaporkan <span class="text-danger">*</span></label>
             <select name="product_id" class="form-select rounded-3 py-2.5">
                 <option value="" disabled selected>Pilih produk yang sesuai pada daftar</option>
+=======
+        <div class="mb-3" id="groupProduk">
+            <label class="form-label small fw-semibold">Pilih Produk Yang Dilaporkan <span class="text-danger">*</span></label>
+            <select name="product_id" class="form-select rounded-3">
+                <option value="">Pilih Produk</option>
+>>>>>>> 841bec61725202c6848a92a7d418cf620928275d
                 @foreach ($products as $product)
                     <option value="{{ $product->id_product }}" {{ old('product_id', request('product_id')) == $product->id_product ? 'selected' : '' }}>
                         {{ $product->title }} (Penjual: {{ $product->seller->name ?? '-' }})
@@ -109,10 +116,17 @@
         </div>
 
         {{-- Dropdown Pengguna --}}
+<<<<<<< HEAD
         <div class="mb-4 d-none" id="groupUser">
             <label class="form-label small fw-bold text-dark">Pilih Pengguna Yang Dilaporkan <span class="text-danger">*</span></label>
             <select name="reported_user_id" class="form-select rounded-3 py-2.5">
                 <option value="" disabled selected>Pilih pengguna yang ingin dilaporkan</option>
+=======
+        <div class="mb-3 d-none" id="groupUser">
+            <label class="form-label small fw-semibold">Pilih Pengguna Yang Dilaporkan (Pembeli / Penjual) <span class="text-danger">*</span></label>
+            <select name="reported_user_id" class="form-select rounded-3">
+                <option value="">Pilih Pengguna</option>
+>>>>>>> 841bec61725202c6848a92a7d418cf620928275d
                 @foreach ($users as $u)
                     <option value="{{ $u->id_user }}" {{ old('reported_user_id') == $u->id_user ? 'selected' : '' }}>
                         {{ $u->name }} ({{ $u->role->role_name ?? '-' }})
@@ -122,10 +136,17 @@
         </div>
 
         {{-- Dropdown Alasan --}}
+<<<<<<< HEAD
         <div class="mb-4">
             <label class="form-label small fw-bold text-dark">Alasan Laporan <span class="text-danger">*</span></label>
             <select name="reason" class="form-select rounded-3 py-2.5" required>
                 <option value="" disabled selected>Pilih alasan utama pelaporan</option>
+=======
+        <div class="mb-3">
+            <label class="form-label small fw-semibold">Alasan Laporan <span class="text-danger">*</span></label>
+            <select name="reason" class="form-select rounded-3" required>
+                <option value="">Pilih Alasan</option>
+>>>>>>> 841bec61725202c6848a92a7d418cf620928275d
                 <option value="Konten tidak sesuai / palsu" {{ old('reason') == 'Konten tidak sesuai / palsu' ? 'selected' : '' }}>Konten tidak sesuai / palsu</option>
                 <option value="Penipuan / tidak mengirim pesanan" {{ old('reason') == 'Penipuan / tidak mengirim pesanan' ? 'selected' : '' }}>Penipuan / tidak mengirim pesanan</option>
                 <option value="Pelanggaran hak cipta" {{ old('reason') == 'Pelanggaran hak cipta' ? 'selected' : '' }}>Pelanggaran hak cipta</option>

@@ -1,4 +1,4 @@
-@extends('layouts.pembeli')
+﻿@extends('layouts.pembeli')
 @section('title', 'Daftar Sebagai Penjual - Karyaku')
 
 @push('styles')
@@ -264,9 +264,15 @@
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-4">
+<<<<<<< HEAD
                         <label class="form-label small fw-bold text-dark mb-1">Bank <span class="text-danger">*</span></label>
                         <select name="bank_name" class="form-select rounded-3 py-2.5 @error('bank_name') is-invalid @enderror" required>
                             <option value="" disabled selected>Pilih Bank Tujuan</option>
+=======
+                        <label class="form-label small fw-semibold text-dark mb-1">Bank <span class="text-danger">*</span></label>
+                        <select name="bank_name" class="form-select rounded-3 @error('bank_name') is-invalid @enderror" required>
+                            <option value="">Pilih Bank</option>
+>>>>>>> 841bec61725202c6848a92a7d418cf620928275d
                             @foreach ($banks as $bank)
                                 <option value="{{ $bank }}" {{ old('bank_name') === $bank ? 'selected' : '' }}>{{ $bank }}</option>
                             @endforeach
@@ -424,6 +430,70 @@
                     </button>
                 </div>
             </div>
+<<<<<<< HEAD
+=======
+
+            {{-- 4. PEMBAYARAN & BUKTI TRANSFER --}}
+            <div class="seller-form-card">
+                <div class="seller-card-title">
+                    <i class="bi bi-credit-card-2-front-fill"></i>
+                    <span>4. Metode & Bukti Pembayaran</span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-dark mb-1">Metode Transfer <span class="text-danger">*</span></label>
+                    <select name="payment_method" class="form-select rounded-3 @error('payment_method') is-invalid @enderror" required>
+                        <option value="">Pilih Rekening Tujuan Transfer</option>
+                        @foreach ($paymentMethods as $key => $label)
+                            <option value="{{ $key }}" {{ old('payment_method') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    @error('payment_method') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+
+                {{-- Total Ringkasan Biaya --}}
+                <div class="checkout-summary-box mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small text-muted">Paket Dipilih:</span>
+                        <span class="small fw-bold text-dark" id="summaryPlanName">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small text-muted">Total Pembayaran:</span>
+                        <span class="fw-extrabold text-primary fs-5" id="summaryTotalAmount">Rp 0</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-dark mb-1">Upload Bukti Transfer <span class="text-danger">*</span></label>
+                    <div class="upload-zone @error('payment_proof') is-invalid @enderror">
+                        <input type="file" name="payment_proof" id="input-payment" accept="image/*" required onchange="handlePreview(this, 'preview-payment', 'box-payment', 'cancel-payment')">
+                        
+                        <div id="preview-payment" class="upload-preview">
+                            <img src="" alt="Preview Bukti" class="img-fluid mb-2">
+                            <p class="text-primary small fw-bold mb-0"><i class="bi bi-arrow-repeat"></i> Klik untuk mengganti bukti transfer</p>
+                        </div>
+
+                        <div id="box-payment">
+                            <i class="bi bi-receipt-cutoff text-primary fs-2 mb-2 d-block"></i>
+                            <div class="fw-bold text-dark small mb-1">Upload Struk / Bukti Transfer</div>
+                            <div class="text-muted" style="font-size: 11px;">Format: JPG, PNG, WEBP (Maksimal 3MB)</div>
+                        </div>
+                    </div>
+
+                    <div id="cancel-payment" class="text-center mt-2" style="display: none;">
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1" onclick="clearUpload('input-payment', 'preview-payment', 'box-payment', 'cancel-payment')">
+                            <i class="bi bi-trash3 me-1"></i> Batalkan Bukti
+                        </button>
+                    </div>
+                    @error('payment_proof') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2 mt-4" {{ $memberships->isEmpty() ? 'disabled' : '' }}>
+                    <i class="bi bi-send-fill"></i> Kirim Formulir Pendaftaran
+                </button>
+            </div>
+
+>>>>>>> 841bec61725202c6848a92a7d418cf620928275d
         </div>
     </div>
 </form>

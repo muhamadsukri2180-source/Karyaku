@@ -123,7 +123,7 @@
 
 {{-- DAFTAR NOTIFIKASI --}}
 @if ($notifications->count() > 0)
-    <div class="d-flex flex-column gap-2.5">
+    <div class="d-flex flex-column gap-4">
         @foreach ($notifications as $notif)
             @php
                 $nameLower = strtolower($notif->name ?? '');

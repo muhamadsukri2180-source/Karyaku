@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -342,7 +342,7 @@
                 <div id="userSelectWrapper" class="hidden">
                     <label class="text-[10px] font-extrabold text-slate-700 uppercase tracking-wide">Pilih Pengguna</label>
                     <select name="user_id" id="add_user_id" class="mt-1 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 focus:bg-white transition-all">
-                        <option value="">-- Pilih Pengguna --</option>
+                        <option value="">Pilih Pengguna</option>
                         @foreach(($allUsers ?? collect()) as $u)
                             @php
                                 $uEmail = (!empty($u->email) && !str_starts_with($u->email, '$') && str_contains($u->email, '@')) ? ' — ' . $u->email : (!empty($u->phone) ? ' — ' . $u->phone : '');

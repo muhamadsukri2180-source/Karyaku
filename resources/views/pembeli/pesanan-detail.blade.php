@@ -1,4 +1,4 @@
-@extends('layouts.pembeli')
+﻿@extends('layouts.pembeli')
 @section('title', 'Detail Pesanan #' . ($order->kode_order ?? $order->id_order))
 
 @section('content')
@@ -104,7 +104,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-dark">Metode Pembayaran Digunakan <span class="text-danger">*</span></label>
                             <select name="payment_method" class="form-select form-select-sm rounded-3" required>
-                                <option value="">-- Pilih Metode --</option>
+                                <option value="">Pilih Metode</option>
                                 <option value="Bank BCA" {{ old('payment_method', $order->payment_method) === 'Bank BCA' ? 'selected' : '' }}>Transfer Bank BCA</option>
                                 <option value="Bank BNI" {{ old('payment_method', $order->payment_method) === 'Bank BNI' ? 'selected' : '' }}>Transfer Bank BNI</option>
                                 <option value="Bank Mandiri" {{ old('payment_method', $order->payment_method) === 'Bank Mandiri' ? 'selected' : '' }}>Transfer Bank Mandiri</option>

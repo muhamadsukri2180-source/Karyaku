@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -481,7 +481,7 @@
                 <div>
                     <label class="text-xs font-bold text-slate-700 uppercase">Keputusan Banding <span class="text-red-500">*</span></label>
                     <select name="action" id="appealActionSelect" required class="mt-2 w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800">
-                        <option value="">-- Pilih Keputusan --</option>
+                        <option value="">Pilih Keputusan</option>
                         <option value="setujui" class="text-emerald-600 font-bold">✓ Setujui Banding (Buka Blokir & Aktifkan Akun)</option>
                         <option value="tolak" class="text-red-600 font-bold">✕ Tolak Banding (Tetap Suspend)</option>
                     </select>
