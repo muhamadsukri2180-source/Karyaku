@@ -29,12 +29,6 @@
 
     <nav class="flex-1 px-4 space-y-1.5 text-[13px] font-semibold text-sky-100 overflow-y-auto pb-4">
         <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-2">Navigasi Utama</p>
-
-<<<<<<< HEAD
-        <!-- 1. Beranda -->
-=======
-        <!1. Dashboard>
->>>>>>> 841bec61725202c6848a92a7d418cf620928275d
         <a href="{{ route('verifikator.dashboard') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all group {{ request()->routeIs('verifikator.dashboard') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }}">
             <i class="fa-solid fa-chart-pie w-4 text-center {{ request()->routeIs('verifikator.dashboard') ? 'text-white' : 'group-hover:text-white transition-colors' }}"></i><span>Beranda</span>
         </a>
