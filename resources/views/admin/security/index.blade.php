@@ -69,7 +69,7 @@
                 <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-2">Menu Utama</p>
                 
                 <a href="{{ route('admin.dashboard') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl {{ request()->routeIs('admin.dashboard') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }} transition-all duration-200">
-                    <i class="fa-solid fa-chart-pie w-4 text-center"></i><span>Dashboard</span>
+                    <i class="fa-solid fa-chart-pie w-4 text-center"></i><span>Beranda</span>
                 </a>
 
                 <!-- MANAJEMEN PENGGUNA -->

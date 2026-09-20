@@ -48,6 +48,7 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
     }
     .cat-chip:hover {
         background: var(--primary-light);
@@ -65,18 +66,47 @@
         background: #ffffff;
         border: 1px solid var(--border-color);
         border-radius: 16px;
-        padding: 14px 18px;
+        padding: 16px 20px;
         margin-bottom: 24px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 16px;
         flex-wrap: wrap;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.02);
+    }
+    
+    .filter-sort-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 4px 10px;
+        transition: all 0.2s ease;
+    }
+    .filter-sort-wrapper:focus-within {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        background: #ffffff;
+    }
+    .filter-sort-select {
+        border: none;
+        background: transparent;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--text-dark);
+        outline: none;
+        padding: 4px 8px;
+        cursor: pointer;
     }
 
     @media(max-width: 576px) {
         .market-banner { padding: 20px 18px; }
-        .filter-bar { padding: 12px 14px; }
+        .filter-bar { padding: 12px 14px; flex-direction: column; align-items: stretch; }
+        .filter-sort-wrapper { width: 100%; justify-content: space-between; }
+        .filter-sort-select { width: 100%; }
     }
 </style>
 @endpush
@@ -115,12 +145,14 @@
 
     {{-- Filter & Sorting Bar --}}
     <div class="filter-bar">
-        <div class="d-flex align-items-center gap-2">
-            <span class="fw-bold text-dark small">Menampilkan {{ $products->total() }} Produk</span>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1.5 rounded-pill bg-light border text-secondary" style="font-size: 12px; font-weight: 600;">
+                <span>{{ $products->total() }} Produk Tersedia</span>
+            </div>
             @if(request('q'))
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                    Pencarian: "{{ request('q') }}"
-                    <a href="{{ route('pembeli.marketplace', request()->except('q', 'page')) }}" class="text-primary ms-1"><i class="bi bi-x"></i></a>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle d-inline-flex align-items-center gap-1 px-3 py-2 rounded-pill" style="font-size: 12px;">
+                    <i class="bi bi-search"></i> Pencarian: "{{ request('q') }}"
+                    <a href="{{ route('pembeli.marketplace', request()->except('q', 'page')) }}" class="text-primary ms-1 fw-bold text-decoration-none"><i class="bi bi-x-circle-fill"></i></a>
                 </span>
             @endif
         </div>
@@ -129,13 +161,18 @@
             @if(request('q')) <input type="hidden" name="q" value="{{ request('q') }}"> @endif
             @if(request('category')) <input type="hidden" name="category" value="{{ request('category') }}"> @endif
             
-            <label for="sortSelect" class="small text-muted fw-semibold text-nowrap d-none d-sm-inline">Urutkan:</label>
-            <select name="sort" id="sortSelect" class="form-select form-select-sm rounded-3 border-secondary-subtle" style="min-width: 140px;" onchange="this.form.submit()">
-                <option value="terlaris" {{ request('sort') == 'terlaris' ? 'selected' : '' }}>🔥 Terlaris</option>
-                <option value="terbaru" {{ request('sort') == 'terbaru' ? 'selected' : '' }}>✨ Terbaru</option>
-                <option value="termurah" {{ request('sort') == 'termurah' ? 'selected' : '' }}>💲 Harga Terendah</option>
-                <option value="termahal" {{ request('sort') == 'termahal' ? 'selected' : '' }}>💎 Harga Tertinggi</option>
-            </select>
+            <div class="filter-sort-wrapper">
+                <div class="d-flex align-items-center gap-1 text-muted ps-1" style="font-size: 12px;">
+                    <i class="bi bi-sort-down-alt text-primary"></i>
+                    <span class="d-none d-sm-inline fw-semibold">Urutkan:</span>
+                </div>
+                <select name="sort" id="sortSelect" class="filter-sort-select" onchange="this.form.submit()">
+                    <option value="terlaris" {{ request('sort') == 'terlaris' ? 'selected' : '' }}>Paling Terlaris</option>
+                    <option value="terbaru" {{ request('sort') == 'terbaru' ? 'selected' : '' }}>Paling Terbaru</option>
+                    <option value="termurah" {{ request('sort') == 'termurah' ? 'selected' : '' }}>Harga Terendah</option>
+                    <option value="termahal" {{ request('sort') == 'termahal' ? 'selected' : '' }}>Harga Tertinggi</option>
+                </select>
+            </div>
         </form>
     </div>
 
@@ -148,7 +185,7 @@
                 <i class="bi bi-search display-4 text-muted mb-3 d-block"></i>
                 <h5 class="fw-bold text-dark">Tidak Ada Produk yang Ditemukan</h5>
                 <p class="text-muted small mb-3">Coba gunakan kata kunci lain atau pilih kategori yang berbeda.</p>
-                <a href="{{ route('pembeli.marketplace') }}" class="btn btn-primary btn-sm px-3 py-2 fw-semibold rounded-3">
+                <a href="{{ route('pembeli.marketplace') }}" class="btn btn-primary btn-sm px-4 py-2.5 fw-bold rounded-pill shadow-sm">
                     <i class="bi bi-arrow-repeat me-1"></i> Reset Filter Pencarian
                 </a>
             </div>

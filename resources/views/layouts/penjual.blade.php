@@ -151,7 +151,7 @@
         </a>
 
         <nav class="nav-menu">
-            <a href="{{ route('penjual.dashboard') }}" class="nav-link {{ request()->routeIs('penjual.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+            <a href="{{ route('penjual.dashboard') }}" class="nav-link {{ request()->routeIs('penjual.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Beranda</a>
             <a href="{{ route('penjual.produk.index') }}" class="nav-link {{ request()->routeIs('penjual.produk*') ? 'active' : '' }}"><i class="bi bi-box-seam-fill"></i> Produk Saya</a>
             <a href="{{ route('penjual.pesanan.index') }}" class="nav-link {{ request()->routeIs('penjual.pesanan*') ? 'active' : '' }}"><i class="bi bi-receipt-cutoff"></i> Pesanan</a>
             <a href="{{ route('penjual.iklan.index') }}" class="nav-link {{ request()->routeIs('penjual.iklan*') ? 'active' : '' }}"><i class="bi bi-megaphone-fill"></i> Iklan</a>
@@ -239,7 +239,7 @@
     </div>
 
     <div class="mobile-menu-panel" id="mobileMenuPanel">
-        <a href="{{ route('penjual.dashboard') }}" class="nav-link {{ request()->routeIs('penjual.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+        <a href="{{ route('penjual.dashboard') }}" class="nav-link {{ request()->routeIs('penjual.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Beranda</a>
         <a href="{{ route('penjual.notifikasi') }}" class="nav-link {{ request()->routeIs('penjual.notifikasi*') ? 'active' : '' }}"><i class="bi bi-bell-fill"></i> Notifikasi @if($unreadNotifCount > 0)<span class="badge bg-danger ms-auto">{{ $unreadNotifCount }}</span>@endif</a>
         <a href="{{ route('penjual.produk.index') }}" class="nav-link {{ request()->routeIs('penjual.produk*') ? 'active' : '' }}"><i class="bi bi-box-seam-fill"></i> Produk Saya</a>
         <a href="{{ route('penjual.pesanan.index') }}" class="nav-link {{ request()->routeIs('penjual.pesanan*') ? 'active' : '' }}"><i class="bi bi-receipt-cutoff"></i> Pesanan Masuk</a>

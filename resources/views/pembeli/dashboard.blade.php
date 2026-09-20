@@ -4,14 +4,46 @@
 
 @push('styles')
 <style>
-    /* ==========================================================================
-       1. TOP HERO SECTION: FULL-BLEED AD VIDEO CARD (LEFT) + POPULAR GRID (RIGHT)
-       ========================================================================== */
     .top-hero-section {
         margin-bottom: 32px;
     }
 
-    /* Left Ad Hero Card (Full Bleed Video Banner Landscape 16:9) */
+    .category-nav-bar {
+        background: transparent;
+        border: none;
+        padding: 4px 0 16px 0;
+        margin-bottom: 24px;
+        overflow-x: auto;
+        white-space: nowrap;
+        box-shadow: none;
+    }
+    .category-nav-list {
+        display: flex;
+        gap: 10px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .category-nav-item a {
+        display: inline-block;
+        padding: 8px 18px;
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-dark);
+        text-decoration: none;
+        transition: all 0.25s ease;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+    }
+    .category-nav-item a:hover,
+    .category-nav-item a.active {
+        background: #eff6ff;
+        color: #2563eb;
+        border-color: #dbeafe;
+    }
+
     .ad-hero-wrapper {
         position: relative;
         width: 100%;
@@ -119,7 +151,6 @@
         color: #000;
     }
 
-    /* Left & Right Circular Navigation Arrows */
     .ad-nav-arrow {
         position: absolute;
         top: 50%;
@@ -147,7 +178,6 @@
     }
     .ad-nav-arrow.prev { left: 14px; }
 
-    /* Tooltip Next Pill */
     .ad-next-wrapper {
         position: absolute;
         right: 14px;
@@ -170,7 +200,6 @@
         pointer-events: none;
     }
 
-    /* Bottom Controls: Animated Circular Pie Timer & Dots */
     .ad-bottom-bar {
         position: absolute;
         bottom: 14px;
@@ -241,7 +270,6 @@
         box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
     }
 
-    /* Right Column: Popular Products Showcase */
     .hero-popular-col {
         display: flex;
         flex-direction: column;
@@ -375,23 +403,37 @@
         max-width: 90px;
     }
 
-    /* ==========================================================================
-       2. STATS & CATEGORIES
-       ========================================================================== */
     .stat-card-dash {
         background: #ffffff;
         border: 1px solid var(--border-color);
         border-radius: 20px;
         padding: 20px;
-        box-shadow: var(--shadow-sm);
-        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        position: relative;
+        overflow: hidden;
     }
+    .stat-card-dash::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: transparent;
+        transition: background 0.25s ease;
+    }
+    .stat-card-dash.stat-blue::before { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+    .stat-card-dash.stat-green::before { background: linear-gradient(90deg, #10b981, #34d399); }
+    .stat-card-dash.stat-orange::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .stat-card-dash.stat-red::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+
     .stat-card-dash:hover {
         transform: translateY(-4px);
-        box-shadow: var(--shadow-hover);
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
         border-color: #cbd5e1;
     }
     .stat-top {
@@ -400,67 +442,20 @@
         justify-content: space-between;
     }
     .stat-icon {
-        width: 46px;
-        height: 46px;
+        width: 48px;
+        height: 48px;
         border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 20px;
+        font-size: 21px;
+        box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.6);
     }
-    .icon-blue { background: #eff6ff; color: #2563eb; }
-    .icon-green { background: #ecfdf5; color: #10b981; }
-    .icon-orange { background: #fff7ed; color: #f59e0b; }
-    .icon-red { background: #fef2f2; color: #ef4444; }
+    .icon-blue { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); color: #2563eb; }
+    .icon-green { background: linear-gradient(135deg, #ecfdf5 0%, #dcfce7 100%); color: #10b981; }
+    .icon-orange { background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); color: #f59e0b; }
+    .icon-red { background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); color: #ef4444; }
 
-    .category-grid {
-        display: grid;
-        grid-template-columns: repeat(8, 1fr);
-        gap: 12px;
-        margin-bottom: 32px;
-    }
-    .category-card {
-        background: #ffffff;
-        border: 1px solid var(--border-color);
-        border-radius: 16px;
-        padding: 14px 8px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 8px;
-        color: var(--text-dark);
-        transition: var(--transition);
-        box-shadow: var(--shadow-sm);
-    }
-    .category-card:hover {
-        transform: translateY(-4px);
-        border-color: #93c5fd;
-        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12);
-        color: var(--primary);
-    }
-    .category-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        background: #eff6ff;
-        color: #2563eb;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        transition: var(--transition);
-    }
-    .category-card:hover .category-icon {
-        background: #2563eb;
-        color: #ffffff;
-        transform: scale(1.08);
-    }
-
-    /* RESPONSIVE */
-    @media(max-width: 1200px) {
-        .category-grid { grid-template-columns: repeat(4, 1fr); }
-    }
     @media(max-width: 992px) {
         .ad-hero-wrapper {
             min-height: 280px;
@@ -483,7 +478,6 @@
         .ad-next-pill { display: none; }
     }
     @media(max-width: 576px) {
-        .category-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .hero-pop-bottom-row { grid-template-columns: 1fr; }
         .ad-timer-container { display: none; }
     }
@@ -492,16 +486,28 @@
 
 @section('content')
 
-    {{-- =========================================================================
-         1. TOP HERO SECTION: FULL-BLEED SELLER AD (LEFT) + POPULAR PRODUCTS (RIGHT)
-         ========================================================================= --}}
+    @if(isset($categories) && $categories->count() > 0)
+        <div class="category-nav-bar">
+            <ul class="category-nav-list">
+                <li class="category-nav-item">
+                    <a href="{{ route('pembeli.marketplace') }}" class="{{ request('category') ? '' : 'active' }}">Semua Kategori</a>
+                </li>
+                @foreach($categories as $cat)
+                    <li class="category-nav-item">
+                        <a href="{{ route('pembeli.marketplace', ['category' => $cat->id_category]) }}" class="{{ request('category') == $cat->id_category ? 'active' : '' }}">
+                            {{ $cat->name }}
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     @php
-        // Iklan Penjual (HANYA BERUPA VIDEO LANDSCAPE, maks 10 detik)
         $sellerAds = isset($promotedProducts) && $promotedProducts->count() > 0 
             ? $promotedProducts->filter(fn($ad) => !empty($ad->video_url))->values()
             : collect();
 
-        // Produk Populer & Terlaris untuk kolom kanan
         $popList = isset($popularProducts) && $popularProducts->count() > 0 
             ? $popularProducts 
             : ($rekomendasi ?? collect());
@@ -512,7 +518,6 @@
 
     <section class="top-hero-section">
         <div class="row g-3 align-items-stretch">
-            {{-- KOLOM KIRI: CARD IKLAN PENJUAL (KHUSUS VIDEO LANDSCAPE MAKS 10 DETIK) --}}
             <div class="col-12 col-lg-7">
                 <div class="ad-hero-wrapper" id="adHeroBanner">
                     <div class="ad-hero-track" id="adHeroTrack">
@@ -523,15 +528,12 @@
                             <div class="ad-hero-slide" data-slide-index="{{ $idx }}">
                                 <a href="{{ $adUrl }}" class="ad-fullscreen-link" title="{{ $ad->title }}">
                                     <video src="{{ $ad->video_url }}" autoplay muted loop playsinline class="ad-media-full" ontimeupdate="if(this.currentTime>=10){ this.currentTime=0; }"></video>
-
-                                    {{-- Tag Iklan Video Landscape Minimalis di Pojok --}}
                                     <div class="ad-tag-floating">
                                         <span class="ad-badge-clean">
                                             <i class="bi bi-camera-reels-fill text-warning me-1"></i> Iklan Video (10s Landscape)
                                         </span>
                                     </div>
                                 </a>
-
                                 <button type="button" class="ad-sound-btn" onclick="event.preventDefault(); event.stopPropagation(); toggleAdSound(this);" title="Nyalakan/Matikan Suara">
                                     <i class="bi bi-volume-mute-fill"></i>
                                 </button>
@@ -549,7 +551,6 @@
                         @endforelse
                     </div>
 
-                    {{-- Tombol Navigasi Panah Geser Kiri / Kanan --}}
                     <button type="button" class="ad-nav-arrow prev" id="adHeroPrev" aria-label="Iklan Sebelumnya">
                         <i class="bi bi-chevron-left"></i>
                     </button>
@@ -560,7 +561,6 @@
                         </button>
                     </div>
 
-                    {{-- Bottom Controls (Animated SVG Pie Timer & Pagination Dots) --}}
                     <div class="ad-bottom-bar">
                         <div class="ad-timer-container" title="Iklan otomatis berganti setiap 10 detik">
                             <svg class="ad-timer-svg" viewBox="0 0 36 36">
@@ -578,10 +578,8 @@
                 </div>
             </div>
 
-            {{-- KOLOM KANAN: PRODUK POPULER (1 CARD BESAR ATAS + 2 CARD BAWAH) --}}
             <div class="col-12 col-lg-5">
                 <div class="hero-popular-col">
-                    {{-- Top Big Popular Card --}}
                     @if($pop1)
                         <a href="{{ route('pembeli.produk.detail', $pop1->id_product) }}" class="hero-pop-card-top text-decoration-none" title="{{ $pop1->title }}">
                             <img src="{{ $pop1->image_url }}" alt="{{ $pop1->title }}" class="pop-card-img" onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($pop1->title) }}&background=2563eb&color=fff&size=512&bold=true'">
@@ -606,7 +604,6 @@
                         </a>
                     @endif
 
-                    {{-- Bottom 2 Mini Popular Cards --}}
                     <div class="hero-pop-bottom-row">
                         @if($pop2)
                             <a href="{{ route('pembeli.produk.detail', $pop2->id_product) }}" class="hero-pop-card-sm text-decoration-none" title="{{ $pop2->title }}">
@@ -639,12 +636,9 @@
         </div>
     </section>
 
-    {{-- =========================================================================
-         2. STATISTIK TRANSAKSI & BELANJA
-         ========================================================================= --}}
     <section class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
-            <div class="stat-card-dash h-100">
+            <div class="stat-card-dash stat-blue h-100">
                 <div class="stat-top">
                     <div class="stat-icon icon-blue"><i class="bi bi-bag-check-fill"></i></div>
                     <span class="badge bg-primary-subtle text-primary fw-bold" style="font-size: 10px;">Total Pesanan</span>
@@ -660,7 +654,7 @@
         </div>
 
         <div class="col-6 col-lg-3">
-            <div class="stat-card-dash h-100">
+            <div class="stat-card-dash stat-green h-100">
                 <div class="stat-top">
                     <div class="stat-icon icon-green"><i class="bi bi-check-circle-fill"></i></div>
                     <span class="badge bg-success-subtle text-success fw-bold" style="font-size: 10px;">Selesai</span>
@@ -676,7 +670,7 @@
         </div>
 
         <div class="col-6 col-lg-3">
-            <div class="stat-card-dash h-100">
+            <div class="stat-card-dash stat-orange h-100">
                 <div class="stat-top">
                     <div class="stat-icon icon-orange"><i class="bi bi-clock-history"></i></div>
                     <span class="badge bg-warning-subtle text-warning-emphasis fw-bold" style="font-size: 10px;">Menunggu</span>
@@ -692,7 +686,7 @@
         </div>
 
         <div class="col-6 col-lg-3">
-            <div class="stat-card-dash h-100">
+            <div class="stat-card-dash stat-red h-100">
                 <div class="stat-top">
                     <div class="stat-icon icon-red"><i class="bi bi-cart-fill"></i></div>
                     <span class="badge bg-danger-subtle text-danger fw-bold" style="font-size: 10px;">Keranjang</span>
@@ -708,73 +702,11 @@
         </div>
     </section>
 
-    {{-- =========================================================================
-         3. JELAJAHI KATEGORI KARYA DIGITAL
-         ========================================================================= --}}
-    <section class="mb-4">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <div>
-                <h4 class="fw-bold text-dark mb-0 fs-5">Jelajahi Kategori</h4>
-                <p class="text-muted small mb-0">Temukan aset berdasarkan bidang keahlian</p>
-            </div>
-            <a href="{{ route('pembeli.marketplace') }}" class="small fw-bold text-primary text-decoration-none d-inline-flex align-items-center gap-1">
-                Semua Kategori <i class="bi bi-chevron-right"></i>
-            </a>
-        </div>
-
-        <div class="category-grid">
-            @php
-                $catIcons = [
-                    'desain' => 'bi-palette-fill',
-                    'logo' => 'bi-vector-pen',
-                    'ui/ux' => 'bi-phone-fill',
-                    'website' => 'bi-code-slash',
-                    'web' => 'bi-code-slash',
-                    '3d' => 'bi-box-seam-fill',
-                    'video' => 'bi-camera-video-fill',
-                    'ilustrasi' => 'bi-image-fill',
-                    'social' => 'bi-share-fill',
-                    'jasa' => 'bi-briefcase-fill',
-                ];
-            @endphp
-            @if(isset($categories) && $categories->count() > 0)
-                @foreach($categories as $cat)
-                    @php
-                        $iconClass = 'bi-grid-fill';
-                        $catNameLower = strtolower($cat->name);
-                        foreach($catIcons as $key => $icon) {
-                            if(str_contains($catNameLower, $key)) {
-                                $iconClass = $icon;
-                                break;
-                            }
-                        }
-                    @endphp
-                    <a href="{{ route('pembeli.marketplace', ['category' => $cat->id_category]) }}" class="category-card text-decoration-none">
-                        <div class="category-icon"><i class="bi {{ $cat->icon ?: $iconClass }}"></i></div>
-                        <span class="small fw-bold">{{ $cat->name }}</span>
-                    </a>
-                @endforeach
-            @else
-                <a href="{{ route('pembeli.marketplace') }}" class="category-card text-decoration-none"><div class="category-icon"><i class="bi bi-palette-fill"></i></div><span class="small fw-bold">Desain</span></a>
-                <a href="{{ route('pembeli.marketplace') }}" class="category-card text-decoration-none"><div class="category-icon"><i class="bi bi-vector-pen"></i></div><span class="small fw-bold">Logo</span></a>
-                <a href="{{ route('pembeli.marketplace') }}" class="category-card text-decoration-none"><div class="category-icon"><i class="bi bi-phone-fill"></i></div><span class="small fw-bold">UI/UX</span></a>
-                <a href="{{ route('pembeli.marketplace') }}" class="category-card text-decoration-none"><div class="category-icon"><i class="bi bi-code-slash"></i></div><span class="small fw-bold">Website</span></a>
-                <a href="{{ route('pembeli.marketplace') }}" class="category-card text-decoration-none"><div class="category-icon"><i class="bi bi-box-seam-fill"></i></div><span class="small fw-bold">3D Model</span></a>
-                <a href="{{ route('pembeli.marketplace') }}" class="category-card text-decoration-none"><div class="category-icon"><i class="bi bi-camera-video-fill"></i></div><span class="small fw-bold">Video</span></a>
-                <a href="{{ route('pembeli.marketplace') }}" class="category-card text-decoration-none"><div class="category-icon"><i class="bi bi-image-fill"></i></div><span class="small fw-bold">Ilustrasi</span></a>
-                <a href="{{ route('pembeli.marketplace') }}" class="category-card text-decoration-none"><div class="category-icon"><i class="bi bi-share-fill"></i></div><span class="small fw-bold">Medsos</span></a>
-            @endif
-        </div>
-    </section>
-
-    {{-- =========================================================================
-         4. REKOMENDASI PRODUK KARYA TERBARU
-         ========================================================================= --}}
     <section>
         <div class="d-flex align-items-center justify-content-between mb-3">
             <div>
                 <h4 class="fw-bold text-dark mb-0 fs-5">Rekomendasi Karya Untukmu</h4>
-                <p class="text-muted small mb-0">Pilihan produk terpopuler dan terverifikasi</p>
+                <p class="text-muted small mb-0">20 karya digital favorit dan terbaru pilihanmu</p>
             </div>
             <a href="{{ route('pembeli.marketplace') }}" class="small fw-bold text-primary text-decoration-none d-inline-flex align-items-center gap-1">
                 Lihat Semua <i class="bi bi-chevron-right"></i>
@@ -782,7 +714,7 @@
         </div>
         
         <div class="product-grid w-100" id="productGrid">
-            @forelse($rekomendasi ?? [] as $product)
+            @forelse(($rekomendasi ?? collect())->take(20) as $product)
                 @include('pembeli.partials.product-card', ['product' => $product])
             @empty
                 <div class="w-100 text-center py-5 bg-white rounded-4 border shadow-sm" style="grid-column: 1 / -1;">
@@ -792,6 +724,14 @@
                 </div>
             @endforelse
         </div>
+
+        @if(isset($rekomendasi) && $rekomendasi->count() > 0)
+            <div class="text-center mt-4">
+                <a href="{{ route('pembeli.marketplace') }}" class="btn fw-bold px-4 py-2 rounded-pill shadow-sm" style="background: #eff6ff; color: #2563eb; font-size: 13px; border: 1px solid #dbeafe;">
+                    Lihat Semua Karya <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        @endif
     </section>
 
 @endsection
@@ -830,7 +770,7 @@
         }
 
         let currentIndex = 0;
-        const AD_INTERVAL_MS = 10000; // 10 Detik
+        const AD_INTERVAL_MS = 10000;
         let startTime = Date.now();
         let animationFrameId = null;
         let isPaused = false;
@@ -882,7 +822,6 @@
                 dot.classList.toggle('active', i === currentIndex);
             });
 
-            // Restart video in current slide if exists
             const slides = track.querySelectorAll('.ad-hero-slide');
             slides.forEach((slide, i) => {
                 const vid = slide.querySelector('video');
@@ -942,7 +881,6 @@
             });
         }
 
-        // Jalankan autoplay 10 detik dengan progress animasi SVG
         resetTimer();
     })();
 </script>

@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Sora', 'sans-serif'] }, colors: { sky: '#0EA5E9', skyHover: '#0284C7', skyDeep: '#0B3D62', coral: '#FF7A59' } } } }
     </script>
@@ -61,7 +63,7 @@
             <nav class="flex-1 px-4 space-y-1.5 text-[13px] font-semibold text-sky-100 overflow-y-auto pb-4">
                 <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-4">Menu Utama</p>
                 <a href="{{ route('admin.dashboard') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all duration-200">
-                    <i class="fa-solid fa-chart-pie w-4 text-center"></i><span>Dashboard</span>
+                    <i class="fa-solid fa-chart-pie w-4 text-center"></i><span>Beranda</span>
                 </a>
 
                 <div>
@@ -295,28 +297,14 @@
                                                     <i class="fa-solid fa-eye text-xs"></i> <span>Tinjau</span>
                                                 </button>
                                                 @if($product->status === 'pending')
-                                                    <form method="POST" action="{{ route('admin.products.approve', $product->id_product) }}" onsubmit="return confirm('Setujui produk ini?');">
-                                                        @csrf
-                                                        <button type="submit" class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Setujui"><i class="fa-solid fa-check text-xs"></i></button>
-                                                    </form>
-                                                    <form method="POST" action="{{ route('admin.products.takedown', $product->id_product) }}" onsubmit="return confirm('Tolak / takedown produk ini?');">
-                                                        @csrf
-                                                        <button type="submit" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Tolak"><i class="fa-solid fa-xmark text-xs"></i></button>
-                                                    </form>
+                                                    <button type="button" onclick="confirmApproveProduct('{{ route('admin.products.approve', $product->id_product) }}', '{{ addslashes($product->title) }}')" class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Setujui"><i class="fa-solid fa-check text-xs"></i></button>
+                                                    <button type="button" onclick="confirmTakedown('{{ route('admin.products.takedown', $product->id_product) }}', '{{ addslashes($product->title) }}', 'Tolak / takedown produk ini?')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Tolak"><i class="fa-solid fa-xmark text-xs"></i></button>
                                                 @elseif($product->status === 'active')
-                                                    <form method="POST" action="{{ route('admin.products.takedown', $product->id_product) }}" onsubmit="return confirm('Takedown produk ini dari katalog?');">
-                                                        @csrf
-                                                        <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-600 hover:text-white transition-all text-[11px] font-bold shadow-sm"><i class="fa-solid fa-ban"></i> Takedown</button>
-                                                    </form>
+                                                    <button type="button" onclick="confirmTakedown('{{ route('admin.products.takedown', $product->id_product) }}', '{{ addslashes($product->title) }}', 'Takedown produk ini dari katalog?')" class="px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-600 hover:text-white transition-all text-[11px] font-bold shadow-sm"><i class="fa-solid fa-ban"></i> Takedown</button>
                                                 @else
-                                                    <form method="POST" action="{{ route('admin.products.approve', $product->id_product) }}" onsubmit="return confirm('Aktifkan kembali produk ini?');">
-                                                        @csrf
-                                                        <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-[11px] font-bold shadow-sm"><i class="fa-solid fa-rotate-left"></i> Aktifkan</button>
-                                                    </form>
+                                                    <button type="button" onclick="confirmApproveProduct('{{ route('admin.products.approve', $product->id_product) }}', '{{ addslashes($product->title) }}', 'Aktifkan kembali produk ini?')" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition-all text-[11px] font-bold shadow-sm"><i class="fa-solid fa-rotate-left"></i> Aktifkan</button>
                                                 @endif
-                                                <button type="button" class="btn-delete-product w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Hapus Permanen"
-                                                    data-id="{{ $product->id_product }}"
-                                                    data-title="{{ $product->title }}">
+                                                <button type="button" onclick="confirmDeleteProduct('{{ route('admin.products.delete', $product->id_product) }}', '{{ addslashes($product->title) }}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Hapus Permanen">
                                                     <i class="fa-solid fa-trash text-xs"></i>
                                                 </button>
                                             </div>
@@ -340,22 +328,6 @@
 
             </div>
         </main>
-    </div>
-
-    <!-- MODAL: HAPUS PRODUK -->
-    <div id="deleteProductModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
-        <div class="modal-overlay absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('deleteProductModal')"></div>
-        <div class="modal-box relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-            <div class="w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
-            <h3 class="font-display font-extrabold text-lg text-slate-900 mb-1">Hapus Produk Permanen?</h3>
-            <p class="text-xs text-slate-600 mb-5">Anda akan menghapus <strong id="deleteProductTitle"></strong> secara permanen. Tindakan ini tidak dapat dibatalkan.</p>
-            <form id="deleteProductForm" method="POST" action="" class="flex justify-center gap-2">
-                @csrf
-                @method('DELETE')
-                <button type="button" onclick="closeModal('deleteProductModal')" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Batal</button>
-                <button type="submit" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">Ya, Hapus</button>
-            </form>
-        </div>
     </div>
 
     <!-- MODAL: TINJAU PRODUK -->
@@ -414,18 +386,12 @@
             </div>
 
             <div id="reviewModalActions" class="mt-6 flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-                <form id="reviewApproveForm" method="POST" action="" class="hidden inline-block" onsubmit="return confirm('Setujui dan aktifkan produk ini?');">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5">
-                        <i class="fa-solid fa-check"></i> Setujui & Terbitkan
-                    </button>
-                </form>
-                <form id="reviewRejectForm" method="POST" action="" class="hidden inline-block" onsubmit="return confirm('Tolak / takedown produk ini?');">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5">
-                        <i class="fa-solid fa-xmark"></i> Tolak / Takedown
-                    </button>
-                </form>
+                <button type="button" id="reviewApproveBtn" class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-check"></i> Setujui & Terbitkan
+                </button>
+                <button type="button" id="reviewRejectBtn" class="hidden px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-xmark"></i> Tolak / Takedown
+                </button>
                 <button type="button" onclick="closeModal('reviewProductModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all">
                     Tutup
                 </button>
@@ -463,6 +429,92 @@
             el.classList.remove('flex');
         }
 
+        function confirmTakedown(actionUrl, title, customMsg) {
+            Swal.fire({
+                title: 'Takedown / Tolak Produk?',
+                text: customMsg || `Apakah Anda yakin ingin menolak / takedown jasa "${title}" dari katalog?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Takedown!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = actionUrl;
+                    const csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = '_token';
+                    csrf.value = '{{ csrf_token() }}';
+                    form.appendChild(csrf);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+
+        function confirmApproveProduct(actionUrl, title, customMsg) {
+            Swal.fire({
+                title: 'Setujui Produk?',
+                text: customMsg || `Apakah Anda yakin ingin menyetujui dan menerbitkan jasa "${title}" ke katalog?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Setujui!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = actionUrl;
+                    const csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = '_token';
+                    csrf.value = '{{ csrf_token() }}';
+                    form.appendChild(csrf);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+
+        function confirmDeleteProduct(actionUrl, title) {
+            Swal.fire({
+                title: 'Hapus Produk Permanen?',
+                text: `Anda akan menghapus jasa "${title}" secara permanen. Tindakan ini tidak dapat dibatalkan.`,
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Hapus Permanen!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = actionUrl;
+
+                    const csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = '_token';
+                    csrf.value = '{{ csrf_token() }}';
+                    form.appendChild(csrf);
+
+                    const method = document.createElement('input');
+                    method.type = 'hidden';
+                    method.name = '_method';
+                    method.value = 'DELETE';
+                    form.appendChild(method);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+
         function openReviewModal(id, title, category, seller, price, description, imgUrl, status) {
             document.getElementById('reviewTitle').textContent = title;
             document.getElementById('reviewCategory').textContent = category;
@@ -471,17 +523,25 @@
             document.getElementById('reviewDescription').textContent = description || 'Tidak ada deskripsi.';
             document.getElementById('reviewStatus').textContent = status === 'active' ? 'Aktif' : (status === 'pending' ? 'Menunggu Approval' : 'Nonaktif');
 
-            const approveForm = document.getElementById('reviewApproveForm');
-            const rejectForm = document.getElementById('reviewRejectForm');
+            const approveBtn = document.getElementById('reviewApproveBtn');
+            const rejectBtn = document.getElementById('reviewRejectBtn');
 
             if (status === 'pending') {
-                approveForm.action = `{{ url('admin/products/approve') }}/${id}`;
-                rejectForm.action = `{{ url('admin/products/takedown') }}/${id}`;
-                approveForm.classList.remove('hidden');
-                rejectForm.classList.remove('hidden');
+                const approveUrl = `{{ url('admin/products/approve') }}/${id}`;
+                const rejectUrl = `{{ url('admin/products/takedown') }}/${id}`;
+                approveBtn.onclick = function() {
+                    closeModal('reviewProductModal');
+                    confirmApproveProduct(approveUrl, title);
+                };
+                rejectBtn.onclick = function() {
+                    closeModal('reviewProductModal');
+                    confirmTakedown(rejectUrl, title, 'Tolak / takedown produk ini?');
+                };
+                approveBtn.classList.remove('hidden');
+                rejectBtn.classList.remove('hidden');
             } else {
-                approveForm.classList.add('hidden');
-                rejectForm.classList.add('hidden');
+                approveBtn.classList.add('hidden');
+                rejectBtn.classList.add('hidden');
             }
 
             const imgEl = document.getElementById('reviewImg');
@@ -501,15 +561,6 @@
 
             openModal('reviewProductModal');
         }
-
-        document.querySelectorAll('.btn-delete-product').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const form = document.getElementById('deleteProductForm');
-                form.action = `{{ url('admin/products') }}/${btn.dataset.id}`;
-                document.getElementById('deleteProductTitle').textContent = btn.dataset.title;
-                openModal('deleteProductModal');
-            });
-        });
     </script>
 </body>
 </html>

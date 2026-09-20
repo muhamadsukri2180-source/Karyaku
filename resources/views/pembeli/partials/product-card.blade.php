@@ -14,15 +14,11 @@
     </div>
     
     <div class="product-body">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-            <div class="d-flex align-items-center gap-1.5 text-truncate" style="max-width: 80%;">
+        <div class="d-flex align-items-center mb-2">
+            <div class="d-flex align-items-center gap-1.5 text-truncate" style="max-width: 100%;">
                 <img src="https://ui-avatars.com/api/?name={{ urlencode($product->seller->name ?? 'Kreator') }}&background=eff6ff&color=2563eb&bold=true" alt="Kreator" class="rounded-circle flex-shrink-0" style="width:20px;height:20px;object-fit:cover;">
                 <span class="text-muted small text-truncate fw-medium" style="font-size: 11px;">{{ $product->seller->name ?? 'Kreator Karyaku' }}</span>
             </div>
-            
-            <button type="button" class="wish-icon-btn {{ $isWish ? 'active' : '' }}" data-url="{{ route('pembeli.wishlist.toggle', $product->id_product) }}" title="Simpan ke Wishlist" aria-label="Simpan ke Wishlist">
-                <i class="bi {{ $isWish ? 'bi-heart-fill text-danger' : 'bi-heart' }}"></i>
-            </button>
         </div>
 
         <h6 class="mb-1 text-truncate" style="font-size: 13.5px; font-weight: 700; line-height: 1.35;">

@@ -1,6 +1,47 @@
 @extends('layouts.pembeli')
 @section('title', 'Laporkan Pelanggaran - Karyaku')
 
+@push('styles')
+<style>
+    .report-card-box {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+    }
+    .form-check-card {
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 10px 16px;
+        transition: all 0.2s ease;
+        background: #f8fafc;
+        cursor: pointer;
+    }
+    .form-check-card:hover {
+        border-color: #cbd5e1;
+        background: #f1f5f9;
+    }
+    .form-check-card input:checked ~ label {
+        color: var(--primary);
+        font-weight: 700;
+    }
+    /* Memberikan warna latar belakang abu-abu terang pada kolom isian agar kontras dan tidak nyaru */
+    .report-card-box .form-control,
+    .report-card-box .form-select {
+        background-color: #f1f5f9 !important;
+        border: 1.5px solid #cbd5e1 !important;
+        color: #1e293b;
+        font-weight: 500;
+    }
+    .report-card-box .form-control:focus,
+    .report-card-box .form-select:focus {
+        background-color: #ffffff !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+</style>
+@endpush
+
 @section('content')
 
 {{-- Header Halaman --}}
@@ -25,34 +66,40 @@
 @endphp
 
 {{-- Card Form Laporan --}}
-<div class="card-box p-4 rounded-4 shadow-sm">
+<div class="report-card-box p-4 p-md-5">
     <form action="{{ route('reports.store') }}" method="POST">
         @csrf
 
         {{-- Pilihan Tipe Target --}}
-        <div class="mb-3">
-            <label class="form-label small fw-semibold">Apa yang ingin kamu laporkan? <span class="text-danger">*</span></label>
-            <div class="d-flex gap-4 flex-wrap mt-1">
-                <div class="form-check">
-                    <input class="form-check-input target-type" type="radio" name="target_type" id="tProduk" value="produk" {{ $defaultTarget == 'produk' ? 'checked' : '' }}>
-                    <label class="form-check-label small fw-medium" for="tProduk">Produk Tertentu</label>
+        <div class="mb-4">
+            <label class="form-label small fw-bold text-dark mb-2">Apa yang ingin kamu laporkan? <span class="text-danger">*</span></label>
+            <div class="d-flex gap-3 flex-wrap">
+                <div class="form-check-card flex-fill">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input target-type" type="radio" name="target_type" id="tProduk" value="produk" {{ $defaultTarget == 'produk' ? 'checked' : '' }}>
+                        <label class="form-check-label small fw-semibold text-secondary cursor-pointer ms-1" for="tProduk">Produk Tertentu</label>
+                    </div>
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input target-type" type="radio" name="target_type" id="tUser" value="pengguna" {{ old('target_type') == 'pengguna' ? 'checked' : '' }}>
-                    <label class="form-check-label small fw-medium" for="tUser">Pengguna (Pembeli / Penjual)</label>
+                <div class="form-check-card flex-fill">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input target-type" type="radio" name="target_type" id="tUser" value="pengguna" {{ old('target_type') == 'pengguna' ? 'checked' : '' }}>
+                        <label class="form-check-label small fw-semibold text-secondary cursor-pointer ms-1" for="tUser">Pengguna (Pembeli / Penjual)</label>
+                    </div>
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input target-type" type="radio" name="target_type" id="tLain" value="lainnya" {{ old('target_type') == 'lainnya' ? 'checked' : '' }}>
-                    <label class="form-check-label small fw-medium" for="tLain">Lainnya</label>
+                <div class="form-check-card flex-fill">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input target-type" type="radio" name="target_type" id="tLain" value="lainnya" {{ old('target_type') == 'lainnya' ? 'checked' : '' }}>
+                        <label class="form-check-label small fw-semibold text-secondary cursor-pointer ms-1" for="tLain">Lainnya</label>
+                    </div>
                 </div>
             </div>
         </div>
 
         {{-- Dropdown Produk --}}
-        <div class="mb-3" id="groupProduk">
-            <label class="form-label small fw-semibold">Pilih Produk Yang Dilaporkan <span class="text-danger">*</span></label>
-            <select name="product_id" class="form-select rounded-3">
-                <option value="">-- Pilih Produk --</option>
+        <div class="mb-4" id="groupProduk">
+            <label class="form-label small fw-bold text-dark">Pilih Produk Yang Dilaporkan <span class="text-danger">*</span></label>
+            <select name="product_id" class="form-select rounded-3 py-2.5">
+                <option value="" disabled selected>Pilih produk yang sesuai pada daftar</option>
                 @foreach ($products as $product)
                     <option value="{{ $product->id_product }}" {{ old('product_id', request('product_id')) == $product->id_product ? 'selected' : '' }}>
                         {{ $product->title }} (Penjual: {{ $product->seller->name ?? '-' }})
@@ -62,10 +109,10 @@
         </div>
 
         {{-- Dropdown Pengguna --}}
-        <div class="mb-3 d-none" id="groupUser">
-            <label class="form-label small fw-semibold">Pilih Pengguna Yang Dilaporkan (Pembeli / Penjual) <span class="text-danger">*</span></label>
-            <select name="reported_user_id" class="form-select rounded-3">
-                <option value="">-- Pilih Pengguna --</option>
+        <div class="mb-4 d-none" id="groupUser">
+            <label class="form-label small fw-bold text-dark">Pilih Pengguna Yang Dilaporkan <span class="text-danger">*</span></label>
+            <select name="reported_user_id" class="form-select rounded-3 py-2.5">
+                <option value="" disabled selected>Pilih pengguna yang ingin dilaporkan</option>
                 @foreach ($users as $u)
                     <option value="{{ $u->id_user }}" {{ old('reported_user_id') == $u->id_user ? 'selected' : '' }}>
                         {{ $u->name }} ({{ $u->role->role_name ?? '-' }})
@@ -75,10 +122,10 @@
         </div>
 
         {{-- Dropdown Alasan --}}
-        <div class="mb-3">
-            <label class="form-label small fw-semibold">Alasan Laporan <span class="text-danger">*</span></label>
-            <select name="reason" class="form-select rounded-3" required>
-                <option value="">-- Pilih Alasan --</option>
+        <div class="mb-4">
+            <label class="form-label small fw-bold text-dark">Alasan Laporan <span class="text-danger">*</span></label>
+            <select name="reason" class="form-select rounded-3 py-2.5" required>
+                <option value="" disabled selected>Pilih alasan utama pelaporan</option>
                 <option value="Konten tidak sesuai / palsu" {{ old('reason') == 'Konten tidak sesuai / palsu' ? 'selected' : '' }}>Konten tidak sesuai / palsu</option>
                 <option value="Penipuan / tidak mengirim pesanan" {{ old('reason') == 'Penipuan / tidak mengirim pesanan' ? 'selected' : '' }}>Penipuan / tidak mengirim pesanan</option>
                 <option value="Pelanggaran hak cipta" {{ old('reason') == 'Pelanggaran hak cipta' ? 'selected' : '' }}>Pelanggaran hak cipta</option>
@@ -89,17 +136,17 @@
 
         {{-- Input Textarea --}}
         <div class="mb-4">
-            <label class="form-label small fw-semibold">Keterangan Detail <span class="text-danger">*</span></label>
-            <textarea name="description" rows="4" class="form-control rounded-3" placeholder="Jelaskan kronologi atau bukti pelanggaran secara lengkap..." required>{{ old('description') }}</textarea>
+            <label class="form-label small fw-bold text-dark">Keterangan Detail <span class="text-danger">*</span></label>
+            <textarea name="description" rows="4" class="form-control rounded-3" placeholder="Jelaskan kronologi, detail kejadian, atau bukti pelanggaran secara lengkap..." required>{{ old('description') }}</textarea>
         </div>
 
         {{-- Tombol Aksi --}}
-        <div class="d-flex gap-2 flex-wrap">
-            <button type="submit" class="btn btn-danger fw-bold px-4 py-2 rounded-3 shadow-sm">
-                <i class="bi bi-send-fill me-1"></i> Kirim Laporan
+        <div class="d-flex align-items-center gap-2 flex-wrap pt-3 border-top">
+            <button type="submit" class="btn btn-danger fw-bold px-4 py-2.5 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5" style="font-size: 13.5px;">
+                <i class="bi bi-send-fill"></i> Kirim Laporan
             </button>
-            <a href="{{ route('reports.index') }}" class="btn btn-outline-secondary px-4 py-2 rounded-3 fw-medium">
-                <i class="bi bi-clock-history me-1"></i> Riwayat Laporan Saya
+            <a href="{{ route('reports.index') }}" class="btn btn-outline-secondary px-4 py-2.5 rounded-pill fw-bold d-inline-flex align-items-center gap-1.5" style="font-size: 13.5px;">
+                <i class="bi bi-clock-history"></i> Riwayat Laporan Saya
             </a>
         </div>
     </form>

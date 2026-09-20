@@ -423,22 +423,10 @@
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
-    .search-combo select {
-        border: none;
-        background: var(--primary-light);
-        color: var(--primary-dark);
-        font-size: 13px;
-        font-weight: 600;
-        padding: 0 14px;
-        max-width: 190px;
-        border-right: 1px solid var(--border-color);
-        outline: none;
-        cursor: pointer;
-    }
     .search-combo input {
         border: none;
         flex: 1;
-        padding: 11px 16px;
+        padding: 11px 18px;
         font-size: 13.5px;
         outline: none;
         min-width: 0;
@@ -664,20 +652,30 @@
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-    /* Responsive Breakpoints */
-    @media (max-width: 992px) {
+    /* Responsive Breakpoints & Laptop Fixes */
+    @media (max-width: 1366px) {
+        .navbar-top { padding: 10px 18px; gap: 8px; }
+        .nav-menu { gap: 2px; margin-left: 4px; }
+        .nav-menu .nav-link { padding: 6px 9px; font-size: 12.5px; gap: 5px; }
+        .nav-menu .nav-link i { font-size: 14px; }
+        .btn-jual { padding: 7px 12px; font-size: 12px; }
+        .user-chip { padding: 4px 10px 4px 4px; gap: 6px; }
+        .user-chip .name { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    }
+
+    @media (max-width: 1180px) {
         .mobile-toggle { display: flex; }
         .nav-menu { display: none; }
         .mobile-menu-panel { display: block; }
         .btn-jual span { display: none; }
     }
+
     @media (max-width: 576px) {
-        .navbar-top { padding: 10px 16px; gap: 10px; }
-        .navbar-search { padding: 0 16px 12px; }
-        .main-content { padding: 16px 14px 50px; }
-        .search-combo select { max-width: 120px; font-size: 12px; padding: 0 8px; }
-        .search-combo input { padding: 10px 12px; font-size: 13px; }
-        .search-combo button { padding: 0 14px; }
+        .navbar-top { padding: 10px 14px; gap: 8px; }
+        .navbar-search { padding: 0 14px 12px; }
+        .main-content { padding: 16px 12px 50px; }
+        .search-combo input { padding: 8px 10px; font-size: 12.5px; }
+        .search-combo button { padding: 0 12px; }
     }
 </style>
 @stack('styles')
@@ -715,7 +713,7 @@
         </a>
 
         <nav class="nav-menu">
-            <a href="{{ route('pembeli.dashboard') }}" class="nav-link {{ request()->routeIs('pembeli.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+            <a href="{{ route('pembeli.dashboard') }}" class="nav-link {{ request()->routeIs('pembeli.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Beranda</a>
             <a href="{{ route('pembeli.marketplace') }}" class="nav-link {{ request()->routeIs('pembeli.marketplace') ? 'active' : '' }}"><i class="bi bi-shop"></i> Marketplace</a>
             <a href="{{ route('pembeli.wishlist') }}" class="nav-link {{ request()->routeIs('pembeli.wishlist') ? 'active' : '' }}"><i class="bi bi-heart-fill"></i> Disukai @if($navWishlistCount > 0)<span class="badge-count">{{ $navWishlistCount }}</span>@endif</a>
             <a href="{{ route('pembeli.keranjang') }}" class="nav-link {{ request()->routeIs('pembeli.keranjang') ? 'active' : '' }}"><i class="bi bi-cart-fill"></i> Keranjang @if($navCartCount > 0)<span class="badge-count">{{ $navCartCount }}</span>@endif</a>
@@ -809,7 +807,7 @@
     </div>
 
     <div class="mobile-menu-panel" id="mobileMenuPanel">
-        <a href="{{ route('pembeli.dashboard') }}" class="nav-link {{ request()->routeIs('pembeli.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+        <a href="{{ route('pembeli.dashboard') }}" class="nav-link {{ request()->routeIs('pembeli.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Beranda</a>
         <a href="{{ route('pembeli.marketplace') }}" class="nav-link {{ request()->routeIs('pembeli.marketplace') ? 'active' : '' }}"><i class="bi bi-shop"></i> Marketplace</a>
         <a href="{{ route('pembeli.wishlist') }}" class="nav-link {{ request()->routeIs('pembeli.wishlist') ? 'active' : '' }}"><i class="bi bi-heart-fill"></i> Disukai @if($navWishlistCount > 0)<span class="badge-count ms-auto">{{ $navWishlistCount }}</span>@endif</a>
         <a href="{{ route('pembeli.keranjang') }}" class="nav-link {{ request()->routeIs('pembeli.keranjang') ? 'active' : '' }}"><i class="bi bi-cart-fill"></i> Keranjang @if($navCartCount > 0)<span class="badge-count ms-auto">{{ $navCartCount }}</span>@endif</a>
@@ -830,14 +828,8 @@
 
     <div class="navbar-search">
         <form class="search-combo" action="{{ route('pembeli.marketplace') }}" method="GET">
-            <select name="category" aria-label="Pilih kategori">
-                <option value="">Semua Kategori</option>
-                @foreach ($navCategories as $navCat)
-                    <option value="{{ $navCat->id_category }}" {{ request('category') == $navCat->id_category ? 'selected' : '' }}>{{ $navCat->name }}</option>
-                @endforeach
-            </select>
             <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari karya digital, aset UI/UX, 3D, atau jasa kreator...">
-            <button type="submit"><i class="bi bi-search"></i><span class="d-none d-sm-inline">Cari</span></button>
+            <button type="submit"><i class="bi bi-search"></i><span class="d-none d-sm-inline">Cari Produk</span></button>
         </form>
     </div>
 </header>
