@@ -20,6 +20,62 @@
     .kk-tabs .nav-link.active { background: var(--primary); color: #fff !important; box-shadow: 0 5px 14px rgba(37,99,235,.18); }
     .kk-tabs .nav-link.danger-tab.active { background: #ef4444; }
     .kk-tabs .nav-link.danger-tab { color: #ef4444; }
+
+    /* CUSTOM TOMBOL AKSI */
+    .btn-action {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 8px 14px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    
+    .btn-action-blue {
+        background: #eff6ff;
+        color: #2563eb;
+        border: 1px solid #bfdbfe;
+    }
+    .btn-action-blue:hover {
+        background: #2563eb;
+        color: #fff;
+        border-color: #2563eb;
+    }
+    .btn-action-blue-active {
+        background: #fef3c7;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+    .btn-action-blue-active:hover {
+        background: #f59e0b;
+        color: #fff;
+    }
+
+    .btn-action-yellow {
+        background: #fffbeb;
+        color: #d97706;
+        border: 1px solid #fde68a;
+    }
+    .btn-action-yellow:hover {
+        background: #f59e0b;
+        color: #fff;
+        border-color: #f59e0b;
+    }
+
+    .btn-action-red {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        padding: 8px 12px;
+    }
+    .btn-action-red:hover {
+        background: #dc2626;
+        color: #fff;
+        border-color: #dc2626;
+    }
 </style>
 
 <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
@@ -103,74 +159,80 @@
             @php
                 $isBlocked = in_array($prod->status, ['rejected', 'inactive', 'blocked']);
             @endphp
-            <div class="kk-card kk-card-hover p-3" style="{{ $isBlocked ? 'border-color:#fecaca !important; background:#fef2f2;' : '' }}">
-                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-                    <div class="d-flex align-items-center gap-3 overflow-hidden">
+            <div class="kk-card kk-card-hover p-4" style="{{ $isBlocked ? 'border-color:#fecaca !important; background:#fef2f2;' : '' }}">
+                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-4">
+                    {{-- DI SINI DITAMBAHKAN GAP (JARAK) YANG LEBIH LUAS ANTARA GAMBAR DAN TEKS --}}
+                    <div class="d-flex align-items-center gap-4 overflow-hidden">
                         <img src="{{ $prod->thumbnail ? asset('storage/' . $prod->thumbnail) : 'https://placehold.co/100x100?text=Karyaku' }}" 
-                             alt="{{ $prod->title }}" class="rounded-3 object-fit-cover flex-shrink-0 border" style="width: 75px; height: 75px;">
+                             alt="{{ $prod->title }}" class="rounded-3 object-fit-cover flex-shrink-0 border shadow-sm" style="width: 85px; height: 85px;">
                         <div class="overflow-hidden">
-                            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                                <span class="badge fw-bold" style="font-size: 10px; background:var(--primary-light); color:var(--primary);">
+                            <div class="d-flex align-items-center gap-2 mb-1.5 flex-wrap">
+                                <span class="badge fw-bold px-2 py-1" style="font-size: 10.5px; background:var(--primary-light); color:var(--primary);">
                                     {{ $prod->category->name ?? 'Kategori' }}
                                 </span>
                                 @if($prod->status === 'active')
-                                    <span class="badge" style="background:#ecfdf5; color:#16a34a;"><i class="bi bi-check-circle-fill me-1"></i> Aktif di Marketplace</span>
+                                    <span class="badge px-2 py-1" style="background:#ecfdf5; color:#16a34a;"><i class="bi bi-check-circle-fill me-1"></i> Aktif di Toko</span>
                                 @elseif($prod->status === 'pending')
-                                    <span class="badge" style="background:#fff7ed; color:#f59e0b;"><i class="bi bi-hourglass-split me-1"></i> Menunggu Verifikasi</span>
+                                    <span class="badge px-2 py-1" style="background:#fff7ed; color:#f59e0b;"><i class="bi bi-hourglass-split me-1"></i> Menunggu Verifikasi</span>
                                 @else
-                                    <span class="badge" style="background:#fef2f2; color:#ef4444;"><i class="bi bi-exclamation-octagon-fill me-1"></i> Ditolak / Dinonaktifkan</span>
+                                    <span class="badge px-2 py-1" style="background:#fef2f2; color:#ef4444;"><i class="bi bi-exclamation-octagon-fill me-1"></i> Ditolak / Dinonaktifkan</span>
                                 @endif
 
                                 @if($prod->is_promoted)
-                                    <span class="badge" style="background:#f59e0b; color:#1e293b;"><i class="bi bi-megaphone-fill me-1"></i> Sedang Diiklankan</span>
+                                    <span class="badge px-2 py-1" style="background:#f59e0b; color:#fff;"><i class="bi bi-megaphone-fill me-1"></i> Sedang Diiklankan</span>
                                 @endif
                             </div>
 
-                            <h6 class="fw-bold mb-1 text-truncate" style="font-size: 15px;">
+                            <h6 class="fw-bold mb-1.5 text-truncate" style="font-size: 16px;">
                                 <a href="{{ route('pembeli.produk.detail', $prod->id_product) }}" target="_blank" class="text-decoration-none" style="color:var(--text-dark);">
                                     {{ $prod->title }}
                                 </a>
                             </h6>
 
-                            <div class="d-flex align-items-center gap-3 small" style="font-size: 12px; color:var(--text-muted);">
-                                <strong style="color:var(--primary);">Rp {{ number_format($prod->price, 0, ',', '.') }}</strong>
+                            <div class="d-flex align-items-center gap-3 small flex-wrap" style="font-size: 12.5px; color:var(--text-muted);">
+                                <strong style="color:var(--primary); font-size: 13.5px;">Rp {{ number_format($prod->price, 0, ',', '.') }}</strong>
+                                <span>&bull;</span>
                                 <span><i class="bi bi-boxes me-1"></i> Stok: <strong>{{ $prod->stock }}</strong></span>
-                                <span><i class="bi bi-eye me-1"></i> {{ $prod->view_count }}</span>
+                                <span>&bull;</span>
+                                <span><i class="bi bi-eye me-1"></i> Dilihat {{ $prod->view_count }}</span>
+                                <span>&bull;</span>
                                 <span><i class="bi bi-bag-check me-1"></i> Terjual {{ $prod->sold_count }}</span>
                             </div>
                         </div>
                     </div>
 
-                    {{-- AKSI --}}
+                    {{-- TOMBOL AKSI --}}
                     <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                         @if($prod->status === 'active')
                             @if($prod->is_promoted)
-                                <form action="{{ route('penjual.iklan.cancel', $prod->id_product) }}" method="POST">
+                                <form action="{{ route('penjual.iklan.cancel', $prod->id_product) }}" method="POST" class="m-0">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-warning btn-sm fw-semibold" title="Hentikan Iklan">
-                                        <i class="bi bi-megaphone-fill me-1"></i> Iklan Aktif
+                                    <button type="submit" class="btn btn-action btn-action-blue-active shadow-sm" title="Hentikan Iklan">
+                                        <i class="bi bi-megaphone-fill"></i> Iklan Aktif
                                     </button>
                                 </form>
                             @else
-                                <form action="{{ route('penjual.iklan.promote', $prod->id_product) }}" method="POST">
+                                <form action="{{ route('penjual.iklan.promote', $prod->id_product) }}" method="POST" class="m-0">
                                     @csrf
-                                    <button type="submit" class="btn btn-sm fw-semibold" style="border:1px solid var(--primary); color:var(--primary);" title="Pasang Iklan untuk Produk Ini">
-                                        <i class="bi bi-megaphone me-1"></i> Iklankan
+                                    <button type="submit" class="btn btn-action btn-action-blue shadow-sm" title="Pasang Iklan untuk Produk Ini">
+                                        <i class="bi bi-megaphone"></i> Iklankan
                                     </button>
                                 </form>
                             @endif
                         @endif
 
-                        <a href="{{ route('penjual.produk.edit', $prod->id_product) }}" class="btn btn-outline-secondary btn-sm fw-semibold">
-                            <i class="bi bi-pencil-square me-1"></i> Edit
+                        {{-- Tombol Edit (Kuning) --}}
+                        <a href="{{ route('penjual.produk.edit', $prod->id_product) }}" class="btn btn-action btn-action-yellow shadow-sm" title="Edit Produk">
+                            <i class="bi bi-pencil-square"></i> Edit
                         </a>
 
-                        <form action="{{ route('penjual.produk.destroy', $prod->id_product) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
+                        {{-- Tombol Hapus (Merah) --}}
+                        <form action="{{ route('penjual.produk.destroy', $prod->id_product) }}" method="POST" class="m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-outline-danger btn-sm">
-                                <i class="bi bi-trash"></i>
+                            <button type="submit" class="btn btn-action btn-action-red shadow-sm" title="Hapus Produk">
+                                <i class="bi bi-trash fs-6"></i>
                             </button>
                         </form>
                     </div>
@@ -178,7 +240,7 @@
 
                 {{-- CATATAN PENOLAKAN / PEMBLOKIRAN JIKA ADA --}}
                 @if($isBlocked && $prod->rejection_note)
-                    <div class="mt-3 p-3 rounded-3 small" style="background:#fef2f2; border:1px solid #fecaca; color:#b91c1c;">
+                    <div class="mt-3.5 p-3 rounded-3 small" style="background:#fef2f2; border:1px solid #fecaca; color:#b91c1c;">
                         <div class="d-flex align-items-center gap-2 fw-bold mb-1">
                             <i class="bi bi-exclamation-triangle-fill"></i> Catatan Penolakan / Pemblokiran oleh Petugas:
                         </div>

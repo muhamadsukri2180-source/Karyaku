@@ -725,7 +725,7 @@
         <div class="navbar-right">
             @if ($isPenjualNav)
                 <a href="{{ route('penjual.dashboard') }}" class="btn-jual d-none d-md-inline-flex">
-                    <i class="bi bi-shop"></i> <span>Dashboard Penjual</span>
+                    <i class="bi bi-shop"></i> <span>Beranda Penjual</span>
                 </a>
             @elseif ($hasSellerReg)
                 <a href="{{ route('pembeli.seller.registration.status') }}" class="btn-jual d-none d-md-inline-flex" style="background: var(--primary);">

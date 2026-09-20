@@ -60,15 +60,31 @@
 </div>
 
 @if ($orderItems->isEmpty())
-    <div class="download-card p-5 text-center text-muted border rounded-4">
-        <div class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle mb-3 shadow-sm" style="width: 80px; height: 80px;">
-            <i class="bi bi-cloud-arrow-down fs-1"></i>
+    <div class="card-box p-4 p-md-5 text-center my-2">
+        <div class="mx-auto d-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle mb-3.5 shadow-sm" style="width: 84px; height: 84px; background: linear-gradient(135deg, rgba(37,99,235,0.1) 0%, rgba(59,130,246,0.18) 100%); border: 1px solid rgba(37,99,235,0.15);">
+            <i class="bi bi-cloud-arrow-down-fill text-primary" style="font-size: 2.5rem;"></i>
         </div>
-        <h5 class="fw-bold text-dark mb-1">Belum Ada Berkas yang Dapat Diunduh</h5>
-        <p class="small text-muted mb-4">Karya digital Anda akan otomatis muncul dan dapat diunduh tanpa batas setelah pesanan terkonfirmasi lunas.</p>
-        <a href="{{ route('pembeli.marketplace') }}" class="btn btn-primary px-4 py-2.5 fw-bold rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5">
-            <i class="bi bi-shop"></i> Jelajahi Marketplace
-        </a>
+        <div style="max-width: 500px;" class="mx-auto">
+            <h5 class="fw-bold text-dark mb-2">Belum Ada Berkas yang Dapat Diunduh</h5>
+            <p class="small text-muted mb-4 leading-relaxed">
+                Karya digital dan aset yang Anda beli akan otomatis muncul di sini dan dapat diunduh tanpa batas setelah pesanan terkonfirmasi lunas.
+            </p>
+            <div class="p-3 bg-light rounded-3 text-start mb-4 border d-flex align-items-center gap-2.5 text-muted small">
+                <i class="bi bi-info-circle-fill text-primary fs-5 flex-shrink-0"></i>
+                <div>
+                    Baru saja melakukan pembayaran? Cek status transaksi Anda di 
+                    <a href="{{ route('pembeli.pesanan') }}" class="fw-bold text-primary text-decoration-underline">Daftar Pesanan Saya</a>.
+                </div>
+            </div>
+            <div class="d-flex flex-wrap align-items-center justify-content-center gap-2">
+                <a href="{{ route('pembeli.marketplace') }}" class="btn btn-primary px-4 py-2.5 fw-bold rounded-pill shadow-sm d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-shop"></i> Jelajahi Marketplace
+                </a>
+                <a href="{{ route('pembeli.pesanan') }}" class="btn btn-outline-secondary px-4 py-2.5 fw-bold rounded-pill d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-receipt"></i> Pesanan Saya
+                </a>
+            </div>
+        </div>
     </div>
 @else
     <div class="row g-4">

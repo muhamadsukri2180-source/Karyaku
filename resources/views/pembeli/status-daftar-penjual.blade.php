@@ -57,7 +57,7 @@
                 </div>
             </div>
             <a href="{{ route('penjual.dashboard') }}" class="btn btn-success fw-bold px-4 py-2.5 rounded-pill shadow-sm text-white flex-shrink-0 d-inline-flex align-items-center gap-1.5" style="font-size: 13.5px;">
-                <i class="bi bi-speedometer2"></i> Masuk Dashboard Penjual
+                Masuk Beranda Penjual
             </a>
         </div>
     </div>
