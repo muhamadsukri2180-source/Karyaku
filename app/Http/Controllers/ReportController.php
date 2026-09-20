@@ -13,16 +13,31 @@ class ReportController extends Controller
 {
     public function index()
     {
+        $userId = Auth::id();
+
+        // 1. Laporan yang diajukan oleh pembeli (Laporan Keluar)
         $reports = Report::with([
                 'product:id_product,title,seller_id',
                 'reportedUser:id_user,name',
+                'reviewer:id_user,name',
             ])
-            ->where('user_id', Auth::id())
+            ->where('user_id', $userId)
             ->latest('id_report')
-            ->paginate(10)
+            ->paginate(10, ['*'], 'page_saya')
             ->withQueryString();
 
-        return view('pembeli.laporan-saya', compact('reports'));
+        // 2. Laporan terhadap akun pembeli ini (Laporan Masuk)
+        $incomingReports = Report::with([
+                'product:id_product,title,seller_id',
+                'reporter:id_user,name',
+                'reviewer:id_user,name',
+            ])
+            ->where('reported_user_id', $userId)
+            ->latest('id_report')
+            ->paginate(10, ['*'], 'page_masuk')
+            ->withQueryString();
+
+        return view('pembeli.laporan-saya', compact('reports', 'incomingReports'));
     }
 
     public function create()

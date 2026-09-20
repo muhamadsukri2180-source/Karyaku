@@ -13,6 +13,17 @@
     </p>
 </div>
 
+@if (session('error'))
+    <div class="alert alert-danger rounded-3 small mb-3">{{ session('error') }}</div>
+@endif
+@if (session('success'))
+    <div class="alert alert-success rounded-3 small mb-3">{{ session('success') }}</div>
+@endif
+
+@php
+    $defaultTarget = request('product_id') ? 'produk' : old('target_type', 'produk');
+@endphp
+
 {{-- Card Form Laporan --}}
 <div class="card-box p-4 rounded-4 shadow-sm">
     <form action="{{ route('reports.store') }}" method="POST">
@@ -23,7 +34,7 @@
             <label class="form-label small fw-semibold">Apa yang ingin kamu laporkan? <span class="text-danger">*</span></label>
             <div class="d-flex gap-4 flex-wrap mt-1">
                 <div class="form-check">
-                    <input class="form-check-input target-type" type="radio" name="target_type" id="tProduk" value="produk" {{ old('target_type', 'produk') == 'produk' ? 'checked' : '' }}>
+                    <input class="form-check-input target-type" type="radio" name="target_type" id="tProduk" value="produk" {{ $defaultTarget == 'produk' ? 'checked' : '' }}>
                     <label class="form-check-label small fw-medium" for="tProduk">Produk Tertentu</label>
                 </div>
                 <div class="form-check">
@@ -43,7 +54,7 @@
             <select name="product_id" class="form-select rounded-3">
                 <option value="">-- Pilih Produk --</option>
                 @foreach ($products as $product)
-                    <option value="{{ $product->id_product }}" {{ old('product_id') == $product->id_product ? 'selected' : '' }}>
+                    <option value="{{ $product->id_product }}" {{ old('product_id', request('product_id')) == $product->id_product ? 'selected' : '' }}>
                         {{ $product->title }} (Penjual: {{ $product->seller->name ?? '-' }})
                     </option>
                 @endforeach

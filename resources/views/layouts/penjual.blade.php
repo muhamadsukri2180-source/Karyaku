@@ -71,6 +71,17 @@
     .user-dropdown .text-danger:hover{ background: #fef2f2; }
     .user-dropdown hr{ margin: 6px 4px; border-color: var(--border-color); }
     .user-dropdown .dropdown-membership{ display:flex; align-items:center; justify-content:space-between; padding: 8px 12px; }
+
+    /* Notifikasi Penjual Dropdown */
+    .icon-btn-light { width: 36px; height: 36px; border-radius: 10px; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.15); display: flex; align-items: center; justify-content: center; color: #fff; position: relative; font-size: 15px; transition: all .2s ease; flex-shrink: 0; cursor: pointer; }
+    .icon-btn-light:hover { background: rgba(255, 255, 255, 0.22); color: #fff; transform: translateY(-1px); }
+    .icon-btn-light .dot { position: absolute; top: 1px; right: 1px; min-width: 16px; height: 16px; padding: 0 3px; background: var(--coral); border-radius: 20px; border: 2px solid var(--primary-dark); font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; color: #fff; }
+    .notif-dropdown { position: absolute; right: 0; top: calc(100% + 10px); width: 310px; max-height: 400px; overflow-y: auto; background: #fff; border-radius: 14px; box-shadow: var(--shadow-hover); border: 1px solid var(--border-color); padding: 8px; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all .18s ease; z-index: 1040; }
+    .notif-menu.open .notif-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+    .notif-item { display: block; padding: 9px 11px; border-radius: 9px; transition: background .15s ease; text-decoration: none; margin-bottom: 2px; }
+    .notif-item:hover { background: var(--primary-light); }
+    .notif-item .n-title { font-size: 12.5px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; }
+    .notif-item .n-desc { font-size: 11.5px; line-height: 1.4; color: var(--text-muted); }
     .mobile-menu-panel{ display: none; max-height: 0; overflow: hidden; background: var(--primary-darker); transition: max-height .28s ease; }
     .mobile-menu-panel.show{ max-height: 640px; }
     .mobile-menu-panel .nav-link{ display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.82); padding: 13px 22px; font-size: 14px; font-weight: 500; border-top: 1px solid rgba(255,255,255,0.08); }
@@ -107,6 +118,20 @@
 @php
     $sideUser = Auth::user();
     $sideMembership = $sideUser->membership->name ?? 'Standar';
+    $currentUserId = $sideUser->id_user ?? Auth::id();
+    $latestNotifications = $currentUserId
+        ? \App\Models\Notification::where(function ($q) use ($currentUserId) {
+            $q->whereNull('user_id')
+              ->orWhere('user_id', $currentUserId);
+        })->latest()->take(5)->get()
+        : collect();
+
+    $unreadNotifCount = $currentUserId
+        ? \App\Models\Notification::where(function ($q) use ($currentUserId) {
+            $q->whereNull('user_id')
+              ->orWhere('user_id', $currentUserId);
+        })->where('is_read', false)->count()
+        : 0;
 @endphp
 
 <header class="site-navbar">
@@ -132,6 +157,10 @@
             <a href="{{ route('penjual.iklan.index') }}" class="nav-link {{ request()->routeIs('penjual.iklan*') ? 'active' : '' }}"><i class="bi bi-megaphone-fill"></i> Iklan</a>
             <a href="{{ route('penjual.keuangan.index') }}" class="nav-link {{ request()->routeIs('penjual.keuangan*') ? 'active' : '' }}"><i class="bi bi-wallet2"></i> Saldo</a>
             <a href="{{ route('penjual.membership.index') }}" class="nav-link {{ request()->routeIs('penjual.membership*') ? 'active' : '' }}"><i class="bi bi-gem"></i> Membership</a>
+            <a href="{{ route('penjual.notifikasi') }}" class="nav-link {{ request()->routeIs('penjual.notifikasi*') ? 'active' : '' }}">
+                <i class="bi bi-bell-fill"></i> Notifikasi
+                @if($unreadNotifCount > 0)<span class="badge-count">{{ $unreadNotifCount }}</span>@endif
+            </a>
             <a href="{{ route('penjual.laporan.index') }}" class="nav-link {{ request()->routeIs('penjual.laporan*') ? 'active' : '' }}"><i class="bi bi-shield-exclamation"></i> Laporan</a>
             <a href="{{ route('penjual.peringatan') }}" class="nav-link {{ request()->routeIs('penjual.peringatan') ? 'active' : '' }}"><i class="bi bi-shield-exclamation"></i> Peringatan Saya</a>
         </nav>
@@ -139,6 +168,38 @@
             <a href="{{ route('pembeli.marketplace') }}" class="btn-jual d-none d-md-inline-flex">
                 <i class="bi bi-shop"></i> <span>Ke Marketplace</span>
             </a>
+
+            {{-- NOTIFIKASI PENJUAL DROPDOWN --}}
+            <div class="user-menu notif-menu" id="notifMenu">
+                <button class="icon-btn-light" id="btnNotif" type="button" title="Notifikasi Penjual" aria-label="Notifikasi">
+                    <i class="bi bi-bell"></i>
+                    @if ($unreadNotifCount > 0)<span class="dot">{{ $unreadNotifCount }}</span>@endif
+                </button>
+                <div class="notif-dropdown">
+                    <div class="d-flex align-items-center justify-content-between px-2 py-1 mb-1 border-bottom">
+                        <span class="fw-bold small text-dark"><i class="bi bi-bell-fill text-primary me-1"></i> Notifikasi Penjual</span>
+                        @if($unreadNotifCount > 0)
+                            <span class="badge bg-danger rounded-pill" style="font-size: 10px;">{{ $unreadNotifCount }} Baru</span>
+                        @endif
+                    </div>
+                    @forelse ($latestNotifications as $notif)
+                        <a href="{{ route('penjual.notifikasi') }}" class="notif-item">
+                            <div class="n-title d-flex justify-content-between align-items-center">
+                                <span class="text-truncate me-1">{{ $notif->name }}</span>
+                                @if(!$notif->is_read)
+                                    <span class="badge bg-primary" style="font-size: 8px; padding: 2px 5px;">Baru</span>
+                                @endif
+                            </div>
+                            <div class="n-desc text-muted">{{ \Illuminate\Support\Str::limit($notif->description, 68) }}</div>
+                            <div class="n-time text-muted" style="font-size: 10.5px; margin-top: 3px;"><i class="bi bi-clock me-1"></i>{{ $notif->created_at ? $notif->created_at->diffForHumans() : '-' }}</div>
+                        </a>
+                    @empty
+                        <div class="text-center text-muted small py-3">Belum ada notifikasi baru.</div>
+                    @endforelse
+                    <hr style="margin: 6px 0;">
+                    <a href="{{ route('penjual.notifikasi') }}" class="d-block text-center small fw-semibold py-1" style="color: var(--primary);">Lihat Semua Notifikasi &rarr;</a>
+                </div>
+            </div>
 
             <div class="user-menu" id="userMenu">
                 <button class="user-chip" id="btnUserChip" type="button">
@@ -156,6 +217,7 @@
                     </div>
                     <hr>
                     <a href="{{ route('penjual.dashboard') }}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+                    <a href="{{ route('penjual.notifikasi') }}"><i class="bi bi-bell-fill"></i> Notifikasi @if($unreadNotifCount > 0)<span class="badge bg-danger ms-auto" style="font-size: 10px;">{{ $unreadNotifCount }}</span>@endif</a>
                     <a href="{{ route('penjual.produk.index') }}"><i class="bi bi-box-seam-fill"></i> Produk Saya</a>
                     <a href="{{ route('penjual.pesanan.index') }}"><i class="bi bi-receipt-cutoff"></i> Pesanan Masuk</a>
                     <a href="{{ route('penjual.iklan.index') }}"><i class="bi bi-megaphone-fill"></i> Iklan & Promosi</a>
@@ -178,13 +240,14 @@
 
     <div class="mobile-menu-panel" id="mobileMenuPanel">
         <a href="{{ route('penjual.dashboard') }}" class="nav-link {{ request()->routeIs('penjual.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+        <a href="{{ route('penjual.notifikasi') }}" class="nav-link {{ request()->routeIs('penjual.notifikasi*') ? 'active' : '' }}"><i class="bi bi-bell-fill"></i> Notifikasi @if($unreadNotifCount > 0)<span class="badge bg-danger ms-auto">{{ $unreadNotifCount }}</span>@endif</a>
         <a href="{{ route('penjual.produk.index') }}" class="nav-link {{ request()->routeIs('penjual.produk*') ? 'active' : '' }}"><i class="bi bi-box-seam-fill"></i> Produk Saya</a>
         <a href="{{ route('penjual.pesanan.index') }}" class="nav-link {{ request()->routeIs('penjual.pesanan*') ? 'active' : '' }}"><i class="bi bi-receipt-cutoff"></i> Pesanan Masuk</a>
         <a href="{{ route('penjual.iklan.index') }}" class="nav-link {{ request()->routeIs('penjual.iklan*') ? 'active' : '' }}"><i class="bi bi-megaphone-fill"></i> Iklan & Promosi</a>
         <a href="{{ route('penjual.keuangan.index') }}" class="nav-link {{ request()->routeIs('penjual.keuangan*') ? 'active' : '' }}"><i class="bi bi-wallet2"></i> Saldo & Penarikan</a>
         <a href="{{ route('penjual.membership.index') }}" class="nav-link {{ request()->routeIs('penjual.membership*') ? 'active' : '' }}"><i class="bi bi-gem"></i> Paket Membership</a>
         <a href="{{ route('penjual.laporan.index') }}" class="nav-link {{ request()->routeIs('penjual.laporan*') ? 'active' : '' }}"><i class="bi bi-shield-exclamation"></i> Laporan</a>
-         <a href="{{ route('penjual.peringatan') }}" class="nav-link {{ request()->routeIs('penjual.peringatan') ? 'active' : '' }}"><i class="bi bi-shield-exclamation"></i> Peringatan Saya</a>
+        <a href="{{ route('penjual.peringatan') }}" class="nav-link {{ request()->routeIs('penjual.peringatan') ? 'active' : '' }}"><i class="bi bi-shield-exclamation"></i> Peringatan Saya</a>
         <a href="{{ route('penjual.produk.create') }}" class="nav-link"><i class="bi bi-plus-lg"></i> Tambah Produk</a>
         <a href="{{ route('pembeli.marketplace') }}" class="nav-link"><i class="bi bi-bag-check-fill"></i> Belanja Karya Lain</a>
         <a href="{{ route('pembeli.dashboard') }}" class="nav-link"><i class="bi bi-person-workspace"></i> Dashboard Pembeli</a>
@@ -383,9 +446,13 @@
 
     const userMenu    = document.getElementById('userMenu');
     const btnUserChip = document.getElementById('btnUserChip');
+    const notifMenu   = document.getElementById('notifMenu');
+    const btnNotif    = document.getElementById('btnNotif');
+
     if (btnUserChip && userMenu) {
         btnUserChip.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (notifMenu) notifMenu.classList.remove('open');
             userMenu.classList.toggle('open');
         });
         document.addEventListener('click', (e) => {
@@ -393,6 +460,20 @@
         });
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') userMenu.classList.remove('open');
+        });
+    }
+
+    if (btnNotif && notifMenu) {
+        btnNotif.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (userMenu) userMenu.classList.remove('open');
+            notifMenu.classList.toggle('open');
+        });
+        document.addEventListener('click', (e) => {
+            if (!notifMenu.contains(e.target)) notifMenu.classList.remove('open');
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') notifMenu.classList.remove('open');
         });
     }
 </script>

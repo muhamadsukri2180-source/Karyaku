@@ -665,16 +665,43 @@ class PenjualController extends Controller
             ->orderBy('name')
             ->get();
 
+        // 1. Laporan Masuk: Laporan dari pihak lain yang ditujukan terhadap akun penjual atau produk miliknya
+        $incomingReports = Report::with([
+                'product:id_product,title,seller_id',
+                'reporter:id_user,name',
+                'reviewer:id_user,name',
+            ])
+            ->where(function ($q) use ($user) {
+                $q->where('reported_user_id', $user->id_user)
+                  ->orWhereHas('product', function ($pq) use ($user) {
+                      $pq->where('seller_id', $user->id_user);
+                  });
+            })
+            ->latest('id_report')
+            ->paginate(8, ['*'], 'page_masuk')
+            ->withQueryString();
+
+        // 2. Laporan Keluar: Laporan yang diajukan sendiri oleh penjual
         $reports = Report::with([
                 'product:id_product,title,seller_id',
                 'reportedUser:id_user,name',
+                'reviewer:id_user,name',
             ])
             ->where('user_id', $user->id_user)
             ->latest('id_report')
-            ->paginate(8)
+            ->paginate(8, ['*'], 'page_saya')
             ->withQueryString();
 
-        return view('penjual.laporan.index', compact('products', 'users', 'reports'));
+        $pendingIncomingCount = Report::where(function ($q) use ($user) {
+                $q->where('reported_user_id', $user->id_user)
+                  ->orWhereHas('product', function ($pq) use ($user) {
+                      $pq->where('seller_id', $user->id_user);
+                  });
+            })
+            ->where('status', 'pending')
+            ->count();
+
+        return view('penjual.laporan.index', compact('products', 'users', 'reports', 'incomingReports', 'pendingIncomingCount'));
     }
 
     public function laporanStore(Request $request)
@@ -739,6 +766,61 @@ class PenjualController extends Controller
             ->paginate(10);
 
         return view('penjual.peringatan', compact('peringatan'));
+    }
+
+    // =========================================================
+    // FITUR NOTIFIKASI PENJUAL
+    // =========================================================
+    public function notificationsIndex(Request $request)
+    {
+        $userId = Auth::id();
+
+        // Bersihkan otomatis notifikasi yang usianya lebih dari 1 bulan
+        Notification::where('created_at', '<', now()->subMonth())->delete();
+
+        $query = Notification::where(function ($q) use ($userId) {
+            $q->whereNull('user_id')
+              ->orWhere('user_id', $userId);
+        });
+
+        // Filter status jika ada parameter ?filter=unread
+        if ($request->query('filter') === 'unread') {
+            $query->where('is_read', false);
+        }
+
+        $notifications = $query->latest()->paginate(12)->withQueryString();
+
+        $totalCount = Notification::where(function ($q) use ($userId) {
+            $q->whereNull('user_id')
+              ->orWhere('user_id', $userId);
+        })->count();
+
+        $unreadCount = Notification::where('user_id', $userId)
+            ->where('is_read', false)
+            ->count();
+
+        return view('penjual.notifikasi', compact('notifications', 'totalCount', 'unreadCount'));
+    }
+
+    public function notificationsMarkAllRead()
+    {
+        $userId = Auth::id();
+
+        Notification::where('user_id', $userId)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return back()->with('success', 'Semua notifikasi telah ditandai sebagai dibaca.');
+    }
+
+    public function notificationDestroy($id)
+    {
+        $userId = Auth::id();
+
+        $notification = Notification::where('user_id', $userId)->findOrFail($id);
+        $notification->delete();
+
+        return back()->with('success', 'Notifikasi berhasil dihapus.');
     }
 
 }

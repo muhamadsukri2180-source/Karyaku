@@ -239,6 +239,11 @@ Route::middleware(['auth', 'suspended', 'role:penjual'])->prefix('penjual')->nam
 
     // BARU: Peringatan Saya
     Route::get('/peringatan', [PenjualController::class, 'peringatanIndex'])->name('peringatan');
+
+    // BARU: Notifikasi Penjual
+    Route::get('/notifikasi', [PenjualController::class, 'notificationsIndex'])->name('notifikasi');
+    Route::post('/notifikasi/mark-all-read', [PenjualController::class, 'notificationsMarkAllRead'])->name('notifikasi.markAllRead');
+    Route::delete('/notifikasi/{id}', [PenjualController::class, 'notificationDestroy'])->name('notifikasi.destroy');
 });
 
 
@@ -287,6 +292,7 @@ Route::middleware(['auth', 'suspended', 'role:pembeli,penjual'])->prefix('pembel
     Route::delete('/daftar-penjual/cancel', [SellerRegistrationController::class, 'cancel'])->name('seller.registration.cancel');
 
     Route::get('/peringatan', [PembeliController::class, 'peringatanIndex'])->name('peringatan');
+    Route::get('/laporan', [ReportController::class, 'index'])->name('laporan');
 });
 
 

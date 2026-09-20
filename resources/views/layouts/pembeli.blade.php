@@ -721,6 +721,7 @@
             <a href="{{ route('pembeli.keranjang') }}" class="nav-link {{ request()->routeIs('pembeli.keranjang') ? 'active' : '' }}"><i class="bi bi-cart-fill"></i> Keranjang @if($navCartCount > 0)<span class="badge-count">{{ $navCartCount }}</span>@endif</a>
             <a href="{{ route('pembeli.pesanan') }}" class="nav-link {{ request()->routeIs('pembeli.pesanan*') ? 'active' : '' }}"><i class="bi bi-receipt"></i> Pesanan</a>
             <a href="{{ route('pembeli.download') }}" class="nav-link {{ request()->routeIs('pembeli.download') ? 'active' : '' }}"><i class="bi bi-cloud-arrow-down-fill"></i> Download</a>
+            <a href="{{ route('pembeli.laporan') }}" class="nav-link {{ request()->routeIs('reports.*') || request()->routeIs('pembeli.laporan') ? 'active' : '' }}"><i class="bi bi-shield-exclamation"></i> Laporan</a>
         </nav>
 
         <div class="navbar-right">
@@ -814,6 +815,7 @@
         <a href="{{ route('pembeli.keranjang') }}" class="nav-link {{ request()->routeIs('pembeli.keranjang') ? 'active' : '' }}"><i class="bi bi-cart-fill"></i> Keranjang @if($navCartCount > 0)<span class="badge-count ms-auto">{{ $navCartCount }}</span>@endif</a>
         <a href="{{ route('pembeli.pesanan') }}" class="nav-link {{ request()->routeIs('pembeli.pesanan*') ? 'active' : '' }}"><i class="bi bi-receipt"></i> Pesanan Saya</a>
         <a href="{{ route('pembeli.download') }}" class="nav-link {{ request()->routeIs('pembeli.download') ? 'active' : '' }}"><i class="bi bi-cloud-arrow-down-fill"></i> Download Saya</a>
+        <a href="{{ route('pembeli.laporan') }}" class="nav-link {{ request()->routeIs('reports.*') || request()->routeIs('pembeli.laporan') ? 'active' : '' }}"><i class="bi bi-shield-exclamation"></i> Laporan Pelanggaran</a>
         <a href="{{ route('pembeli.profile') }}" class="nav-link {{ request()->routeIs('pembeli.profile') ? 'active' : '' }}"><i class="bi bi-person-fill"></i> Profil</a>
         @if ($isPenjualNav)
             <a href="{{ route('penjual.dashboard') }}" class="nav-link text-warning"><i class="bi bi-speedometer2"></i> Dashboard Penjual</a>
