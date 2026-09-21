@@ -1,4 +1,4 @@
-﻿@extends('layouts.penjual')
+@extends('layouts.penjual')
 
 @section('title', 'Iklan & Promosi Produk')
 
@@ -226,19 +226,22 @@
     function validateAdVideo(input) {
         const file = input.files[0];
         const errorMsg = input.parentElement.querySelector('.video-error-msg');
-        const submitBtn = input.form.querySelector('.btn-publish-ad');
+        const submitBtn = input.form ? input.form.querySelector('.btn-publish-ad') : null;
         
         if (!file) {
-            errorMsg.classList.add('d-none');
-            submitBtn.disabled = false;
+            if (errorMsg) errorMsg.classList.add('d-none');
+            if (submitBtn) submitBtn.disabled = false;
             return;
         }
 
         // Cek ukuran file (Maks 10 MB = 10 * 1024 * 1024 bytes)
         const maxSizeBytes = 10 * 1024 * 1024;
         if (file.size > maxSizeBytes) {
-            errorMsg.textContent = "Ukuran file video melebihi batas 10 MB (File Anda: " + (file.size / (1024 * 1024)).toFixed(1) + " MB).";
-            errorMsg.classList.remove('d-none');
+            if (errorMsg) {
+                errorMsg.textContent = "Ukuran file video melebihi batas 10 MB (File Anda: " + (file.size / (1024 * 1024)).toFixed(1) + " MB).";
+                errorMsg.classList.remove('d-none');
+            }
+            if (submitBtn) submitBtn.disabled = true;
             input.value = "";
             return;
         }
@@ -246,18 +249,56 @@
         // Cek durasi video (Maks 10 Detik)
         const video = document.createElement('video');
         video.preload = 'metadata';
-        video.onloadedmetadata = function() {
-            window.URL.revokeObjectURL(video.src);
-            const duration = video.duration;
-            if (duration > 10.5) {
-                errorMsg.textContent = "Durasi video melebihi batas 10 detik (Durasi video Anda: " + Math.round(duration) + " detik). Silakan potong/pilih video maks 10 detik.";
-                errorMsg.classList.remove('d-none');
-                input.value = "";
+        const objectUrl = URL.createObjectURL(file);
+        let durationChecked = false;
+
+        function handleDuration(duration) {
+            if (durationChecked) return;
+            durationChecked = true;
+            try { window.URL.revokeObjectURL(objectUrl); } catch(e) {}
+
+            // Jika durasi terdeteksi dan valid (angka lebih besar dari 0)
+            if (duration && !isNaN(duration) && duration !== Infinity && duration > 0) {
+                if (duration > 10.5) {
+                    if (errorMsg) {
+                        errorMsg.textContent = "Durasi video melebihi batas 10 detik (Durasi video Anda: " + Math.round(duration) + " detik). Silakan potong/pilih video maks 10 detik.";
+                        errorMsg.classList.remove('d-none');
+                    }
+                    if (submitBtn) submitBtn.disabled = true;
+                    input.value = "";
+                } else {
+                    if (errorMsg) errorMsg.classList.add('d-none');
+                    if (submitBtn) submitBtn.disabled = false;
+                }
             } else {
-                errorMsg.classList.add('d-none');
+                // Fallback: Jika browser belum berhasil mengukur durasi secara presisi dari file blob,
+                // izinkan unggah (selama ukuran file <= 10MB) agar tidak gagal validasi 0 detik secara salah.
+                if (errorMsg) errorMsg.classList.add('d-none');
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        }
+
+        video.onloadedmetadata = function() {
+            // Trik untuk browser (seperti Chrome/Firefox) jika duration bernilai Infinity/NaN/0 di event awal
+            if (video.duration === Infinity || isNaN(video.duration) || video.duration === 0) {
+                video.currentTime = 1e101;
+                video.ontimeupdate = function() {
+                    this.ontimeupdate = null;
+                    handleDuration(this.duration);
+                };
+                setTimeout(() => {
+                    handleDuration(video.duration);
+                }, 400);
+            } else {
+                handleDuration(video.duration);
             }
         };
-        video.src = URL.createObjectURL(file);
+
+        video.onerror = function() {
+            handleDuration(0);
+        };
+
+        video.src = objectUrl;
     }
 </script>
 @endpush
