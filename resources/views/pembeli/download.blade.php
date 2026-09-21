@@ -139,11 +139,6 @@
                                     <i class="bi bi-slash-circle me-1"></i> File Tidak Tersedia
                                 </button>
                             @endif
-                            @if($prod)
-                                <a href="{{ route('pembeli.produk.detail', $prod->id_product) }}" class="btn btn-outline-secondary btn-sm px-3 py-2 rounded-pill d-inline-flex align-items-center justify-content-center" title="Lihat Detail & Ulas">
-                                    <i class="bi bi-star"></i>
-                                </a>
-                            @endif
                         </div>
                     </div>
                 </div>

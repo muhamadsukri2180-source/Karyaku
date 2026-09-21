@@ -228,13 +228,9 @@
                         </a>
 
                         {{-- Tombol Hapus (Merah) --}}
-                        <form action="{{ route('penjual.produk.destroy', $prod->id_product) }}" method="POST" class="m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-action btn-action-red shadow-sm" title="Hapus Produk">
-                                <i class="bi bi-trash fs-6"></i>
-                            </button>
-                        </form>
+                        <button type="button" class="btn btn-action btn-action-red shadow-sm" title="Hapus Produk" onclick="confirmDeleteProduct('{{ route('penjual.produk.destroy', $prod->id_product) }}', '{{ addslashes($prod->title) }}')">
+                            <i class="bi bi-trash fs-6 me-1"></i> Hapus
+                        </button>
                     </div>
                 </div>
 
@@ -258,5 +254,49 @@
         {{ $products->links() }}
     </div>
 @endif
+
+@push('scripts')
+<script>
+function confirmDeleteProduct(actionUrl, productTitle) {
+    Swal.fire({
+        title: 'Hapus Produk Digital?',
+        html: `Apakah Anda yakin ingin menghapus produk <strong>"${productTitle}"</strong>?<br><small class="text-muted mt-2 d-block">Tindakan ini tidak dapat dibatalkan dan berkas karya akan dihapus secara permanen.</small>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '<i class="bi bi-trash-fill me-1"></i> Ya, Hapus Produk',
+        cancelButtonText: '<i class="bi bi-x-lg me-1"></i> Batal',
+        customClass: {
+            popup: 'rounded-4 border-0 shadow-lg',
+            confirmButton: 'btn btn-danger px-4 py-2 rounded-3 fw-bold',
+            cancelButton: 'btn btn-secondary px-4 py-2 rounded-3 fw-semibold ms-2'
+        },
+        buttonsStyling: false
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = actionUrl;
+            
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = '{{ csrf_token() }}';
+            form.appendChild(csrf);
+
+            const method = document.createElement('input');
+            method.type = 'hidden';
+            method.name = '_method';
+            method.value = 'DELETE';
+            form.appendChild(method);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
+@endpush
 
 @endsection

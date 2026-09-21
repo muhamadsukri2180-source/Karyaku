@@ -191,9 +191,6 @@ class User extends Authenticatable
 
     public function canUploadProduct(): bool
     {
-        if (!$this->isMembershipActive() && $this->id_membership) {
-            return false;
-        }
         $max = $this->getMaxUploadLimit();
         $current = Product::where('seller_id', $this->id_user)->count();
         return $current < $max;

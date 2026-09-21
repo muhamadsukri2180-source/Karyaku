@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
     :root {
@@ -235,7 +236,6 @@
             <a href="{{ route('penjual.keuangan.index') }}" class="nav-link {{ request()->routeIs('penjual.keuangan*') ? 'active' : '' }}"><i class="bi bi-wallet2"></i> Saldo</a>
             <a href="{{ route('penjual.membership.index') }}" class="nav-link {{ request()->routeIs('penjual.membership*') ? 'active' : '' }}"><i class="bi bi-gem"></i> Membership</a>
             <a href="{{ route('penjual.laporan.index') }}" class="nav-link {{ request()->routeIs('penjual.laporan*') ? 'active' : '' }}"><i class="bi bi-shield-exclamation"></i> Laporan</a>
-            <a href="{{ route('penjual.peringatan') }}" class="nav-link {{ request()->routeIs('penjual.peringatan') ? 'active' : '' }}"><i class="bi bi-shield-exclamation"></i> Peringatan</a>
         </nav>
 
         <div class="navbar-right">
@@ -302,7 +302,6 @@
                     <a href="{{ route('penjual.keuangan.index') }}"><i class="bi bi-wallet2"></i> Saldo & Penarikan</a>
                     <a href="{{ route('penjual.membership.index') }}"><i class="bi bi-gem"></i> Paket Membership</a>
                     <a href="{{ route('penjual.laporan.index') }}"><i class="bi bi-shield-exclamation"></i> Laporan</a>
-                    <a href="{{ route('penjual.peringatan') }}"><i class="bi bi-shield-exclamation"></i> Peringatan Saya</a>
                     <hr>
                     <a href="{{ route('pembeli.marketplace') }}"><i class="bi bi-bag-check-fill"></i> Belanja Karya Lain</a>
                     <a href="{{ route('pembeli.dashboard') }}"><i class="bi bi-person-workspace"></i> Beranda Pembeli</a>
@@ -329,7 +328,6 @@
         <a href="{{ route('penjual.keuangan.index') }}" class="nav-link {{ request()->routeIs('penjual.keuangan*') ? 'active' : '' }}"><i class="bi bi-wallet2"></i> Saldo & Penarikan</a>
         <a href="{{ route('penjual.membership.index') }}" class="nav-link {{ request()->routeIs('penjual.membership*') ? 'active' : '' }}"><i class="bi bi-gem"></i> Paket Membership</a>
         <a href="{{ route('penjual.laporan.index') }}" class="nav-link {{ request()->routeIs('penjual.laporan*') ? 'active' : '' }}"><i class="bi bi-shield-exclamation"></i> Laporan</a>
-        <a href="{{ route('penjual.peringatan') }}" class="nav-link {{ request()->routeIs('penjual.peringatan') ? 'active' : '' }}"><i class="bi bi-shield-exclamation"></i> Peringatan Saya</a>
         <a href="{{ route('penjual.produk.create') }}" class="nav-link"><i class="bi bi-plus-lg"></i> Tambah Produk</a>
         <a href="{{ route('pembeli.marketplace') }}" class="nav-link"><i class="bi bi-bag-check-fill"></i> Belanja Karya Lain</a>
         <a href="{{ route('pembeli.dashboard') }}" class="nav-link"><i class="bi bi-person-workspace"></i> Beranda Pembeli</a>

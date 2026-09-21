@@ -539,17 +539,4 @@ class PembeliController extends Controller
 
         return view('pembeli.notifications', compact('notifications'));
     }
-
-    public function peringatanIndex()
-    {
-        $userId = Auth::id();
-        $peringatan = \App\Models\Report::with(['product', 'reporter'])
-            ->where('reported_user_id', $userId)
-            ->whereIn('status', ['reviewed', 'resolved', 'escalated'])
-            ->whereNotNull('admin_note')
-            ->latest('updated_at')
-            ->paginate(10);
-
-        return view('pembeli.peringatan', compact('peringatan'));
-    }
 }

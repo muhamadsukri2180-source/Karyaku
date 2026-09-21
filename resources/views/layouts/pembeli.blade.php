@@ -714,7 +714,7 @@
 
         <nav class="nav-menu">
             <a href="{{ route('pembeli.dashboard') }}" class="nav-link {{ request()->routeIs('pembeli.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Beranda</a>
-            <a href="{{ route('pembeli.marketplace') }}" class="nav-link {{ request()->routeIs('pembeli.marketplace') ? 'active' : '' }}"><i class="bi bi-shop"></i> Marketplace</a>
+            <a href="{{ route('pembeli.marketplace') }}" class="nav-link {{ request()->routeIs('pembeli.marketplace') ? 'active' : '' }}"><i class="bi bi-shop"></i> Pasar</a>
             <a href="{{ route('pembeli.wishlist') }}" class="nav-link {{ request()->routeIs('pembeli.wishlist') ? 'active' : '' }}"><i class="bi bi-heart-fill"></i> Disukai @if($navWishlistCount > 0)<span class="badge-count">{{ $navWishlistCount }}</span>@endif</a>
             <a href="{{ route('pembeli.keranjang') }}" class="nav-link {{ request()->routeIs('pembeli.keranjang') ? 'active' : '' }}"><i class="bi bi-cart-fill"></i> Keranjang @if($navCartCount > 0)<span class="badge-count">{{ $navCartCount }}</span>@endif</a>
             <a href="{{ route('pembeli.pesanan') }}" class="nav-link {{ request()->routeIs('pembeli.pesanan*') ? 'active' : '' }}"><i class="bi bi-receipt"></i> Pesanan</a>
@@ -792,9 +792,7 @@
                         <div class="text-muted small text-truncate">@safeEmail($navUser->email ?? '')</div>
                     </div>
                     <a href="{{ route('pembeli.profile') }}"><i class="bi bi-person-fill text-primary"></i> Pengaturan Profil</a>
-                    <a href="{{ route('reports.create') }}"><i class="bi bi-flag-fill text-danger"></i> Laporkan Pelanggaran</a>
-                    <a href="{{ route('reports.index') }}"><i class="bi bi-clock-history text-secondary"></i> Riwayat Laporan Saya</a>
-                    <a href="{{ route('pembeli.peringatan') }}"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Peringatan Saya</a>
+                    <a href="{{ route('pembeli.laporan') }}"><i class="bi bi-shield-exclamation text-danger"></i> Pusat Laporan & Pengaduan</a>
                     <a href="{{ route('pembeli.seller.registration.status') }}"><i class="bi bi-person-check-fill text-info"></i> Status Pendaftaran Penjual</a>
                     <hr>
                     <form action="{{ route('logout') }}" method="POST">
@@ -808,7 +806,7 @@
 
     <div class="mobile-menu-panel" id="mobileMenuPanel">
         <a href="{{ route('pembeli.dashboard') }}" class="nav-link {{ request()->routeIs('pembeli.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Beranda</a>
-        <a href="{{ route('pembeli.marketplace') }}" class="nav-link {{ request()->routeIs('pembeli.marketplace') ? 'active' : '' }}"><i class="bi bi-shop"></i> Marketplace</a>
+        <a href="{{ route('pembeli.marketplace') }}" class="nav-link {{ request()->routeIs('pembeli.marketplace') ? 'active' : '' }}"><i class="bi bi-shop"></i> Pasar</a>
         <a href="{{ route('pembeli.wishlist') }}" class="nav-link {{ request()->routeIs('pembeli.wishlist') ? 'active' : '' }}"><i class="bi bi-heart-fill"></i> Disukai @if($navWishlistCount > 0)<span class="badge-count ms-auto">{{ $navWishlistCount }}</span>@endif</a>
         <a href="{{ route('pembeli.keranjang') }}" class="nav-link {{ request()->routeIs('pembeli.keranjang') ? 'active' : '' }}"><i class="bi bi-cart-fill"></i> Keranjang @if($navCartCount > 0)<span class="badge-count ms-auto">{{ $navCartCount }}</span>@endif</a>
         <a href="{{ route('pembeli.pesanan') }}" class="nav-link {{ request()->routeIs('pembeli.pesanan*') ? 'active' : '' }}"><i class="bi bi-receipt"></i> Pesanan Saya</a>

@@ -15,6 +15,22 @@ class ReportController extends Controller
     {
         $userId = Auth::id();
 
+        $products = Product::select('id_product', 'title', 'seller_id')
+            ->with(['seller:id_user,name'])
+            ->where('status', 'active')
+            ->where('seller_id', '!=', $userId)
+            ->orderBy('title')
+            ->get();
+
+        $users = User::select('id_user', 'name', 'id_role')
+            ->with(['role:id_role,role_name'])
+            ->where('id_user', '!=', $userId)
+            ->whereHas('role', function ($q) {
+                $q->whereIn('role_name', ['penjual', 'pembeli']);
+            })
+            ->orderBy('name')
+            ->get();
+
         // 1. Laporan yang diajukan oleh pembeli (Laporan Keluar)
         $reports = Report::with([
                 'product:id_product,title,seller_id',
@@ -37,29 +53,16 @@ class ReportController extends Controller
             ->paginate(10, ['*'], 'page_masuk')
             ->withQueryString();
 
-        return view('pembeli.laporan-saya', compact('reports', 'incomingReports'));
+        $pendingIncomingCount = Report::where('reported_user_id', $userId)
+            ->where('status', 'pending')
+            ->count();
+
+        return view('pembeli.laporan-saya', compact('products', 'users', 'reports', 'incomingReports', 'pendingIncomingCount'));
     }
 
     public function create()
     {
-        $userId = Auth::id();
-
-        $products = Product::select('id_product', 'title', 'seller_id')
-            ->with(['seller:id_user,name'])
-            ->where('status', 'active')
-            ->orderBy('title')
-            ->get();
-
-        $users = User::select('id_user', 'name', 'id_role')
-            ->with(['role:id_role,role_name'])
-            ->where('id_user', '!=', $userId)
-            ->whereHas('role', function ($q) {
-                $q->whereIn('role_name', ['penjual', 'pembeli']);
-            })
-            ->orderBy('name')
-            ->get();
-
-        return view('pembeli.laporkan', compact('products', 'users'));
+        return $this->index();
     }
 
     public function store(Request $request)
@@ -109,7 +112,7 @@ class ReportController extends Controller
             'status'           => 'pending',
         ]));
 
-        return redirect()->route('reports.index')
+        return redirect()->back()
             ->with('success', 'Laporan berhasil dikirim! Tim admin akan meninjau laporan kamu.');
     }
 

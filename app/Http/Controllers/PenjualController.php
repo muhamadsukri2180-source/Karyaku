@@ -121,12 +121,11 @@ class PenjualController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->isMembershipActive() && $user->id_membership) {
-            return redirect()->route('penjual.membership.index')
-                ->with('error', 'Masa aktif paket membership Anda telah berakhir. Silakan perpanjang paket membership Anda untuk dapat menambah produk baru.');
-        }
-
         if (!$user->canUploadProduct()) {
+            if (!$user->isMembershipActive() && $user->id_membership) {
+                return redirect()->route('penjual.membership.index')
+                    ->with('error', 'Masa aktif paket membership Anda telah berakhir dan kuota produk Anda telah penuh. Silakan perpanjang paket membership Anda.');
+            }
             return redirect()->route('penjual.produk.index')
                 ->with('error', 'Kuota upload produk Anda sudah penuh (' . $user->getMaxUploadLimit() . ' produk). Silakan tingkatkan paket membership Anda.');
         }
@@ -139,12 +138,11 @@ class PenjualController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->isMembershipActive() && $user->id_membership) {
-            return redirect()->route('penjual.membership.index')
-                ->with('error', 'Masa aktif paket membership Anda telah berakhir. Silakan perpanjang paket membership Anda untuk mengunggah produk baru.');
-        }
-
         if (!$user->canUploadProduct()) {
+            if (!$user->isMembershipActive() && $user->id_membership) {
+                return redirect()->route('penjual.membership.index')
+                    ->with('error', 'Masa aktif paket membership Anda telah berakhir dan kuota produk Anda telah penuh. Silakan perpanjang paket membership Anda.');
+            }
             return redirect()->route('penjual.produk.index')
                 ->with('error', 'Gagal mengunggah. Batas kuota upload produk paket Anda (' . $user->getMaxUploadLimit() . ' produk) telah tercapai.');
         }
@@ -165,9 +163,6 @@ class PenjualController extends Controller
         $thumbPath = $request->hasFile('thumbnail') ? $request->file('thumbnail')->store('products/thumbnails', 'public') : null;
         
         $galleryPaths = [];
-        if ($thumbPath) {
-            $galleryPaths[] = $thumbPath;
-        }
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $imgFile) {
                 if (count($galleryPaths) < 5) {
@@ -219,6 +214,7 @@ class PenjualController extends Controller
             'category_id' => 'required|exists:categories,id_category',
             'price'       => 'required|numeric|min:1000',
             'stock'       => 'required|integer|min:1',
+            'status'      => 'nullable|string|in:active,inactive',
             'description' => 'required|string',
             'thumbnail'   => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
             'images'      => 'nullable|array|max:5',
@@ -235,9 +231,6 @@ class PenjualController extends Controller
         }
 
         $galleryPaths = is_array($product->images) ? $product->images : [];
-        if ($product->thumbnail && !in_array($product->thumbnail, $galleryPaths)) {
-            array_unshift($galleryPaths, $product->thumbnail);
-        }
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $imgFile) {
@@ -263,7 +256,7 @@ class PenjualController extends Controller
         }
 
         $product->fill($validated);
-        if (in_array($product->status, ['rejected', 'inactive', 'blocked'])) {
+        if (in_array($product->status, ['rejected', 'blocked'])) {
             $product->status = 'pending';
             $product->rejection_note = null;
         }
@@ -753,19 +746,6 @@ class PenjualController extends Controller
 
         return redirect()->route('penjual.laporan.index')
             ->with('success', 'Laporan berhasil dikirim! Tim verifikator, admin, dan CS akan meninjau laporan kamu.');
-    }
-
-    public function peringatanIndex()
-    {
-        $userId = Auth::id();
-        $peringatan = \App\Models\Report::with(['product', 'reporter'])
-            ->where('reported_user_id', $userId)
-            ->whereIn('status', ['reviewed', 'resolved', 'escalated'])
-            ->whereNotNull('admin_note')
-            ->latest('updated_at')
-            ->paginate(10);
-
-        return view('penjual.peringatan', compact('peringatan'));
     }
 
     // =========================================================

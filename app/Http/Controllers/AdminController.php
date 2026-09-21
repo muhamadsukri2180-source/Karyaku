@@ -1262,6 +1262,35 @@ class AdminController extends Controller
         $totalOrdersPaid         = (int) $orders->where('payment_status', 'paid')->count();
         $totalOrdersCount        = (int) $orders->count();
 
+        if (!class_exists(\PhpOffice\PhpSpreadsheet\Spreadsheet::class)) {
+            $monthClean = str_replace(' ', '_', $dateRange['month_name']);
+            $filename = 'Laporan_Keuangan_Karyaku_' . $monthClean . '_' . $dateRange['year'] . '.csv';
+
+            return response()->streamDownload(function () use ($orders) {
+                $file = fopen('php://output', 'w');
+                fputs($file, "\xEF\xBB\xBF");
+                fputcsv($file, ['No', 'Tanggal', 'No Pesanan', 'Pembeli', 'Total Harga (Rp)', 'Komisi Platform 5% (Rp)', 'Status Pembayaran']);
+                $no = 1;
+                foreach ($orders as $order) {
+                    $total = (float) $order->total_price;
+                    fputcsv($file, [
+                        $no++,
+                        $order->created_at ? $order->created_at->format('d/m/Y H:i') : '-',
+                        $order->order_number ?? ('#' . $order->id_order),
+                        $order->buyer->name ?? 'Pembeli',
+                        $total,
+                        $total * 0.05,
+                        strtoupper($order->payment_status ?? 'PENDING'),
+                    ]);
+                }
+                fclose($file);
+            }, $filename, [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Cache-Control' => 'max-age=0',
+            ]);
+        }
+
         $spreadsheet = new Spreadsheet();
         $spreadsheet->getDefaultStyle()->getFont()->setName('Segoe UI')->setSize(10);
 

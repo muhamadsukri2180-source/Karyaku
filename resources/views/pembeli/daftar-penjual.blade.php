@@ -381,16 +381,6 @@
                 </div>
                 <div class="row g-4">
                     <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-dark mb-1">Metode Transfer <span class="text-danger">*</span></label>
-                            <select name="payment_method" class="form-select rounded-3 py-2.5 @error('payment_method') is-invalid @enderror" required>
-                                <option value="" disabled selected>Pilih Rekening Tujuan Transfer</option>
-                                @foreach ($paymentMethods as $key => $label)
-                                    <option value="{{ $key }}" {{ old('payment_method') === $key ? 'selected' : '' }}>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @error('payment_method') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
 
                         <div class="checkout-summary-box mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-1">

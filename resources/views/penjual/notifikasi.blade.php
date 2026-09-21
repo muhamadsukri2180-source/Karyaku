@@ -209,14 +209,9 @@
                                         <span class="notif-title">{{ $notif->name }}</span>
                                     </div>
 
-                                    <form action="{{ route('penjual.notifikasi.destroy', $notif->id) }}" method="POST"
-                                          onsubmit="return confirm('Hapus notifikasi ini?')" class="flex-shrink-0">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn-hapus" title="Hapus notifikasi">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn-hapus flex-shrink-0" title="Hapus notifikasi" onclick="confirmDeleteNotif('{{ route('penjual.notifikasi.destroy', $notif->id) }}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </div>
 
                                 <p class="notif-desc mb-0">{{ $notif->description }}</p>
@@ -300,5 +295,44 @@ document.addEventListener('DOMContentLoaded', function () {
         if (kosong) kosong.classList.toggle('d-none', tampil !== 0);
     });
 });
+
+function confirmDeleteNotif(actionUrl) {
+    Swal.fire({
+        title: 'Hapus Notifikasi?',
+        text: 'Notifikasi ini akan dihapus dari riwayat toko Anda.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal',
+        customClass: {
+            popup: 'rounded-4 border-0 shadow-lg',
+            confirmButton: 'btn btn-danger px-4 py-2 rounded-3 fw-bold',
+            cancelButton: 'btn btn-secondary px-4 py-2 rounded-3 fw-semibold ms-2'
+        },
+        buttonsStyling: false
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = actionUrl;
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = '{{ csrf_token() }}';
+            form.appendChild(csrf);
+
+            const method = document.createElement('input');
+            method.type = 'hidden';
+            method.name = '_method';
+            method.value = 'DELETE';
+            form.appendChild(method);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
 </script>
 @endpush
