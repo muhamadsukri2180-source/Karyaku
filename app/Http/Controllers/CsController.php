@@ -3,13 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AccountAppeal;
-use App\Models\IdentityVerification;
-use App\Models\Membership;
 use App\Models\Notification;
-use App\Models\Order;
 use App\Models\Product;
 use App\Models\Report;
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -196,152 +192,6 @@ class CsController extends Controller
         });
 
         return redirect()->back()->with('success', $result);
-    }
-
-    public function transaksi(Request $request)
-    {
-        $search = $request->query('search');
-        $tabPendaftaran = $request->query('tab_pendaftaran', 'pending');
-
-        // Transaksi jual-beli produk (dibaca via kode_order, id_order tidak pernah ditampilkan/dicari)
-        $orders = Order::select('id_order', 'buyer_id', 'total_price', 'status', 'payment_status', 'created_at')
-            ->with([
-                'buyer:id_user,name',
-                'items:id_order_item,order_id,product_id',
-                'items.product:id_product,seller_id,title',
-                'items.product.seller:id_user,name'
-            ])
-            ->when($search, fn ($q) => $q->whereHas('buyer', fn ($qq) => $qq->where('name', 'like', "%{$search}%")))
-            ->latest('id_order')->paginate(10, ['*'], 'page_pesanan')->withQueryString();
-
-        // Transaksi pendaftaran / pembayaran menjadi penjual (butuh persetujuan CS)
-        $sellerQuery = IdentityVerification::select([
-                'id_identity_verification', 'user_id', 'membership_id', 'verifier_id',
-                'status', 'payment_method', 'payment_amount', 'notes', 'submitted_at', 'verified_at',
-            ])
-            ->with(['user:id_user,name,email', 'membership:id_membership,name,price', 'verifier:id_user,name'])
-            ->whereNotNull('payment_method')
-            ->when($search, fn ($q) => $q->whereHas('user', fn ($qq) => $qq->where('name', 'like', "%{$search}%")));
-
-        if ($tabPendaftaran === 'history') {
-            $sellerQuery->whereIn('status', ['approved', 'rejected']);
-        } else {
-            $sellerQuery->where('status', 'pending');
-        }
-
-        $sellerTransactions = $sellerQuery->latest('id_identity_verification')
-            ->paginate(10, ['*'], 'page_pendaftaran')->withQueryString();
-
-        $pendingSellerCount = IdentityVerification::whereNotNull('payment_method')->where('status', 'pending')->count();
-
-        return view('cs.transaksi', compact('orders', 'sellerTransactions', 'tabPendaftaran', 'pendingSellerCount'));
-    }
-
-    public function transaksiDetail(string|int $id)
-    {
-        return response()->json(Order::with([
-            'buyer:id_user,name,email,phone',
-            'items:id_order_item,order_id,product_id,quantity,price,subtotal',
-            'items.product:id_product,seller_id,title,price',
-            'items.product.seller:id_user,name'
-        ])->findOrFail($id));
-    }
-
-    /**
-     * CS menyetujui transaksi pembayaran pendaftaran seorang pembeli menjadi penjual.
-     * Menyetujui akan mengubah role user menjadi "penjual" dan mengaktifkan membership-nya.
-     */
-    public function approvePendaftaran(string|int $id)
-    {
-        try {
-            DB::transaction(function () use ($id) {
-                $verification = IdentityVerification::lockForUpdate()->findOrFail($id);
-
-                if ($verification->status !== 'pending') {
-                    throw new \RuntimeException('Pengajuan ini sudah diproses sebelumnya.');
-                }
-
-                $sellerRole = Role::where('role_name', 'penjual')->firstOrFail();
-                $user = User::where('id_user', $verification->user_id)->lockForUpdate()->firstOrFail();
-
-                $userData = ['id_role' => $sellerRole->id_role, 'status' => 'active'];
-
-                if ($verification->membership_id && $membership = Membership::find($verification->membership_id)) {
-                    $userData['id_membership'] = $membership->id_membership;
-                    $durationDays = $membership->duration_days ?? 30;
-
-                    $isSamePlanActive = ($user->id_membership == $membership->id_membership)
-                        && $user->membership_expires_at
-                        && $user->membership_expires_at->isFuture();
-
-                    $userData['membership_expires_at'] = $isSamePlanActive
-                        ? $user->membership_expires_at->copy()->addDays($durationDays)
-                        : now()->addDays($durationDays);
-                }
-
-                $user->update($userData);
-                $verification->update([
-                    'status'      => 'approved',
-                    'verifier_id' => Auth::id(),
-                    'verified_at' => now(),
-                ]);
-
-                $membershipName = $verification->membership->name ?? 'Membership Penjual';
-                Notification::create([
-                    'user_id'     => $verification->user_id,
-                    'name'        => 'Pembayaran Paket Disetujui',
-                    'description' => 'Selamat! Pembayaran paket ' . $membershipName . ' Anda telah disetujui oleh CS. Akun Anda kini aktif sebagai penjual.',
-                    'is_read'     => false,
-                ]);
-            });
-
-            return redirect()->route('cs.transaksi')->with('success', 'Pendaftaran menjadi penjual berhasil disetujui.');
-        } catch (\Throwable $e) {
-            report($e);
-            return redirect()->back()->with('error', 'Gagal menyetujui pendaftaran: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * CS menolak transaksi pembayaran pendaftaran seorang pembeli menjadi penjual.
-     */
-    public function rejectPendaftaran(Request $request, string|int $id)
-    {
-        $validated = $request->validate([
-            'notes' => 'required|string|max:500',
-        ], [
-            'notes.required' => 'Catatan / alasan penolakan wajib diisi.',
-        ]);
-
-        try {
-            DB::transaction(function () use ($id, $validated) {
-                $verification = IdentityVerification::lockForUpdate()->findOrFail($id);
-
-                if ($verification->status !== 'pending') {
-                    throw new \RuntimeException('Pengajuan ini sudah diproses sebelumnya.');
-                }
-
-                $verification->update([
-                    'status'      => 'rejected',
-                    'notes'       => $validated['notes'],
-                    'verifier_id' => Auth::id(),
-                    'verified_at' => now(),
-                ]);
-
-                $membershipName = $verification->membership->name ?? 'Paket Membership';
-                Notification::create([
-                    'user_id'     => $verification->user_id,
-                    'name'        => 'Pembayaran / Verifikasi Ditolak',
-                    'description' => 'Pembayaran/pengajuan paket ' . $membershipName . ' Anda ditolak oleh CS. Catatan: ' . $validated['notes'],
-                    'is_read'     => false,
-                ]);
-            });
-
-            return redirect()->route('cs.transaksi')->with('success', 'Pendaftaran menjadi penjual berhasil ditolak.');
-        } catch (\Throwable $e) {
-            report($e);
-            return redirect()->back()->with('error', 'Gagal menolak pendaftaran: ' . $e->getMessage());
-        }
     }
 
     public function notifikasi()

@@ -315,13 +315,5 @@ Route::middleware(['auth', 'suspended', 'role:customer_service'])->prefix('cs')-
     Route::post('/laporan/produk/{id}/tindak', [CsController::class, 'tindakProdukLaporan'])->name('laporan.produk.tindak');
     Route::post('/laporan/appeal/{id}/tindak', [CsController::class, 'tindakAppeal'])->name('laporan.appeal.tindak');
 
-    Route::get('/transaksi', [CsController::class, 'transaksi'])->name('transaksi');
-    Route::get('/transaksi/{id}', [CsController::class, 'transaksiDetail'])->name('transaksi.detail');
-
-    //penambahan route untuk fitur cek transaksi
-     Route::post('/transaksi/pendaftaran/{id}/approve', [CsController::class, 'approvePendaftaran'])->name('transaksi.pendaftaran.approve');
-    Route::post('/transaksi/pendaftaran/{id}/reject', [CsController::class, 'rejectPendaftaran'])->name('transaksi.pendaftaran.reject');
-
-
     Route::get('/notifikasi', [CsController::class, 'notifikasi'])->name('notifikasi');
 });
