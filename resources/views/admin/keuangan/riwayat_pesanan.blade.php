@@ -158,11 +158,11 @@
                 </div>
 
             </div>
-        </main>
-    </div>
+@endsection
 
+@push('modals')
     <!-- MODAL DETAIL ORDER -->
-    <div id="orderDetailModal" class="fixed inset-0 z-[60] hidden items-center justify-center modal-backdrop p-4">
+    <div id="orderDetailModal" class="fixed inset-0 z-[60] hidden items-center justify-center modal-backdrop p-4 bg-slate-900/60 backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
             <div class="p-5 border-b border-sky-100 flex items-center justify-between bg-sky-50/50">
                 <div class="flex items-center gap-2">
@@ -178,8 +178,9 @@
                     <p class="text-xs font-semibold">Memuat detail transaksi...</p>
                 </div>
             </div>
-
-@endsection
+        </div>
+    </div>
+@endpush
 
 @push('scripts')
 <script>

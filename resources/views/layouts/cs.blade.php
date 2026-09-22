@@ -108,7 +108,7 @@
             </div>
         </header>
 
-        <div class="p-6 sm:p-8 space-y-8 overflow-y-auto no-scrollbar">
+        <div class="p-6 sm:p-8 space-y-8 overflow-y-auto no-scrollbar relative z-10">
 
             @if(session('success'))
                 <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold px-4 py-3 rounded-xl shadow-sm">
@@ -131,6 +131,8 @@
         </div>
     </main>
 </div>
+
+@stack('modals')
 
 <script>
     const sidebar = document.getElementById('sidebar');

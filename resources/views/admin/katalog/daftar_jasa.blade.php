@@ -152,9 +152,9 @@
                 </div>
 
             </div>
-        </main>
-    </div>
+@endsection
 
+@push('modals')
     <!-- MODAL: TINJAU PRODUK -->
     <div id="reviewProductModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
         <div class="modal-overlay absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('reviewProductModal')"></div>
@@ -223,8 +223,7 @@
             </div>
         </div>
     </div>
-
-@endsection
+@endpush
 
 @push('scripts')
 <script>

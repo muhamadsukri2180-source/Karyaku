@@ -136,7 +136,9 @@
     </div>
 
 </div>
+@endsection
 
+@push('modals')
 <!-- MODAL TAMBAH MEMBERSHIP -->
 <div id="addModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0 w-screen h-screen">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300 mx-4 my-6 overflow-hidden max-h-[90vh] flex flex-col" id="addModalContent">
@@ -295,7 +297,7 @@
         </form>
     </div>
 </div>
-@endsection
+@endpush
 
 @push('scripts')
 <script>

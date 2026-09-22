@@ -50,17 +50,17 @@ class AdminController extends Controller
         $recentOrders = Order::with('buyer')->latest()->take(3)->get()->map(fn($o) => [
             'title' => 'Order Baru #' . $o->kode_order,
             'desc'  => 'Pembeli "' . ($o->buyer->name ?? '-') . '" membuat pesanan baru.',
-            'time'  => $o->created_at, 'color' => 'emerald',
+            'time'  => $o->created_at, 'color' => 'emerald', 'icon' => 'fa-bag-shopping',
         ]);
 
         $recentProducts = Product::where('status', 'active')->latest('updated_at')->take(3)->get()->map(fn($p) => [
             'title' => 'Produk Diverifikasi', 'desc' => 'Produk "' . $p->title . '" telah disetujui.',
-            'time'  => $p->updated_at, 'color' => 'sky',
+            'time'  => $p->updated_at, 'color' => 'sky', 'icon' => 'fa-box',
         ]);
 
         $recentIdentities = IdentityVerification::with('user')->latest()->take(3)->get()->map(fn($iv) => [
             'title' => 'Pengajuan Identitas', 'desc' => 'Kreator "' . ($iv->user->name ?? '-') . '" mengunggah identitas.',
-            'time'  => $iv->created_at, 'color' => 'amber',
+            'time'  => $iv->created_at, 'color' => 'amber', 'icon' => 'fa-id-card',
         ]);
 
         $recentActivities = $recentOrders->concat($recentProducts)->concat($recentIdentities)
@@ -68,10 +68,14 @@ class AdminController extends Controller
 
         $isMaintenance = app()->isDownForMaintenance();
 
+        $totalGrossVolume = $totalRevenue;
+        $totalVerifikator = User::whereHas('role', fn($q) => $q->where('role_name', 'verifikator'))->count();
+        $currentYear      = $year;
+
         return view('admin.dashboard', compact(
             'totalProducts', 'totalOrders', 'monthlySales', 'totalRevenue', 'platformCommission',
             'totalUsers', 'pendingIdentityCount', 'pendingReportsCount', 'chartData', 'recentActivities',
-            'isMaintenance', 'year'
+            'isMaintenance', 'year', 'totalGrossVolume', 'totalVerifikator', 'currentYear'
         ));
     }
 

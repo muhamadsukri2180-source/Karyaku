@@ -133,9 +133,9 @@
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+@endsection
 
+@push('modals')
     <!-- MODAL 1: TAMBAH KATEGORI (Sesuai Gambar 2) -->
     <div id="addModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0 w-screen h-screen">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 border-t-4 border-emerald-500" id="addModalContent">
@@ -235,8 +235,7 @@
             </form>
         </div>
     </div>
-
-@endsection
+@endpush
 
 @push('scripts')
 <script>

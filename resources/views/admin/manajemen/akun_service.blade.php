@@ -185,7 +185,9 @@
     </div>
 
 </div>
+@endsection
 
+@push('modals')
 <!-- MODAL: TAMBAH AKUN CS -->
 <div id="csModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col transform scale-95 transition-transform duration-300 mx-4 overflow-hidden" id="csModalContent">
@@ -224,7 +226,7 @@
 </div>
 
 <!-- MODAL EDIT AKUN CS -->
-<div id="editCsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+<div id="editCsModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 w-screen h-screen">
     <div id="editCsModalContent" class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl transform scale-95 transition-transform duration-300 border border-sky-100">
         <div class="flex items-center justify-between pb-4 border-b border-sky-100">
             <div class="flex items-center gap-2.5">
@@ -262,7 +264,7 @@
         </form>
     </div>
 </div>
-@endsection
+@endpush
 
 @push('scripts')
 <script>

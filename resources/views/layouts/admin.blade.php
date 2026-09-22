@@ -265,7 +265,7 @@
                 $isPenggunaActive = request()->routeIs('admin.users*') || request()->routeIs('admin.manajemen.akun_service*');
                 $isKatalogActive  = request()->routeIs('admin.products*') || request()->routeIs('admin.categories*');
                 $isKeuanganActive = request()->routeIs('admin.transactions*') || request()->routeIs('admin.withdrawals*') || request()->routeIs('admin.laporan.keuangan*');
-                $isMaintenanceActive = \App\Models\AllowedIp::where('ip_address', 'MAINTENANCE_MODE')->where('is_allowed', true)->exists() ?? false;
+                $isMaintenanceActive = \App\Models\AllowedIp::where('ip_address', 'MAINTENANCE_MODE')->exists() ?? false;
             @endphp
             <div class="p-4 mx-4 my-5 rounded-2xl bg-white/10 border border-white/20 flex items-center gap-3 backdrop-blur-md shadow-inner">
                 <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">
@@ -425,7 +425,7 @@
                 </div>
             </header>
 
-            <div class="p-6 sm:p-8 space-y-8 overflow-y-auto no-scrollbar">
+            <div class="p-6 sm:p-8 space-y-8 overflow-y-auto no-scrollbar relative z-10">
 
                 @if(session('success'))
                     <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold px-4 py-3 rounded-xl shadow-sm">
@@ -448,6 +448,8 @@
             </div>
         </main>
     </div>
+
+    @stack('modals')
 
     <script>
         document.querySelectorAll('.menu-toggle').forEach(btn => {

@@ -282,7 +282,9 @@
     </div>
 
 </div>
+@endsection
 
+@push('modals')
 <!-- MODAL TINDAK LANJUT LAPORAN UMUM / PRODUK -->
 <div id="tindakModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4" id="tindakModalContent">
@@ -362,7 +364,7 @@
         <img id="modalPreviewImg" src="" alt="Bukti Gambar" class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl object-contain bg-white">
     </div>
 </div>
-@endsection
+@endpush
 
 @push('scripts')
 <script>

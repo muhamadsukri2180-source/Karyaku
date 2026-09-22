@@ -119,7 +119,9 @@
     </div>
 
 </div>
+@endsection
 
+@push('modals')
 <!-- MODAL KIRIM NOTIFIKASI -->
 <div id="addNotificationModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0 w-screen h-screen">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 border-t-4 border-emerald-500 max-h-[90vh] overflow-y-auto" id="addModalContent">
@@ -226,7 +228,7 @@
         </div>
     </div>
 </div>
-@endsection
+@endpush
 
 @push('scripts')
 <script>
