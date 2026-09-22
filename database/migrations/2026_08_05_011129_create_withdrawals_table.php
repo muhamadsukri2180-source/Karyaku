@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('bank_account_number');
             $table->string('bank_account_name');
             $table->decimal('amount', 12, 2);
-            $table->string('status')->default('pending'); // pending, processed, rejected
+            $table->string('status')->default('pending');
             $table->text('notes')->nullable();
 
             $table->foreignId('processed_by')->nullable()

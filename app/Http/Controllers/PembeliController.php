@@ -19,9 +19,6 @@ use Illuminate\Support\Facades\Storage;
 
 class PembeliController extends Controller
 {
-    // =========================================================
-    // DASHBOARD
-    // =========================================================
     public function dashboard()
     {
         $userId = Auth::id();
@@ -48,10 +45,8 @@ class PembeliController extends Controller
             ->take(5)
             ->get();
 
-        // Rotasi iklan & produk populer setiap 3 jam agar selalu fresh & variatif
-        $hourSeed = (int) floor(now()->timestamp / 10800); // 10.800 detik = 3 jam
+        $hourSeed = (int) floor(now()->timestamp / 10800);
 
-        // 1. Iklan video yang dipromosikan oleh penjual (Aktif, Memiliki Video & Belum Kedaluwarsa)
         $promotedProducts = Product::with(['category', 'seller'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
@@ -64,7 +59,6 @@ class PembeliController extends Controller
             ->take(8)
             ->get();
 
-        // Jika penjual belum ada yang pasang iklan video promosi, fallback ke karya aktif yang memiliki video
         if ($promotedProducts->isEmpty()) {
             $promotedProducts = Product::with(['category', 'seller'])
                 ->withAvg('reviews', 'rating')
@@ -77,7 +71,6 @@ class PembeliController extends Controller
                 ->get();
         }
 
-        // 2. Produk Populer & Terlaris untuk kolom kanan samping iklan (3 karya teratas)
         $popularProducts = Product::with(['category', 'seller'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
@@ -88,7 +81,6 @@ class PembeliController extends Controller
             ->take(6)
             ->get();
 
-        // 3. Rekomendasi Karya Terbaru & Pilihan
         $rekomendasi = Product::with(['category', 'seller'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
@@ -107,9 +99,6 @@ class PembeliController extends Controller
         ));
     }
 
-    // =========================================================
-    // MARKETPLACE
-    // =========================================================
     public function marketplace(Request $request)
     {
         $userId = Auth::id();
@@ -142,9 +131,6 @@ class PembeliController extends Controller
         return view('pembeli.marketplace', compact('products', 'categories', 'wishlistIds'));
     }
 
-    // =========================================================
-    // DETAIL PRODUK
-    // =========================================================
     public function produkDetail($id)
     {
         $userId = Auth::id();
@@ -177,9 +163,6 @@ class PembeliController extends Controller
         ));
     }
 
-    // =========================================================
-    // REVIEW
-    // =========================================================
     public function reviewStore(Request $request, $id)
     {
         $request->validate([
@@ -206,9 +189,6 @@ class PembeliController extends Controller
         return back()->with('success', 'Terima kasih! Ulasan dan rating Anda berhasil disimpan.');
     }
 
-    // =========================================================
-    // KERANJANG
-    // =========================================================
     public function keranjangIndex()
     {
         $items = Cart::with(['product.seller'])->where('user_id', Auth::id())->latest('id_cart')->get();
@@ -247,9 +227,6 @@ class PembeliController extends Controller
         return back()->with('success', 'Item berhasil dihapus dari keranjang.');
     }
 
-    // =========================================================
-    // CHECKOUT
-    // =========================================================
     public function checkout(Request $request)
     {
         $request->validate([
@@ -306,9 +283,6 @@ class PembeliController extends Controller
             ->with('success', 'Pesanan berhasil dibuat. Silakan lakukan pembayaran.');
     }
 
-    // =========================================================
-    // WISHLIST
-    // =========================================================
     public function wishlistToggle($productId)
     {
         $userId = Auth::id();
@@ -349,9 +323,6 @@ class PembeliController extends Controller
         return view('pembeli.wishlist', compact('wishlists', 'items'));
     }
 
-    // =========================================================
-    // PESANAN
-    // =========================================================
     public function pesananIndex(Request $request)
     {
         $userId = Auth::id();
@@ -437,9 +408,6 @@ class PembeliController extends Controller
         return back()->with('success', 'Bukti pembayaran berhasil diunggah! Tim Verifikator kami akan mengecek dan memverifikasi transaksi Anda secepatnya.');
     }
 
-    // =========================================================
-    // DOWNLOAD
-    // =========================================================
     public function downloadIndex()
     {
         $userId = Auth::id();
@@ -477,9 +445,6 @@ class PembeliController extends Controller
         return back()->with('error', 'File berkas tidak ditemukan di server penyimpanan.');
     }
 
-    // =========================================================
-    // PROFILE
-    // =========================================================
     public function profile()
     {
         return view('pembeli.profile', ['user' => Auth::user()]);
@@ -500,9 +465,6 @@ class PembeliController extends Controller
         return back()->with('success', 'Profil berhasil diperbarui.');
     }
 
-    // =========================================================
-    // MEMBERSHIP
-    // =========================================================
     public function membershipIndex()
     {
         $userId = Auth::id();
@@ -522,12 +484,8 @@ class PembeliController extends Controller
         return redirect()->route('pembeli.seller.registration.create', ['membership' => $membership->id_membership]);
     }
 
-    // =========================================================
-    // NOTIFIKASI & PERINGATAN
-    // =========================================================
     public function notificationsIndex()
     {
-        // Hapus otomatis notifikasi yang sudah lebih dari 1 bulan
         Notification::where('created_at', '<', now()->subMonth())->delete();
 
         $notifications = Notification::where(function ($q) {

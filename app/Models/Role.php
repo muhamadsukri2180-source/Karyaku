@@ -20,7 +20,6 @@ class Role extends Model
             if ($role->role_name) {
                 $role->role_name = strtolower(trim($role->role_name));
 
-                // Cek apakah ada role lain yang memiliki nama sama (case-insensitive)
                 $exists = static::whereRaw('LOWER(trim(role_name)) = ?', [$role->role_name])
                     ->where('id_role', '!=', $role->id_role ?? 0)
                     ->exists();

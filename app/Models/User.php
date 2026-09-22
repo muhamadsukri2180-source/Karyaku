@@ -64,7 +64,7 @@ class User extends Authenticatable
             return false;
         }
         if (!$this->suspended_until) {
-            return true; // Permanent suspend
+            return true;
         }
         return $this->suspended_until->isFuture();
     }
@@ -118,11 +118,6 @@ class User extends Authenticatable
             'formatted'        => implode(' ', $parts) . ' (Hingga ' . $this->suspended_until->translatedFormat('d M Y, H:i') . ' WIB)',
         ];
     }
-
-    /* =========================================================================
-     | HELPER MEMBERSHIP & COUNTDOWN
-     | ========================================================================= */
-
     public function isMembershipActive(): bool
     {
         if (!$this->id_membership) {
@@ -142,9 +137,6 @@ class User extends Authenticatable
         return max(0, (int) now()->diffInDays($this->membership_expires_at, false));
     }
 
-    /**
-     * Data countdown presisi (hari, jam, menit, detik & timestamp JS)
-     */
     public function getMembershipCountdownAttribute(): array
     {
         if (!$this->membership_expires_at || $this->membership_expires_at->isPast()) {
@@ -169,10 +161,6 @@ class User extends Authenticatable
             'formatted_target' => $this->membership_expires_at->translatedFormat('d F Y H:i:s'),
         ];
     }
-
-    /**
-     * Cek apakah perlu notifikasi/alert peringatan (default: <= 3 hari tersisa)
-     */
     public function needsMembershipRenewalWarning(int $thresholdDays = 3): bool
     {
         if (!$this->membership_expires_at || $this->membership_expires_at->isPast()) {
@@ -186,7 +174,7 @@ class User extends Authenticatable
         if ($this->isMembershipActive() && $this->membership) {
             return (int) ($this->membership->max_upload ?? 5);
         }
-        return 5; // Default limit untuk akun gratis/tanpa membership/paket kadaluarsa
+        return 5;
     }
 
     public function canUploadProduct(): bool
@@ -200,10 +188,6 @@ class User extends Authenticatable
     {
         return $this->isMembershipActive();
     }
-
-    /* =========================================================================
-     | RELASI DATABASE
-     | ========================================================================= */
 
     public function role()
     {

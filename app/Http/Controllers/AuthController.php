@@ -14,19 +14,14 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    // Tampilkan form login
     public function showLogin()
     {
         return view('auth.login');
     }
-
-    // Tampilkan form register
     public function showRegister()
     {
         return view('auth.register');
     }
-
-    // Tampilkan Halaman Khusus Penangguhan (Ban)
     public function showSuspendedNotice()
     {
         if (! session()->has('suspended_info') && ! old('user_id')) {
@@ -35,8 +30,6 @@ class AuthController extends Controller
 
         return view('disband.ban');
     }
-
-    // Proses register
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -66,8 +59,6 @@ class AuthController extends Controller
             ->with('success', 'Registrasi berhasil! Silakan masuk dengan akun kamu.')
             ->with('registered_username', $validated['username']);
     }
-
-    // Proses login (pakai username, bukan email)
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -83,16 +74,13 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        // Cek apakah user diblokir / disuspend
         if ($user->status === 'blocked') {
-            // Jika masa suspend sudah lewat waktu, aktifkan kembali otomatis
             if ($user->suspended_until && $user->suspended_until->isPast()) {
                 $user->status = 'active';
                 $user->suspended_until = null;
                 $user->suspend_reason = null;
                 $user->save();
             } else {
-                // Masih dalam masa penangguhan (Suspend)
                 $countdown = $user->suspend_countdown;
                 $appeal = AccountAppeal::where('user_id', $user->id_user)->latest()->first();
 
@@ -137,8 +125,6 @@ class AuthController extends Controller
 
         return $this->redirectByRole($user);
     }
-
-    // Proses pengajuan banding oleh pengguna terblokir
     public function submitAppeal(Request $request)
     {
         $request->validate([
@@ -194,17 +180,10 @@ class AuthController extends Controller
         return redirect()->route('auth.login');
     }
 
-    // ==========================================
-    // FITUR LUPA & RESET PASSWORD
-    // ==========================================
-
-    // Tampilkan form lupa password (kirim email)
     public function showForgotPassword()
     {
         return view('auth.forgot_password');
     }
-
-    // Kirim tautan reset password ke email
     public function sendResetLinkEmail(Request $request)
     {
         $request->validate([
@@ -219,8 +198,6 @@ class AuthController extends Controller
             ? back()->with('status', 'Tautan reset password berhasil dikirim ke email Anda.')
             : back()->withErrors(['email' => 'Terjadi kesalahan, silakan coba lagi.']);
     }
-
-    // Tampilkan form buat password baru (dari link email)
     public function showResetPassword(Request $request, string $token)
     {
         return view('auth.reset_password', [

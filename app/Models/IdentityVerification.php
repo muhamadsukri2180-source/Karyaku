@@ -26,25 +26,20 @@ class IdentityVerification extends Model
         'notes',
         'verified_at',
 
-        // DATA PENDAFTAR
         'nik',
         'address',
 
-        // DATA REKENING
         'bank_name',
         'account_name',
         'account_number',
 
-        // MEMBERSHIP
         'membership_id',
 
-        // PEMBAYARAN
         'payment_method',
         'payment_proof',
         'payment_amount',
         'payment_submitted_at',
 
-        // PROSES
         'submitted_at',
     ];
 
@@ -55,13 +50,6 @@ class IdentityVerification extends Model
         'payment_amount' => 'decimal:2',
     ];
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONSHIP KE USER
-    |--------------------------------------------------------------------------
-    */
-
    public function user(): BelongsTo
     {
         return $this->belongsTo(
@@ -71,11 +59,6 @@ class IdentityVerification extends Model
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | VERIFIKATOR (RELATIONSHIP KE VERIFIKATOR)
-    |--------------------------------------------------------------------------
-    */
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(
@@ -85,11 +68,6 @@ class IdentityVerification extends Model
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | MEMBERSHIP (RELATIONSHIP KE MEMBERSHIP)
-    |--------------------------------------------------------------------------
-    */
     public function membership(): BelongsTo
     {
         return $this->belongsTo(

@@ -27,7 +27,6 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // Indexing untuk join order dan analisis penjualan produk
             $table->index('order_id');
             $table->index('product_id');
         });

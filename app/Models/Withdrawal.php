@@ -16,7 +16,7 @@ class Withdrawal extends Model
         'bank_account_number',
         'bank_account_name',
         'amount',
-        'status', // pending, processed, rejected
+        'status',
         'notes',
         'processed_by',
         'processed_at',

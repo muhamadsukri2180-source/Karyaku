@@ -19,7 +19,6 @@ class CustomerService extends Model
         'admin_note',
     ];
 
-    // Relasi ke model User (Pengguna yang mengirim keluhan)
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id_user');

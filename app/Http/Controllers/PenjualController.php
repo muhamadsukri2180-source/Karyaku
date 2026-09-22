@@ -18,7 +18,6 @@ use Illuminate\Support\Facades\Storage;
 
 class PenjualController extends Controller
 {
-    // ================= 1. DASHBOARD PENJUAL =================
     public function dashboard()
     {
         $user = Auth::user()->load('membership', 'role');
@@ -80,7 +79,6 @@ class PenjualController extends Controller
         ));
     }
 
-    // ================= 2. MANAJEMEN PRODUK (DAFTAR) =================
     public function produkIndex(Request $request)
     {
         $user = Auth::user();
@@ -116,7 +114,6 @@ class PenjualController extends Controller
         return view('penjual.produk.index', compact('products', 'tab', 'counts', 'canUpload', 'maxUpload'));
     }
 
-    // ================= 3. TAMBAH PRODUK =================
     public function produkCreate()
     {
         $user = Auth::user();
@@ -196,7 +193,6 @@ class PenjualController extends Controller
             ->with('success', 'Produk berhasil diunggah! Produk Anda saat ini berada dalam antrean verifikasi oleh Verifikator sebelum diterbitkan di marketplace.');
     }
 
-    // ================= 4. EDIT & UPDATE PRODUK =================
     public function produkEdit($id)
     {
         $product = Product::where('seller_id', Auth::id())->findOrFail($id);
@@ -265,7 +261,6 @@ class PenjualController extends Controller
         return redirect()->route('penjual.produk.index')->with('success', 'Data produk berhasil diperbarui dan diajukan ulang untuk verifikasi.');
     }
 
-    // ================= 5. HAPUS PRODUK =================
     public function produkDestroy($id)
     {
         $product = Product::where('seller_id', Auth::id())->findOrFail($id);
@@ -281,7 +276,6 @@ class PenjualController extends Controller
         return redirect()->route('penjual.produk.index')->with('success', 'Produk berhasil dihapus.');
     }
 
-    // ================= 6. FITUR IKLAN & PROMOSI PRODUK =================
     public function iklanIndex()
     {
         $user = Auth::user();
@@ -345,7 +339,6 @@ class PenjualController extends Controller
         return back()->with('success', 'Promosi iklan untuk produk ini telah dihentikan.');
     }
 
-    // ================= 7. MEMBERSHIP PENJUAL & PEMBELIAN =================
     public function membershipIndex()
     {
         $user = Auth::user()->load('membership');
@@ -358,14 +351,12 @@ class PenjualController extends Controller
         $showWarning = $user->needsMembershipRenewalWarning(3);
         $isExpired = $user->membership_expires_at ? $user->membership_expires_at->isPast() : false;
 
-        // Cek apakah penjual memiliki pengajuan pembayaran paket yang sedang pending
         $pendingPayment = IdentityVerification::with('membership')
             ->where('user_id', $user->id_user)
             ->where('status', 'pending')
             ->latest('id_identity_verification')
             ->first();
 
-        // Cek jika ada penolakan pembayaran sebelumnya (dalam 7 hari terakhir)
         $lastRejectedPayment = IdentityVerification::with('membership')
             ->where('user_id', $user->id_user)
             ->where('status', 'rejected')
@@ -373,7 +364,6 @@ class PenjualController extends Controller
             ->latest('id_identity_verification')
             ->first();
 
-        // Data rekening dan metode pembayaran resmi platform
         $paymentMethods = [
             'BCA' => [
                 'name'           => 'Bank Central Asia (BCA)',
@@ -461,7 +451,6 @@ class PenjualController extends Controller
         $user = Auth::user();
         $membership = Membership::findOrFail($id);
 
-        // Cek jika penjual masih memiliki pembayaran pending
         if (IdentityVerification::where('user_id', $user->id_user)->where('status', 'pending')->exists()) {
             return redirect()->route('penjual.membership.index')
                 ->with('error', 'Anda masih memiliki transaksi perpanjangan/upgrade paket yang sedang diproses oleh admin.');
@@ -483,7 +472,6 @@ class PenjualController extends Controller
 
         $proofPath = $request->file('payment_proof')->store('identity-verifications/payment', 'public');
 
-        // Ambil data verifikasi sebelumnya (NIK, alamat, rekening awal) jika ada
         $lastVerif = IdentityVerification::where('user_id', $user->id_user)->latest('id_identity_verification')->first();
 
         $nik = $lastVerif->nik ?? null;
@@ -493,7 +481,6 @@ class PenjualController extends Controller
         $accountName = !empty($validated['sender_name']) ? $validated['sender_name'] : ($lastVerif->account_name ?? $user->name);
         $accountNumber = !empty($validated['sender_account']) ? $validated['sender_account'] : ($lastVerif->account_number ?? '-');
 
-        // Buat record pengajuan verifikasi pembayaran baru
         IdentityVerification::create([
             'user_id'              => $user->id_user,
             'identity_document'    => $identityDoc,
@@ -544,7 +531,6 @@ class PenjualController extends Controller
         return back()->with('error', 'Tidak ada pengajuan pembayaran pending yang dapat dibatalkan.');
     }
 
-    // ================= 8. PESANAN MASUK (PENJUALAN) =================
     public function pesananIndex(Request $request)
     {
         $user = Auth::user();
@@ -585,7 +571,6 @@ class PenjualController extends Controller
         return back()->with('info', 'Pemeriksaan dan verifikasi bukti pembayaran dilakukan oleh tim Verifikator platform untuk menjamin keamanan transaksi.');
     }
 
-    // ================= 9. KEUANGAN & PENARIKAN SALDO =================
     public function keuanganIndex()
     {
         $user = Auth::user();
@@ -631,13 +616,6 @@ class PenjualController extends Controller
         return back()->with('success', 'Permintaan penarikan saldo berhasil diajukan.');
     }
 
-
-
-        // ================= LAPORAN DARI PENJUAL =================
-    // Fitur ini memungkinkan penjual mengirim laporan (mis. laporan terhadap
-    // pembeli/pengguna lain atau produk bermasalah). Laporan yang masuk akan
-    // otomatis terhubung & bisa ditindaklanjuti oleh role verifikator, admin,
-    // dan customer service, karena semuanya membaca dari tabel `reports` yang sama.
     public function laporanIndex(Request $request)
     {
         $user = Auth::user();
@@ -658,7 +636,6 @@ class PenjualController extends Controller
             ->orderBy('name')
             ->get();
 
-        // 1. Laporan Masuk: Laporan dari pihak lain yang ditujukan terhadap akun penjual atau produk miliknya
         $incomingReports = Report::with([
                 'product:id_product,title,seller_id',
                 'reporter:id_user,name',
@@ -674,7 +651,6 @@ class PenjualController extends Controller
             ->paginate(8, ['*'], 'page_masuk')
             ->withQueryString();
 
-        // 2. Laporan Keluar: Laporan yang diajukan sendiri oleh penjual
         $reports = Report::with([
                 'product:id_product,title,seller_id',
                 'reportedUser:id_user,name',
@@ -748,14 +724,10 @@ class PenjualController extends Controller
             ->with('success', 'Laporan berhasil dikirim! Tim verifikator, admin, dan CS akan meninjau laporan kamu.');
     }
 
-    // =========================================================
-    // FITUR NOTIFIKASI PENJUAL
-    // =========================================================
     public function notificationsIndex(Request $request)
     {
         $userId = Auth::id();
 
-        // Bersihkan otomatis notifikasi yang usianya lebih dari 1 bulan
         Notification::where('created_at', '<', now()->subMonth())->delete();
 
         $query = Notification::where(function ($q) use ($userId) {
@@ -763,7 +735,6 @@ class PenjualController extends Controller
               ->orWhere('user_id', $userId);
         });
 
-        // Filter status jika ada parameter ?filter=unread
         if ($request->query('filter') === 'unread') {
             $query->where('is_read', false);
         }

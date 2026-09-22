@@ -22,7 +22,6 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // Indexing untuk filtering status pesanan & riwayat transaksi pembeli
             $table->index(['buyer_id', 'status']);
             $table->index('payment_status');
         });

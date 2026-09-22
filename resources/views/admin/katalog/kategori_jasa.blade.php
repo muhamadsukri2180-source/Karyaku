@@ -1,29 +1,11 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Karyaku - Kategori Jasa</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Sora', 'sans-serif'] },
-                    colors: { sky: '#0EA5E9', skyHover: '#0284C7', skyDeep: '#0B3D62' }
-                }
-            }
-        }
-    </script>
+@extends('layouts.admin')
+
+@section('title', 'Karyaku - Kategori Jasa')
+
+@section('header_title', 'Kategori Jasa')
+@section('header_subtitle', 'Kelola struktur kategori untuk mengelompokkan layanan/karya kreator.')
+
+@section('content')
     <style>
         .active-menu { background: rgba(255, 255, 255, 0.2); border-left: 4px solid #ffffff; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -48,150 +30,8 @@
         .dropdown-toggle:not(:checked) ~ .list { max-height: 0; opacity: 0; border-width: 0; padding: 0; visibility: hidden; }
         .list { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     </style>
-</head>
-<body class="bg-gradient-to-br from-slate-100 via-sky-100/40 to-blue-200/50 text-slate-800 font-sans antialiased min-h-screen">
 
-    <div class="flex min-h-screen relative">
-        <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden hidden transition-opacity duration-300"></div>
-
-        <!-- SIDEBAR -->
-        <aside id="sidebar" class="w-[260px] bg-gradient-to-b from-skyDeep via-skyHover to-sky text-white flex flex-col shrink-0 border-r border-sky-400/20 shadow-2xl fixed lg:sticky top-0 h-screen z-50 closed lg:translate-x-0">
-            <div class="p-6 border-b border-white/15 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-white overflow-hidden flex items-center justify-center shadow-lg"><img src="{{ asset('image/logo.png') }}" alt="KaryaKu Logo" class="w-full h-full object-contain"></div>
-                    <div>
-                        <h1 class="font-display font-extrabold text-[17px] leading-none tracking-wide text-white">KaryaKu</h1>
-                        <span class="text-[9px] text-sky-200 font-bold uppercase tracking-[0.2em] mt-1 block">Admin Panel</span>
-                    </div>
-                </div>
-                <button id="sidebarCloseBtn" class="lg:hidden text-white/80 hover:text-white p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-
-            <div class="p-4 mx-4 my-5 rounded-2xl bg-white/10 border border-white/20 flex items-center gap-3 backdrop-blur-md shadow-inner">
-                <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 2)) }}</div>
-                <div class="overflow-hidden">
-                    <p class="text-sm font-bold text-white truncate">{{ auth()->user()->name ?? 'Admin' }}</p>
-                </div>
-            </div>
-
-            <nav class="flex-1 px-4 space-y-1.5 text-[13px] font-semibold text-sky-100 overflow-y-auto pb-4">
-                <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-4">Menu Utama</p>
-                <a href="{{ route('admin.dashboard') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all duration-200">
-                    <i class="fa-solid fa-chart-pie w-4 text-center"></i><span>Beranda</span>
-                </a>
-
-                <div>
-                    <button type="button" data-menu="pengguna" class="menu-toggle w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                        <i class="fa-solid fa-users w-4 text-center group-hover:text-white transition-colors"></i><span>Manajemen Pengguna</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] ml-auto menu-chevron" data-chevron="pengguna"></i>
-                    </button>
-                    <div class="submenu pl-4 mt-1 space-y-1" data-submenu="pengguna">
-                        <a href="{{ route('admin.users') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-user text-[10px] text-sky-200 w-3 text-center"></i> Akun Pengguna
-                        </a>
-                        <a href="{{ route('admin.users.verifikator') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-id-card text-[10px] text-sky-200 w-3 text-center"></i> Akun Verifikator
-                        </a>
-                        <a href="{{ route('admin.manajemen.akun_service') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-headset text-[10px] text-sky-200 w-3 text-center"></i> Akun Customer Service
-                        </a>
-                    </div>
-                </div>
-
-                <div>
-                    <button type="button" data-menu="katalog" class="menu-toggle w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                        <i class="fa-solid fa-box-open w-4 text-center text-white transition-colors"></i><span class="text-white">Katalog & Kategori</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] ml-auto menu-chevron rotated" data-chevron="katalog"></i>
-                    </button>
-                    <div class="submenu pl-4 mt-1 space-y-1 open" data-submenu="katalog">
-                        <a href="{{ route('admin.products') }}" class="flex items-center justify-between px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <div class="flex items-center gap-2"><i class="fa-solid fa-list-check text-[10px] text-sky-200 w-3 text-center"></i> Daftar Jasa</div>
-                        </a>
-                        <a href="{{ route('admin.categories.index') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg active-menu transition-all text-xs">
-                            <i class="fa-solid fa-tags text-[10px] text-white w-3 text-center"></i> Kategori Jasa
-                        </a>
-                    </div>
-                </div>
-
-                <div>
-                    <button type="button" data-menu="transaksi" class="menu-toggle w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                        <i class="fa-solid fa-receipt w-4 text-center group-hover:text-white transition-colors"></i><span>Keuangan</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] ml-auto menu-chevron" data-chevron="transaksi"></i>
-                    </button>
-                    <div class="submenu pl-4 mt-1 space-y-1" data-submenu="transaksi">
-                        <a href="{{ route('admin.transactions') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-clock-rotate-left text-[10px] text-sky-200 w-3 text-center"></i> Riwayat Pesanan
-                        </a>
-                        <a href="{{ route('admin.withdrawals') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-wallet text-[10px] text-sky-200 w-3 text-center"></i> Penarikan Saldo
-                        </a>
-                        <a href="{{ route('admin.laporan.keuangan') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-file-invoice-dollar text-[10px] text-sky-200 w-3 text-center"></i> Laporan Keuangan
-                        </a>
-                    </div>
-                </div>
-
-                <a href="{{ route('admin.memberships') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                    <i class="fa-solid fa-crown w-4 text-center group-hover:text-amber-300 transition-colors"></i><span>Paket Membership</span>
-                </a>
-                
-                <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-6">Sistem</p>
-                <a href="{{ route('admin.maintenance') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                    <div class="flex items-center gap-3"><i class="fa-solid fa-server w-4 text-center group-hover:text-white transition-colors"></i><span>Maintenance & Backup</span></div>
-                </a>
-
-                <a href="{{ route('admin.pelanggaran') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1">
-                    <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-white transition-colors"></i>
-                    <span>Pelanggaran</span>
-                </a>
-                 <a href="{{ route('admin.security.index') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl {{ request()->routeIs('admin.security.*') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }} transition-all group mt-1">
-                    <i class="fa-solid fa-shield-halved w-4 text-center text-white"></i><span>Keamanan System</span>
-                </a>
-                <a href="{{ route('admin.notifications.index') }}"
-                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1 {{ request()->routeIs('admin.notifications.*') ? 'bg-white/20 text-white font-bold' : '' }}">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
-                        <span>Notifikasi</span>
-                    </div>
-                    @php
-                        $unreadNotificationsCount = 0;
-                        if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'is_read')) {
-                            $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
-                        } else {
-                            $unreadNotificationsCount = \App\Models\Notification::count();
-                        }
-                    @endphp
-
-                    @if($unreadNotificationsCount > 0)
-                        <span class="bg-amber-400 text-slate-900 text-[10px] px-2 py-0.5 rounded-full font-extrabold shadow-sm">
-                            {{ $unreadNotificationsCount }}
-                        </span>
-                    @endif
-                </a>
-            </nav>
-            <div class="p-4 border-t border-white/15">
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-red-600/80 text-white hover:bg-red-700 text-xs font-bold transition-all duration-300 shadow-md">
-                        <i class="fa-solid fa-power-off"></i><span>Keluar Sistem</span>
-                    </button>
-                </form>
-            </div>
-        </aside>
-
-        <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col min-w-0 w-full">
-            <header class="bg-white/70 backdrop-blur-xl border-b border-sky-200 px-6 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
-                <div class="flex items-center gap-4">
-                    <button id="sidebarToggleBtn" class="lg:hidden w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition border border-sky-200 shadow-sm"><i class="fa-solid fa-bars text-base"></i></button>
-                    <div>
-                        <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900">Kategori Jasa</h2>
-                        <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Kelola struktur kategori untuk mengelompokkan layanan/karya kreator.</p>
-                    </div>
-                </div>
-            </header>
-
-            <div class="p-6 sm:p-8 space-y-6">
+    <div class="space-y-6">
 
                 @if (session('success'))
                     <script>Swal.fire({icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", timer: 2500, showConfirmButton: false});</script>
@@ -396,149 +236,146 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
-    <script>
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
-        const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-        
-        function toggleSidebar() { sidebar.classList.toggle('open'); sidebar.classList.toggle('closed'); sidebarOverlay.classList.toggle('hidden'); }
-        if(sidebarToggleBtn) sidebarToggleBtn.addEventListener('click', toggleSidebar);
-        if(sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', toggleSidebar);
-        if(sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
+@endsection
 
-        document.querySelectorAll('.menu-toggle').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const key = btn.getAttribute('data-menu');
-                const submenu = document.querySelector(`[data-submenu="${key}"]`);
-                const chevron = document.querySelector(`[data-chevron="${key}"]`);
-                if(submenu) submenu.classList.toggle('open');
-                if(chevron) chevron.classList.toggle('rotated');
-            });
+@push('scripts')
+<script>
+    // Close custom dropdowns when clicking outside
+    window.addEventListener('click', function(e) {
+        if (!e.target.closest('.custom-dropdown')) {
+            const toggles = document.querySelectorAll('.dropdown-toggle');
+            toggles.forEach(t => t.checked = false);
+        }
+    });
+
+    function filterCategories() {
+        const q = document.getElementById('categorySearch').value.toLowerCase();
+        document.querySelectorAll('#categoryTableBody .category-row').forEach(row => {
+            row.style.display = row.dataset.name.includes(q) ? '' : 'none';
         });
+    }
 
-        // Close custom dropdowns when clicking outside
-        window.addEventListener('click', function(e) {
-            if (!e.target.closest('.custom-dropdown')) {
-                const toggles = document.querySelectorAll('.dropdown-toggle');
-                toggles.forEach(t => t.checked = false);
-            }
+    function confirmDelete(button) {
+        Swal.fire({
+            title: 'Hapus Kategori?',
+            text: "Data yang dihapus tidak dapat dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) button.closest('form').submit();
         });
+    }
 
-        function filterCategories() {
-            const q = document.getElementById('categorySearch').value.toLowerCase();
-            document.querySelectorAll('#categoryTableBody .category-row').forEach(row => {
-                row.style.display = row.dataset.name.includes(q) ? '' : 'none';
-            });
-        }
+    function selectStatus(type, value, text) {
+        document.getElementById(`${type}_status_hidden`).value = value;
+        document.getElementById(`${type}SelectedStatusText`).textContent = text;
+        document.getElementById(`${type}DropdownToggle`).checked = false;
+    }
 
-        function confirmDelete(button) {
-            Swal.fire({
-                title: 'Hapus Kategori?',
-                text: "Data yang dihapus tidak dapat dikembalikan!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#94a3b8',
-                confirmButtonText: 'Ya, Hapus!',
-                cancelButtonText: 'Batal',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) button.closest('form').submit();
-            });
-        }
+    // --- TAMBAH KATEGORI MODAL LOGIC ---
+    const addModal = document.getElementById('addModal');
+    const addModalContent = document.getElementById('addModalContent');
 
-        function selectStatus(type, value, text) {
-            document.getElementById(`${type}_status_hidden`).value = value;
-            document.getElementById(`${type}SelectedStatusText`).textContent = text;
-            document.getElementById(`${type}DropdownToggle`).checked = false;
-        }
-
-        // --- TAMBAH KATEGORI MODAL LOGIC ---
-        const addModal = document.getElementById('addModal');
-        const addModalContent = document.getElementById('addModalContent');
-
-        function openAddModal() {
-            document.getElementById('addForm').reset();
-            selectStatus('add', 'aktif', 'Aktif');
+    function openAddModal() {
+        document.getElementById('addForm').reset();
+        selectStatus('add', 'aktif', 'Aktif');
+        if (addModal) {
             addModal.classList.remove('hidden');
             setTimeout(() => {
                 addModal.classList.remove('opacity-0');
-                addModalContent.classList.remove('scale-95');
-                addModalContent.classList.add('scale-100');
+                if(addModalContent) {
+                    addModalContent.classList.remove('scale-95');
+                    addModalContent.classList.add('scale-100');
+                }
             }, 10);
         }
+    }
 
-        function closeAddModal() {
+    function closeAddModal() {
+        if (addModal) {
             addModal.classList.add('opacity-0');
-            addModalContent.classList.remove('scale-100');
-            addModalContent.classList.add('scale-95');
+            if(addModalContent) {
+                addModalContent.classList.remove('scale-100');
+                addModalContent.classList.add('scale-95');
+            }
             setTimeout(() => { addModal.classList.add('hidden'); }, 300);
         }
+    }
 
-        function submitAdd() {
-            const name = document.getElementById('add_name').value.trim();
-            if (!name) {
-                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Silahkan isi nama kategori', confirmButtonColor: '#0EA5E9' });
-                return;
-            }
-            document.getElementById('addForm').submit();
+    function submitAdd() {
+        const name = document.getElementById('add_name').value.trim();
+        if (!name) {
+            Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Silahkan isi nama kategori', confirmButtonColor: '#0EA5E9' });
+            return;
         }
+        document.getElementById('addForm').submit();
+    }
 
-        // --- EDIT KATEGORI MODAL LOGIC ---
-        const editModal = document.getElementById('editModal');
-        const editModalContent = document.getElementById('editModalContent');
-        let originalEditData = {};
+    // --- EDIT KATEGORI MODAL LOGIC ---
+    const editModal = document.getElementById('editModal');
+    const editModalContent = document.getElementById('editModalContent');
+    let originalEditData = {};
 
-        function openEditModal(category) {
-            if(category) {
-                originalEditData = {
-                    name: String(category.name || ''),
-                    description: String(category.description || ''),
-                    status: String(category.status || 'aktif')
-                };
+    function openEditModal(category) {
+        if(category) {
+            originalEditData = {
+                name: String(category.name || ''),
+                description: String(category.description || ''),
+                status: String(category.status || 'aktif')
+            };
 
-                document.getElementById('edit_name').value = originalEditData.name;
-                document.getElementById('edit_description').value = originalEditData.description;
-                let statusText = originalEditData.status === 'aktif' ? 'Aktif' : 'Nonaktif';
-                selectStatus('edit', originalEditData.status, statusText);
+            document.getElementById('edit_name').value = originalEditData.name;
+            document.getElementById('edit_description').value = originalEditData.description;
+            let statusText = originalEditData.status === 'aktif' ? 'Aktif' : 'Nonaktif';
+            selectStatus('edit', originalEditData.status, statusText);
 
-                document.getElementById('editForm').action = "/admin/categories/" + category.id_category;
-            }
-            
+            document.getElementById('editForm').action = "/admin/categories/" + category.id_category;
+        }
+        
+        if (editModal) {
             editModal.classList.remove('hidden');
             setTimeout(() => {
                 editModal.classList.remove('opacity-0');
-                editModalContent.classList.remove('scale-95');
-                editModalContent.classList.add('scale-100');
+                if(editModalContent) {
+                    editModalContent.classList.remove('scale-95');
+                    editModalContent.classList.add('scale-100');
+                }
             }, 10);
         }
+    }
 
-        function closeEditModal() {
+    function closeEditModal() {
+        if (editModal) {
             editModal.classList.add('opacity-0');
-            editModalContent.classList.remove('scale-100');
-            editModalContent.classList.add('scale-95');
+            if(editModalContent) {
+                editModalContent.classList.remove('scale-100');
+                editModalContent.classList.add('scale-95');
+            }
             setTimeout(() => { editModal.classList.add('hidden'); }, 300);
         }
+    }
 
-        function submitEdit() {
-            const currentData = {
-                name: document.getElementById('edit_name').value.trim(),
-                description: document.getElementById('edit_description').value.trim(),
-                status: document.getElementById('edit_status_hidden').value.trim()
-            };
+    function submitEdit() {
+        const currentData = {
+            name: document.getElementById('edit_name').value.trim(),
+            description: document.getElementById('edit_description').value.trim(),
+            status: document.getElementById('edit_status_hidden').value.trim()
+        };
 
-            if (!currentData.name) {
-                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Silahkan isi nama kategori', confirmButtonColor: '#0EA5E9' });
-                return;
-            }
-            if (currentData.name === originalEditData.name && currentData.description === originalEditData.description && currentData.status === originalEditData.status) {
-                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Silahkan ubah input yang diperlukan', confirmButtonColor: '#0EA5E9' });
-                return;
-            }
-            document.getElementById('editForm').submit();
+        if (!currentData.name) {
+            Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Silahkan isi nama kategori', confirmButtonColor: '#0EA5E9' });
+            return;
         }
-    </script>
-</body>
-</html>
+        if (currentData.name === originalEditData.name && currentData.description === originalEditData.description && currentData.status === originalEditData.status) {
+            Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Silahkan ubah input yang diperlukan', confirmButtonColor: '#0EA5E9' });
+            return;
+        }
+        document.getElementById('editForm').submit();
+    }
+</script>
+@endpush

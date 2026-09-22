@@ -38,7 +38,6 @@ class CsController extends Controller
     {
         $search = $request->query('search');
 
-        // Semua laporan yang BUKAN laporan produk (termasuk laporan umum/lainnya tanpa reported_user_id)
         $reportsUser = Report::select('id_report', 'id_report as id', 'user_id', 'reported_user_id', 'reason', 'description', 'status', 'created_at')
             ->with(['reporter:id_user,name', 'reportedUser:id_user,name'])
             ->whereNull('product_id')
@@ -50,7 +49,6 @@ class CsController extends Controller
             ))
             ->latest('id_report')->paginate(10, ['*'], 'page_user')->withQueryString();
 
-        // Laporan khusus produk/penjual
         $reportsProduk = Report::select('id_report', 'id_report as id', 'user_id', 'product_id', 'reason', 'description', 'status', 'created_at')
             ->with(['reporter:id_user,name', 'product:id_product,seller_id,title', 'product.seller:id_user,name'])
             ->whereNotNull('product_id')

@@ -1,341 +1,186 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Karyaku - Laporan Keuangan Bulanan</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Sora', 'sans-serif'] },
-                    colors: { sky: '#0EA5E9', skyHover: '#0284C7', skyDeep: '#0B3D62', coral: '#FF7A59' }
-                }
-            }
+@extends('layouts.admin')
+
+@section('title', 'Karyaku - Laporan Keuangan Bulanan')
+
+@section('header_title', 'Laporan Keuangan')
+@section('header_subtitle', 'Rangkuman transaksi, komisi platform 5%, dan rekapitulasi arus kas bulanan.')
+
+@push('styles')
+<style>
+    .tab-btn.active {
+        background-color: #0EA5E9;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+    }
+    @media print {
+        aside, #sidebar, #topNavbar, .no-print, #sidebarOverlay, .filter-box, #mainScreenWrapper {
+            display: none !important;
         }
-    </script>
-    <style>
-        .active-menu { background: rgba(255, 255, 255, 0.2); border-left: 4px solid #ffffff; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(14, 165, 233, 0.3); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(14, 165, 233, 0.5); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        @media (max-width: 1023px) { #sidebar.closed { transform: translateX(-100%); } #sidebar.open { transform: translateX(0); } }
-        .submenu { max-height: 0; overflow: hidden; transition: max-height .3s ease-in-out; }
-        .submenu.open { max-height: 400px; }
-        .menu-chevron { transition: transform .3s ease; }
-        .menu-chevron.rotated { transform: rotate(180deg); }
-        .card-hover { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 15px 30px -10px rgba(14, 165, 233, 0.25); border-color: rgba(14, 165, 233, 0.5); }
-        .tab-btn.active {
-            background-color: #0EA5E9;
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+        html, body {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif !important;
+            font-size: 8pt !important;
+            line-height: 1.35 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
-        @media print {
-            aside, #sidebar, #topNavbar, .no-print, #sidebarOverlay, .filter-box, #mainScreenWrapper {
-                display: none !important;
-            }
-            html, body {
-                background: #ffffff !important;
-                color: #0f172a !important;
-                font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif !important;
-                font-size: 8pt !important;
-                line-height: 1.35 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            @page {
-                size: A4 portrait;
-                margin: 10mm 10mm 12mm 10mm;
-            }
-            #printDocument {
-                display: block !important;
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            .print-table {
-                width: 100% !important;
-                border-collapse: collapse !important;
-                margin-top: 6px !important;
-                margin-bottom: 14px !important;
-                font-size: 7.5pt !important;
-            }
-            .print-table th, 
-            .print-table td {
-                border: 1px solid #94a3b8 !important;
-                padding: 4px 6px !important;
-                vertical-align: middle !important;
-            }
-            .print-table thead th {
-                background-color: #f1f5f9 !important;
-                color: #0f172a !important;
-                font-weight: 700 !important;
-                text-transform: uppercase !important;
-                font-size: 7pt !important;
-                letter-spacing: 0.3px !important;
-                -webkit-print-color-adjust: exact !important;
-            }
-            .print-table tfoot td {
-                background-color: #f8fafc !important;
-                font-weight: 700 !important;
-                border-top: 2px solid #334155 !important;
-                -webkit-print-color-adjust: exact !important;
-            }
-            .print-table thead {
-                display: table-header-group !important;
-            }
-            .print-table tr {
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
-            }
-            body.print-scope-orders #printSectionWithdrawals,
-            body.print-scope-orders #printSectionDaily {
-                display: none !important;
-            }
-            body.print-scope-withdrawals #printSectionOrders,
-            body.print-scope-withdrawals #printSectionDaily {
-                display: none !important;
-            }
-            body.print-scope-daily #printSectionOrders,
-            body.print-scope-daily #printSectionWithdrawals {
-                display: none !important;
-            }
+        @page {
+            size: A4 portrait;
+            margin: 10mm 10mm 12mm 10mm;
         }
-    </style>
-</head>
-<body class="bg-gradient-to-br from-slate-100 via-sky-100/40 to-blue-200/50 text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-sky/20 selection:text-skyDeep min-h-screen">
+        #printDocument {
+            display: block !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .print-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-top: 6px !important;
+            margin-bottom: 14px !important;
+            font-size: 7.5pt !important;
+        }
+        .print-table th, 
+        .print-table td {
+            border: 1px solid #94a3b8 !important;
+            padding: 4px 6px !important;
+            vertical-align: middle !important;
+        }
+        .print-table thead th {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            font-size: 7pt !important;
+            letter-spacing: 0.3px !important;
+            -webkit-print-color-adjust: exact !important;
+        }
+        .print-table tfoot td {
+            background-color: #f8fafc !important;
+            font-weight: 700 !important;
+            border-top: 2px solid #334155 !important;
+            -webkit-print-color-adjust: exact !important;
+        }
+        .print-table thead {
+            display: table-header-group !important;
+        }
+        .print-table tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+        body.print-scope-orders #printSectionWithdrawals,
+        body.print-scope-orders #printSectionDaily {
+            display: none !important;
+        }
+        body.print-scope-withdrawals #printSectionOrders,
+        body.print-scope-withdrawals #printSectionDaily {
+            display: none !important;
+        }
+        body.print-scope-daily #printSectionOrders,
+        body.print-scope-daily #printSectionWithdrawals {
+            display: none !important;
+        }
+    }
+</style>
+@endpush
 
-    <div id="mainScreenWrapper" class="flex min-h-screen relative">
-        <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden hidden transition-opacity duration-300"></div>
+@section('header_right')
+    <!-- Quick Month Navigator -->
+    <div class="hidden sm:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
+        @if(!empty($dateRange['has_prev']))
+            <a href="{{ route('admin.laporan.keuangan', ['month' => $dateRange['prev_month'], 'year' => $dateRange['prev_year']]) }}" 
+               class="px-2.5 py-1 rounded-lg text-slate-600 hover:bg-white hover:text-sky transition-all flex items-center gap-1" title="Bulan Sebelumnya">
+                <i class="fa-solid fa-chevron-left text-[10px]"></i>
+            </a>
+        @else
+            <span class="px-2.5 py-1 rounded-lg text-slate-300 cursor-not-allowed opacity-40 flex items-center gap-1" title="Batas Awal Tahun Launching (2026)">
+                <i class="fa-solid fa-chevron-left text-[10px]"></i>
+            </span>
+        @endif
 
-        <!-- SIDEBAR -->
-        <aside id="sidebar" class="w-[260px] bg-gradient-to-b from-skyDeep via-skyHover to-sky text-white flex flex-col shrink-0 border-r border-sky-400/20 shadow-2xl fixed lg:sticky top-0 h-screen z-50 closed lg:translate-x-0">
-            <div class="p-6 border-b border-white/15 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-white overflow-hidden flex items-center justify-center shadow-lg shadow-skyDeep/20"><img src="{{ asset('image/logo.png') }}" alt="KaryaKu Logo" class="w-full h-full object-contain"></div>
-                    <div>
-                        <h1 class="font-display font-extrabold text-[17px] leading-none tracking-wide text-white">KaryaKu</h1>
-                        <span class="text-[9px] text-sky-200 font-bold uppercase tracking-[0.2em] mt-1 block">Admin Panel</span>
-                    </div>
-                </div>
-                <button id="sidebarCloseBtn" class="lg:hidden text-white/80 hover:text-white p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <span class="px-3 py-1 font-bold text-skyDeep">
+            {{ $dateRange['month_name'] }} {{ $dateRange['year'] }}
+        </span>
+
+        @if(!empty($dateRange['has_next']))
+            <a href="{{ route('admin.laporan.keuangan', ['month' => $dateRange['next_month'], 'year' => $dateRange['next_year']]) }}" 
+               class="px-2.5 py-1 rounded-lg text-slate-600 hover:bg-white hover:text-sky transition-all flex items-center gap-1" title="Bulan Berikutnya">
+                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </a>
+        @else
+            <span class="px-2.5 py-1 rounded-lg text-slate-300 cursor-not-allowed opacity-40 flex items-center gap-1" title="Bulan Terkini">
+                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </span>
+        @endif
+    </div>
+
+    <!-- Smart Print Button with Dropdown -->
+    <div class="relative inline-block text-left" id="printDropdownContainer">
+        <div class="flex items-center">
+            <button type="button" onclick="triggerPrint('all')" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-l-xl border border-slate-200 shadow-sm transition-all flex items-center gap-2">
+                <i class="fa-solid fa-print text-sky-600"></i>
+                <span>Cetak Laporan</span>
+            </button>
+            <button type="button" onclick="togglePrintDropdown(event)" class="px-2 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-r-xl border-t border-r border-b border-slate-200 shadow-sm transition-all" title="Pilihan Cetak">
+                <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
+            </button>
+        </div>
+        <div id="printDropdownMenu" class="hidden absolute right-0 mt-2 w-60 rounded-2xl bg-white shadow-xl border border-slate-200 py-2 z-50">
+            <div class="px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                Opsi Format Cetak
             </div>
-
-            <div class="p-4 mx-4 my-5 rounded-2xl bg-white/10 border border-white/20 flex items-center gap-3 backdrop-blur-md shadow-inner">
-                <div class="w-10 h-10 rounded-full bg-white text-sky flex items-center justify-center font-bold text-sm shadow shrink-0">{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 2)) }}</div>
-                <div class="overflow-hidden">
-                    <p class="text-sm font-bold text-white truncate">{{ auth()->user()->name ?? 'Admin' }}</p>
-                    <span class="text-[10px] text-sky-200 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Administrator</span>
-                </div>
-            </div>
-
-            <nav class="flex-1 px-4 space-y-1.5 text-[13px] font-semibold text-sky-100 overflow-y-auto pb-4">
-                <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-4">Menu Utama</p>
-                <a href="{{ route('admin.dashboard') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all duration-200">
-                    <i class="fa-solid fa-chart-pie w-4 text-center"></i><span>Beranda</span>
-                </a>
-
+            <button type="button" onclick="triggerPrint('all')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-sky-50 hover:text-sky-700 flex items-center gap-2.5 transition">
+                <i class="fa-solid fa-file-invoice text-sky-500 w-4"></i>
                 <div>
-                    <button type="button" data-menu="pengguna" class="menu-toggle w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                        <i class="fa-solid fa-users w-4 text-center group-hover:text-white transition-colors"></i><span>Manajemen Pengguna</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] ml-auto menu-chevron" data-chevron="pengguna"></i>
-                    </button>
-                    <div class="submenu pl-4 mt-1 space-y-1" data-submenu="pengguna">
-                        <a href="{{ route('admin.users') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-user text-[10px] text-sky-200 w-3 text-center"></i> Akun Pengguna
-                        </a>
-                        <a href="{{ route('admin.users.verifikator') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-id-card text-[10px] text-sky-200 w-3 text-center"></i> Akun Verifikator
-                        </a>
-                        <a href="{{ route('admin.manajemen.akun_service') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-headset text-[10px] text-sky-200 w-3 text-center"></i> Akun Customer Service
-                        </a>
-                    </div>
+                    <span class="font-bold block">Laporan Lengkap</span>
+                    <span class="text-[10px] text-slate-400">Ringkasan & seluruh tabel data</span>
                 </div>
-
+            </button>
+            <button type="button" onclick="triggerPrint('active')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-sky-50 hover:text-sky-700 flex items-center gap-2.5 transition">
+                <i class="fa-solid fa-table-list text-emerald-500 w-4"></i>
                 <div>
-                    <button type="button" data-menu="katalog" class="menu-toggle w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                        <i class="fa-solid fa-box-open w-4 text-center group-hover:text-white transition-colors"></i><span>Katalog & Kategori</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] ml-auto menu-chevron" data-chevron="katalog"></i>
-                    </button>
-                    <div class="submenu pl-4 mt-1 space-y-1" data-submenu="katalog">
-                        <a href="{{ route('admin.products') }}" class="flex items-center justify-between px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <div class="flex items-center gap-2"><i class="fa-solid fa-list-check text-[10px] text-sky-200 w-3 text-center"></i> Daftar Jasa</div>
-                        </a>
-                        <a href="{{ route('admin.categories.index') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-tags text-[10px] text-sky-200 w-3 text-center"></i> Kategori Jasa
-                        </a>
-                    </div>
+                    <span class="font-bold block">Tab Aktif Saja</span>
+                    <span class="text-[10px] text-slate-400" id="printActiveTabLabel">Transaksi Penjualan</span>
                 </div>
-
+            </button>
+            <button type="button" onclick="triggerPrint('orders')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-sky-50 hover:text-sky-700 flex items-center gap-2.5 transition">
+                <i class="fa-solid fa-cart-shopping text-blue-500 w-4"></i>
                 <div>
-                    <button type="button" data-menu="transaksi" class="menu-toggle w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                        <i class="fa-solid fa-receipt w-4 text-center text-white transition-colors"></i><span class="text-white">Keuangan</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] ml-auto menu-chevron rotated" data-chevron="transaksi"></i>
-                    </button>
-                    <div class="submenu pl-4 mt-1 space-y-1 open" data-submenu="transaksi">
-                        <a href="{{ route('admin.transactions') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-clock-rotate-left text-[10px] text-sky-200 w-3 text-center"></i> Riwayat Pesanan
-                        </a>
-                        <a href="{{ route('admin.withdrawals') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all text-xs">
-                            <i class="fa-solid fa-wallet text-[10px] text-sky-200 w-3 text-center"></i> Penarikan Saldo
-                        </a>
-                        <a href="{{ route('admin.laporan.keuangan') }}" class="flex items-center gap-2 px-3.5 py-2 rounded-lg active-menu transition-all text-xs font-bold">
-                            <i class="fa-solid fa-file-invoice-dollar text-[10px] text-white w-3 text-center"></i> Laporan Keuangan
-                        </a>
-                    </div>
+                    <span class="font-bold block">Hanya Transaksi Penjualan</span>
+                    <span class="text-[10px] text-slate-400">{{ $orders->count() }} transaksi</span>
                 </div>
-
-                <a href="{{ route('admin.memberships') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                    <i class="fa-solid fa-crown w-4 text-center group-hover:text-amber-300 transition-colors"></i><span>Paket Membership</span>
-                </a>
-                <p class="px-3.5 text-[10px] font-bold uppercase tracking-wider text-sky-200/70 mb-2 mt-6">Sistem</p>
-                <a href="{{ route('admin.maintenance') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group">
-                    <div class="flex items-center gap-3"><i class="fa-solid fa-server w-4 text-center group-hover:text-white transition-colors"></i><span>Maintenance & Backup</span></div>
-                </a>
-
-                <a href="{{ route('admin.pelanggaran') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1">
-                    <i class="fa-solid fa-triangle-exclamation w-4 text-center group-hover:text-white transition-colors"></i>
-                    <span>Pelanggaran</span>
-                </a>
-
-                <a href="{{ route('admin.security.index') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl {{ request()->routeIs('admin.security.*') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }} transition-all group mt-1">
-                    <i class="fa-solid fa-shield-halved w-4 text-center text-white"></i><span>Keamanan System</span>
-                </a>
-
-                <a href="{{ route('admin.notifications.index') }}" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/10 hover:text-white transition-all group mt-1">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-bell w-4 text-center group-hover:text-white transition-colors"></i>
-                        <span>Notifikasi</span>
-                    </div>
-                </a>
-            </nav>
-            <div class="p-4 border-t border-white/15">
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-red-600/80 text-white hover:bg-red-700 text-xs font-bold transition-all duration-300 shadow-md">
-                        <i class="fa-solid fa-power-off"></i><span>Keluar Sistem</span>
-                    </button>
-                </form>
-            </div>
-        </aside>
-
-        <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col min-w-0 w-full">
-            <!-- TOP NAVBAR -->
-            <header id="topNavbar" class="bg-gradient-to-r from-white via-sky-50/50 to-blue-50/50 backdrop-blur-xl border-b border-sky-200 px-6 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm no-print">
-                <div class="flex items-center gap-4">
-                    <button id="sidebarToggleBtn" class="lg:hidden w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition border border-sky-200 shadow-sm"><i class="fa-solid fa-bars text-base"></i></button>
-                    <div>
-                        <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900">Laporan Keuangan</h2>
-                        <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Rangkuman transaksi, komisi platform 5%, dan rekapitulasi arus kas bulanan.</p>
-                    </div>
+            </button>
+            <button type="button" onclick="triggerPrint('withdrawals')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-sky-50 hover:text-sky-700 flex items-center gap-2.5 transition">
+                <i class="fa-solid fa-wallet text-amber-500 w-4"></i>
+                <div>
+                    <span class="font-bold block">Hanya Penarikan Saldo</span>
+                    <span class="text-[10px] text-slate-400">{{ $withdrawals->count() }} pengajuan</span>
                 </div>
-
-                <div class="flex items-center gap-3">
-                    <!-- Quick Month Navigator -->
-                    <div class="hidden sm:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
-                        @if(!empty($dateRange['has_prev']))
-                            <a href="{{ route('admin.laporan.keuangan', ['month' => $dateRange['prev_month'], 'year' => $dateRange['prev_year']]) }}" 
-                               class="px-2.5 py-1 rounded-lg text-slate-600 hover:bg-white hover:text-sky transition-all flex items-center gap-1" title="Bulan Sebelumnya">
-                                <i class="fa-solid fa-chevron-left text-[10px]"></i>
-                            </a>
-                        @else
-                            <span class="px-2.5 py-1 rounded-lg text-slate-300 cursor-not-allowed opacity-40 flex items-center gap-1" title="Batas Awal Tahun Launching (2026)">
-                                <i class="fa-solid fa-chevron-left text-[10px]"></i>
-                            </span>
-                        @endif
-
-                        <span class="px-3 py-1 font-bold text-skyDeep">
-                            {{ $dateRange['month_name'] }} {{ $dateRange['year'] }}
-                        </span>
-
-                        @if(!empty($dateRange['has_next']))
-                            <a href="{{ route('admin.laporan.keuangan', ['month' => $dateRange['next_month'], 'year' => $dateRange['next_year']]) }}" 
-                               class="px-2.5 py-1 rounded-lg text-slate-600 hover:bg-white hover:text-sky transition-all flex items-center gap-1" title="Bulan Berikutnya">
-                                <i class="fa-solid fa-chevron-right text-[10px]"></i>
-                            </a>
-                        @else
-                            <span class="px-2.5 py-1 rounded-lg text-slate-300 cursor-not-allowed opacity-40 flex items-center gap-1" title="Bulan Terkini">
-                                <i class="fa-solid fa-chevron-right text-[10px]"></i>
-                            </span>
-                        @endif
-                    </div>
-
-                    <!-- Smart Print Button with Dropdown -->
-                    <div class="relative inline-block text-left" id="printDropdownContainer">
-                        <div class="flex items-center">
-                            <button type="button" onclick="triggerPrint('all')" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-l-xl border border-slate-200 shadow-sm transition-all flex items-center gap-2">
-                                <i class="fa-solid fa-print text-sky-600"></i>
-                                <span>Cetak Laporan</span>
-                            </button>
-                            <button type="button" onclick="togglePrintDropdown(event)" class="px-2 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-r-xl border-t border-r border-b border-slate-200 shadow-sm transition-all" title="Pilihan Cetak">
-                                <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
-                            </button>
-                        </div>
-                        <div id="printDropdownMenu" class="hidden absolute right-0 mt-2 w-60 rounded-2xl bg-white shadow-xl border border-slate-200 py-2 z-50">
-                            <div class="px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
-                                Opsi Format Cetak
-                            </div>
-                            <button type="button" onclick="triggerPrint('all')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-sky-50 hover:text-sky-700 flex items-center gap-2.5 transition">
-                                <i class="fa-solid fa-file-invoice text-sky-500 w-4"></i>
-                                <div>
-                                    <span class="font-bold block">Laporan Lengkap</span>
-                                    <span class="text-[10px] text-slate-400">Ringkasan & seluruh tabel data</span>
-                                </div>
-                            </button>
-                            <button type="button" onclick="triggerPrint('active')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-sky-50 hover:text-sky-700 flex items-center gap-2.5 transition">
-                                <i class="fa-solid fa-table-list text-emerald-500 w-4"></i>
-                                <div>
-                                    <span class="font-bold block">Tab Aktif Saja</span>
-                                    <span class="text-[10px] text-slate-400" id="printActiveTabLabel">Transaksi Penjualan</span>
-                                </div>
-                            </button>
-                            <button type="button" onclick="triggerPrint('orders')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-sky-50 hover:text-sky-700 flex items-center gap-2.5 transition">
-                                <i class="fa-solid fa-cart-shopping text-blue-500 w-4"></i>
-                                <div>
-                                    <span class="font-bold block">Hanya Transaksi Penjualan</span>
-                                    <span class="text-[10px] text-slate-400">{{ $orders->count() }} transaksi</span>
-                                </div>
-                            </button>
-                            <button type="button" onclick="triggerPrint('withdrawals')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-sky-50 hover:text-sky-700 flex items-center gap-2.5 transition">
-                                <i class="fa-solid fa-wallet text-amber-500 w-4"></i>
-                                <div>
-                                    <span class="font-bold block">Hanya Penarikan Saldo</span>
-                                    <span class="text-[10px] text-slate-400">{{ $withdrawals->count() }} pengajuan</span>
-                                </div>
-                            </button>
-                            <button type="button" onclick="triggerPrint('daily')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-sky-50 hover:text-sky-700 flex items-center gap-2.5 transition">
-                                <i class="fa-solid fa-calendar-day text-indigo-500 w-4"></i>
-                                <div>
-                                    <span class="font-bold block">Hanya Rekap Harian</span>
-                                    <span class="text-[10px] text-slate-400">{{ count($dailyBreakdown) }} hari pembukuan</span>
-                                </div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Export Excel Button -->
-                    <a href="{{ route('admin.laporan.keuangan.export', request()->query()) }}" 
-                       class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-500/25 transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]">
-                        <i class="fa-solid fa-file-excel text-emerald-100 text-sm"></i>
-                        <span>Ekspor Excel (.xlsx)</span>
-                    </a>
+            </button>
+            <button type="button" onclick="triggerPrint('daily')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-sky-50 hover:text-sky-700 flex items-center gap-2.5 transition">
+                <i class="fa-solid fa-calendar-day text-indigo-500 w-4"></i>
+                <div>
+                    <span class="font-bold block">Hanya Rekap Harian</span>
+                    <span class="text-[10px] text-slate-400">{{ count($dailyBreakdown) }} hari pembukuan</span>
                 </div>
-            </header>
+            </button>
+        </div>
+    </div>
 
-            <div class="p-6 sm:p-8 space-y-6 overflow-y-auto no-scrollbar" id="mainScreenWrapper">
+    <!-- Export Excel Button -->
+    <a href="{{ route('admin.laporan.keuangan.export', request()->query()) }}" 
+       class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-500/25 transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]">
+        <i class="fa-solid fa-file-excel text-emerald-100 text-sm"></i>
+        <span>Ekspor Excel (.xlsx)</span>
+    </a>
+@endsection
+
+@section('content')
+
 
                 <!-- FILTER CONTROLS CARD -->
                 <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl p-5 sm:p-6 shadow-sm filter-box">
@@ -1132,135 +977,109 @@
                 Dokumen ini dicetak secara sah dan otomatis melalui Sistem Informasi Karyaku pada {{ now()->translatedFormat('d F Y, H:i:s') }} WIB. Rekam data transaksi tersimpan terenkripsi pada server.
             </div>
         </div>
-    </div>
+@endsection
 
-    <!-- SCRIPT CHART & TAB INTERACTIVITY -->
-    <script>
-        // Sidebar Toggle Scripts
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOpenBtn = document.getElementById('sidebarOpenBtn');
-        const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
+@push('scripts')
+<script>
+    // Tab Switching Logic
+    let currentActiveTab = 'orders';
 
-        function toggleSidebar() {
-            sidebar.classList.toggle('closed');
-            sidebar.classList.toggle('open');
-            sidebarOverlay.classList.toggle('hidden');
-        }
-
-        if (sidebarOpenBtn) sidebarOpenBtn.addEventListener('click', toggleSidebar);
-        if (sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', toggleSidebar);
-        if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
-
-        // Submenu Accordion
-        document.querySelectorAll('.menu-toggle').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const menu = btn.getAttribute('data-menu');
-                const submenu = document.querySelector(`[data-submenu="${menu}"]`);
-                const chevron = document.querySelector(`[data-chevron="${menu}"]`);
-                if (submenu) submenu.classList.toggle('open');
-                if (chevron) chevron.classList.toggle('rotated');
-            });
+    function switchTab(tabKey) {
+        currentActiveTab = tabKey;
+        document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(el => {
+            el.classList.remove('active');
+            el.classList.remove('bg-sky');
+            el.classList.remove('text-white');
         });
 
-        // Tab Switching Logic
-        let currentActiveTab = 'orders';
+        const activeTabLabel = document.getElementById('printActiveTabLabel');
 
-        function switchTab(tabKey) {
-            currentActiveTab = tabKey;
-            document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(el => {
-                el.classList.remove('active');
-                el.classList.remove('bg-sky');
-                el.classList.remove('text-white');
-            });
+        if (tabKey === 'orders') {
+            document.getElementById('tabContentOrders').classList.remove('hidden');
+            document.getElementById('tabBtnOrders').classList.add('active');
+            if (activeTabLabel) activeTabLabel.textContent = 'Transaksi Penjualan';
+        } else if (tabKey === 'withdrawals') {
+            document.getElementById('tabContentWithdrawals').classList.remove('hidden');
+            document.getElementById('tabBtnWithdrawals').classList.add('active');
+            if (activeTabLabel) activeTabLabel.textContent = 'Penarikan Saldo';
+        } else if (tabKey === 'daily') {
+            document.getElementById('tabContentDaily').classList.remove('hidden');
+            document.getElementById('tabBtnDaily').classList.add('active');
+            if (activeTabLabel) activeTabLabel.textContent = 'Rekapitulasi Harian';
+        }
+    }
 
-            const activeTabLabel = document.getElementById('printActiveTabLabel');
+    // Dropdown Print Toggle & Triggers
+    function togglePrintDropdown(event) {
+        event.stopPropagation();
+        const menu = document.getElementById('printDropdownMenu');
+        if (menu) menu.classList.toggle('hidden');
+    }
 
-            if (tabKey === 'orders') {
-                document.getElementById('tabContentOrders').classList.remove('hidden');
-                document.getElementById('tabBtnOrders').classList.add('active');
-                if (activeTabLabel) activeTabLabel.textContent = 'Transaksi Penjualan';
-            } else if (tabKey === 'withdrawals') {
-                document.getElementById('tabContentWithdrawals').classList.remove('hidden');
-                document.getElementById('tabBtnWithdrawals').classList.add('active');
-                if (activeTabLabel) activeTabLabel.textContent = 'Penarikan Saldo';
-            } else if (tabKey === 'daily') {
-                document.getElementById('tabContentDaily').classList.remove('hidden');
-                document.getElementById('tabBtnDaily').classList.add('active');
-                if (activeTabLabel) activeTabLabel.textContent = 'Rekapitulasi Harian';
-            }
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('printDropdownContainer');
+        const menu = document.getElementById('printDropdownMenu');
+        if (menu && container && !container.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+
+    function triggerPrint(scope) {
+        const menu = document.getElementById('printDropdownMenu');
+        if (menu) menu.classList.add('hidden');
+
+        // Reset scope classes on body
+        document.body.classList.remove('print-scope-all', 'print-scope-orders', 'print-scope-withdrawals', 'print-scope-daily');
+
+        if (scope === 'active') {
+            scope = currentActiveTab;
         }
 
-        // Dropdown Print Toggle & Triggers
-        function togglePrintDropdown(event) {
-            event.stopPropagation();
-            const menu = document.getElementById('printDropdownMenu');
-            if (menu) menu.classList.toggle('hidden');
+        if (scope === 'orders') {
+            document.body.classList.add('print-scope-orders');
+        } else if (scope === 'withdrawals') {
+            document.body.classList.add('print-scope-withdrawals');
+        } else if (scope === 'daily') {
+            document.body.classList.add('print-scope-daily');
+        } else {
+            document.body.classList.add('print-scope-all');
         }
 
-        document.addEventListener('click', function(e) {
-            const container = document.getElementById('printDropdownContainer');
-            const menu = document.getElementById('printDropdownMenu');
-            if (menu && container && !container.contains(e.target)) {
-                menu.classList.add('hidden');
-            }
-        });
+        setTimeout(() => {
+            window.print();
+        }, 50);
+    }
 
-        function triggerPrint(scope) {
-            const menu = document.getElementById('printDropdownMenu');
-            if (menu) menu.classList.add('hidden');
-
-            // Reset scope classes on body
-            document.body.classList.remove('print-scope-all', 'print-scope-orders', 'print-scope-withdrawals', 'print-scope-daily');
-
-            if (scope === 'active') {
-                scope = currentActiveTab;
-            }
-
-            if (scope === 'orders') {
-                document.body.classList.add('print-scope-orders');
-            } else if (scope === 'withdrawals') {
-                document.body.classList.add('print-scope-withdrawals');
-            } else if (scope === 'daily') {
-                document.body.classList.add('print-scope-daily');
-            } else {
-                document.body.classList.add('print-scope-all');
-            }
-
-            setTimeout(() => {
-                window.print();
-            }, 50);
-        }
-
-        // Live Table Search Filter
-        function filterTableRows() {
-            const input = document.getElementById('tableSearchInput');
-            const filter = input.value.toLowerCase();
-            
-            // Search in currently visible table
-            const activeTable = document.querySelector('.tab-pane:not(.hidden) table tbody');
-            if (activeTable) {
-                const rows = activeTable.getElementsByTagName('tr');
-                for (let i = 0; i < rows.length; i++) {
-                    const rowText = rows[i].textContent || rows[i].innerText;
-                    if (rowText.toLowerCase().indexOf(filter) > -1) {
-                        rows[i].style.display = '';
-                    } else {
-                        rows[i].style.display = 'none';
-                    }
+    // Live Table Search Filter
+    function filterTableRows() {
+        const input = document.getElementById('tableSearchInput');
+        const filter = input.value.toLowerCase();
+        
+        // Search in currently visible table
+        const activeTable = document.querySelector('.tab-pane:not(.hidden) table tbody');
+        if (activeTable) {
+            const rows = activeTable.getElementsByTagName('tr');
+            for (let i = 0; i < rows.length; i++) {
+                const rowText = rows[i].textContent || rows[i].innerText;
+                if (rowText.toLowerCase().indexOf(filter) > -1) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
                 }
             }
         }
+    }
 
-        // Initialize Chart.js
-        document.addEventListener('DOMContentLoaded', function() {
-            // Chart 1: Dual Line/Bar Daily Performance
+    // Initialize Chart.js
+    document.addEventListener('DOMContentLoaded', function() {
+        const dailyCanvas = document.getElementById('dailyFinancialChart');
+        if (dailyCanvas) {
             const chartLabels = @json($chartData['labels']);
             const chartInflow = @json($chartData['inflow']);
             const chartOutflow = @json($chartData['outflow']);
 
-            const ctxDaily = document.getElementById('dailyFinancialChart').getContext('2d');
+            const ctxDaily = dailyCanvas.getContext('2d');
             new Chart(ctxDaily, {
                 type: 'line',
                 data: {
@@ -1329,9 +1148,11 @@
                     }
                 }
             });
+        }
 
-            // Chart 2: Status Distribution Doughnut Chart
-            const ctxStatus = document.getElementById('statusDistributionChart').getContext('2d');
+        const statusCanvas = document.getElementById('statusDistributionChart');
+        if (statusCanvas) {
+            const ctxStatus = statusCanvas.getContext('2d');
             const totalPaid = {{ $summary['total_orders_paid'] }};
             const totalUnpaid = {{ $summary['total_orders_unpaid'] }};
             const totalFailed = {{ $summary['total_orders_failed'] }};
@@ -1356,7 +1177,8 @@
                     }
                 }
             });
-        });
-    </script>
-</body>
-</html>
+        }
+    });
+</script>
+@endpush
+

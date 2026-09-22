@@ -31,7 +31,6 @@ class ReportController extends Controller
             ->orderBy('name')
             ->get();
 
-        // 1. Laporan yang diajukan oleh pembeli (Laporan Keluar)
         $reports = Report::with([
                 'product:id_product,title,seller_id',
                 'reportedUser:id_user,name',
@@ -42,7 +41,6 @@ class ReportController extends Controller
             ->paginate(10, ['*'], 'page_saya')
             ->withQueryString();
 
-        // 2. Laporan terhadap akun pembeli ini (Laporan Masuk)
         $incomingReports = Report::with([
                 'product:id_product,title,seller_id',
                 'reporter:id_user,name',

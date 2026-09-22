@@ -1,212 +1,143 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Karyaku - Detail Verifikasi Produk</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@extends('layouts.verifikator')
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Sora', 'sans-serif'] },
-                    colors: { sky: '#0EA5E9', skyHover: '#0284C7', skyDeep: '#0B3D62' }
-                }
-            }
-        }
-    </script>
-    <style>
-        .active-menu { background: rgba(255, 255, 255, 0.2); border-left: 4px solid #ffffff; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(14, 165, 233, 0.3); border-radius: 10px; }
+@section('title', 'Detail Verifikasi Produk')
+@section('header_title', 'Detail Verifikasi Produk')
+@section('header_subtitle', 'Tinjau deskripsi, varian harga, dan sampel media karya penjual.')
 
-        #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        @media (max-width: 1023px) { #sidebar.closed { transform: translateX(-100%); } #sidebar.open { transform: translateX(0); } }
-    </style>
-</head>
-<body class="bg-gradient-to-br from-slate-100 via-sky-100/40 to-blue-200/50 text-slate-800 font-sans antialiased min-h-screen">
+@section('header_right')
+<a href="{{ route('verifikator.produk') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 hover:border-sky-300 text-slate-700 font-bold text-xs transition shadow-sm">
+    <i class="fa-solid fa-arrow-left"></i> Kembali
+</a>
+@endsection
 
-    <div class="flex min-h-screen relative">
-        <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden hidden transition-opacity duration-300"></div>
-
-        @include('verifikator.partials.sidebar')
-
-        <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col min-w-0 w-full">
-            <header class="bg-white/70 backdrop-blur-xl border-b border-sky-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
-                <div class="flex items-center gap-4">
-                    <button id="sidebarToggleBtn" class="lg:hidden w-10 h-10 rounded-xl bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center transition border border-sky-200 shadow-sm"><i class="fa-solid fa-bars text-base"></i></button>
-                    <div>
-                        <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight font-display text-slate-900">Detail Verifikasi Produk</h2>
-                        <p class="text-[11px] sm:text-xs text-slate-600 font-semibold mt-0.5">Tinjau deskripsi, varian harga, dan sampel media karya penjual.</p>
-                    </div>
-                </div>
-                <a href="{{ route('verifikator.produk') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 hover:border-sky-300 text-slate-700 font-bold text-xs transition shadow-sm">
-                    <i class="fa-solid fa-arrow-left"></i> Kembali
-                </a>
-            </header>
-
-            <div class="p-6 sm:p-8 space-y-6">
-
-                <div class="bg-white border border-sky-200 rounded-2xl p-6 shadow-sm space-y-5">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-                        <div>
-                            <span class="text-xs font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-full border border-sky-200">
-                                {{ $product->category->name ?? 'Kategori Umum' }}
-                            </span>
-                            <h2 class="text-xl font-extrabold text-slate-900 font-display mt-2">{{ $product->title ?? $product->name ?? '-' }}</h2>
-                        </div>
-                        <div class="text-left md:text-right">
-                            <span class="text-[10px] font-bold uppercase text-slate-400 block tracking-wider">Harga Ditentukan</span>
-                            <span class="text-2xl font-extrabold text-emerald-600 font-display">Rp {{ number_format($product->price ?? 0, 0, ',', '.') }}</span>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                        <div class="p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
-                            <span class="text-slate-400 font-bold block uppercase text-[10px]">Nama Penjual</span>
-                            <span class="font-extrabold text-slate-800 text-sm block mt-0.5">{{ $product->seller->name ?? $product->user->name ?? '-' }}</span>
-                        </div>
-                        <div class="p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
-                            <span class="text-slate-400 font-bold block uppercase text-[10px]">Email Penjual</span>
-                            <span class="font-bold text-slate-800 text-sm block mt-0.5">@safeEmail($product->seller->email ?? $product->user->email ?? '-')</span>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 class="text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">Deskripsi Produk & Jasa</h4>
-                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs leading-relaxed text-slate-700">
-                            {!! nl2br(e($product->description ?? 'Tidak ada rincian deskripsi.')) !!}
-                        </div>
-                    </div>
-
-                    @if($product->thumbnail || $product->file)
-                    <div>
-                        <h4 class="text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">Pratinjau Gambar Sampel</h4>
-                        <div class="bg-slate-100 border border-slate-200 rounded-xl p-2 max-w-md">
-                            <img src="{{ $product->thumbnail_url }}" class="w-full h-auto rounded-lg shadow-sm">
-                        </div>
-                    </div>
-                    @endif
-                </div>
-
-                @if($product->status === 'pending')
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                    <!-- Form Approve -->
-                    <div class="bg-white border-l-4 border-l-emerald-500 border-y border-r border-slate-200 rounded-2xl p-6 shadow-sm">
-                        <h3 class="font-extrabold text-slate-900 text-base font-display mb-1 flex items-center gap-2">
-                            <i class="fa-solid fa-circle-check text-emerald-500"></i> Publikasikan Produk
-                        </h3>
-                        <p class="text-xs text-slate-500 font-medium mb-4">Produk langsung berstatus aktif dan dapat dibeli publik.</p>
-
-                        <form id="approveProductForm" action="{{ route('verifikator.produk.approve', $product->id_product ?? $product->id) }}" method="POST">
-                            @csrf
-                            <button type="button" onclick="confirmApproveProduct()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition shadow-md flex items-center justify-center gap-2 cursor-pointer">
-                                <i class="fa-solid fa-check"></i> ✅ Disetujui & Terbitkan
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Form Reject -->
-                    <div class="bg-white border-l-4 border-l-red-500 border-y border-r border-slate-200 rounded-2xl p-6 shadow-sm">
-                        <h3 class="font-extrabold text-slate-900 text-base font-display mb-1 flex items-center gap-2">
-                            <i class="fa-solid fa-circle-xmark text-red-500"></i> Tolak Produk
-                        </h3>
-                        <p class="text-xs text-slate-500 font-medium mb-4">Kirimkan pesan penolakan / catatan revisi ke penjual.</p>
-
-                        <form id="rejectProductForm" action="{{ route('verifikator.produk.reject', $product->id_product ?? $product->id) }}" method="POST" class="space-y-4">
-                            @csrf
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Catatan Penolakan <span class="text-red-500">*</span></label>
-                                <textarea id="rejectionNoteInput" name="rejection_note" required placeholder="Tuliskan catatan revisi/penolakan..." class="w-full border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none focus:border-red-400 bg-slate-50 min-h-[80px]"></textarea>
-                            </div>
-
-                            <button type="button" onclick="confirmRejectProduct()" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs transition shadow-md flex items-center justify-center gap-2 cursor-pointer">
-                                <i class="fa-solid fa-xmark"></i> ✕ Tolak / Minta Revisi
-                            </button>
-                        </form>
-                    </div>
-
-                </div>
-                @else
-                <div class="bg-slate-100 text-slate-700 border border-slate-200 rounded-2xl p-4 font-bold text-xs text-center">
-                    Status Produk: {{ strtoupper($product->status) }}
-                </div>
-                @endif
-
-            </div>
-        </main>
+@section('content')
+<div class="bg-white border border-sky-200 rounded-2xl p-6 shadow-sm space-y-5">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div>
+            <span class="text-xs font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-full border border-sky-200">
+                {{ $product->category->name ?? 'Kategori Umum' }}
+            </span>
+            <h2 class="text-xl font-extrabold text-slate-900 font-display mt-2">{{ $product->title ?? $product->name ?? '-' }}</h2>
+        </div>
+        <div class="text-left md:text-right">
+            <span class="text-[10px] font-bold uppercase text-slate-400 block tracking-wider">Harga Ditentukan</span>
+            <span class="text-2xl font-extrabold text-emerald-600 font-display">Rp {{ number_format($product->price ?? 0, 0, ',', '.') }}</span>
+        </div>
     </div>
 
-    <!-- SCRIPTS -->
-    <script>
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
-        const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
+            <span class="text-slate-400 font-bold block uppercase text-[10px]">Nama Penjual</span>
+            <span class="font-extrabold text-slate-800 text-sm block mt-0.5">{{ $product->seller->name ?? $product->user->name ?? '-' }}</span>
+        </div>
+        <div class="p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
+            <span class="text-slate-400 font-bold block uppercase text-[10px]">Email Penjual</span>
+            <span class="font-bold text-slate-800 text-sm block mt-0.5">@safeEmail($product->seller->email ?? $product->user->email ?? '-')</span>
+        </div>
+    </div>
 
-        function toggleSidebar() {
-            sidebar.classList.toggle('open'); sidebar.classList.toggle('closed');
-            sidebarOverlay.classList.toggle('hidden');
-        }
-        if(sidebarToggleBtn) sidebarToggleBtn.addEventListener('click', toggleSidebar);
-        if(sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', toggleSidebar);
+    <div>
+        <h4 class="text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">Deskripsi Produk & Jasa</h4>
+        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs leading-relaxed text-slate-700">
+            {!! nl2br(e($product->description ?? 'Tidak ada rincian deskripsi.')) !!}
+        </div>
+    </div>
 
-        function confirmApproveProduct() {
-            Swal.fire({
-                title: 'Setujui Produk?',
-                text: "Produk akan dapat dilihat dan dibeli oleh seluruh pembeli.",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#94a3b8',
-                confirmButtonText: 'Ya, Terbitkan!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('approveProductForm').submit();
-                }
-            });
-        }
+    @if($product->thumbnail || $product->file)
+    <div>
+        <h4 class="text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">Pratinjau Gambar Sampel</h4>
+        <div class="bg-slate-100 border border-slate-200 rounded-xl p-2 max-w-md">
+            <img src="{{ $product->thumbnail_url }}" class="w-full h-auto rounded-lg shadow-sm">
+        </div>
+    </div>
+    @endif
+</div>
 
-        function confirmRejectProduct() {
-            const note = document.getElementById('rejectionNoteInput').value;
-            if (!note.trim()) {
-                Swal.fire({ icon: 'warning', title: 'Catatan Wajib Diisi', text: 'Tuliskan alasan penolakan produk.', confirmButtonColor: '#0EA5E9' });
-                return;
+@if($product->status === 'pending')
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Form Approve -->
+    <div class="bg-white border-l-4 border-l-emerald-500 border-y border-r border-slate-200 rounded-2xl p-6 shadow-sm">
+        <h3 class="font-extrabold text-slate-900 text-base font-display mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-circle-check text-emerald-500"></i> Publikasikan Produk
+        </h3>
+        <p class="text-xs text-slate-500 font-medium mb-4">Produk langsung berstatus aktif dan dapat dibeli publik.</p>
+
+        <form id="approveProductForm" action="{{ route('verifikator.produk.approve', $product->id_product ?? $product->id) }}" method="POST">
+            @csrf
+            <button type="button" onclick="confirmApproveProduct()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition shadow-md flex items-center justify-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-check"></i> ✅ Disetujui & Terbitkan
+            </button>
+        </form>
+    </div>
+
+    <!-- Form Reject -->
+    <div class="bg-white border-l-4 border-l-red-500 border-y border-r border-slate-200 rounded-2xl p-6 shadow-sm">
+        <h3 class="font-extrabold text-slate-900 text-base font-display mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-circle-xmark text-red-500"></i> Tolak Produk
+        </h3>
+        <p class="text-xs text-slate-500 font-medium mb-4">Kirimkan pesan penolakan / catatan revisi ke penjual.</p>
+
+        <form id="rejectProductForm" action="{{ route('verifikator.produk.reject', $product->id_product ?? $product->id) }}" method="POST" class="space-y-4">
+            @csrf
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Catatan Penolakan <span class="text-red-500">*</span></label>
+                <textarea id="rejectionNoteInput" name="rejection_note" required placeholder="Tuliskan catatan revisi/penolakan..." class="w-full border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none focus:border-red-400 bg-slate-50 min-h-[80px]"></textarea>
+            </div>
+
+            <button type="button" onclick="confirmRejectProduct()" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs transition shadow-md flex items-center justify-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-xmark"></i> ✕ Tolak / Minta Revisi
+            </button>
+        </form>
+    </div>
+
+</div>
+@else
+<div class="bg-slate-100 text-slate-700 border border-slate-200 rounded-2xl p-4 font-bold text-xs text-center">
+    Status Produk: {{ strtoupper($product->status) }}
+</div>
+@endif
+@endsection
+
+@push('scripts')
+<script>
+    function confirmApproveProduct() {
+        Swal.fire({
+            title: 'Setujui Produk?',
+            text: "Produk akan dapat dilihat dan dibeli oleh seluruh pembeli.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Ya, Terbitkan!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('approveProductForm').submit();
             }
-            Swal.fire({
-                title: 'Tolak Produk Ini?',
-                text: "Catatan penolakan akan dikirimkan ke notifikasi penjual.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#94a3b8',
-                confirmButtonText: 'Ya, Tolak!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('rejectProductForm').submit();
-                }
-            });
-        }
+        });
+    }
 
-        @if (session('success'))
-            Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", timer: 3000, showConfirmButton: false });
-        @endif
-        @if (session('error'))
-            Swal.fire({ icon: 'error', title: 'Gagal!', text: "{{ session('error') }}", confirmButtonColor: '#ef4444' });
-        @endif
-    </script>
-</body>
-</html>
+    function confirmRejectProduct() {
+        const note = document.getElementById('rejectionNoteInput').value;
+        if (!note.trim()) {
+            Swal.fire({ icon: 'warning', title: 'Catatan Wajib Diisi', text: 'Tuliskan alasan penolakan produk.', confirmButtonColor: '#0EA5E9' });
+            return;
+        }
+        Swal.fire({
+            title: 'Tolak Produk Ini?',
+            text: "Catatan penolakan akan dikirimkan ke notifikasi penjual.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Ya, Tolak!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('rejectProductForm').submit();
+            }
+        });
+    }
+</script>
+@endpush

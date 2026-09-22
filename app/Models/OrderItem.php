@@ -33,7 +33,6 @@ class OrderItem extends Model
         return $this->belongsTo(Product::class, 'product_id', 'id_product');
     }
 
-    // Tidak ada kolom seller_id terpisah -> ambil dari relasi product->seller
     public function getSellerNameAttribute(): string
     {
         return $this->product?->seller?->name ?? '-';

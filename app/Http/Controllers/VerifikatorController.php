@@ -24,7 +24,6 @@ class VerifikatorController extends Controller
         return $user && in_array(strtolower($user->role->role_name ?? ''), ['admin', 'verifikator'], true);
     }
 
-    // ================= 1. DASHBOARD =================
     public function dashboard()
     {
         $pending = IdentityVerification::select(['id_identity_verification', 'user_id', 'membership_id', 'status', 'payment_method', 'submitted_at'])
@@ -59,7 +58,6 @@ class VerifikatorController extends Controller
         ));
     }
 
-    // ================= 2. VERIFIKASI IDENTITAS =================
     public function identitas(Request $request)
     {
         $tab = $request->get('tab', 'pending');
@@ -104,7 +102,6 @@ class VerifikatorController extends Controller
                     $userData['id_membership'] = $membership->id_membership;
                     $durationDays = $membership->duration_days ?? 30;
 
-                    // Jika memperpanjang paket yang sama dan masih aktif, tambahkan dari expiry lama
                     $isSamePlanActive = ($user->id_membership == $membership->id_membership) && $user->membership_expires_at && $user->membership_expires_at->isFuture();
 
                     $userData['membership_expires_at'] = $isSamePlanActive
@@ -161,7 +158,6 @@ class VerifikatorController extends Controller
         }
     }
 
-    // ================= 3. VERIFIKASI PRODUK =================
     public function produk(Request $request)
     {
         $tab = $request->get('tab', 'pending');
@@ -238,7 +234,6 @@ class VerifikatorController extends Controller
         }
     }
 
-    // ================= 4. VERIFIKASI PEMBAYARAN =================
     public function pembayaran(Request $request)
     {
         $sub = $request->get('sub', 'transaksi');
@@ -314,7 +309,6 @@ class VerifikatorController extends Controller
                     'verified_at'    => now(),
                 ]);
 
-                // Notifikasi untuk Pembeli
                 Notification::create([
                     'user_id'     => $order->buyer_id,
                     'name'        => 'Transaksi Pembelian Disetujui',
@@ -322,7 +316,6 @@ class VerifikatorController extends Controller
                     'is_read'     => false,
                 ]);
 
-                // Notifikasi untuk Penjual dari setiap item produk
                 $sellerIds = [];
                 foreach ($order->items as $item) {
                     if ($item->product && $item->product->seller_id) {
@@ -382,7 +375,6 @@ class VerifikatorController extends Controller
         }
     }
 
-    // ================= 5. LAPORAN PELANGGARAN =================
     public function laporan(Request $request)
     {
         $tab = $request->get('tab', 'pending');
@@ -463,7 +455,6 @@ class VerifikatorController extends Controller
         }
     }
 
-    // ================= 6. PROFIL VERIFIKATOR =================
     public function profile()
     {
         $user = Auth::user();

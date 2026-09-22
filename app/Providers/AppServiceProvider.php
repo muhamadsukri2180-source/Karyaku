@@ -46,11 +46,9 @@ class AppServiceProvider extends ServiceProvider
 
                 $view->with(compact('pendingKtp', 'pendingProduk', 'pendingPembayaran', 'laporanMasuk'));
             } catch (\Throwable $e) {
-                // Fallback if database not initialized
             }
         });
 
-        // Blade directive: @safeEmail($email) — hides bcrypt hashes & non-email strings
         Blade::directive('safeEmail', function ($expression) {
             return "<?php
                 \$_safeEmailVal = {$expression};

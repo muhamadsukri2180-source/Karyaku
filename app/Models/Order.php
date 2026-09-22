@@ -14,8 +14,8 @@ class Order extends Model
     protected $fillable = [
         'buyer_id',
         'total_price',
-        'status',         // pending, diproses, selesai, dibatalkan
-        'payment_status', // unpaid, pending, paid, failed, rejected
+        'status',
+        'payment_status',
         'payment_method',
         'payment_proof',
         'payment_submitted_at',

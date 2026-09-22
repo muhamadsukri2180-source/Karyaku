@@ -25,10 +25,8 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // Mencegah item yang sama masuk dua kali dalam keranjang
             $table->unique(['user_id', 'product_id']);
 
-            // Index untuk retrieval data keranjang user
             $table->index('user_id');
         });
     }

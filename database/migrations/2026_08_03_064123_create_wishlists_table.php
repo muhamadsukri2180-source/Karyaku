@@ -23,10 +23,8 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // Mencegah duplikasi produk yang sama di wishlist user
             $table->unique(['user_id', 'product_id']);
 
-            // Index untuk mempercepat pencarian item wishlist milik user
             $table->index('user_id');
         });
     }

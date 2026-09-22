@@ -38,7 +38,6 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // Indexing untuk Performa Query Filtering & Katalog
             $table->index('status');
             $table->index(['seller_id', 'status']);
             $table->index(['category_id', 'status']);
