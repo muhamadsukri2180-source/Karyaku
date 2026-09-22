@@ -530,7 +530,7 @@
                                     <video src="{{ $ad->video_url }}" autoplay muted loop playsinline class="ad-media-full" ontimeupdate="if(this.currentTime>=10){ this.currentTime=0; }"></video>
                                     <div class="ad-tag-floating">
                                         <span class="ad-badge-clean">
-                                            <i class="bi bi-camera-reels-fill text-warning me-1"></i> Iklan Video (10s Landscape)
+                                            Iklan
                                         </span>
                                     </div>
                                 </a>
@@ -555,7 +555,6 @@
                         <i class="bi bi-chevron-left"></i>
                     </button>
                     <div class="ad-next-wrapper">
-                        <span class="ad-next-pill">Berikutnya</span>
                         <button type="button" class="ad-nav-arrow next" id="adHeroNext" aria-label="Iklan Berikutnya" style="position: static; transform: none;">
                             <i class="bi bi-chevron-right"></i>
                         </button>
@@ -567,7 +566,6 @@
                                 <path class="ad-timer-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                 <path id="adTimerProgress" class="ad-timer-progress" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             </svg>
-                            <span>10s</span>
                         </div>
                         <div class="ad-dots-list" id="adDotsList">
                             @for($i = 0; $i < max(1, count($sellerAds)); $i++)
@@ -586,7 +584,7 @@
                             <div class="pop-card-overlay">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <span class="pop-badge-pill">
-                                        <i class="bi bi-stars text-warning"></i> Populer
+                                        Populer
                                     </span>
                                     <span class="pop-price-pill">
                                         Rp {{ number_format($pop1->price, 0, ',', '.') }}
