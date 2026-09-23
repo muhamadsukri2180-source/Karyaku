@@ -21,7 +21,7 @@
             </div>
         </div>
 
-        <h6 class="mb-1 text-truncate" style="font-size: 13.5px; font-weight: 700; line-height: 1.35;">
+        <h6 class="mb-1 text-truncate card-title-prod" style="font-weight: 700; line-height: 1.35;">
             <a href="{{ route('pembeli.produk.detail', $product->id_product) }}" class="text-dark text-decoration-none" title="{{ $product->title }}">
                 {{ $product->title }}
             </a>
@@ -33,7 +33,7 @@
             </span>
         </div>
 
-        <div class="fw-extrabold text-primary mb-3" style="font-size: 15px; letter-spacing: -0.2px;">
+        <div class="fw-extrabold text-primary mb-2 mb-sm-3 card-price-prod" style="letter-spacing: -0.2px;">
             Rp {{ number_format($product->price, 0, ',', '.') }}
         </div>
 

@@ -1,6 +1,14 @@
 @extends('layouts.pembeli')
 @section('title', 'Paket Membership Penjual - Karyaku')
 
+@push('styles')
+<style>
+    @media(max-width: 576px) {
+        .card-box { padding: 18px 16px !important; border-radius: 16px !important; }
+    }
+</style>
+@endpush
+
 @section('content')
 
 <div class="mb-4">

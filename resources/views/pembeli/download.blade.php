@@ -42,6 +42,14 @@
         border-radius: 12px;
         padding: 12px 14px;
     }
+
+    @media(max-width: 576px) {
+        .download-card { border-radius: 16px; }
+        .download-body { padding: 14px 16px; }
+        .download-thumb { width: 56px; height: 56px; border-radius: 10px; }
+        .download-meta-box { padding: 10px 12px; }
+        .download-footer { padding: 12px 16px; }
+    }
 </style>
 @endpush
 

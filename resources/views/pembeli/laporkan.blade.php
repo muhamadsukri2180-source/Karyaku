@@ -38,6 +38,11 @@
         border-color: var(--primary) !important;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
+
+    @media(max-width: 576px) {
+        .report-card-box { border-radius: 16px; padding: 18px 16px !important; }
+        .form-check-card { padding: 8px 12px; }
+    }
 </style>
 @endpush
 

@@ -458,27 +458,96 @@
 
     @media(max-width: 992px) {
         .ad-hero-wrapper {
-            min-height: 280px;
-            height: 280px;
+            min-height: 240px;
+            height: auto;
+            aspect-ratio: 16 / 9;
         }
         .ad-media-full, .ad-placeholder-full {
-            min-height: 280px;
+            min-height: 240px;
         }
         .hero-popular-col {
             min-height: auto;
         }
         .hero-pop-card-top {
-            min-height: 180px;
-            height: 180px;
+            min-height: 170px;
+            height: 170px;
         }
         .hero-pop-card-sm {
-            min-height: 130px;
-            height: 130px;
+            min-height: 120px;
+            height: 120px;
         }
         .ad-next-pill { display: none; }
     }
     @media(max-width: 576px) {
-        .hero-pop-bottom-row { grid-template-columns: 1fr; }
+        .top-hero-section {
+            margin-bottom: 20px;
+        }
+        .category-nav-bar {
+            padding: 2px 0 10px 0;
+            margin-bottom: 16px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .category-nav-bar::-webkit-scrollbar { display: none; }
+        .category-nav-item a {
+            padding: 6px 14px;
+            font-size: 11px;
+            border-radius: 16px;
+        }
+        .ad-hero-wrapper {
+            border-radius: 16px;
+            min-height: 180px;
+            max-height: 220px;
+            height: auto;
+        }
+        .ad-media-full, .ad-placeholder-full {
+            min-height: 180px;
+        }
+        .ad-nav-arrow {
+            width: 32px;
+            height: 32px;
+            font-size: 13px;
+        }
+        .ad-nav-arrow.prev { left: 8px; }
+        .ad-next-wrapper { right: 8px; }
+        .hero-pop-card-top {
+            border-radius: 14px;
+            min-height: 150px;
+            height: 150px;
+        }
+        .pop-card-overlay { padding: 12px; }
+        .pop-title-text { font-size: 14px; }
+        .pop-price-pill { font-size: 11.5px; padding: 3px 8px; }
+        .hero-pop-bottom-row {
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .hero-pop-card-sm {
+            border-radius: 14px;
+            min-height: 115px;
+            height: 115px;
+        }
+        .pop-card-overlay-sm { padding: 10px; }
+        .pop-title-sm { font-size: 11.5px; margin-bottom: 2px; }
+        .pop-price-sm { font-size: 11px; }
+
+        /* Stat cards on mobile */
+        .stat-card-dash {
+            padding: 12px 14px;
+            border-radius: 14px;
+        }
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            font-size: 16px;
+            border-radius: 10px;
+        }
+        .stat-card-dash .h4 {
+            font-size: 1.15rem;
+        }
+        .stat-card-dash a {
+            font-size: 11px !important;
+        }
         .ad-timer-container { display: none; }
     }
 </style>

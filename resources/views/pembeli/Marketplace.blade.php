@@ -30,9 +30,13 @@
         display: flex;
         gap: 8px;
         overflow-x: auto;
-        padding-bottom: 10px;
-        margin-bottom: 24px;
-        scrollbar-width: thin;
+        padding-bottom: 8px;
+        margin-bottom: 20px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .cat-chips-scroll::-webkit-scrollbar {
+        display: none;
     }
     .cat-chip {
         white-space: nowrap;
@@ -103,10 +107,14 @@
     }
 
     @media(max-width: 576px) {
-        .market-banner { padding: 20px 18px; }
-        .filter-bar { padding: 12px 14px; flex-direction: column; align-items: stretch; }
+        .market-banner { padding: 18px 16px; border-radius: 16px; margin-bottom: 18px; }
+        .market-banner h3 { font-size: 1.25rem; }
+        .market-banner p { font-size: 11.5px; }
+        .cat-chip { padding: 6px 12px; font-size: 11.5px; border-radius: 20px; }
+        .filter-bar { padding: 12px 14px; flex-direction: column; align-items: stretch; gap: 10px; border-radius: 14px; margin-bottom: 18px; }
+        .filter-bar form { width: 100%; margin-left: 0 !important; }
         .filter-sort-wrapper { width: 100%; justify-content: space-between; }
-        .filter-sort-select { width: 100%; }
+        .filter-sort-select { flex: 1; font-size: 12px; }
     }
 </style>
 @endpush

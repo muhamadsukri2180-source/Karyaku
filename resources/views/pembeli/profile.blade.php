@@ -41,6 +41,12 @@
             padding: 24px;
         }
     }
+    @media(max-width: 576px) {
+        .profile-card-box { border-radius: 16px; }
+        .profile-sidebar { padding: 20px 16px; }
+        .profile-form-area { padding: 18px 16px; }
+        .btn-simpan-profil { width: 100%; justify-content: center; }
+    }
 </style>
 @endpush
 
@@ -135,7 +141,7 @@
                 </div>
 
                 <div class="d-flex justify-content-end pt-3 border-top">
-                    <button type="submit" class="btn btn-primary fw-bold px-4 py-2.5 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5" style="font-size: 13.5px;">
+                    <button type="submit" class="btn btn-primary fw-bold px-4 py-2.5 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5 btn-simpan-profil" style="font-size: 13.5px;">
                         Simpan Perubahan
                     </button>
                 </div>

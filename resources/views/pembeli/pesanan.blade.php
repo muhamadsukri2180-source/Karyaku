@@ -49,6 +49,14 @@
         border-color: var(--primary);
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
     }
+
+    @media(max-width: 576px) {
+        .order-card { border-radius: 16px; }
+        .order-header { padding: 12px 14px; }
+        .order-body { padding: 12px 14px; }
+        .order-footer { padding: 12px 14px; }
+        .nav-pills .nav-link { padding: 7px 13px; font-size: 12px; }
+    }
 </style>
 @endpush
 

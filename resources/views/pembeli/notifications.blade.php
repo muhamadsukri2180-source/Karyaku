@@ -36,6 +36,12 @@
         justify-content: center;
         flex-shrink: 0;
     }
+
+    @media(max-width: 576px) {
+        .notification-card-box { border-radius: 16px; }
+        .notification-item { padding: 14px 16px; }
+        .notification-icon { width: 38px; height: 38px; font-size: 16px; border-radius: 10px; }
+    }
 </style>
 @endpush
 

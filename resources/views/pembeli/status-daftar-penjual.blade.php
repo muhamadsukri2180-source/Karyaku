@@ -21,6 +21,11 @@
         opacity: 0.9;
         transform: scale(1.01);
     }
+
+    @media(max-width: 576px) {
+        .reg-status-card { border-radius: 16px; padding: 18px 16px !important; }
+        .img-preview-box { height: 140px; border-radius: 10px; }
+    }
 </style>
 @endpush
 

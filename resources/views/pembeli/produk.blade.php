@@ -56,6 +56,14 @@
     .rating-stars input:checked ~ label {
         color: #f59e0b;
     }
+
+    @media(max-width: 576px) {
+        .gallery-main { max-height: 280px; border-radius: 14px; }
+        .thumb-nav-img { width: 54px; height: 54px; border-radius: 9px; }
+        .price-tag-lg { font-size: 22px; margin-bottom: 14px !important; }
+        .seller-box { padding: 12px; border-radius: 12px; margin-bottom: 16px !important; }
+        .card-box { padding: 16px !important; border-radius: 16px; }
+    }
 </style>
 @endpush
 

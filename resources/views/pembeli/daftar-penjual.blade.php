@@ -1,4 +1,4 @@
-﻿@extends('layouts.pembeli')
+@extends('layouts.pembeli')
 @section('title', 'Daftar Sebagai Penjual - Karyaku')
 
 @push('styles')
@@ -137,6 +137,15 @@
         border-color: var(--primary) !important;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
+
+    @media(max-width: 576px) {
+        .seller-wizard-container { border-radius: 16px; }
+        .step-indicator { padding: 12px 14px; gap: 8px; }
+        .step-badge { width: 28px; height: 28px; font-size: 11.5px; }
+        .wizard-body-pad { padding: 18px 14px !important; }
+        .upload-zone { padding: 16px 12px; }
+        .plan-card-option { padding: 12px; }
+    }
 </style>
 @endpush
 
@@ -179,7 +188,7 @@
             </div>
         </div>
 
-        <div class="p-4 p-md-5">
+        <div class="p-4 p-md-5 wizard-body-pad">
             {{-- STEP 1: DATA DIRI & KTP --}}
             <div class="step-section active" id="step-1">
                 <div class="mb-4">

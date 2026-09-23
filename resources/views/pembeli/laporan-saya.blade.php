@@ -70,6 +70,12 @@
     .kk-empty { text-align:center; padding:50px 20px; color:var(--text-muted); }
     .kk-empty i.big { font-size:2.3rem; display:block; margin-bottom:10px; opacity:.6; }
 
+    @media (max-width: 576px) {
+        .pembeli-page-head h4 { font-size: 18px; }
+        .kk-card { border-radius: 16px; }
+        .report-item { padding: 12px 14px; border-radius: 12px; }
+        .nav-tabs-report .nav-link { padding: 8px 10px; font-size: 12px; }
+    }
     @media (max-width: 400px){ .target-grid { grid-template-columns:1fr; } }
     @media (prefers-reduced-motion: reduce){ .report-item, .target-opt label, .btn-kirim, .nav-tabs-report .nav-link { transition:none; } }
 </style>

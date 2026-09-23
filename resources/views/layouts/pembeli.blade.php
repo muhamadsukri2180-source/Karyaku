@@ -463,7 +463,9 @@
         border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
     .mobile-menu-panel.show {
-        max-height: 580px;
+        max-height: calc(100vh - 110px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
     .mobile-menu-panel .nav-link {
         display: flex;
@@ -599,6 +601,12 @@
         flex-direction: column;
         flex: 1;
     }
+    .card-title-prod { font-size: 13.5px; }
+    .card-price-prod { font-size: 15px; }
+    @media (max-width: 576px) {
+        .card-title-prod { font-size: 12px; }
+        .card-price-prod { font-size: 13.5px; }
+    }
     .wish-icon-btn {
         background: #fef2f2;
         border: 1px solid #fee2e2;
@@ -652,6 +660,73 @@
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+    /* Mobile Bottom Navigation Bar */
+    .mobile-bottom-nav {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-top: 1px solid rgba(226, 232, 240, 0.9);
+        z-index: 1040;
+        box-shadow: 0 -4px 18px rgba(15, 23, 42, 0.08);
+        padding: 0 6px calc(env(safe-area-inset-bottom, 0px) / 2);
+    }
+    .bottom-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        height: 100%;
+        color: #64748b;
+        text-decoration: none;
+        font-size: 10px;
+        font-weight: 600;
+        gap: 3px;
+        transition: var(--transition);
+        position: relative;
+    }
+    .bottom-nav-item i {
+        font-size: 18px;
+        line-height: 1;
+        transition: transform 0.2s ease, color 0.2s ease;
+    }
+    .bottom-nav-item.active {
+        color: var(--primary);
+    }
+    .bottom-nav-item.active i {
+        transform: translateY(-1px) scale(1.1);
+        color: var(--primary);
+    }
+    .bottom-nav-item .icon-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .bottom-badge {
+        position: absolute;
+        top: -6px;
+        right: -10px;
+        background: var(--coral);
+        color: #fff;
+        font-size: 9px;
+        font-weight: 800;
+        min-width: 16px;
+        height: 16px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        border: 2px solid #fff;
+    }
+
     /* Responsive Breakpoints & Laptop Fixes */
     @media (max-width: 1366px) {
         .navbar-top { padding: 10px 18px; gap: 8px; }
@@ -670,12 +745,53 @@
         .btn-jual span { display: none; }
     }
 
+    @media (max-width: 768px) {
+        body { padding-bottom: 66px; }
+        .mobile-bottom-nav { display: flex; }
+        .main-content { padding: 16px 14px 40px; }
+    }
+
     @media (max-width: 576px) {
-        .navbar-top { padding: 10px 14px; gap: 8px; }
-        .navbar-search { padding: 0 14px 12px; }
-        .main-content { padding: 16px 12px 50px; }
-        .search-combo input { padding: 8px 10px; font-size: 12.5px; }
-        .search-combo button { padding: 0 12px; }
+        .navbar-top { padding: 9px 12px; gap: 6px; }
+        .brand-icon { width: 34px; height: 34px; border-radius: 9px; }
+        .navbar-search { padding: 0 12px 10px; }
+        .search-combo { border-radius: 11px; }
+        .search-combo input { padding: 8px 10px; font-size: 12px; }
+        .search-combo button { padding: 0 12px; font-size: 12px; }
+        .icon-btn-light { width: 34px; height: 34px; font-size: 15px; border-radius: 9px; }
+        .mobile-toggle { width: 34px; height: 34px; border-radius: 9px; }
+        .user-chip { padding: 3px 6px 3px 3px; }
+        .user-chip img { width: 26px; height: 26px; }
+
+        /* Dropdowns mobile viewport safe */
+        .notif-dropdown {
+            position: fixed !important;
+            top: 56px !important;
+            left: 12px !important;
+            right: 12px !important;
+            width: auto !important;
+            max-width: none !important;
+            border-radius: 14px;
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.22) !important;
+        }
+        .user-dropdown {
+            position: fixed !important;
+            top: 56px !important;
+            left: 12px !important;
+            right: 12px !important;
+            width: auto !important;
+            max-width: none !important;
+            border-radius: 14px;
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.22) !important;
+        }
+
+        /* Product cards on mobile 2 columns */
+        .product-card { border-radius: 14px; }
+        .product-thumb { height: 130px; }
+        .product-thumb .cat-badge { font-size: 9px; padding: 2px 7px; top: 6px; left: 6px; }
+        .wish-btn { width: 28px; height: 28px; font-size: 12px; top: 6px; right: 6px; }
+        .product-body { padding: 9px 9px 12px; }
+        .btn-buy-rectangular { padding: 7px 0; font-size: 11px; border-radius: 8px; }
     }
 </style>
 @stack('styles')
@@ -753,6 +869,12 @@
                     })->where('created_at', '>=', now()->subDays(3))->count()
                     : 0;
             @endphp
+            {{-- Quick Cart on Mobile Navbar --}}
+            <a href="{{ route('pembeli.keranjang') }}" class="icon-btn-light d-flex d-md-none" title="Keranjang Belanja">
+                <i class="bi bi-cart3"></i>
+                @if ($navCartCount > 0)<span class="dot">{{ $navCartCount }}</span>@endif
+            </a>
+
             <div class="user-menu notif-menu" id="notifMenu">
                 <button class="icon-btn-light" id="btnNotif" type="button" title="Notifikasi">
                     <i class="bi bi-bell"></i>
@@ -805,6 +927,16 @@
     </div>
 
     <div class="mobile-menu-panel" id="mobileMenuPanel">
+        {{-- User Greeting in Mobile Drawer --}}
+        <div class="p-3 border-bottom border-white border-opacity-10 d-flex align-items-center gap-3">
+            <img src="https://ui-avatars.com/api/?name={{ urlencode($navUser->name ?? 'Pembeli') }}&background=dbeafe&color=1e3a8a&bold=true" alt="avatar" class="rounded-circle border border-white border-opacity-25" style="width: 38px; height: 38px;">
+            <div class="overflow-hidden">
+                <div class="fw-bold text-white text-truncate" style="font-size: 13.5px;">{{ $navUser->name ?? 'Pembeli' }}</div>
+                <div class="text-white-50 small text-truncate" style="font-size: 11px;">@safeEmail($navUser->email ?? '')</div>
+            </div>
+            <span class="badge bg-primary bg-opacity-75 ms-auto" style="font-size: 10px;">Pembeli</span>
+        </div>
+
         <a href="{{ route('pembeli.dashboard') }}" class="nav-link {{ request()->routeIs('pembeli.dashboard') ? 'active' : '' }}"><i class="bi bi-grid-1x2-fill"></i> Beranda</a>
         <a href="{{ route('pembeli.marketplace') }}" class="nav-link {{ request()->routeIs('pembeli.marketplace') ? 'active' : '' }}"><i class="bi bi-shop"></i> Pasar</a>
         <a href="{{ route('pembeli.wishlist') }}" class="nav-link {{ request()->routeIs('pembeli.wishlist') ? 'active' : '' }}"><i class="bi bi-heart-fill"></i> Disukai @if($navWishlistCount > 0)<span class="badge-count ms-auto">{{ $navWishlistCount }}</span>@endif</a>
@@ -812,7 +944,7 @@
         <a href="{{ route('pembeli.pesanan') }}" class="nav-link {{ request()->routeIs('pembeli.pesanan*') ? 'active' : '' }}"><i class="bi bi-receipt"></i> Pesanan Saya</a>
         <a href="{{ route('pembeli.download') }}" class="nav-link {{ request()->routeIs('pembeli.download') ? 'active' : '' }}"><i class="bi bi-cloud-arrow-down-fill"></i> Download Saya</a>
         <a href="{{ route('pembeli.laporan') }}" class="nav-link {{ request()->routeIs('reports.*') || request()->routeIs('pembeli.laporan') ? 'active' : '' }}"><i class="bi bi-shield-exclamation"></i> Laporan Pelanggaran</a>
-        <a href="{{ route('pembeli.profile') }}" class="nav-link {{ request()->routeIs('pembeli.profile') ? 'active' : '' }}"><i class="bi bi-person-fill"></i> Profil</a>
+        <a href="{{ route('pembeli.profile') }}" class="nav-link {{ request()->routeIs('pembeli.profile') ? 'active' : '' }}"><i class="bi bi-person-fill"></i> Profil Saya</a>
         @if ($isPenjualNav)
             <a href="{{ route('penjual.dashboard') }}" class="nav-link text-warning"><i class="bi bi-speedometer2"></i> Dashboard Penjual</a>
         @else
@@ -835,6 +967,33 @@
 <main class="main-content">
     @yield('content')
 </main>
+
+{{-- Mobile Bottom Navigation Bar (Handphone View) --}}
+<nav class="mobile-bottom-nav d-md-none" aria-label="Navigasi Bawah">
+    <a href="{{ route('pembeli.dashboard') }}" class="bottom-nav-item {{ request()->routeIs('pembeli.dashboard') ? 'active' : '' }}">
+        <i class="bi {{ request()->routeIs('pembeli.dashboard') ? 'bi-grid-1x2-fill' : 'bi-grid-1x2' }}"></i>
+        <span>Beranda</span>
+    </a>
+    <a href="{{ route('pembeli.marketplace') }}" class="bottom-nav-item {{ request()->routeIs('pembeli.marketplace') ? 'active' : '' }}">
+        <i class="bi {{ request()->routeIs('pembeli.marketplace') ? 'bi-shop' : 'bi-shop-window' }}"></i>
+        <span>Pasar</span>
+    </a>
+    <a href="{{ route('pembeli.keranjang') }}" class="bottom-nav-item {{ request()->routeIs('pembeli.keranjang') ? 'active' : '' }}">
+        <div class="icon-wrapper">
+            <i class="bi {{ request()->routeIs('pembeli.keranjang') ? 'bi-cart-fill' : 'bi-cart3' }}"></i>
+            @if($navCartCount > 0)<span class="bottom-badge">{{ $navCartCount }}</span>@endif
+        </div>
+        <span>Keranjang</span>
+    </a>
+    <a href="{{ route('pembeli.pesanan') }}" class="bottom-nav-item {{ request()->routeIs('pembeli.pesanan*') ? 'active' : '' }}">
+        <i class="bi {{ request()->routeIs('pembeli.pesanan*') ? 'bi-receipt-cutoff' : 'bi-receipt' }}"></i>
+        <span>Pesanan</span>
+    </a>
+    <a href="{{ route('pembeli.profile') }}" class="bottom-nav-item {{ request()->routeIs('pembeli.profile') ? 'active' : '' }}">
+        <i class="bi {{ request()->routeIs('pembeli.profile') ? 'bi-person-fill' : 'bi-person' }}"></i>
+        <span>Akun</span>
+    </a>
+</nav>
 
 {{-- ========== CUSTOM TOAST NOTIFICATION ========== --}}
 <style>
@@ -1011,53 +1170,77 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Mobile Drawer Toggle
-    const btnToggleMenu = document.getElementById('btnToggleMenu');
-    const mobileMenuPanel = document.getElementById('mobileMenuPanel');
-    if (btnToggleMenu && mobileMenuPanel) {
-        btnToggleMenu.addEventListener('click', () => {
-            const isOpen = mobileMenuPanel.classList.toggle('show');
-            btnToggleMenu.setAttribute('aria-expanded', isOpen);
-            btnToggleMenu.querySelector('i').className = isOpen ? 'bi bi-x-lg fs-5' : 'bi bi-list fs-5';
-        });
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 992 && mobileMenuPanel.classList.contains('show')) {
-                mobileMenuPanel.classList.remove('show');
-                btnToggleMenu.setAttribute('aria-expanded', false);
-                btnToggleMenu.querySelector('i').className = 'bi bi-list fs-5';
-            }
-        });
+    function initPembeliNav() {
+        // Mobile Drawer Toggle
+        const btnToggleMenu = document.getElementById('btnToggleMenu');
+        const mobileMenuPanel = document.getElementById('mobileMenuPanel');
+        if (btnToggleMenu && mobileMenuPanel) {
+            btnToggleMenu.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (typeof userMenu !== 'undefined' && userMenu) userMenu.classList.remove('open');
+                if (typeof notifMenu !== 'undefined' && notifMenu) notifMenu.classList.remove('open');
+                const isOpen = mobileMenuPanel.classList.toggle('show');
+                btnToggleMenu.setAttribute('aria-expanded', isOpen);
+                btnToggleMenu.querySelector('i').className = isOpen ? 'bi bi-x-lg fs-5' : 'bi bi-list fs-5';
+            });
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 992 && mobileMenuPanel.classList.contains('show')) {
+                    mobileMenuPanel.classList.remove('show');
+                    btnToggleMenu.setAttribute('aria-expanded', false);
+                    btnToggleMenu.querySelector('i').className = 'bi bi-list fs-5';
+                }
+            });
+        }
+
+        // User Dropdown
+        const userMenu = document.getElementById('userMenu');
+        const btnUserChip = document.getElementById('btnUserChip');
+        if (btnUserChip && userMenu) {
+            btnUserChip.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof notifMenu !== 'undefined' && notifMenu) notifMenu.classList.remove('open');
+                if (mobileMenuPanel && mobileMenuPanel.classList.contains('show')) {
+                    mobileMenuPanel.classList.remove('show');
+                    if (btnToggleMenu) btnToggleMenu.querySelector('i').className = 'bi bi-list fs-5';
+                }
+                userMenu.classList.toggle('open');
+            });
+            document.addEventListener('click', (e) => {
+                if (!userMenu.contains(e.target)) userMenu.classList.remove('open');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') userMenu.classList.remove('open');
+            });
+        }
+
+        // Notifications Dropdown
+        const notifMenu = document.getElementById('notifMenu');
+        const btnNotif  = document.getElementById('btnNotif');
+        if (btnNotif && notifMenu) {
+            btnNotif.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof userMenu !== 'undefined' && userMenu) userMenu.classList.remove('open');
+                if (mobileMenuPanel && mobileMenuPanel.classList.contains('show')) {
+                    mobileMenuPanel.classList.remove('show');
+                    if (btnToggleMenu) btnToggleMenu.querySelector('i').className = 'bi bi-list fs-5';
+                }
+                notifMenu.classList.toggle('open');
+            });
+            document.addEventListener('click', (e) => {
+                if (!notifMenu.contains(e.target)) notifMenu.classList.remove('open');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') notifMenu.classList.remove('open');
+            });
+        }
     }
 
-    // User Dropdown
-    const userMenu = document.getElementById('userMenu');
-    const btnUserChip = document.getElementById('btnUserChip');
-    if (btnUserChip && userMenu) {
-        btnUserChip.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (typeof notifMenu !== 'undefined' && notifMenu) notifMenu.classList.remove('open');
-            userMenu.classList.toggle('open');
-        });
-        document.addEventListener('click', (e) => {
-            if (!userMenu.contains(e.target)) userMenu.classList.remove('open');
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') userMenu.classList.remove('open');
-        });
-    }
-
-    // Notifications Dropdown
-    const notifMenu = document.getElementById('notifMenu');
-    const btnNotif  = document.getElementById('btnNotif');
-    if (btnNotif && notifMenu) {
-        btnNotif.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (typeof userMenu !== 'undefined' && userMenu) userMenu.classList.remove('open');
-            notifMenu.classList.toggle('open');
-        });
-        document.addEventListener('click', (e) => {
-            if (!notifMenu.contains(e.target)) notifMenu.classList.remove('open');
-        });
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPembeliNav);
+    } else {
+        initPembeliNav();
     }
 
     // Toggle Wishlist via AJAX

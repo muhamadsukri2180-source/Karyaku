@@ -1,5 +1,15 @@
-﻿@extends('layouts.pembeli')
+@extends('layouts.pembeli')
 @section('title', 'Detail Pesanan #' . ($order->kode_order ?? $order->id_order))
+
+@push('styles')
+<style>
+    @media(max-width: 576px) {
+        .card-box { padding: 16px !important; border-radius: 16px !important; }
+        .table td, .table th { padding: 8px 6px; font-size: 12px; }
+        .btn-kirim-bukti { width: 100% !important; }
+    }
+</style>
+@endpush
 
 @section('content')
 
@@ -124,7 +134,7 @@
                     </div>
 
                     <div class="mt-3 text-end">
-                        <button type="submit" class="btn btn-primary fw-bold px-4 py-2 rounded-3 text-white">
+                        <button type="submit" class="btn btn-primary fw-bold px-4 py-2 rounded-3 text-white btn-kirim-bukti">
                             <i class="bi bi-send-fill me-1"></i> Kirim Bukti Pembayaran ke Verifikator
                         </button>
                     </div>

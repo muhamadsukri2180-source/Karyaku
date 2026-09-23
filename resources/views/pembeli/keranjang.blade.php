@@ -40,6 +40,15 @@
         border-top: 1px solid var(--border-color);
         padding: 24px;
     }
+
+    @media(max-width: 576px) {
+        .cart-container-box { border-radius: 16px; }
+        .cart-header-bar { padding: 12px 14px; }
+        .cart-item-row { padding: 12px 14px; }
+        .cart-thumb { width: 54px; height: 54px; border-radius: 9px; }
+        .cart-footer-summary { padding: 16px 14px; }
+        #btnCheckout { width: 100%; padding: 11px 0; }
+    }
 </style>
 @endpush
 
