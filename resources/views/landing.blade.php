@@ -1252,5 +1252,24 @@
         }
     });
 </script>
+
+@if (session('success') || session('info'))
+    <div id="flashToast" class="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 transition-all duration-500 transform translate-y-0 opacity-100 border border-emerald-500/30">
+        <i class="fa-solid fa-circle-check text-lg text-emerald-200"></i>
+        <span class="text-sm font-semibold tracking-wide">{{ session('success') ?? session('info') }}</span>
+        <button type="button" onclick="document.getElementById('flashToast').remove()" class="ml-2 text-emerald-200 hover:text-white transition">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+    <script>
+        setTimeout(() => {
+            const toast = document.getElementById('flashToast');
+            if (toast) {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(() => toast.remove(), 500);
+            }
+        }, 4000);
+    </script>
+@endif
 </body>
 </html>

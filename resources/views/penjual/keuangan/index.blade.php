@@ -135,12 +135,20 @@
                             </div>
                             <div class="text-end flex-shrink-0">
                                 <h6 class="fw-bold mb-1" style="color:var(--text-dark);">Rp {{ number_format($w->amount, 0, ',', '.') }}</h6>
-                                @if($w->status === 'completed')
+                                @php $stat = strtolower($w->status); @endphp
+                                @if(in_array($stat, ['processed', 'completed', 'approved', 'selesai', 'success']))
                                     <span class="badge" style="background:#ecfdf5; color:#16a34a;"><i class="bi bi-check-circle me-1"></i>Berhasil</span>
-                                @elseif($w->status === 'pending')
-                                    <span class="badge" style="background:#fff7ed; color:#f59e0b;"><i class="bi bi-clock me-1"></i>Diproses</span>
+                                    @if($w->processed_at)
+                                        <div style="font-size: 10px; color:#16a34a;" class="mt-1">
+                                            <i class="bi bi-check2-all me-1"></i>Selesai: {{ $w->processed_at->translatedFormat('d M Y, H:i') }}
+                                        </div>
+                                    @endif
+                                @elseif($stat === 'pending')
+                                    <span class="badge" style="background:#fff7ed; color:#f59e0b;"><i class="bi bi-clock me-1"></i>Menunggu Diproses</span>
+                                @elseif(in_array($stat, ['rejected', 'ditolak', 'failed', 'gagal']))
+                                    <span class="badge" style="background:#fef2f2; color:#ef4444;"><i class="bi bi-x-circle me-1"></i>Gagal / Ditolak</span>
                                 @else
-                                    <span class="badge" style="background:#fef2f2; color:#ef4444;"><i class="bi bi-x-circle me-1"></i>Gagal/Ditolak</span>
+                                    <span class="badge" style="background:#f1f5f9; color:#64748b;">{{ ucfirst($w->status) }}</span>
                                 @endif
                             </div>
                         </div>

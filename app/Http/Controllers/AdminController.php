@@ -721,7 +721,7 @@ class AdminController extends Controller
         return view('admin.keuangan.penarikan_saldo', [
             'withdrawals' => $withdrawals, 'menungguDiproses' => Withdrawal::where('status', 'pending')->count(),
             'gagalDitolak' => Withdrawal::where('status', 'rejected')->count(),
-            'selesaiBulanIni' => Withdrawal::where('status', 'processed')->whereMonth('processed_at', now()->month)->whereYear('processed_at', now()->year)->sum('amount')
+            'selesaiBulanIni' => Withdrawal::whereIn('status', ['processed', 'completed'])->whereMonth('processed_at', now()->month)->whereYear('processed_at', now()->year)->sum('amount')
         ]);
     }
 

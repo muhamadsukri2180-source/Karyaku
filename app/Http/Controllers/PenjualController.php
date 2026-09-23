@@ -577,7 +577,9 @@ class PenjualController extends Controller
         $totalPendapatan = OrderItem::whereHas('product', fn($q) => $q->where('seller_id', $user->id_user))
             ->whereHas('order', fn($q) => $q->where('payment_status', 'paid'))->sum('subtotal');
 
-        $totalDitarik = Withdrawal::where('user_id', $user->id_user)->whereIn('status', ['completed', 'pending'])->sum('amount');
+        $totalDitarik = Withdrawal::where('user_id', $user->id_user)
+            ->whereIn('status', ['completed', 'processed', 'approved', 'selesai', 'success', 'pending'])
+            ->sum('amount');
         $saldoTersedia = max(0, $totalPendapatan - $totalDitarik);
         $withdrawals = Withdrawal::where('user_id', $user->id_user)->latest('id_withdrawal')->paginate(10);
 
@@ -596,7 +598,9 @@ class PenjualController extends Controller
 
         $totalPendapatan = OrderItem::whereHas('product', fn($q) => $q->where('seller_id', $user->id_user))
             ->whereHas('order', fn($q) => $q->where('payment_status', 'paid'))->sum('subtotal');
-        $totalDitarik = Withdrawal::where('user_id', $user->id_user)->whereIn('status', ['completed', 'pending'])->sum('amount');
+        $totalDitarik = Withdrawal::where('user_id', $user->id_user)
+            ->whereIn('status', ['completed', 'processed', 'approved', 'selesai', 'success', 'pending'])
+            ->sum('amount');
         $saldoTersedia = max(0, $totalPendapatan - $totalDitarik);
 
         if ($validated['amount'] > $saldoTersedia) {

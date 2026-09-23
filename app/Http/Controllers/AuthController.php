@@ -177,7 +177,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('auth.login');
+        return redirect()->route('landing')->with('success', 'Anda telah berhasil keluar dari sistem.');
     }
 
     public function showForgotPassword()
