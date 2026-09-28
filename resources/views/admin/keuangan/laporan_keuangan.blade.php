@@ -13,7 +13,7 @@
         box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
     }
     @media print {
-        aside, #sidebar, #topNavbar, .no-print, #sidebarOverlay, .filter-box, #mainScreenWrapper {
+        aside, header, #sidebar, #topNavbar, .no-print, #sidebarOverlay, .filter-box, #mainScreenWrapper {
             display: none !important;
         }
         html, body {
@@ -180,7 +180,7 @@
 @endsection
 
 @section('content')
-
+<div class="no-print w-full flex flex-col gap-6">
 
                 <!-- FILTER CONTROLS CARD -->
                 <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl p-5 sm:p-6 shadow-sm filter-box">
@@ -643,9 +643,7 @@
                     </div>
                 </div>
 
-            </div>
-        </main>
-    </div>
+</div>
 
     <!-- DEDICATED OFFICIAL PRINT DOCUMENT (Only rendered when printing) -->
     <div id="printDocument" class="hidden">
