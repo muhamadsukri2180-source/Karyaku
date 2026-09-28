@@ -1043,7 +1043,9 @@ class AdminController extends Controller
         ];
 
         $launchYear  = 2026;
+        $launchMonth = 9; // Launching di bulan September 2026
         $currentYear = (int) now()->year;
+        $currentMonth = (int) now()->month;
         $maxYear     = max($launchYear, $currentYear);
 
         if ($filterType === 'mingguan') {
@@ -1068,15 +1070,16 @@ class AdminController extends Controller
             $periodLabel = 'Periode ' . $startDate->format('d M Y') . ' s/d ' . $endDate->format('d M Y');
         } else {
             $filterType = 'bulanan';
-            $inputMonth = (int) $request->input('month', now()->month);
-            $inputYear  = (int) $request->input('year', now()->year);
+            $inputMonth = (int) $request->input('month', $currentMonth);
+            $inputYear  = (int) $request->input('year', $currentYear);
 
             $year  = min(max($inputYear, $launchYear), $maxYear);
-            $month = min(max($inputMonth, 1), 12);
 
-            if ($year === $currentYear && $month > (int) now()->month) {
-                $month = (int) now()->month;
-            }
+            // Batas minimal dan maksimal bulan tergantung dari tahun yang dipilih
+            $minMonth = ($year === $launchYear) ? $launchMonth : 1;
+            $maxMonth = ($year === $currentYear) ? $currentMonth : 12;
+
+            $month = min(max($inputMonth, $minMonth), $maxMonth);
 
             $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
             $endDate   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
@@ -1087,10 +1090,20 @@ class AdminController extends Controller
         $prevCarbon = $currentMonthCarbon->copy()->subMonth();
         $nextCarbon = $currentMonthCarbon->copy()->addMonth();
 
-        $hasPrev = !($prevCarbon->year < $launchYear);
-        $hasNext = !($nextCarbon->year > $currentYear || ($nextCarbon->year === $currentYear && $nextCarbon->month > (int) now()->month));
+        // Cek prev/next berdasarkan rentang valid (Mulai Sept 2026 - Waktu Sekarang Realtime)
+        $hasPrev = !($prevCarbon->year < $launchYear || ($prevCarbon->year === $launchYear && $prevCarbon->month < $launchMonth));
+        $hasNext = !($nextCarbon->year > $currentYear || ($nextCarbon->year === $currentYear && $nextCarbon->month > $currentMonth));
 
         $availableYears = range($launchYear, $maxYear);
+
+        // Hanya mengembalikan nama bulan yang valid untuk tahun yang dipilih ke UI dropdown
+        $availableMonthsUI = [];
+        $uiMinMonth = ($year === $launchYear) ? $launchMonth : 1;
+        $uiMaxMonth = ($year === $currentYear) ? $currentMonth : 12;
+        
+        for ($m = $uiMinMonth; $m <= $uiMaxMonth; $m++) {
+            $availableMonthsUI[$m] = $monthNames[$m];
+        }
 
         return [
             'filter_type'     => $filterType,
@@ -1107,7 +1120,7 @@ class AdminController extends Controller
             'has_prev'        => $hasPrev,
             'has_next'        => $hasNext,
             'available_years' => $availableYears,
-            'month_names'     => $monthNames,
+            'month_names'     => $availableMonthsUI,
         ];
     }
 
@@ -1273,14 +1286,11 @@ class AdminController extends Controller
             return response()->streamDownload(function () use ($orders) {
                 $file = fopen('php://output', 'w');
                 fputs($file, "\xEF\xBB\xBF");
-                fputcsv($file, ['No', 'Tanggal', 'No Pesanan', 'Pembeli', 'Total Harga (Rp)', 'Komisi Platform 5% (Rp)', 'Status Pembayaran']);
-                $no = 1;
+                fputcsv($file, ['Tanggal & Waktu', 'Pembeli', 'Total Harga (Rp)', 'Komisi Platform 5% (Rp)', 'Status Pembayaran']);
                 foreach ($orders as $order) {
                     $total = (float) $order->total_price;
                     fputcsv($file, [
-                        $no++,
                         $order->created_at ? $order->created_at->format('d/m/Y H:i') : '-',
-                        $order->order_number ?? ('#' . $order->id_order),
                         $order->buyer->name ?? 'Pembeli',
                         $total,
                         $total * 0.05,
@@ -1302,7 +1312,7 @@ class AdminController extends Controller
         $sheetOrders->setTitle('Transaksi Penjualan');
         $sheetOrders->setShowGridLines(true);
 
-        $sheetOrders->mergeCells('A1:I1');
+        $sheetOrders->mergeCells('A1:G1');
         $sheetOrders->setCellValue('A1', 'LAPORAN KEUANGAN KARYAKU MARKETPLACE');
         $sheetOrders->getStyle('A1')->applyFromArray([
             'font' => ['bold' => true, 'size' => 15, 'color' => ['rgb' => 'FFFFFF']],
@@ -1311,7 +1321,7 @@ class AdminController extends Controller
         ]);
         $sheetOrders->getRowDimension(1)->setRowHeight(38);
 
-        $sheetOrders->mergeCells('A2:I2');
+        $sheetOrders->mergeCells('A2:G2');
         $sheetOrders->setCellValue('A2', 'Periode: ' . $dateRange['period_label'] . ' (' . $startDate->format('d/m/Y') . ' - ' . $endDate->format('d/m/Y') . ')  |  Dicetak pada: ' . now()->format('d/m/Y H:i') . ' WIB');
         $sheetOrders->getStyle('A2')->applyFromArray([
             'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
@@ -1322,21 +1332,19 @@ class AdminController extends Controller
 
         $sheetOrders->mergeCells('A4:B4');
         $sheetOrders->setCellValue('A4', 'TOTAL PEMASUKAN (LUNAS)');
-        $sheetOrders->mergeCells('C4:D4');
         $sheetOrders->setCellValue('C4', 'KOMISI PLATFORM (5%)');
-        $sheetOrders->mergeCells('E4:F4');
-        $sheetOrders->setCellValue('E4', 'PENARIKAN SALDO PENJUAL');
-        $sheetOrders->mergeCells('G4:I4');
-        $sheetOrders->setCellValue('G4', 'SALDO BERSIH (NET INFLOW)');
+        $sheetOrders->mergeCells('D4:E4');
+        $sheetOrders->setCellValue('D4', 'PENARIKAN SALDO PENJUAL');
+        $sheetOrders->mergeCells('F4:G4');
+        $sheetOrders->setCellValue('F4', 'SALDO BERSIH (NET INFLOW)');
 
         $sheetOrders->mergeCells('A5:B5');
         $sheetOrders->setCellValue('A5', $totalPemasukan);
-        $sheetOrders->mergeCells('C5:D5');
         $sheetOrders->setCellValue('C5', $totalKomisiPlatform);
-        $sheetOrders->mergeCells('E5:F5');
-        $sheetOrders->setCellValue('E5', $totalPenarikanDisetujui);
-        $sheetOrders->mergeCells('G5:I5');
-        $sheetOrders->setCellValue('G5', $saldoBersih);
+        $sheetOrders->mergeCells('D5:E5');
+        $sheetOrders->setCellValue('D5', $totalPenarikanDisetujui);
+        $sheetOrders->mergeCells('F5:G5');
+        $sheetOrders->setCellValue('F5', $saldoBersih);
 
         $sheetOrders->getStyle('A4:B4')->applyFromArray([
             'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '065F46']],
@@ -1350,49 +1358,49 @@ class AdminController extends Controller
             'numberFormat' => ['formatCode' => '"Rp "#,##0']
         ]);
 
-        $sheetOrders->getStyle('C4:D4')->applyFromArray([
+        $sheetOrders->getStyle('C4')->applyFromArray([
             'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '0369A1']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E0F2FE']]
         ]);
-        $sheetOrders->getStyle('C5:D5')->applyFromArray([
+        $sheetOrders->getStyle('C5')->applyFromArray([
             'font' => ['bold' => true, 'size' => 13, 'color' => ['rgb' => '0369A1']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F0F9FF']],
             'numberFormat' => ['formatCode' => '"Rp "#,##0']
         ]);
 
-        $sheetOrders->getStyle('E4:F4')->applyFromArray([
+        $sheetOrders->getStyle('D4:E4')->applyFromArray([
             'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '92400E']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FEF3C7']]
         ]);
-        $sheetOrders->getStyle('E5:F5')->applyFromArray([
+        $sheetOrders->getStyle('D5:E5')->applyFromArray([
             'font' => ['bold' => true, 'size' => 13, 'color' => ['rgb' => '92400E']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFFBEB']],
             'numberFormat' => ['formatCode' => '"Rp "#,##0']
         ]);
 
-        $sheetOrders->getStyle('G4:I4')->applyFromArray([
+        $sheetOrders->getStyle('F4:G4')->applyFromArray([
             'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '4338CA']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'EDE9FE']]
         ]);
-        $sheetOrders->getStyle('G5:I5')->applyFromArray([
+        $sheetOrders->getStyle('F5:G5')->applyFromArray([
             'font' => ['bold' => true, 'size' => 13, 'color' => ['rgb' => '4338CA']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F5F3FF']],
             'numberFormat' => ['formatCode' => '"Rp "#,##0']
         ]);
 
-        $sheetOrders->getStyle('A4:I5')->applyFromArray([
+        $sheetOrders->getStyle('A4:G5')->applyFromArray([
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CBD5E1']]]
         ]);
         $sheetOrders->getRowDimension(4)->setRowHeight(20);
         $sheetOrders->getRowDimension(5)->setRowHeight(28);
 
-        $sheetOrders->mergeCells('A7:I7');
+        $sheetOrders->mergeCells('A7:G7');
         $sheetOrders->setCellValue('A7', 'RINCIAN TRANSAKSI PENJUALAN (ORDERS)');
         $sheetOrders->getStyle('A7')->applyFromArray([
             'font' => ['bold' => true, 'size' => 11, 'color' => ['rgb' => '0F172A']],
@@ -1401,22 +1409,20 @@ class AdminController extends Controller
         $sheetOrders->getRowDimension(7)->setRowHeight(22);
 
         $orderHeaders = [
-            'A8' => 'No',
-            'B8' => 'Kode Order',
-            'C8' => 'Tanggal & Waktu',
-            'D8' => 'Nama Pembeli',
-            'E8' => 'Rincian Produk / Layanan',
-            'F8' => 'Status Pembayaran',
-            'G8' => 'Status Pesanan',
-            'H8' => 'Total Transaksi',
-            'I8' => 'Komisi Platform (5%)'
+            'A8' => 'Tanggal & Waktu',
+            'B8' => 'Nama Pembeli',
+            'C8' => 'Rincian Produk / Layanan',
+            'D8' => 'Status Pembayaran',
+            'E8' => 'Status Pesanan',
+            'F8' => 'Total Transaksi',
+            'G8' => 'Komisi Platform (5%)'
         ];
 
         foreach ($orderHeaders as $cell => $text) {
             $sheetOrders->setCellValue($cell, $text);
         }
 
-        $sheetOrders->getStyle('A8:I8')->applyFromArray([
+        $sheetOrders->getStyle('A8:G8')->applyFromArray([
             'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0284C7']],
@@ -1436,18 +1442,37 @@ class AdminController extends Controller
                 $isEven = ($noOrder % 2 === 0);
                 $rowBg = $isEven ? 'F8FAFC' : 'FFFFFF';
 
-                $sheetOrders->setCellValue('A' . $rowOrder, $noOrder++);
-                $sheetOrders->setCellValue('B' . $rowOrder, '#' . $o->id_order);
-                $sheetOrders->setCellValue('C' . $rowOrder, $o->created_at ? $o->created_at->format('d/m/Y H:i') : '-');
-                $sheetOrders->setCellValue('D' . $rowOrder, $o->buyer->name ?? 'User #' . $o->buyer_id);
-                $sheetOrders->setCellValue('E' . $rowOrder, $itemList ?: '-');
-                $sheetOrders->setCellValue('F' . $rowOrder, strtoupper($o->payment_status));
-                $sheetOrders->setCellValue('G' . $rowOrder, strtoupper($o->status));
-                $sheetOrders->setCellValue('H' . $rowOrder, (float) $o->total_price);
-                $sheetOrders->setCellValue('I' . $rowOrder, (float) ($o->total_price * 0.05));
+                $sheetOrders->setCellValue('A' . $rowOrder, $o->created_at ? $o->created_at->format('d/m/Y H:i') : '-');
+                $sheetOrders->setCellValue('B' . $rowOrder, $o->buyer->name ?? 'User #' . $o->buyer_id);
+                $sheetOrders->setCellValue('C' . $rowOrder, $itemList ?: '-');
+                
+                $paymentStatusIndo = match (strtolower($o->payment_status)) {
+                    'paid' => 'LUNAS',
+                    'unpaid' => 'BELUM BAYAR',
+                    'pending' => 'MENUNGGU',
+                    'failed' => 'GAGAL',
+                    'expired' => 'KEDALUWARSA',
+                    'dibatalkan' => 'DIBATALKAN',
+                    default => strtoupper($o->payment_status)
+                };
+                $sheetOrders->setCellValue('D' . $rowOrder, $paymentStatusIndo);
+
+                $orderStatusIndo = match (strtolower($o->status)) {
+                    'selesai' => 'SELESAI',
+                    'success' => 'BERHASIL',
+                    'pending' => 'MENUNGGU',
+                    'failed' => 'GAGAL',
+                    'canceled' => 'DIBATALKAN',
+                    'processed' => 'DIPROSES',
+                    default => strtoupper($o->status)
+                };
+                $sheetOrders->setCellValue('E' . $rowOrder, $orderStatusIndo);
+                
+                $sheetOrders->setCellValue('F' . $rowOrder, (float) $o->total_price);
+                $sheetOrders->setCellValue('G' . $rowOrder, (float) ($o->total_price * 0.05));
 
                 // Basic Row Styling
-                $sheetOrders->getStyle('A' . $rowOrder . ':I' . $rowOrder)->applyFromArray([
+                $sheetOrders->getStyle('A' . $rowOrder . ':G' . $rowOrder)->applyFromArray([
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => $rowBg]],
                     'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'E2E8F0']]],
                     'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
@@ -1455,28 +1480,26 @@ class AdminController extends Controller
 
                 // Alignment & Format Kolom
                 $sheetOrders->getStyle('A' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheetOrders->getStyle('B' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheetOrders->getStyle('C' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheetOrders->getStyle('F' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheetOrders->getStyle('G' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetOrders->getStyle('D' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetOrders->getStyle('E' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 
-                $sheetOrders->getStyle('H' . $rowOrder)->getNumberFormat()->setFormatCode('"Rp "#,##0');
-                $sheetOrders->getStyle('I' . $rowOrder)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+                $sheetOrders->getStyle('F' . $rowOrder)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+                $sheetOrders->getStyle('G' . $rowOrder)->getNumberFormat()->setFormatCode('"Rp "#,##0');
 
                 // Pewarnaan Badge Status Pembayaran
                 $payStatus = strtolower($o->payment_status);
                 if ($payStatus === 'paid' || $payStatus === 'lunas') {
-                    $sheetOrders->getStyle('F' . $rowOrder)->applyFromArray([
+                    $sheetOrders->getStyle('D' . $rowOrder)->applyFromArray([
                         'font' => ['bold' => true, 'color' => ['rgb' => '166534']],
                         'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'DCFCE7']]
                     ]);
                 } elseif ($payStatus === 'unpaid' || $payStatus === 'pending') {
-                    $sheetOrders->getStyle('F' . $rowOrder)->applyFromArray([
+                    $sheetOrders->getStyle('D' . $rowOrder)->applyFromArray([
                         'font' => ['bold' => true, 'color' => ['rgb' => '854D0E']],
                         'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FEF9C3']]
                     ]);
                 } else {
-                    $sheetOrders->getStyle('F' . $rowOrder)->applyFromArray([
+                    $sheetOrders->getStyle('D' . $rowOrder)->applyFromArray([
                         'font' => ['bold' => true, 'color' => ['rgb' => '991B1B']],
                         'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FEE2E2']]
                     ]);
@@ -1484,9 +1507,10 @@ class AdminController extends Controller
 
                 $sheetOrders->getRowDimension($rowOrder)->setRowHeight(22);
                 $rowOrder++;
+                $noOrder++;
             }
         } else {
-            $sheetOrders->mergeCells('A' . $rowOrder . ':I' . $rowOrder);
+            $sheetOrders->mergeCells('A' . $rowOrder . ':G' . $rowOrder);
             $sheetOrders->setCellValue('A' . $rowOrder, 'Tidak ada data transaksi pada periode ini.');
             $sheetOrders->getStyle('A' . $rowOrder)->applyFromArray([
                 'font' => ['italic' => true, 'color' => ['rgb' => '64748B']],
@@ -1498,17 +1522,17 @@ class AdminController extends Controller
         }
 
         // Baris Total Transaksi
-        $sheetOrders->mergeCells('A' . $rowOrder . ':G' . $rowOrder);
+        $sheetOrders->mergeCells('A' . $rowOrder . ':E' . $rowOrder);
         $sheetOrders->setCellValue('A' . $rowOrder, 'TOTAL TRANSAKSI KESELURUHAN:');
         if ($orders->count() > 0) {
-            $sheetOrders->setCellValue('H' . $rowOrder, '=SUM(H8:H' . ($rowOrder - 1) . ')');
-            $sheetOrders->setCellValue('I' . $rowOrder, '=SUM(I8:I' . ($rowOrder - 1) . ')');
+            $sheetOrders->setCellValue('F' . $rowOrder, '=SUM(F8:F' . ($rowOrder - 1) . ')');
+            $sheetOrders->setCellValue('G' . $rowOrder, '=SUM(G8:G' . ($rowOrder - 1) . ')');
         } else {
-            $sheetOrders->setCellValue('H' . $rowOrder, 0);
-            $sheetOrders->setCellValue('I' . $rowOrder, 0);
+            $sheetOrders->setCellValue('F' . $rowOrder, 0);
+            $sheetOrders->setCellValue('G' . $rowOrder, 0);
         }
 
-        $sheetOrders->getStyle('A' . $rowOrder . ':I' . $rowOrder)->applyFromArray([
+        $sheetOrders->getStyle('A' . $rowOrder . ':G' . $rowOrder)->applyFromArray([
             'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '0F172A']],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E2E8F0']],
             'borders' => [
@@ -1519,22 +1543,22 @@ class AdminController extends Controller
             'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
         ]);
         $sheetOrders->getStyle('A' . $rowOrder)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-        $sheetOrders->getStyle('H' . $rowOrder)->getNumberFormat()->setFormatCode('"Rp "#,##0');
-        $sheetOrders->getStyle('I' . $rowOrder)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+        $sheetOrders->getStyle('F' . $rowOrder)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+        $sheetOrders->getStyle('G' . $rowOrder)->getNumberFormat()->setFormatCode('"Rp "#,##0');
         $sheetOrders->getRowDimension($rowOrder)->setRowHeight(26);
 
         // Auto-fit Columns
-        foreach (range('A', 'I') as $col) {
+        foreach (range('A', 'G') as $col) {
             $sheetOrders->getColumnDimension($col)->setAutoSize(true);
         }
-        $sheetOrders->getColumnDimension('E')->setAutoSize(false)->setWidth(35);
+        $sheetOrders->getColumnDimension('C')->setAutoSize(false)->setWidth(35);
 
         $sheetWd = $spreadsheet->createSheet();
         $sheetWd->setTitle('Penarikan Saldo');
         $sheetWd->setShowGridLines(true);
 
         // Header Banner Penarikan (Teal Theme)
-        $sheetWd->mergeCells('A1:J1');
+        $sheetWd->mergeCells('A1:H1');
         $sheetWd->setCellValue('A1', 'DETAIL PENARIKAN SALDO PENJUAL (WITHDRAWALS)');
         $sheetWd->getStyle('A1')->applyFromArray([
             'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => 'FFFFFF']],
@@ -1543,7 +1567,7 @@ class AdminController extends Controller
         ]);
         $sheetWd->getRowDimension(1)->setRowHeight(36);
 
-        $sheetWd->mergeCells('A2:J2');
+        $sheetWd->mergeCells('A2:H2');
         $sheetWd->setCellValue('A2', 'Periode: ' . $dateRange['period_label'] . '  |  Total Penarikan Disetujui: Rp ' . number_format($totalPenarikanDisetujui, 0, ',', '.'));
         $sheetWd->getStyle('A2')->applyFromArray([
             'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
@@ -1554,23 +1578,21 @@ class AdminController extends Controller
 
         // Header Kolom Tabel Penarikan (Row 4)
         $wdHeaders = [
-            'A4' => 'No',
-            'B4' => 'ID Penarikan',
-            'C4' => 'Tanggal Pengajuan',
-            'D4' => 'Nama Penjual',
-            'E4' => 'Nama Bank',
-            'F4' => 'No. Rekening',
-            'G4' => 'Atas Nama Rekening',
-            'H4' => 'Nominal Penarikan',
-            'I4' => 'Tanggal Diproses',
-            'J4' => 'Status'
+            'A4' => 'Tanggal Pengajuan',
+            'B4' => 'Nama Penjual',
+            'C4' => 'Nama Bank',
+            'D4' => 'No. Rekening',
+            'E4' => 'Atas Nama Rekening',
+            'F4' => 'Nominal Penarikan',
+            'G4' => 'Tanggal Diproses',
+            'H4' => 'Status'
         ];
 
         foreach ($wdHeaders as $cell => $text) {
             $sheetWd->setCellValue($cell, $text);
         }
 
-        $sheetWd->getStyle('A4:J4')->applyFromArray([
+        $sheetWd->getStyle('A4:H4')->applyFromArray([
             'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0F766E']],
@@ -1587,48 +1609,52 @@ class AdminController extends Controller
                 $isEven = ($noWd % 2 === 0);
                 $rowBg = $isEven ? 'F0FDFA' : 'FFFFFF';
 
-                $sheetWd->setCellValue('A' . $rowWd, $noWd++);
-                $sheetWd->setCellValue('B' . $rowWd, '#WD-' . $w->id_withdrawal);
-                $sheetWd->setCellValue('C' . $rowWd, $w->created_at ? $w->created_at->format('d/m/Y H:i') : '-');
-                $sheetWd->setCellValue('D' . $rowWd, $w->user->name ?? 'Penjual #' . $w->user_id);
-                $sheetWd->setCellValue('E' . $rowWd, strtoupper($w->bank_name ?? '-'));
+                $sheetWd->setCellValue('A' . $rowWd, $w->created_at ? $w->created_at->format('d/m/Y H:i') : '-');
+                $sheetWd->setCellValue('B' . $rowWd, $w->user->name ?? 'Penjual #' . $w->user_id);
+                $sheetWd->setCellValue('C' . $rowWd, strtoupper($w->bank_name ?? '-'));
+                $sheetWd->setCellValueExplicit('D' . $rowWd, (string) $w->bank_account_number, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+                $sheetWd->setCellValue('E' . $rowWd, $w->bank_account_name ?? '-');
+                $sheetWd->setCellValue('F' . $rowWd, (float) $w->amount);
+                $sheetWd->setCellValue('G' . $rowWd, $w->processed_at ? $w->processed_at->format('d/m/Y H:i') : '-');
                 
-                $sheetWd->setCellValueExplicit('F' . $rowWd, (string) $w->bank_account_number, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-                
-                $sheetWd->setCellValue('G' . $rowWd, $w->bank_account_name ?? '-');
-                $sheetWd->setCellValue('H' . $rowWd, (float) $w->amount);
-                $sheetWd->setCellValue('I' . $rowWd, $w->processed_at ? $w->processed_at->format('d/m/Y H:i') : '-');
-                $sheetWd->setCellValue('J' . $rowWd, strtoupper($w->status));
+                $wdStatusIndo = match (strtolower($w->status)) {
+                    'pending' => 'MENUNGGU',
+                    'approved' => 'DISETUJUI',
+                    'processed' => 'DIPROSES',
+                    'success' => 'BERHASIL',
+                    'selesai' => 'SELESAI',
+                    'rejected' => 'DITOLAK',
+                    default => strtoupper($w->status)
+                };
+                $sheetWd->setCellValue('H' . $rowWd, $wdStatusIndo);
 
-                $sheetWd->getStyle('A' . $rowWd . ':J' . $rowWd)->applyFromArray([
+                $sheetWd->getStyle('A' . $rowWd . ':H' . $rowWd)->applyFromArray([
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => $rowBg]],
                     'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CCFBF1']]],
                     'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
                 ]);
 
                 $sheetWd->getStyle('A' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheetWd->getStyle('B' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $sheetWd->getStyle('C' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheetWd->getStyle('E' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheetWd->getStyle('F' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheetWd->getStyle('I' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheetWd->getStyle('J' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetWd->getStyle('D' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetWd->getStyle('G' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheetWd->getStyle('H' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 
-                $sheetWd->getStyle('H' . $rowWd)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+                $sheetWd->getStyle('F' . $rowWd)->getNumberFormat()->setFormatCode('"Rp "#,##0');
 
                 $wStatus = strtolower($w->status);
                 if (in_array($wStatus, ['processed', 'approved', 'selesai', 'success'])) {
-                    $sheetWd->getStyle('J' . $rowWd)->applyFromArray([
+                    $sheetWd->getStyle('H' . $rowWd)->applyFromArray([
                         'font' => ['bold' => true, 'color' => ['rgb' => '166534']],
                         'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'DCFCE7']]
                     ]);
                 } elseif ($wStatus === 'pending') {
-                    $sheetWd->getStyle('J' . $rowWd)->applyFromArray([
+                    $sheetWd->getStyle('H' . $rowWd)->applyFromArray([
                         'font' => ['bold' => true, 'color' => ['rgb' => '854D0E']],
                         'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FEF9C3']]
                     ]);
                 } else {
-                    $sheetWd->getStyle('J' . $rowWd)->applyFromArray([
+                    $sheetWd->getStyle('H' . $rowWd)->applyFromArray([
                         'font' => ['bold' => true, 'color' => ['rgb' => '991B1B']],
                         'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FEE2E2']]
                     ]);
@@ -1636,9 +1662,10 @@ class AdminController extends Controller
 
                 $sheetWd->getRowDimension($rowWd)->setRowHeight(22);
                 $rowWd++;
+                $noWd++;
             }
         } else {
-            $sheetWd->mergeCells('A' . $rowWd . ':J' . $rowWd);
+            $sheetWd->mergeCells('A' . $rowWd . ':H' . $rowWd);
             $sheetWd->setCellValue('A' . $rowWd, 'Tidak ada data pengajuan penarikan pada periode ini.');
             $sheetWd->getStyle('A' . $rowWd)->applyFromArray([
                 'font' => ['italic' => true, 'color' => ['rgb' => '64748B']],
@@ -1649,15 +1676,15 @@ class AdminController extends Controller
             $rowWd++;
         }
 
-        $sheetWd->mergeCells('A' . $rowWd . ':G' . $rowWd);
+        $sheetWd->mergeCells('A' . $rowWd . ':E' . $rowWd);
         $sheetWd->setCellValue('A' . $rowWd, 'TOTAL PENARIKAN SALDO:');
         if ($withdrawals->count() > 0) {
-            $sheetWd->setCellValue('H' . $rowWd, '=SUM(H4:H' . ($rowWd - 1) . ')');
+            $sheetWd->setCellValue('F' . $rowWd, '=SUM(F4:F' . ($rowWd - 1) . ')');
         } else {
-            $sheetWd->setCellValue('H' . $rowWd, 0);
+            $sheetWd->setCellValue('F' . $rowWd, 0);
         }
 
-        $sheetWd->getStyle('A' . $rowWd . ':J' . $rowWd)->applyFromArray([
+        $sheetWd->getStyle('A' . $rowWd . ':H' . $rowWd)->applyFromArray([
             'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '0F172A']],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E2E8F0']],
             'borders' => [
@@ -1668,17 +1695,17 @@ class AdminController extends Controller
             'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
         ]);
         $sheetWd->getStyle('A' . $rowWd)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-        $sheetWd->getStyle('H' . $rowWd)->getNumberFormat()->setFormatCode('"Rp "#,##0');
+        $sheetWd->getStyle('F' . $rowWd)->getNumberFormat()->setFormatCode('"Rp "#,##0');
         $sheetWd->getRowDimension($rowWd)->setRowHeight(26);
 
-        foreach (range('A', 'J') as $col) {
+        foreach (range('A', 'H') as $col) {
             $sheetWd->getColumnDimension($col)->setAutoSize(true);
         }
 
         $sheetDaily = $spreadsheet->createSheet();
         $sheetDaily->setTitle('Rekap Harian');
         $sheetDaily->setShowGridLines(true);
-        $sheetDaily->mergeCells('A1:H1');
+        $sheetDaily->mergeCells('A1:G1');
         $sheetDaily->setCellValue('A1', 'REKAPITULASI ARUS KAS HARIAN');
         $sheetDaily->getStyle('A1')->applyFromArray([
             'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => 'FFFFFF']],
@@ -1687,7 +1714,7 @@ class AdminController extends Controller
         ]);
         $sheetDaily->getRowDimension(1)->setRowHeight(36);
 
-        $sheetDaily->mergeCells('A2:H2');
+        $sheetDaily->mergeCells('A2:G2');
         $sheetDaily->setCellValue('A2', 'Rangkuman Penerimaan dan Pengeluaran Harian Periode ' . $dateRange['period_label']);
         $sheetDaily->getStyle('A2')->applyFromArray([
             'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
@@ -1697,21 +1724,20 @@ class AdminController extends Controller
         $sheetDaily->getRowDimension(2)->setRowHeight(22);
 
         $dailyHeaders = [
-            'A4' => 'No',
-            'B4' => 'Tanggal',
-            'C4' => 'Hari',
-            'D4' => 'Transaksi Lunas',
-            'E4' => 'Pemasukan Bruto (Rp)',
-            'F4' => 'Komisi Platform 5% (Rp)',
-            'G4' => 'Penarikan Saldo (Rp)',
-            'H4' => 'Arus Kas Bersih (Rp)'
+            'A4' => 'Tanggal',
+            'B4' => 'Hari',
+            'C4' => 'Transaksi Lunas',
+            'D4' => 'Pemasukan Bruto (Rp)',
+            'E4' => 'Komisi Platform 5% (Rp)',
+            'F4' => 'Penarikan Saldo (Rp)',
+            'G4' => 'Arus Kas Bersih (Rp)'
         ];
 
         foreach ($dailyHeaders as $cell => $text) {
             $sheetDaily->setCellValue($cell, $text);
         }
 
-        $sheetDaily->getStyle('A4:H4')->applyFromArray([
+        $sheetDaily->getStyle('A4:G4')->applyFromArray([
             'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => 'FFFFFF']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F46E5']],
@@ -1743,16 +1769,21 @@ class AdminController extends Controller
             $isEven = ($noDaily % 2 === 0);
             $rowBg = $isEven ? 'F5F3FF' : 'FFFFFF';
 
-            $sheetDaily->setCellValue('A' . $rowDaily, $noDaily++);
-            $sheetDaily->setCellValue('B' . $rowDaily, $dayCarbon->format('d/m/Y'));
-            $sheetDaily->setCellValue('C' . $rowDaily, $dayCarbon->format('l'));
-            $sheetDaily->setCellValue('D' . $rowDaily, $dayOrders->count());
-            $sheetDaily->setCellValue('E' . $rowDaily, $dayInflow);
-            $sheetDaily->setCellValue('F' . $rowDaily, $dayCommission);
-            $sheetDaily->setCellValue('G' . $rowDaily, $dayOutflow);
-            $sheetDaily->setCellValue('H' . $rowDaily, $dayNet);
+            $daysIndo = [
+                'Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 
+                'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu'
+            ];
+            $dayNameIndo = $daysIndo[$dayCarbon->format('l')] ?? $dayCarbon->format('l');
 
-            $sheetDaily->getStyle('A' . $rowDaily . ':H' . $rowDaily)->applyFromArray([
+            $sheetDaily->setCellValue('A' . $rowDaily, $dayCarbon->format('d/m/Y'));
+            $sheetDaily->setCellValue('B' . $rowDaily, $dayNameIndo);
+            $sheetDaily->setCellValue('C' . $rowDaily, $dayOrders->count());
+            $sheetDaily->setCellValue('D' . $rowDaily, $dayInflow);
+            $sheetDaily->setCellValue('E' . $rowDaily, $dayCommission);
+            $sheetDaily->setCellValue('F' . $rowDaily, $dayOutflow);
+            $sheetDaily->setCellValue('G' . $rowDaily, $dayNet);
+
+            $sheetDaily->getStyle('A' . $rowDaily . ':G' . $rowDaily)->applyFromArray([
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => $rowBg]],
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'E0E7FF']]],
                 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
@@ -1761,26 +1792,26 @@ class AdminController extends Controller
             $sheetDaily->getStyle('A' . $rowDaily)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheetDaily->getStyle('B' . $rowDaily)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheetDaily->getStyle('C' . $rowDaily)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-            $sheetDaily->getStyle('D' . $rowDaily)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             
+            $sheetDaily->getStyle('D' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
             $sheetDaily->getStyle('E' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
             $sheetDaily->getStyle('F' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
             $sheetDaily->getStyle('G' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
-            $sheetDaily->getStyle('H' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
 
             $sheetDaily->getRowDimension($rowDaily)->setRowHeight(20);
             $rowDaily++;
+            $noDaily++;
         }
 
-        $sheetDaily->mergeCells('A' . $rowDaily . ':C' . $rowDaily);
+        $sheetDaily->mergeCells('A' . $rowDaily . ':B' . $rowDaily);
         $sheetDaily->setCellValue('A' . $rowDaily, 'TOTAL PERIODE:');
+        $sheetDaily->setCellValue('C' . $rowDaily, '=SUM(C4:C' . ($rowDaily - 1) . ')');
         $sheetDaily->setCellValue('D' . $rowDaily, '=SUM(D4:D' . ($rowDaily - 1) . ')');
         $sheetDaily->setCellValue('E' . $rowDaily, '=SUM(E4:E' . ($rowDaily - 1) . ')');
         $sheetDaily->setCellValue('F' . $rowDaily, '=SUM(F4:F' . ($rowDaily - 1) . ')');
         $sheetDaily->setCellValue('G' . $rowDaily, '=SUM(G4:G' . ($rowDaily - 1) . ')');
-        $sheetDaily->setCellValue('H' . $rowDaily, '=SUM(H4:H' . ($rowDaily - 1) . ')');
 
-        $sheetDaily->getStyle('A' . $rowDaily . ':H' . $rowDaily)->applyFromArray([
+        $sheetDaily->getStyle('A' . $rowDaily . ':G' . $rowDaily)->applyFromArray([
             'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '0F172A']],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E2E8F0']],
             'borders' => [
@@ -1791,14 +1822,14 @@ class AdminController extends Controller
             'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
         ]);
         $sheetDaily->getStyle('A' . $rowDaily)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-        $sheetDaily->getStyle('D' . $rowDaily)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheetDaily->getStyle('C' . $rowDaily)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheetDaily->getStyle('D' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
         $sheetDaily->getStyle('E' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
         $sheetDaily->getStyle('F' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
         $sheetDaily->getStyle('G' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
-        $sheetDaily->getStyle('H' . $rowDaily)->getNumberFormat()->setFormatCode('"Rp "#,##0');
         $sheetDaily->getRowDimension($rowDaily)->setRowHeight(26);
 
-        foreach (range('A', 'H') as $col) {
+        foreach (range('A', 'G') as $col) {
             $sheetDaily->getColumnDimension($col)->setAutoSize(true);
         }
         $spreadsheet->setActiveSheetIndex(0);
