@@ -66,6 +66,13 @@
         .menu-chevron { transition: transform .3s ease; }
         .menu-chevron.rotated { transform: rotate(180deg); }
 
+        .active-tab {
+            background-color: #f0f9ff !important; /* bg-sky-50 */
+            color: #0284c7 !important; /* text-sky-600 */
+            border-color: #bae6fd !important; /* border-sky-200 */
+            box-shadow: 0 2px 4px rgba(14, 165, 233, 0.1);
+        }
+
         .card-hover {
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             cursor: default;
