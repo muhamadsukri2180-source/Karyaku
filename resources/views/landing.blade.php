@@ -222,6 +222,7 @@
             </div>
         </div>
     </div>
+
     <div id="mobileMenu" class="lg:hidden bg-white border-t border-slate-200 shadow-xl">
         <nav class="flex flex-col px-4 py-4 space-y-1 text-sm font-semibold text-slate-600">
             <a href="#hero" class="px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-primary">
