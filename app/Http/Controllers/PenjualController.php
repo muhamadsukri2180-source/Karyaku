@@ -154,8 +154,20 @@ class PenjualController extends Controller
             'images'      => 'nullable|array|max:5',
             'images.*'    => 'image|mimes:jpeg,png,jpg,webp|max:4096',
             'video'       => 'nullable|file|mimes:mp4,webm,ogg,mov,avi|max:51200',
-            'file'        => 'required|file|max:51200',
+            'file'        => 'required|file|mimes:zip,rar,7z,tar,gz,pdf,doc,docx,xls,xlsx,ppt,pptx,psd,ai,fig,sketch,mp3,wav,ogg,mp4,mkv,avi,png,jpg,jpeg,webp,txt,epub,csv|max:51200',
+        ], [
+            'file.mimes'  => 'Format file digital tidak diizinkan. Gunakan format arsip (ZIP/RAR), dokumen, gambar, audio, atau video yang aman.',
+            'file.max'    => 'Ukuran file digital maksimal adalah 50MB.',
         ]);
+
+        // Verifikasi keamanan tambahan: Blokir ekstensi berbahaya (Malware / Script Executable Prevention)
+        $dangerousExtensions = ['php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phar', 'exe', 'bat', 'sh', 'cmd', 'cgi', 'pl', 'py', 'jar', 'vbs', 'com', 'scr', 'msi', 'htm', 'html', 'js', 'svg'];
+        if ($request->hasFile('file')) {
+            $ext = strtolower($request->file('file')->getClientOriginalExtension());
+            if (in_array($ext, $dangerousExtensions)) {
+                return back()->withInput()->with('error', "Ekstensi file (.{$ext}) terdeteksi berisiko/berbahaya dan ditolak demi keamanan server.");
+            }
+        }
 
         $thumbPath = $request->hasFile('thumbnail') ? $request->file('thumbnail')->store('products/thumbnails', 'public') : null;
         
@@ -216,8 +228,20 @@ class PenjualController extends Controller
             'images'      => 'nullable|array|max:5',
             'images.*'    => 'image|mimes:jpeg,png,jpg,webp|max:4096',
             'video'       => 'nullable|file|mimes:mp4,webm,ogg,mov,avi|max:51200',
-            'file'        => 'nullable|file|max:51200',
+            'file'        => 'nullable|file|mimes:zip,rar,7z,tar,gz,pdf,doc,docx,xls,xlsx,ppt,pptx,psd,ai,fig,sketch,mp3,wav,ogg,mp4,mkv,avi,png,jpg,jpeg,webp,txt,epub,csv|max:51200',
+        ], [
+            'file.mimes'  => 'Format file digital tidak diizinkan. Gunakan format arsip (ZIP/RAR), dokumen, gambar, audio, atau video yang aman.',
+            'file.max'    => 'Ukuran file digital maksimal adalah 50MB.',
         ]);
+
+        // Verifikasi keamanan tambahan: Blokir ekstensi berbahaya (Malware / Script Executable Prevention)
+        $dangerousExtensions = ['php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phar', 'exe', 'bat', 'sh', 'cmd', 'cgi', 'pl', 'py', 'jar', 'vbs', 'com', 'scr', 'msi', 'htm', 'html', 'js', 'svg'];
+        if ($request->hasFile('file')) {
+            $ext = strtolower($request->file('file')->getClientOriginalExtension());
+            if (in_array($ext, $dangerousExtensions)) {
+                return back()->withInput()->with('error', "Ekstensi file (.{$ext}) terdeteksi berisiko/berbahaya dan ditolak demi keamanan server.");
+            }
+        }
 
         if ($request->hasFile('thumbnail')) {
             if ($product->thumbnail && Storage::disk('public')->exists($product->thumbnail)) {
