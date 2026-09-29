@@ -193,7 +193,7 @@
             </a>
             <nav class="hidden lg:flex items-center space-x-7 text-[13px] font-semibold text-blue-100">
                 <a href="#hero" class="hover:text-white transition">
-                    Beranda
+                    Beranda Saya
                 </a>
                 <a href="#tentang" class="hover:text-white transition">
                     Tentang Kami
