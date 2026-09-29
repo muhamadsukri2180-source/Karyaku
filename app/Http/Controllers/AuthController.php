@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Models\LoginHistory;
 
 class AuthController extends Controller
 {
@@ -115,6 +116,13 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
+        LoginHistory::create([
+            'username' => $user->name,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'type' => 'login'
+        ]);
+
         if ($request->query('role') === 'penjual' && ($user->role->role_name ?? null) === 'pembeli') {
             return redirect()->route('pembeli.seller.registration.create');
         }
@@ -173,6 +181,15 @@ class AuthController extends Controller
     // Logout
     public function logout(Request $request)
     {
+        if (Auth::check()) {
+            LoginHistory::create([
+                'username' => Auth::user()->name,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'type' => 'logout'
+            ]);
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

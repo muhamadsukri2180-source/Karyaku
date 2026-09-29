@@ -151,6 +151,124 @@
             </table>
         </div>
     </div>
+    <!-- TABEL ANTI BOT -->
+    <div class="bg-indigo-50 border border-indigo-200 rounded-2xl shadow-lg shadow-indigo-500/10 overflow-hidden">
+        <div class="p-5 border-b border-indigo-100 bg-gradient-to-r from-indigo-500/10 via-white to-indigo-50 flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-indigo-500 text-white flex items-center justify-center border border-indigo-600 shadow-sm shrink-0">
+                    <i class="fa-solid fa-robot text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-indigo-950 text-base font-display">Tabel Anti Bot & Serangan Otomatis</h3>
+                    <p class="text-[11px] text-indigo-800/80 font-medium">Log aktivitas dari Bot atau serangan DDoS. Silakan klik "Blokir Manual" untuk membekukan IP tersebut.</p>
+                </div>
+            </div>
+            <span class="bg-indigo-600 text-white text-[10px] px-3 py-1 rounded-full font-extrabold shadow-sm">{{ $botIps->count() }} Bot Terdeteksi</span>
+        </div>
+
+        <div class="w-full overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                    <tr class="bg-indigo-700 text-indigo-50 text-[11px] uppercase tracking-wider font-bold whitespace-nowrap">
+                        <th class="py-3.5 px-6">Alamat IP Bot</th>
+                        <th class="py-3.5 px-6">Tipe Serangan</th>
+                        <th class="py-3.5 px-6">User Agent Palsu / Bot Name</th>
+                        <th class="py-3.5 px-6 text-center">Spam Request</th>
+                        <th class="py-3.5 px-6">Terakhir Menyerang</th>
+                        <th class="py-3.5 px-6 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs divide-y divide-indigo-100 text-indigo-950 font-medium">
+                    @forelse($botIps as $bot)
+                    <tr class="hover:bg-indigo-100/80 transition-colors bg-white odd:bg-indigo-50/50 whitespace-nowrap">
+                        <td class="py-4 px-6 font-mono font-bold text-indigo-900">{{ $bot->ip_address }}</td>
+                        <td class="py-4 px-6 text-indigo-800 max-w-xs truncate font-semibold"><span class="bg-indigo-100 px-2 py-1 rounded border border-indigo-200">{{ $bot->reason }}</span></td>
+                        <td class="py-4 px-6 text-indigo-700 max-w-xs truncate">{{ $bot->user_agent ?? 'Unknown/Empty' }}</td>
+                        <td class="py-4 px-6 text-center font-bold">
+                            <span class="bg-red-100 px-2.5 py-1 rounded-md text-[11px] border border-red-300 text-red-700">{{ $bot->request_count }}x Req</span>
+                        </td>
+                        <td class="py-4 px-6 text-indigo-600 font-semibold">{{ $bot->last_activity_at?->diffForHumans() }}</td>
+                        <td class="py-4 px-6 text-center">
+                            @if($bot->status === 'abnormal')
+                                <span class="bg-red-100 text-red-700 font-bold px-3 py-1.5 rounded-lg text-xs"><i class="fa-solid fa-ban"></i> Terblokir</span>
+                            @else
+                                <form action="{{ route('admin.security.toggle', $bot->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                        <i class="fa-solid fa-lock"></i> Blokir Manual
+                                    </button>
+                                </form>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center py-10 text-indigo-900 text-xs font-semibold bg-indigo-50/20">
+                            <i class="fa-solid fa-shield-virus text-indigo-400 text-xl block mb-2"></i>
+                            Sistem bebas dari serangan Bot / DDoS saat ini.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TABEL RIWAYAT LOGIN / LOGOUT -->
+    <div class="bg-slate-50 border border-slate-200 rounded-2xl shadow-lg shadow-slate-500/10 overflow-hidden">
+        <div class="p-5 border-b border-slate-100 bg-gradient-to-r from-slate-100 via-white to-slate-50 flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-slate-800 text-white flex items-center justify-center border border-slate-900 shadow-sm shrink-0">
+                    <i class="fa-solid fa-clock-rotate-left text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-slate-900 text-base font-display">Tabel Riwayat Login & Logout Pengguna</h3>
+                    <p class="text-[11px] text-slate-500 font-medium">Memantau sesi akun, lokasi IP Login, dan waktu Logout secara real-time.</p>
+                </div>
+            </div>
+            <span class="bg-slate-800 text-white text-[10px] px-3 py-1 rounded-full font-extrabold shadow-sm">100 Riwayat Terakhir</span>
+        </div>
+
+        <div class="w-full overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold whitespace-nowrap">
+                        <th class="py-3.5 px-6">Username / Akun</th>
+                        <th class="py-3.5 px-6">Status Aktivitas</th>
+                        <th class="py-3.5 px-6">Alamat IP (Lokasi)</th>
+                        <th class="py-3.5 px-6">Perangkat / Browser</th>
+                        <th class="py-3.5 px-6">Waktu Kejadian</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs divide-y divide-slate-100 text-slate-700 font-medium">
+                    @forelse($loginHistories as $log)
+                    <tr class="hover:bg-slate-50 transition-colors bg-white whitespace-nowrap">
+                        <td class="py-4 px-6 font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-user-circle text-slate-400"></i> {{ $log->username ?? 'Unknown' }}
+                        </td>
+                        <td class="py-4 px-6">
+                            @if($log->type == 'login')
+                                <span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded border border-emerald-200 font-bold text-[10px] uppercase tracking-wider"><i class="fa-solid fa-right-to-bracket mr-1"></i> Sedang Login</span>
+                            @else
+                                <span class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded border border-slate-200 font-bold text-[10px] uppercase tracking-wider"><i class="fa-solid fa-right-from-bracket mr-1"></i> Telah Logout</span>
+                            @endif
+                        </td>
+                        <td class="py-4 px-6 font-mono font-semibold text-slate-800">{{ $log->ip_address }}</td>
+                        <td class="py-4 px-6 text-slate-500 max-w-xs truncate" title="{{ $log->user_agent }}">{{ $log->user_agent }}</td>
+                        <td class="py-4 px-6 text-slate-500 font-semibold">{{ $log->created_at->format('d M Y, H:i:s') }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="text-center py-10 text-slate-500 text-xs font-semibold bg-slate-50">
+                            <i class="fa-solid fa-ghost text-slate-300 text-xl block mb-2"></i>
+                            Belum ada riwayat aktivitas masuk/keluar.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 @endsection
 

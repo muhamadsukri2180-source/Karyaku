@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Product, Order, OrderItem, User, Role, Category, Membership, IdentityVerification, Withdrawal, Report, CustomerService, Notification, IpLog, AllowedIp, AccountAppeal};
+use App\Models\{Product, Order, OrderItem, User, Role, Category, Membership, IdentityVerification, Withdrawal, Report, CustomerService, Notification, IpLog, AllowedIp, AccountAppeal, LoginHistory};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Artisan, Hash, Storage, DB, Schema};
 use Carbon\Carbon;
@@ -827,14 +827,21 @@ class AdminController extends Controller
     public function securityVerifyPage(Request $request)
     {
         if ($request->has('reset')) session()->forget('security_verified_at');
-        return session()->has('security_verified_at') ? redirect()->route('admin.security.index') : view('admin.security.verify');
+        if (session()->has('security_verified_at')) return redirect()->route('admin.security.index');
+        
+        $num1 = rand(1, 10);
+        $num2 = rand(1, 10);
+        session(['security_captcha_answer' => $num1 + $num2, 'security_captcha_q' => "$num1 + $num2"]);
+        
+        return view('admin.security.verify');
     }
 
     public function securityProcessVerify(Request $request)
     {
-        $request->validate(['password' => 'required', 'pin' => 'required|numeric']);
-        if (!Hash::check($request->password, auth()->user()->password)) return back()->with('error', 'Password Salah!');
-        if ($request->pin != env('SECURITY_ACCESS_PIN', '123456')) return back()->with('error', 'PIN Salah!');
+        $request->validate(['password' => 'required', 'pin' => 'required|numeric', 'captcha' => 'required|numeric']);
+        if ($request->password !== env('SECURITY_ACCESS_PASSWORD', 'KaryakuAman123!')) return back()->with('error', 'Security Password Salah!');
+        if ($request->pin != env('SECURITY_ACCESS_PIN', '789101')) return back()->with('error', 'PIN Salah!');
+        if ($request->captcha != session('security_captcha_answer')) return back()->with('error', 'Jawaban Keamanan (Captcha) Salah!');
         
         session(['security_verified_at' => now()]);
         return redirect()->route('admin.security.index')->with('success', 'Akses Keamanan Diberikan.');
@@ -846,6 +853,10 @@ class AdminController extends Controller
         return view('admin.security.index', [
             'normalIps' => IpLog::where('status', 'normal')->latest('last_activity_at')->get(),
             'abnormalIps' => IpLog::where('status', 'abnormal')->latest('last_activity_at')->get(),
+            'botIps' => IpLog::where(function($q) {
+                $q->where('reason', 'like', '%Bot%')->orWhere('reason', 'like', '%Spam%');
+            })->latest('last_activity_at')->get(),
+            'loginHistories' => LoginHistory::latest()->limit(100)->get(),
             'allowedIps' => AllowedIp::latest()->get(), 'myIp' => $request->ip()
         ]);
     }
