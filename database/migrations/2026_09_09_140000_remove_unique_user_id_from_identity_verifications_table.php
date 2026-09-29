@@ -37,13 +37,11 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('identity_verifications', function (Blueprint $table) {
-            try {
-                $table->dropIndex(['user_id']);
-            } catch (\Throwable $e) {
-
-            }
-
             $table->dropForeign(['user_id']);
+        });
+
+        Schema::table('identity_verifications', function (Blueprint $table) {
+            $table->dropIndex('identity_verifications_user_id_index');
         });
 
         Schema::table('identity_verifications', function (Blueprint $table) {
