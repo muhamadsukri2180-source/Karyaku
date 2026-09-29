@@ -42,14 +42,14 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('auth.login.submit');
 
     Route::get('/register', [AuthController::class, 'showRegister'])->name('auth.register');
-    Route::post('/register', [AuthController::class, 'register'])->name('auth.register.submit');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1')->name('auth.register.submit');
 
     // --- RUTE LUPA & RESET PASSWORD ---
     Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->middleware('guest')->name('password.request');
-    Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->middleware('guest')->name('password.email');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->middleware(['guest', 'throttle:5,1'])->name('password.email');
 
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->middleware('guest')->name('password.reset');
-    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('guest')->name('password.store');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware(['guest', 'throttle:5,1'])->name('password.store');
 });
 
 // Logout (Harus Authenticated)
@@ -59,7 +59,7 @@ Route::post('/logout', [AuthController::class, 'logout'])
 
 // Halaman Khusus Penangguhan Akun & Pengajuan Banding
 Route::get('/suspended-notice', [AuthController::class, 'showSuspendedNotice'])->name('suspended.notice');
-Route::post('/appeal/submit', [AuthController::class, 'submitAppeal'])->name('appeal.submit');
+Route::post('/appeal/submit', [AuthController::class, 'submitAppeal'])->middleware('throttle:5,1')->name('appeal.submit');
 
 
 // ==========================================
@@ -149,13 +149,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // 12. Keamanan System & Monitoring IP
     Route::get('/security/verify', [AdminController::class, 'securityVerifyPage'])->name('security.verify');
-    Route::post('/security/verify', [AdminController::class, 'securityProcessVerify'])->name('security.process_verify');
+    Route::post('/security/verify', [AdminController::class, 'securityProcessVerify'])->middleware('throttle:5,1')->name('security.process_verify');
 
-    Route::get('/security/ip-monitor', [AdminController::class, 'securityIndex'])->name('security.index');
-    Route::post('/security/allowed-ip', [AdminController::class, 'securityStoreAllowedIp'])->name('security.allowed_ip.store');
-    Route::delete('/security/allowed-ip/{id}', [AdminController::class, 'securityDestroyAllowedIp'])->name('security.allowed_ip.destroy');
-    Route::post('/security/toggle/{id}', [AdminController::class, 'securityToggleStatus'])->name('security.toggle');
-    Route::delete('/security/log/{id}', [AdminController::class, 'securityDestroyLog'])->name('security.log.destroy');
+    Route::middleware(['security.access'])->group(function () {
+        Route::get('/security/ip-monitor', [AdminController::class, 'securityIndex'])->name('security.index');
+        Route::post('/security/allowed-ip', [AdminController::class, 'securityStoreAllowedIp'])->name('security.allowed_ip.store');
+        Route::delete('/security/allowed-ip/{id}', [AdminController::class, 'securityDestroyAllowedIp'])->name('security.allowed_ip.destroy');
+        Route::post('/security/toggle/{id}', [AdminController::class, 'securityToggleStatus'])->name('security.toggle');
+        Route::delete('/security/log/{id}', [AdminController::class, 'securityDestroyLog'])->name('security.log.destroy');
+    });
 
 
     //route fitur clear cache
@@ -297,7 +299,7 @@ Route::middleware(['auth', 'suspended', 'role:pembeli,penjual'])->prefix('pembel
 // ==========================================
 Route::middleware(['auth', 'suspended'])->group(function () {
     Route::get('/laporan', [ReportController::class, 'create'])->name('reports.create');
-    Route::post('/laporan', [ReportController::class, 'store'])->name('reports.store');
+    Route::post('/laporan', [ReportController::class, 'store'])->middleware('throttle:10,1')->name('reports.store');
     Route::get('/laporan/riwayat', [ReportController::class, 'index'])->name('reports.index');
 });
 

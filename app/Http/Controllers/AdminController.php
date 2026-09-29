@@ -839,11 +839,23 @@ class AdminController extends Controller
     public function securityProcessVerify(Request $request)
     {
         $request->validate(['password' => 'required', 'pin' => 'required|numeric', 'captcha' => 'required|numeric']);
-        if ($request->password !== env('SECURITY_ACCESS_PASSWORD', 'KaryakuAman123!')) return back()->with('error', 'Security Password Salah!');
-        if ($request->pin != env('SECURITY_ACCESS_PIN', '789101')) return back()->with('error', 'PIN Salah!');
+        $expectedPassword = config('app.security_access_password', env('SECURITY_ACCESS_PASSWORD', 'KaryakuAman123!'));
+        $expectedPin = config('app.security_access_pin', env('SECURITY_ACCESS_PIN', '789101'));
+
+        if ($request->password !== $expectedPassword) return back()->with('error', 'Security Password Salah!');
+        if ($request->pin != $expectedPin) return back()->with('error', 'PIN Salah!');
         if ($request->captcha != session('security_captcha_answer')) return back()->with('error', 'Jawaban Keamanan (Captcha) Salah!');
         
         session(['security_verified_at' => now()]);
+
+        // Otomatis masukkan IP Admin yang berhasil verifikasi ke Whitelist
+        try {
+            AllowedIp::firstOrCreate(
+                ['ip_address' => $request->ip()],
+                ['label' => 'Admin Verified (' . (auth()->user()->name ?? 'Admin') . ')', 'added_by' => auth()->user()->name ?? 'Admin']
+            );
+        } catch (\Throwable $e) {}
+
         return redirect()->route('admin.security.index')->with('success', 'Akses Keamanan Diberikan.');
     }
 
@@ -854,19 +866,30 @@ class AdminController extends Controller
             'normalIps' => IpLog::where('status', 'normal')->latest('last_activity_at')->get(),
             'abnormalIps' => IpLog::where('status', 'abnormal')->latest('last_activity_at')->get(),
             'botIps' => IpLog::where(function($q) {
-                $q->where('reason', 'like', '%Bot%')->orWhere('reason', 'like', '%Spam%');
+                $q->where('reason', 'like', '%Bot%')->orWhere('reason', 'like', '%Spam%')->orWhere('reason', 'like', '%DoS%')->orWhere('reason', 'like', '%Flood%');
             })->latest('last_activity_at')->get(),
             'loginHistories' => LoginHistory::latest()->limit(100)->get(),
             'allowedIps' => AllowedIp::latest()->get(), 'myIp' => $request->ip()
         ]);
     }
 
-    public function securityToggleStatus(string|int $id)
+    public function securityToggleStatus(Request $request, string|int $id)
     {
         if (!session()->has('security_verified_at')) return redirect()->route('admin.security.verify');
         $ip = IpLog::findOrFail($id);
-        $ip->update(['status' => $ip->status === 'normal' ? 'abnormal' : 'normal', 'reason' => $ip->status === 'normal' ? 'Dibersihkan Admin' : 'Ditandai manual']);
-        return back()->with('success', "Status IP {$ip->ip_address} diperbarui.");
+
+        $newStatus = ($ip->status === 'normal') ? 'abnormal' : 'normal';
+        $reason = $request->input('reason');
+        if (empty($reason)) {
+            $reason = ($newStatus === 'abnormal') ? 'Dibekukan manual oleh Admin' : 'Dibersihkan oleh Admin';
+        }
+
+        $ip->update([
+            'status' => $newStatus,
+            'reason' => $reason,
+        ]);
+
+        return back()->with('success', "Status IP {$ip->ip_address} berhasil diubah menjadi {$newStatus}.");
     }
 
     public function securityDestroyLog(string|int $id)
@@ -874,6 +897,35 @@ class AdminController extends Controller
         if (!session()->has('security_verified_at')) return redirect()->route('admin.security.verify');
         IpLog::findOrFail($id)->delete();
         return back()->with('success', 'Log IP dihapus.');
+    }
+
+    public function securityStoreAllowedIp(Request $request)
+    {
+        if (!session()->has('security_verified_at')) return redirect()->route('admin.security.verify');
+
+        $validated = $request->validate([
+            'ip_address' => 'required|ip|unique:allowed_ips,ip_address',
+            'label'      => 'required|string|max:100',
+        ]);
+
+        AllowedIp::create([
+            'ip_address' => $validated['ip_address'],
+            'label'      => $validated['label'],
+            'added_by'   => auth()->user()->name ?? 'Admin',
+        ]);
+
+        return back()->with('success', "IP {$validated['ip_address']} berhasil ditambahkan ke daftar izin (Whitelist).");
+    }
+
+    public function securityDestroyAllowedIp(string|int $id)
+    {
+        if (!session()->has('security_verified_at')) return redirect()->route('admin.security.verify');
+
+        $allowedIp = AllowedIp::findOrFail($id);
+        $ip = $allowedIp->ip_address;
+        $allowedIp->delete();
+
+        return back()->with('success', "IP {$ip} berhasil dihapus dari Whitelist.");
     }
 
     public function clearCache(Request $request)

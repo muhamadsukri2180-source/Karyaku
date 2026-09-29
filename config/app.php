@@ -185,4 +185,12 @@ return [
         // 'Example' => App\Facades\Example::class,
     ])->toArray(),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Security Access PIN & Password
+    |--------------------------------------------------------------------------
+    */
+    'security_access_password' => env('SECURITY_ACCESS_PASSWORD', 'KaryakuAman123!'),
+    'security_access_pin'      => env('SECURITY_ACCESS_PIN', '789101'),
+
 ];
