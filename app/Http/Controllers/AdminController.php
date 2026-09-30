@@ -868,7 +868,7 @@ class AdminController extends Controller
             'botIps' => IpLog::where(function($q) {
                 $q->where('reason', 'like', '%Bot%')->orWhere('reason', 'like', '%Spam%')->orWhere('reason', 'like', '%DoS%')->orWhere('reason', 'like', '%Flood%');
             })->latest('last_activity_at')->get(),
-            'loginHistories' => LoginHistory::latest()->limit(100)->get(),
+            'loginHistories' => LoginHistory::latest()->simplePaginate(10),
             'allowedIps' => AllowedIp::latest()->get(), 'myIp' => $request->ip()
         ]);
     }
@@ -888,6 +888,23 @@ class AdminController extends Controller
             'status' => $newStatus,
             'reason' => $reason,
         ]);
+
+        if ($newStatus === 'abnormal') {
+            $days = (int) $request->input('freeze_days', 0);
+            $hours = (int) $request->input('freeze_hours', 0);
+            $seconds = (int) $request->input('freeze_seconds', 0);
+            
+            $totalSeconds = ($days * 86400) + ($hours * 3600) + $seconds;
+            if ($totalSeconds > 0) {
+                // Bekukan via cache selama durasi yang ditentukan
+                \Illuminate\Support\Facades\Cache::put("frozen_ip_{$ip->ip_address}", true, now()->addSeconds($totalSeconds));
+            } else {
+                // Permanen (10 tahun)
+                \Illuminate\Support\Facades\Cache::put("frozen_ip_{$ip->ip_address}", true, now()->addYears(10));
+            }
+        } else {
+            \Illuminate\Support\Facades\Cache::forget("frozen_ip_{$ip->ip_address}");
+        }
 
         return back()->with('success', "Status IP {$ip->ip_address} berhasil diubah menjadi {$newStatus}.");
     }

@@ -231,7 +231,7 @@
                     <p class="text-[11px] text-slate-500 font-medium">Memantau sesi akun, lokasi IP Login, dan waktu Logout secara real-time.</p>
                 </div>
             </div>
-            <span class="bg-slate-800 text-white text-[10px] px-3 py-1 rounded-full font-extrabold shadow-sm">100 Riwayat Terakhir</span>
+            <span class="bg-slate-800 text-white text-[10px] px-3 py-1 rounded-full font-extrabold shadow-sm">10 Riwayat per Halaman</span>
         </div>
 
         <div class="w-full overflow-x-auto">
@@ -242,7 +242,7 @@
                         <th class="py-3.5 px-6">Status Aktivitas</th>
                         <th class="py-3.5 px-6">Alamat IP (Lokasi)</th>
                         <th class="py-3.5 px-6">Perangkat / Browser</th>
-                        <th class="py-3.5 px-6">Waktu Kejadian</th>
+                        <th class="py-3.5 px-6">Waktu Kejadian (Tanggal & Waktu)</th>
                     </tr>
                 </thead>
                 <tbody class="text-xs divide-y divide-slate-100 text-slate-700 font-medium">
@@ -272,6 +272,9 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <div class="p-4 border-t border-slate-100 bg-white">
+            {{ $loginHistories->links() }}
         </div>
     </div>
 

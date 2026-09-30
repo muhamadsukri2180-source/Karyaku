@@ -132,12 +132,12 @@ class DetectAbnormalIp
             $ipLog->last_activity_at = now();
             $ipLog->save();
 
-            // Blokir jika IP berstatus abnormal dan bukan Whitelist
-            if ($ipLog->status === 'abnormal' && !$isWhitelisted) {
+            // Blokir jika IP berstatus abnormal dan bukan Whitelist atau jika IP ada di cache pembekuan
+            if (!$isWhitelisted && ($ipLog->status === 'abnormal' || \Illuminate\Support\Facades\Cache::has("frozen_ip_{$ip}"))) {
                 if (str_contains($ipLog->reason ?? '', 'DoS') || str_contains($ipLog->reason ?? '', 'Flooding')) {
                     abort(429, 'Terlalu banyak permintaan (DDoS Mitigation System). Silakan tunggu beberapa saat.');
                 }
-                abort(403, 'Akses Anda diblokir karena terdeteksi aktivitas mencurigakan. (Security System)');
+                abort(403, 'Akses Anda diblokir sementara oleh Admin karena aktivitas mencurigakan atau pembekuan akun.');
             }
 
             if ($ipLog->request_count > 1000 && $ipLog->status !== 'abnormal') {
