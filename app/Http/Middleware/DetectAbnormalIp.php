@@ -103,7 +103,34 @@ class DetectAbnormalIp
             }
         }
 
-        // 4. Deteksi DDoS & Rate Flooding (>120 request/menit untuk non-whitelist)
+        // 4. Deteksi Bot / Scraper dari User-Agent
+        if (!$isSuspicious && !$isWhitelisted) {
+            $lowerUa = strtolower($userAgent);
+            
+            // Jika User-Agent benar-benar kosong atau terlalu pendek
+            if (strlen(trim($lowerUa)) < 5) {
+                $isSuspicious = true;
+                $reason = "Terdeteksi Bot Spam (Tanpa User-Agent)";
+            } else {
+                // Daftar black-list bot peretas / scanner / scraper
+                $badBots = [
+                    'sqlmap', 'nikto', 'nmap', 'zgrab', 'masscan', 'acunetix', 
+                    'dirbuster', 'wpcan', 'postmanruntime', 'python-requests', 
+                    'go-http-client', 'java/', 'curl/', 'wget/', 'scrapy', 
+                    'httpclient', 'libwww-perl', 'ahrefsbot', 'semrushbot'
+                ];
+                
+                foreach ($badBots as $bot) {
+                    if (str_contains($lowerUa, $bot)) {
+                        $isSuspicious = true;
+                        $reason = "Terdeteksi Bot / Scanner Berbahaya ($bot)";
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 5. Deteksi DDoS & Rate Flooding (>120 request/menit untuk non-whitelist)
         if (!$isWhitelisted) {
             $floodKey = "ddos_flood_count_{$ip}";
             $reqInMinute = Cache::increment($floodKey);
