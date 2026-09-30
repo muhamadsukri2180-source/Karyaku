@@ -44,46 +44,73 @@
                     </tr>
                 </thead>
                 <tbody class="text-xs divide-y divide-slate-100">
-                    @forelse($abnormalIps as $index => $ip)
+                    @forelse($abnormalIps as $ipAddress => $logs)
+                    @php
+                        $first = $logs->sortByDesc('last_activity_at')->first();
+                        $totalReq = $logs->sum('request_count');
+                        $groupId = 'abnormal-'.$loop->index;
+                    @endphp
                     <tr class="hover:bg-red-50/40 transition-colors bg-white odd:bg-slate-50/30 whitespace-nowrap">
-                        <td class="py-4 px-6 font-mono font-bold text-red-600">{{ $ip->ip_address }}</td>
-                        <td class="py-4 px-6 text-slate-700 font-semibold max-w-xs truncate">{{ $ip->reason ?? '-' }}</td>
+                        <td class="py-4 px-6 font-mono font-bold text-red-600">
+                            {{ $ipAddress }}
+                            @if($logs->count() > 1)
+                            <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="ml-2 px-2 py-0.5 rounded bg-red-100 text-red-700 text-[10px] hover:bg-red-200">
+                                {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                            @endif
+                        </td>
+                        <td class="py-4 px-6 text-slate-700 font-semibold max-w-xs truncate">{{ $first->reason ?? '-' }}</td>
                         
                         <td class="py-4 px-6 font-mono text-[11px] text-slate-600">
                             <div class="flex items-center gap-2">
-                                <span class="truncate max-w-[220px] bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200 font-bold">{{ $ip->last_activity ?? 'N/A' }}</span>
-                                <!-- ICON MATA UNTUK DETAIL BOBOL (XSS-Safe via data attributes) -->
+                                <span class="truncate max-w-[220px] bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200 font-bold">{{ $first->last_activity ?? 'N/A' }}</span>
                                 <button type="button" class="btn-jailbreak-detail w-8 h-8 rounded-lg bg-red-100 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-xs flex items-center justify-center text-xs shrink-0 cursor-pointer"
-                                    data-ip="{{ $ip->ip_address }}"
-                                    data-activity="{{ $ip->last_activity }}"
-                                    data-reason="{{ $ip->reason }}"
-                                    data-useragent="{{ $ip->user_agent }}"
+                                    onclick="showJailbreakDetail('{{ $ipAddress }}', '{{ addslashes($first->last_activity) }}', '{{ addslashes($first->reason) }}', '{{ addslashes($first->user_agent) }}')"
                                     title="Lihat Lokasi File & Payload">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                             </div>
                         </td>
 
-                        <td class="py-4 px-6 text-center font-bold text-slate-700"><span class="bg-red-100 text-red-700 px-2.5 py-1 rounded-md text-[11px] border border-red-200">{{ $ip->request_count }}x</span></td>
-                        <td class="py-4 px-6 text-slate-500 font-medium">{{ $ip->last_activity_at?->diffForHumans() }}</td>
-                        <td class="py-4 px-6">
-                            <div class="flex items-center justify-center gap-2">
-                                <form action="{{ route('admin.security.toggle', $ip->id) }}" method="POST">
-                                    @csrf
+                        <td class="py-4 px-6 text-center font-bold text-slate-700"><span class="bg-red-100 text-red-700 px-2.5 py-1 rounded-md text-[11px] border border-red-200">{{ $totalReq }}x</span></td>
+                        <td class="py-4 px-6 text-slate-500 font-medium">{{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                        <td class="py-4 px-6 text-center">
+                            <form action="{{ route('admin.security.toggle', $first->id) }}" method="POST" class="inline-block">
+                                @csrf
+                                @if($first->status === 'abnormal')
                                     <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
-                                        Normal
+                                        <i class="fa-solid fa-check"></i> Buka Blokir
                                     </button>
-                                </form>
-
-                                <form id="delete-log-{{ $index }}" action="{{ route('admin.security.log.destroy', $ip->id) }}" method="POST">
-                                    @csrf @method('DELETE')
-                                    <button type="button" onclick="confirmDeleteLog('delete-log-{{ $index }}')" class="w-7 h-7 rounded-lg bg-slate-200 hover:bg-red-600 text-slate-700 hover:text-white transition-all shadow-xs flex items-center justify-center text-xs cursor-pointer" title="Hapus Log">
-                                        <i class="fa-solid fa-trash-can"></i>
+                                @else
+                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                        <i class="fa-solid fa-ban"></i> Ban
                                     </button>
-                                </form>
-                            </div>
+                                @endif
+                            </form>
                         </td>
                     </tr>
+                    
+                    @if($logs->count() > 1)
+                    <!-- DROPDOWN SESSIONS -->
+                    <tr id="{{ $groupId }}" class="hidden bg-slate-50/50">
+                        <td colspan="6" class="p-0 border-b border-slate-200">
+                            <table class="w-full text-left">
+                                @foreach($logs as $log)
+                                <tr class="border-t border-slate-200 hover:bg-slate-100 text-[11px]">
+                                    <td class="py-3 px-10 text-slate-500 font-mono">Sesi: #{{ substr($log->session_id, 0, 8) }}</td>
+                                    <td class="py-3 px-6 text-slate-600 truncate max-w-[150px]">{{ $log->reason }}</td>
+                                    <td class="py-3 px-6 text-slate-600 font-mono truncate max-w-[150px]">{{ $log->last_activity }}</td>
+                                    <td class="py-3 px-6 text-center text-slate-600 font-bold">{{ $log->request_count }}x</td>
+                                    <td class="py-3 px-6 text-slate-500 font-medium">{{ $log->last_activity_at ? $log->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                                    <td class="py-3 px-6 text-center text-slate-400 italic">
+                                        -
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </table>
+                        </td>
+                    </tr>
+                    @endif
                     @empty
                     <tr>
                         <td colspan="6" class="text-center py-10 text-slate-400 text-xs font-semibold bg-slate-50/20">
@@ -128,22 +155,56 @@
                     </tr>
                 </thead>
                 <tbody class="text-xs divide-y divide-amber-200 text-amber-950 font-medium">
-                    @forelse($normalIps as $ip)
+                    @forelse($normalIps as $ipAddress => $logs)
+                    @php
+                        $first = $logs->sortByDesc('last_activity_at')->first();
+                        $totalReq = $logs->sum('request_count');
+                        $groupId = 'normal-'.$loop->index;
+                    @endphp
                     <tr class="hover:bg-amber-100/80 transition-colors bg-white odd:bg-amber-50/50 whitespace-nowrap">
-                        <td class="py-4 px-6 font-mono font-bold text-amber-900">{{ $ip->ip_address }}</td>
-                        <td class="py-4 px-6 font-mono text-[11px] text-amber-900 max-w-xs truncate">{{ $ip->last_activity }}</td>
-                        <td class="py-4 px-6 text-amber-800 max-w-xs truncate">{{ $ip->user_agent }}</td>
-                        <td class="py-4 px-6 text-center font-bold text-amber-900">
-                            <span class="bg-amber-200/80 px-2.5 py-1 rounded-md text-[11px] border border-amber-300 font-extrabold text-amber-950">{{ $ip->request_count }}x</span>
+                        <td class="py-4 px-6 font-mono font-bold text-amber-900">
+                            {{ $ipAddress }}
+                            @if($logs->count() > 1)
+                            <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="ml-2 px-2 py-0.5 rounded bg-amber-200 text-amber-800 text-[10px] hover:bg-amber-300">
+                                {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                            @endif
                         </td>
-                        <td class="py-4 px-6 text-amber-900 font-semibold">{{ $ip->last_activity_at?->diffForHumans() }}</td>
+                        <td class="py-4 px-6 font-mono text-[11px] text-amber-900 max-w-xs truncate">{{ $first->last_activity }}</td>
+                        <td class="py-4 px-6 text-amber-800 max-w-xs truncate" title="{{ $first->user_agent }}">{{ $first->user_agent }}</td>
+                        <td class="py-4 px-6 text-center font-bold text-amber-900">
+                            <span class="bg-amber-200/80 px-2.5 py-1 rounded-md text-[11px] border border-amber-300 font-extrabold text-amber-950">{{ $totalReq }}x</span>
+                        </td>
+                        <td class="py-4 px-6 text-amber-900 font-semibold">{{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
                         <td class="py-4 px-6 text-center">
-                            <!-- TOMBOL BEKUKAN AKSES -->
-                            <button type="button" onclick="openFreezeTimerModal('{{ $ip->id }}', '{{ $ip->ip_address }}')" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer">
-                                <i class="fa-solid fa-key"></i> Kunci (Bekukan)
+                            <!-- TOMBOL BEKUKAN AKSES UTAMA -->
+                            <button type="button" onclick="openFreezeTimerModal('{{ $first->id }}', '{{ $ipAddress }}')" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold shadow-sm transition-all cursor-pointer">
+                                <i class="fa-solid fa-key"></i> Kunci
                             </button>
                         </td>
                     </tr>
+                    
+                    @if($logs->count() > 1)
+                    <!-- DROPDOWN SESSIONS -->
+                    <tr id="{{ $groupId }}" class="hidden bg-amber-50/40">
+                        <td colspan="6" class="p-0 border-b border-amber-200">
+                            <table class="w-full text-left">
+                                @foreach($logs as $log)
+                                <tr class="border-t border-amber-100 hover:bg-amber-100/80 text-[11px]">
+                                    <td class="py-3 px-10 text-amber-700 font-mono">Sesi: #{{ substr($log->session_id, 0, 8) }}</td>
+                                    <td class="py-3 px-6 text-amber-800 font-mono truncate max-w-[200px]">{{ $log->last_activity }}</td>
+                                    <td class="py-3 px-6 text-amber-800 truncate max-w-[200px]" title="{{ $log->user_agent }}">{{ $log->user_agent }}</td>
+                                    <td class="py-3 px-6 text-center text-amber-800 font-bold">{{ $log->request_count }}x</td>
+                                    <td class="py-3 px-6 text-amber-800 font-semibold">{{ $log->last_activity_at ? $log->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                                    <td class="py-3 px-6 text-center text-amber-600/80 italic">
+                                        -
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </table>
+                        </td>
+                    </tr>
+                    @endif
                     @empty
                     <tr>
                         <td colspan="6" class="text-center py-10 text-amber-900 text-xs font-semibold bg-amber-50/20">
@@ -184,28 +245,64 @@
                     </tr>
                 </thead>
                 <tbody class="text-xs divide-y divide-indigo-100 text-indigo-950 font-medium">
-                    @forelse($botIps as $bot)
+                    @forelse($botIps as $ipAddress => $logs)
+                    @php
+                        $first = $logs->sortByDesc('last_activity_at')->first();
+                        $totalReq = $logs->sum('request_count');
+                        $groupId = 'bot-'.$loop->index;
+                    @endphp
                     <tr class="hover:bg-indigo-100/80 transition-colors bg-white odd:bg-indigo-50/50 whitespace-nowrap">
-                        <td class="py-4 px-6 font-mono font-bold text-indigo-900">{{ $bot->ip_address }}</td>
-                        <td class="py-4 px-6 text-indigo-800 max-w-xs truncate font-semibold"><span class="bg-indigo-100 px-2 py-1 rounded border border-indigo-200">{{ $bot->reason }}</span></td>
-                        <td class="py-4 px-6 text-indigo-700 max-w-xs truncate">{{ $bot->user_agent ?? 'Unknown/Empty' }}</td>
-                        <td class="py-4 px-6 text-center font-bold">
-                            <span class="bg-red-100 px-2.5 py-1 rounded-md text-[11px] border border-red-300 text-red-700">{{ $bot->request_count }}x Req</span>
-                        </td>
-                        <td class="py-4 px-6 text-indigo-600 font-semibold">{{ $bot->last_activity_at?->diffForHumans() }}</td>
-                        <td class="py-4 px-6 text-center">
-                            @if($bot->status === 'abnormal')
-                                <span class="bg-red-100 text-red-700 font-bold px-3 py-1.5 rounded-lg text-xs"><i class="fa-solid fa-ban"></i> Terblokir</span>
-                            @else
-                                <form action="{{ route('admin.security.toggle', $bot->id) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
-                                        <i class="fa-solid fa-lock"></i> Blokir Manual
-                                    </button>
-                                </form>
+                        <td class="py-4 px-6 font-mono font-bold text-indigo-900">
+                            {{ $ipAddress }}
+                            @if($logs->count() > 1)
+                            <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="ml-2 px-2 py-0.5 rounded bg-indigo-200 text-indigo-800 text-[10px] hover:bg-indigo-300">
+                                {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
+                            </button>
                             @endif
                         </td>
+                        <td class="py-4 px-6 text-indigo-800 max-w-xs truncate font-semibold"><span class="bg-indigo-100 px-2 py-1 rounded border border-indigo-200">{{ $first->reason }}</span></td>
+                        <td class="py-4 px-6 text-indigo-700 max-w-xs truncate" title="{{ $first->user_agent }}">{{ $first->user_agent ?? 'Unknown/Empty' }}</td>
+                        <td class="py-4 px-6 text-center font-bold">
+                            <span class="bg-red-100 px-2.5 py-1 rounded-md text-[11px] border border-red-300 text-red-700">{{ $totalReq }}x Req</span>
+                        </td>
+                        <td class="py-4 px-6 text-indigo-600 font-semibold">{{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                        <td class="py-4 px-6 text-center">
+                            <form action="{{ route('admin.security.toggle', $first->id) }}" method="POST" class="inline-block">
+                                @csrf
+                                @if($first->status === 'abnormal')
+                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                        <i class="fa-solid fa-check"></i> Buka Blokir
+                                    </button>
+                                @else
+                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                        <i class="fa-solid fa-ban"></i> Ban
+                                    </button>
+                                @endif
+                            </form>
+                        </td>
                     </tr>
+                    
+                    @if($logs->count() > 1)
+                    <!-- DROPDOWN SESSIONS -->
+                    <tr id="{{ $groupId }}" class="hidden bg-indigo-50/40">
+                        <td colspan="6" class="p-0 border-b border-indigo-200">
+                            <table class="w-full text-left">
+                                @foreach($logs as $log)
+                                <tr class="border-t border-indigo-100 hover:bg-indigo-100/50 text-[11px]">
+                                    <td class="py-3 px-10 text-indigo-700 font-mono">Sesi: #{{ substr($log->session_id, 0, 8) }}</td>
+                                    <td class="py-3 px-6 text-indigo-800 font-semibold truncate max-w-[150px]">{{ $log->reason }}</td>
+                                    <td class="py-3 px-6 text-indigo-700 truncate max-w-[150px]" title="{{ $log->user_agent }}">{{ $log->user_agent }}</td>
+                                    <td class="py-3 px-6 text-center text-red-700 font-bold">{{ $log->request_count }}x</td>
+                                    <td class="py-3 px-6 text-indigo-600 font-semibold">{{ $log->last_activity_at ? $log->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                                    <td class="py-3 px-6 text-center text-indigo-400 italic">
+                                        -
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </table>
+                        </td>
+                    </tr>
+                    @endif
                     @empty
                     <tr>
                         <td colspan="6" class="text-center py-10 text-indigo-900 text-xs font-semibold bg-indigo-50/20">

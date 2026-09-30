@@ -119,10 +119,17 @@ class DetectAbnormalIp
 
         // 5. Catat Log ke Database secara aman (try-catch agar tidak memutus aplikasi jika DB sibuk)
         try {
-            $ipLog = IpLog::firstOrNew(['ip_address' => $ip]);
+            $sessionIdCookie = $request->cookie(config('session.cookie'));
+            $sessionId = $sessionIdCookie ? substr(md5($sessionIdCookie), 0, 16) : substr(md5($userAgent . $ip), 0, 16);
 
-            if ($isSuspicious && !$isWhitelisted) {
-                $ipLog->status = 'abnormal';
+            $ipLog = IpLog::firstOrNew([
+                'ip_address' => $ip,
+                'session_id' => $sessionId
+            ]);
+
+            // Semi-otomatis: Hanya catat sebagai 'suspicious', JANGAN langsung 'abnormal' (terblokir)
+            if ($isSuspicious && !$isWhitelisted && $ipLog->status !== 'abnormal') {
+                $ipLog->status = 'suspicious';
                 $ipLog->reason = $reason;
             }
 
@@ -132,8 +139,8 @@ class DetectAbnormalIp
             $ipLog->last_activity_at = now();
             $ipLog->save();
 
-            // Blokir jika IP berstatus abnormal dan bukan Whitelist atau jika IP ada di cache pembekuan
-            if (!$isWhitelisted && ($ipLog->status === 'abnormal' || \Illuminate\Support\Facades\Cache::has("frozen_ip_{$ip}"))) {
+            // Blokir HANYA jika Admin sudah memblokir manual ('abnormal') atau membekukan ('frozen_session_')
+            if (!$isWhitelisted && ($ipLog->status === 'abnormal' || \Illuminate\Support\Facades\Cache::has("frozen_session_{$sessionId}"))) {
                 if (str_contains($ipLog->reason ?? '', 'DoS') || str_contains($ipLog->reason ?? '', 'Flooding')) {
                     abort(429, 'Terlalu banyak permintaan (DDoS Mitigation System). Silakan tunggu beberapa saat.');
                 }

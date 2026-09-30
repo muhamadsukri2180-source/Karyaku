@@ -39,7 +39,7 @@ class CheckSecurityAccess
 
         // 2. CEK WHITELIST IP
         if (!in_array($userIp, $whitelist)) {
-            abort(403, 'AKSES DITOLAK: IP Anda (' . $userIp . ') tidak memiliki izin mengakses Pusat Keamanan Sistem.');
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin mengakses Pusat Keamanan Sistem.');
         }
 
         return $next($request);

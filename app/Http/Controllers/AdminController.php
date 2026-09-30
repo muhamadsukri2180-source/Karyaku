@@ -230,7 +230,14 @@ class AdminController extends Controller
 
     public function downloadBackup(string $filename)
     {
-        $path = storage_path('app/backups/' . basename($filename));
+        $safeName = basename($filename);
+
+        // Hanya izinkan file .zip
+        if (!preg_match('/^[\w\-]+\.zip$/i', $safeName)) {
+            abort(403, 'Nama file tidak valid.');
+        }
+
+        $path = storage_path('app/backups/' . $safeName);
         if (!file_exists($path)) abort(404, 'File backup tidak ditemukan.');
         return response()->download($path);
     }
@@ -863,11 +870,11 @@ class AdminController extends Controller
     {
         if (!session()->has('security_verified_at')) return redirect()->route('admin.security.verify')->with('warning', 'Verifikasi dahulu.');
         return view('admin.security.index', [
-            'normalIps' => IpLog::where('status', 'normal')->latest('last_activity_at')->get(),
-            'abnormalIps' => IpLog::where('status', 'abnormal')->latest('last_activity_at')->get(),
+            'normalIps' => IpLog::where('status', 'normal')->latest('last_activity_at')->get()->groupBy('ip_address'),
+            'abnormalIps' => IpLog::whereIn('status', ['abnormal', 'suspicious'])->latest('last_activity_at')->get()->groupBy('ip_address'),
             'botIps' => IpLog::where(function($q) {
                 $q->where('reason', 'like', '%Bot%')->orWhere('reason', 'like', '%Spam%')->orWhere('reason', 'like', '%DoS%')->orWhere('reason', 'like', '%Flood%');
-            })->latest('last_activity_at')->get(),
+            })->latest('last_activity_at')->get()->groupBy('ip_address'),
             'loginHistories' => LoginHistory::latest()->simplePaginate(10),
             'allowedIps' => AllowedIp::latest()->get(), 'myIp' => $request->ip()
         ]);
@@ -878,7 +885,8 @@ class AdminController extends Controller
         if (!session()->has('security_verified_at')) return redirect()->route('admin.security.verify');
         $ip = IpLog::findOrFail($id);
 
-        $newStatus = ($ip->status === 'normal') ? 'abnormal' : 'normal';
+        // Jika normal atau suspicious, maka jadi abnormal (blokir). Jika abnormal, kembali normal.
+        $newStatus = in_array($ip->status, ['normal', 'suspicious']) ? 'abnormal' : 'normal';
         $reason = $request->input('reason');
         if (empty($reason)) {
             $reason = ($newStatus === 'abnormal') ? 'Dibekukan manual oleh Admin' : 'Dibersihkan oleh Admin';
@@ -896,14 +904,14 @@ class AdminController extends Controller
             
             $totalSeconds = ($days * 86400) + ($hours * 3600) + $seconds;
             if ($totalSeconds > 0) {
-                // Bekukan via cache selama durasi yang ditentukan
-                \Illuminate\Support\Facades\Cache::put("frozen_ip_{$ip->ip_address}", true, now()->addSeconds($totalSeconds));
+                // Bekukan via cache selama durasi yang ditentukan (berdasarkan session, bukan ip massal)
+                \Illuminate\Support\Facades\Cache::put("frozen_session_{$ip->session_id}", true, now()->addSeconds($totalSeconds));
             } else {
                 // Permanen (10 tahun)
-                \Illuminate\Support\Facades\Cache::put("frozen_ip_{$ip->ip_address}", true, now()->addYears(10));
+                \Illuminate\Support\Facades\Cache::put("frozen_session_{$ip->session_id}", true, now()->addYears(10));
             }
         } else {
-            \Illuminate\Support\Facades\Cache::forget("frozen_ip_{$ip->ip_address}");
+            \Illuminate\Support\Facades\Cache::forget("frozen_session_{$ip->session_id}");
         }
 
         return back()->with('success', "Status IP {$ip->ip_address} berhasil diubah menjadi {$newStatus}.");
@@ -1994,5 +2002,49 @@ class AdminController extends Controller
         $membership->delete();
 
         return redirect()->route('admin.memberships')->with('success', 'Paket membership berhasil dihapus.');
+    }
+
+    public function reportSuspicious(Request $request)
+    {
+        $ip = $request->ip();
+        
+        $userAgent = $request->header('User-Agent') ?? 'Unknown';
+        $sessionIdCookie = $request->cookie(config('session.cookie'));
+        $sessionId = $sessionIdCookie ? substr(md5($sessionIdCookie), 0, 16) : substr(md5($userAgent . $ip), 0, 16);
+        
+        $ipLog = \App\Models\IpLog::firstOrNew([
+            'ip_address' => $ip,
+            'session_id' => $sessionId
+        ]);
+        
+        // Tandai sebagai suspicious (semi otomatis) jika belum diblok manual
+        if ($ipLog->status !== 'abnormal') {
+            $ipLog->status = 'suspicious';
+        }
+        
+        // Simpan reason yang dikirim frontend atau gunakan default (whitelist)
+        $allowedReasons = [
+            'Mencoba Inspect Element / Membuka DevTools (F12/Ctrl+Shift+I)',
+            'Mencoba Inspect Element / Membuka DevTools (Frontend)',
+        ];
+        $rawReason = $request->input('reason', 'Mencoba Inspect Element / Membuka DevTools (Frontend)');
+        $reason = in_array($rawReason, $allowedReasons) ? $rawReason : 'Aktivitas mencurigakan dari browser';
+        // Jika sudah abnormal tapi alasan kosong, tetap simpan
+        if (empty($ipLog->reason)) {
+            $ipLog->reason = $reason;
+        } else {
+            // Append alasan jika belum ada
+            if (!str_contains($ipLog->reason, 'Inspect Element')) {
+                $ipLog->reason .= ' | ' . $reason;
+            }
+        }
+        
+        $ipLog->user_agent = substr($request->header('User-Agent') ?? 'Unknown', 0, 255);
+        $ipLog->last_activity = 'Membuka Developer Tools di Browser';
+        $ipLog->request_count = ($ipLog->request_count ?? 0) + 1;
+        $ipLog->last_activity_at = now();
+        $ipLog->save();
+        
+        return response()->json(['status' => 'success']);
     }
 }

@@ -37,7 +37,7 @@ class AuthController extends Controller
             'username' => 'required|string|max:255|unique:users,name',
             'email'    => 'required|string|email|max:255|unique:users,email',
             'phone'    => ['required', 'string', 'max:20', 'regex:/^(\+62|08)[0-9]{8,13}$/'],
-            'password' => 'required|string|min:6|confirmed',
+            'password' => 'required|string|min:8|confirmed',
             'terms'    => 'required',
         ], [
             'phone.required' => 'No. telepon wajib diisi.',

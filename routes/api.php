@@ -17,3 +17,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::post('/security/report-suspicious', [\App\Http\Controllers\AdminController::class, 'reportSuspicious'])
+    ->middleware('throttle:5,1');
