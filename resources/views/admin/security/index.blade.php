@@ -52,8 +52,13 @@
                         <td class="py-4 px-6 font-mono text-[11px] text-slate-600">
                             <div class="flex items-center gap-2">
                                 <span class="truncate max-w-[220px] bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200 font-bold">{{ $ip->last_activity ?? 'N/A' }}</span>
-                                <!-- ICON MATA UNTUK DETAIL BOBOL -->
-                                <button type="button" onclick="showJailbreakDetail('{{ $ip->ip_address }}', '{{ addslashes($ip->last_activity) }}', '{{ addslashes($ip->reason) }}', '{{ addslashes($ip->user_agent) }}')" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-xs flex items-center justify-center text-xs shrink-0 cursor-pointer" title="Lihat Lokasi File & Payload">
+                                <!-- ICON MATA UNTUK DETAIL BOBOL (XSS-Safe via data attributes) -->
+                                <button type="button" class="btn-jailbreak-detail w-8 h-8 rounded-lg bg-red-100 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-xs flex items-center justify-center text-xs shrink-0 cursor-pointer"
+                                    data-ip="{{ $ip->ip_address }}"
+                                    data-activity="{{ $ip->last_activity }}"
+                                    data-reason="{{ $ip->reason }}"
+                                    data-useragent="{{ $ip->user_agent }}"
+                                    title="Lihat Lokasi File & Payload">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                             </div>
@@ -269,6 +274,88 @@
             </table>
         </div>
     </div>
+
+    <!-- TABEL 5: WHITELIST IP (MANAJEMEN AKSES KEAMANAN) -->
+    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl shadow-lg shadow-emerald-500/10 overflow-hidden">
+        <div class="p-5 border-b border-emerald-100 bg-gradient-to-r from-emerald-500/10 via-white to-emerald-50 flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center border border-emerald-600 shadow-sm shrink-0">
+                    <i class="fa-solid fa-shield-check text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-emerald-950 text-base font-display">Daftar IP Whitelist (Akses Aman)</h3>
+                    <p class="text-[11px] text-emerald-800/80 font-medium">IP yang diizinkan mengakses Pusat Keamanan Sistem. Hanya IP dalam daftar ini yang dapat membuka halaman ini.</p>
+                </div>
+            </div>
+            <span class="bg-emerald-600 text-white text-[10px] px-3 py-1 rounded-full font-extrabold shadow-sm">{{ $allowedIps->count() }} IP Terdaftar</span>
+        </div>
+
+        <!-- FORM TAMBAH IP BARU -->
+        <div class="p-5 bg-emerald-50/50 border-b border-emerald-100">
+            <form action="{{ route('admin.security.allowed_ip.store') }}" method="POST" class="flex flex-wrap items-end gap-3">
+                @csrf
+                <div class="flex-1 min-w-[200px]">
+                    <label class="text-[11px] font-extrabold text-emerald-800 uppercase tracking-wider block mb-1.5">Alamat IP</label>
+                    <input type="text" name="ip_address" required placeholder="Contoh: 192.168.1.100" class="w-full bg-white border border-emerald-200 rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all shadow-sm font-mono">
+                </div>
+                <div class="flex-1 min-w-[200px]">
+                    <label class="text-[11px] font-extrabold text-emerald-800 uppercase tracking-wider block mb-1.5">Label / Keterangan</label>
+                    <input type="text" name="label" required placeholder="Contoh: Kantor Pusat" class="w-full bg-white border border-emerald-200 rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all shadow-sm">
+                </div>
+                <button type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-[12px] font-bold rounded-xl shadow-[0_4px_0_0_#065f46] hover:bg-emerald-700 active:translate-y-[4px] active:shadow-[0_0_0_0_#065f46] transition-all cursor-pointer">
+                    <i class="fa-solid fa-plus"></i> Tambah IP
+                </button>
+            </form>
+        </div>
+
+        <!-- TABEL DAFTAR WHITELIST -->
+        <div class="w-full overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                    <tr class="bg-emerald-700 text-emerald-50 text-[11px] uppercase tracking-wider font-bold whitespace-nowrap">
+                        <th class="py-3.5 px-6">No</th>
+                        <th class="py-3.5 px-6">Alamat IP</th>
+                        <th class="py-3.5 px-6">Label / Keterangan</th>
+                        <th class="py-3.5 px-6">Didaftarkan Oleh</th>
+                        <th class="py-3.5 px-6">Tanggal Ditambahkan</th>
+                        <th class="py-3.5 px-6 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs divide-y divide-emerald-100 text-emerald-950 font-medium">
+                    @forelse($allowedIps as $index => $allowedIp)
+                    <tr class="hover:bg-emerald-100/80 transition-colors bg-white odd:bg-emerald-50/50 whitespace-nowrap">
+                        <td class="py-4 px-6 font-bold text-emerald-800">{{ $index + 1 }}</td>
+                        <td class="py-4 px-6 font-mono font-bold text-emerald-900">
+                            {{ $allowedIp->ip_address }}
+                            @if($allowedIp->ip_address === $myIp)
+                                <span class="ml-2 bg-sky-100 text-sky-700 px-2 py-0.5 rounded text-[10px] font-extrabold border border-sky-200">IP ANDA</span>
+                            @endif
+                        </td>
+                        <td class="py-4 px-6 text-emerald-800 font-semibold">{{ $allowedIp->label ?? '-' }}</td>
+                        <td class="py-4 px-6 text-emerald-700">{{ $allowedIp->added_by ?? 'System' }}</td>
+                        <td class="py-4 px-6 text-emerald-600 font-semibold">{{ $allowedIp->created_at?->format('d M Y, H:i') }}</td>
+                        <td class="py-4 px-6 text-center">
+                            <form id="delete-allowed-{{ $index }}" action="{{ route('admin.security.allowed_ip.destroy', $allowedIp->id) }}" method="POST" class="inline">
+                                @csrf @method('DELETE')
+                                <button type="button" onclick="confirmDeleteAllowed('delete-allowed-{{ $index }}')" class="w-8 h-8 rounded-lg bg-red-100 hover:bg-red-600 text-red-600 hover:text-white transition-all shadow-xs flex items-center justify-center text-xs cursor-pointer mx-auto" title="Hapus dari Whitelist">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center py-10 text-emerald-900 text-xs font-semibold bg-emerald-50/20">
+                            <i class="fa-solid fa-inbox text-emerald-400 text-xl block mb-2"></i>
+                            Belum ada IP yang terdaftar di Whitelist. IP Admin pertama akan didaftarkan otomatis saat verifikasi.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 @endsection
 
