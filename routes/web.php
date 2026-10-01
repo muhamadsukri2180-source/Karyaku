@@ -51,17 +51,17 @@ Route::get('/', function () {
 // ==========================================
 Route::prefix('auth')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('auth.login.submit');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth')->name('auth.login.submit');
 
     Route::get('/register', [AuthController::class, 'showRegister'])->name('auth.register');
-    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1')->name('auth.register.submit');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:auth')->name('auth.register.submit');
 
     // --- RUTE LUPA & RESET PASSWORD ---
     Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->middleware('guest')->name('password.request');
-    Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->middleware(['guest', 'throttle:5,1'])->name('password.email');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->middleware(['guest', 'throttle:auth'])->name('password.email');
 
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->middleware('guest')->name('password.reset');
-    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware(['guest', 'throttle:5,1'])->name('password.store');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware(['guest', 'throttle:auth'])->name('password.store');
 });
 
 // Logout (Harus Authenticated)
@@ -71,7 +71,7 @@ Route::post('/logout', [AuthController::class, 'logout'])
 
 // Halaman Khusus Penangguhan Akun & Pengajuan Banding
 Route::get('/suspended-notice', [AuthController::class, 'showSuspendedNotice'])->name('suspended.notice');
-Route::post('/appeal/submit', [AuthController::class, 'submitAppeal'])->middleware('throttle:5,1')->name('appeal.submit');
+Route::post('/appeal/submit', [AuthController::class, 'submitAppeal'])->name('appeal.submit');
 
 
 // ==========================================

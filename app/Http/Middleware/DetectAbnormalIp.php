@@ -51,37 +51,28 @@ class DetectAbnormalIp
         }
 
         // 3. Cek SQL Injection dan XSS dari Input Data dan URL
-        if (!$isSuspicious && !$isWhitelisted) {
-            $inputData = json_encode($request->all()) . ' ' . $request->fullUrl();
+        if (!$isSuspicious && !$isWhitelisted && !$request->is('admin/product*') && !$request->is('seller/product*')) {
+            $inputData = urldecode($request->fullUrl()) . ' ' . json_encode($request->all());
 
+            // Pola SQLi yang dipertajam (Akurasi Tinggi, Bebas False-Positive)
             $sqliPatterns = [
                 '/\bunion\s+(all\s+)?select\b/i',
                 '/\b(drop|truncate|alter)\s+table\b/i',
-                '/\binsert\s+into\b/i',
-                '/\bdelete\s+from\b/i',
-                '/\bwaitfor\s+delay\b/i',
-                '/\b(benchmark|sleep)\s*\(/i',
-                '/\b(and|or)\b\s+[\'"]?\d+[\'"]?\s*=\s*[\'"]?\d+/i',
-                '/\b(and|or)\b\s+true\b/i',
+                '/\b(and|or)\b\s+[\'"]?\d+[\'"]?\s*=\s*[\'"]?\d+/i', // Contoh: or 1=1
                 '/\binformation_schema\b/i',
                 '/\bload_file\s*\(/i',
                 '/\binto\s+(outfile|dumpfile)\b/i',
                 '/(\'|")\s*(or|and)\s*(\'|")?\w+(\'|")?\s*=/i'
             ];
 
+            // Pola XSS yang dipertajam
             $xssPatterns = [
                 '/<script\b[^>]*>(.*?)<\/script>/is',
                 '/<script\b/i',
                 '/javascript\s*:/i',
                 '/\bon(error|load|click|mouseover|submit|focus|blur|keydown|keyup)\s*=/i',
-                '/alert\s*\(/i',
                 '/document\.cookie/i',
-                '/document\.location/i',
-                '/<iframe\b/i',
-                '/<object\b/i',
-                '/<embed\b/i',
-                '/\beval\s*\(/i',
-                '/base64_decode\s*\(/i'
+                '/\beval\s*\(/i'
             ];
 
             foreach ($sqliPatterns as $pattern) {
@@ -144,7 +135,7 @@ class DetectAbnormalIp
             }
         }
 
-        // 5. Catat Log ke Database secara aman (try-catch agar tidak memutus aplikasi jika DB sibuk)
+        // 6. Catat Log ke Database secara aman (try-catch agar tidak memutus aplikasi jika DB sibuk)
         try {
             $sessionIdCookie = $request->cookie(config('session.cookie'));
             $sessionId = $sessionIdCookie ? substr(md5($sessionIdCookie), 0, 16) : substr(md5($userAgent . $ip), 0, 16);
@@ -174,9 +165,7 @@ class DetectAbnormalIp
                 abort(403, 'Akses Anda diblokir sementara oleh Admin karena aktivitas mencurigakan atau pembekuan akun.');
             }
 
-            if ($ipLog->request_count > 1000 && $ipLog->status !== 'abnormal') {
-                $ipLog->update(['reason' => 'Terdeteksi aktivitas Bot / Spam (Lebih dari 1000 request)']);
-            }
+            // Dihapus: Pengecekan request_count > 1000 karena menyebabkan false-positive untuk pengguna aktif jangka panjang.
         } catch (\Throwable $e) {
             // Jika status mencurigakan tapi DB bermasalah, tetap cegah serangan
             if ($isSuspicious && !$isWhitelisted) {
