@@ -20,6 +20,18 @@ use App\Http\Controllers\CsController;
 // ==========================================
 // 1. PUBLIC / LANDING PAGE
 // ==========================================
+use Illuminate\Support\Facades\Artisan;
+
+// Route rahasia sementara untuk update database di Hosting
+Route::get('/run-migration-secret', function () {
+    try {
+        Artisan::call('migrate', ['--force' => true]);
+        return 'Migrasi berhasil dijalankan di Hosting! Output: ' . Artisan::output();
+    } catch (\Exception $e) {
+        return 'Gagal: ' . $e->getMessage();
+    }
+});
+
 Route::get('/', function () {
     $memberships = \App\Models\Membership::orderBy('price', 'asc')->get();
     $bestProducts = \App\Models\Product::with(['seller', 'category'])
