@@ -2006,45 +2006,8 @@ class AdminController extends Controller
 
     public function reportSuspicious(Request $request)
     {
-        $ip = $request->ip();
-        
-        $userAgent = $request->header('User-Agent') ?? 'Unknown';
-        $sessionIdCookie = $request->cookie(config('session.cookie'));
-        $sessionId = $sessionIdCookie ? substr(md5($sessionIdCookie), 0, 16) : substr(md5($userAgent . $ip), 0, 16);
-        
-        $ipLog = \App\Models\IpLog::firstOrNew([
-            'ip_address' => $ip,
-            'session_id' => $sessionId
-        ]);
-        
-        // Tandai sebagai suspicious (semi otomatis) jika belum diblok manual
-        if ($ipLog->status !== 'abnormal') {
-            $ipLog->status = 'suspicious';
-        }
-        
-        // Simpan reason yang dikirim frontend atau gunakan default (whitelist)
-        $allowedReasons = [
-            'Mencoba Inspect Element / Membuka DevTools (F12/Ctrl+Shift+I)',
-            'Mencoba Inspect Element / Membuka DevTools (Frontend)',
-        ];
-        $rawReason = $request->input('reason', 'Mencoba Inspect Element / Membuka DevTools (Frontend)');
-        $reason = in_array($rawReason, $allowedReasons) ? $rawReason : 'Aktivitas mencurigakan dari browser';
-        // Jika sudah abnormal tapi alasan kosong, tetap simpan
-        if (empty($ipLog->reason)) {
-            $ipLog->reason = $reason;
-        } else {
-            // Append alasan jika belum ada
-            if (!str_contains($ipLog->reason, 'Inspect Element')) {
-                $ipLog->reason .= ' | ' . $reason;
-            }
-        }
-        
-        $ipLog->user_agent = substr($request->header('User-Agent') ?? 'Unknown', 0, 255);
-        $ipLog->last_activity = 'Membuka Developer Tools di Browser';
-        $ipLog->request_count = ($ipLog->request_count ?? 0) + 1;
-        $ipLog->last_activity_at = now();
-        $ipLog->save();
-        
-        return response()->json(['status' => 'success']);
+        // Fitur ini dinonaktifkan agar tidak mencatat ribuan spam log 
+        // ketika tab browser masih terbuka dengan cache Javascript yang lama.
+        return response()->json(['status' => 'success', 'message' => 'Laporan diabaikan.']);
     }
 }

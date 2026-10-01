@@ -491,55 +491,6 @@
         if (sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', toggleSidebar);
         if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
     </script>
-    <script>
-        // Disable Right Click
-        document.addEventListener('contextmenu', event => event.preventDefault());
-
-        function reportSuspiciousActivity() {
-            fetch('/api/security/report-suspicious', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reason: 'Mencoba Inspect Element / Membuka DevTools (F12/Ctrl+Shift+I)' })
-            }).catch(e => console.log(e));
-        }
-
-        // Disable Inspect Element (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U)
-        document.onkeydown = function(e) {
-            if (e.keyCode == 123) { // F12
-                reportSuspiciousActivity();
-                return false;
-            }
-            if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) {
-                reportSuspiciousActivity();
-                return false;
-            }
-            if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) {
-                reportSuspiciousActivity();
-                return false;
-            }
-            if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) {
-                reportSuspiciousActivity();
-                return false;
-            }
-            if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) {
-                reportSuspiciousActivity();
-                return false;
-            }
-        };
-
-        // Advanced DevTools detection via dimension diff
-        let devtools = function() {};
-        devtools.toString = function() {
-            reportSuspiciousActivity();
-            return '-';
-        }
-        setInterval(()=>{
-            console.profile(devtools);
-            console.profileEnd(devtools);
-            if(window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160){
-                reportSuspiciousActivity();
-            }
-        }, 2000);
     </script>
     @stack('scripts')
 </body>

@@ -140,10 +140,19 @@ class DetectAbnormalIp
             $sessionIdCookie = $request->cookie(config('session.cookie'));
             $sessionId = $sessionIdCookie ? substr(md5($sessionIdCookie), 0, 16) : substr(md5($userAgent . $ip), 0, 16);
 
-            $ipLog = IpLog::firstOrNew([
-                'ip_address' => $ip,
-                'session_id' => $sessionId
-            ]);
+            // Mengelompokkan log berdasarkan IP, Session ID, dan HARI INI agar log kemarin dan sekarang dipisah.
+            $today = now()->toDateString();
+            $ipLog = IpLog::where('ip_address', $ip)
+                ->where('session_id', $sessionId)
+                ->whereDate('created_at', $today)
+                ->first();
+
+            if (!$ipLog) {
+                $ipLog = new IpLog([
+                    'ip_address' => $ip,
+                    'session_id' => $sessionId,
+                ]);
+            }
 
             // Semi-otomatis: Hanya catat sebagai 'suspicious', JANGAN langsung 'abnormal' (terblokir)
             if ($isSuspicious && !$isWhitelisted && $ipLog->status !== 'abnormal') {
