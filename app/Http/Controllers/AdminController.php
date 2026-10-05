@@ -973,6 +973,10 @@ class AdminController extends Controller
     public function securityToggleStatus(Request $request, string|int $id)
     {
         if (!session()->has('security_verified_at')) return redirect()->route('admin.security.verify');
+        
+        // Pastikan tabel ip_bans dibuat otomatis jika hosting belum menjalankan migrasi
+        IpBan::ensureTable();
+
         $ip = IpLog::findOrFail($id);
         $targetIp = $ip->ip_address;
         $currentAdminIp = $request->ip();
@@ -995,7 +999,7 @@ class AdminController extends Controller
         $isUserBanned = $targetUser && ($targetUser->status === 'blocked' || Cache::has("banned_user_{$targetUser->id_user}"));
         $isIpBanned   = ($ip->status === 'abnormal') 
             || Cache::has("banned_ip_{$targetIp}") 
-            || IpBan::where('ip_address', $targetIp)->exists();
+            || IpBan::isBanned($targetIp);
         $isCurrentlyBanned = $isUserBanned || $isIpBanned;
 
         $newStatus = $isCurrentlyBanned ? 'normal' : 'abnormal';
@@ -1019,23 +1023,13 @@ class AdminController extends Controller
             $totalSeconds = ($days * 86400) + ($hours * 3600) + $seconds;
 
             // 1. Simpan ke Model IpBan (Tabel ip_bans) secara permanen / dengan durasi
-            try {
-                IpBan::ensureTable();
-                IpBan::updateOrCreate(
-                    ['ip_address' => $targetIp],
-                    [
-                        'user_id'      => $targetUser?->id_user,
-                        'category'     => BanReason::categorize($reason),
-                        'reason'       => $reason,
-                        'banned_until' => $totalSeconds > 0 ? now()->addSeconds($totalSeconds) : null,
-                        'banned_by'    => auth()->user()?->name ?? 'Admin',
-                    ]
-                );
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('Gagal menyimpan IpBan: ' . $e->getMessage());
-            }
-            // Reset cache lookup agar ban langsung berlaku (tidak menunggu cache 60 detik)
-            IpBan::forgetCache($targetIp);
+            IpBan::recordBan($targetIp, [
+                'user_id'      => $targetUser?->id_user,
+                'category'     => BanReason::categorize($reason),
+                'reason'       => $reason,
+                'banned_until' => $totalSeconds > 0 ? now()->addSeconds($totalSeconds) : null,
+                'banned_by'    => auth()->user()?->name ?? 'Admin',
+            ]);
 
             // 2. Blokir Akun Pengguna Terkait
             if ($targetUser) {
