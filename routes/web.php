@@ -22,12 +22,17 @@ use App\Http\Controllers\CsController;
 // ==========================================
 use Illuminate\Support\Facades\Artisan;
 
-// Route rahasia sementara untuk update database di Hosting
+// Route rahasia sementara untuk update database & bersihkan cache di Hosting
 Route::get('/run-migration-secret', function () {
     try {
+        @unlink(base_path('bootstrap/cache/packages.php'));
+        @unlink(base_path('bootstrap/cache/services.php'));
+        @unlink(base_path('bootstrap/cache/config.php'));
+        @unlink(base_path('bootstrap/cache/routes-v7.php'));
+        Artisan::call('optimize:clear');
         Artisan::call('migrate', ['--force' => true]);
-        return 'Migrasi berhasil dijalankan di Hosting! Output: ' . Artisan::output();
-    } catch (\Exception $e) {
+        return 'Migrasi dan pembersihan cache berhasil! Output: ' . Artisan::output();
+    } catch (\Throwable $e) {
         return 'Gagal: ' . $e->getMessage();
     }
 });
@@ -340,12 +345,17 @@ Route::middleware(['auth', 'suspended', 'role:customer_service'])->prefix('cs')-
     Route::get('/notifikasi', [CsController::class, 'notifikasi'])->name('notifikasi');
 });
 
-// ROUTE RAHASIA UNTUK MIGRASI DI HOSTING FTP
+// ROUTE RAHASIA UNTUK MIGRASI & PERBAIKAN CACHE DI HOSTING FTP
 Route::get('/run-migration-secret-88', function () {
     try {
+        @unlink(base_path('bootstrap/cache/packages.php'));
+        @unlink(base_path('bootstrap/cache/services.php'));
+        @unlink(base_path('bootstrap/cache/config.php'));
+        @unlink(base_path('bootstrap/cache/routes-v7.php'));
+        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-        return "Migrasi berhasil dijalankan. Output: " . \Illuminate\Support\Facades\Artisan::output();
-    } catch (\Exception $e) {
+        return "Migrasi & pembersihan cache berhasil dijalankan. Output: " . \Illuminate\Support\Facades\Artisan::output();
+    } catch (\Throwable $e) {
         return "Migrasi gagal: " . $e->getMessage();
     }
 });
