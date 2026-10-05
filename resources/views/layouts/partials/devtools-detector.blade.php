@@ -1,13 +1,9 @@
 {{-- ============================================================
-     KARYAKU DEVTOOLS DETECTOR - Partial Layout
-     Dipasang di semua layout (admin, pembeli, penjual, verifikator, cs,
-     landing, login, register).
-     Mendeteksi HANYA shortcut tombol developer (F12 / Inspect / View Source)
-     PENTING:
-     1. Staff (Admin/Verifikator/CS) hanya dikecualikan jika
-        SECURITY_EXEMPT_STAFF=true di .env (default: tetap dideteksi).
-     2. Window resize dan Right-click dinonaktifkan agar TIDAK
-        menimbulkan false-positive (salah deteksi) pada pengguna biasa.
+     KARYAKU DEVTOOLS & INSPECT ELEMENT DETECTOR
+     Mendeteksi pembukaan DevTools via:
+     1. Shortcut Keyboard (F12, Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+Shift+J, Ctrl+U, Mac)
+     2. Klik Kanan -> Inspect Element / Browser Menu (Docked & Undocked DevTools)
+     3. Halaman yang dibuka saat DevTools sudah dalam keadaan terbuka
 ============================================================ --}}
 
 @php
@@ -21,19 +17,15 @@
 (function() {
     'use strict';
 
-    // Cegah script terpasang dua kali di halaman yang sama
     if (window.__karyakuDevtoolsDetector) return;
     window.__karyakuDevtoolsDetector = true;
 
-    // Laporkan maksimal 1x per metode per halaman agar tidak membebani server
-    const _reported = {};
+    let _reported = false;
 
     function reportDevTools(method) {
-        if (_reported[method]) return;
-        _reported[method] = true;
+        if (_reported) return;
+        _reported = true;
 
-        // URL relatif -> selalu mengarah ke host/port yang sedang dibuka
-        // (tidak bergantung APP_URL di .env, aman untuk lokal maupun hosting)
         const url = @json(route('security.devtools_ping', [], false));
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : @json(csrf_token());
@@ -50,24 +42,19 @@
             },
             body: JSON.stringify({
                 _signal: 'devtools_open',
-                method: method,
+                method: method || 'devtools-open',
                 page: window.location.pathname,
                 ts: Date.now()
             })
         }).catch(function() {});
     }
 
-    // ─────────────────────────────────────────────
-    // Deteksi HANYA shortcut keyboard spesifik DevTools:
-    // F12 / Ctrl+Shift+I / Ctrl+Shift+C / Ctrl+Shift+J / Ctrl+Shift+K / Ctrl+U
-    // (Mac: Cmd+Opt+I / Cmd+Opt+C / Cmd+Opt+J / Cmd+Opt+U)
-    // ─────────────────────────────────────────────
+    // 1. Deteksi Shortcut Keyboard Developer
     document.addEventListener('keydown', function(e) {
         const key  = e.key || '';
         const code = e.code || '';
         const ctrl = e.ctrlKey || e.metaKey;
         const shiftOrAlt = e.shiftKey || (e.metaKey && e.altKey);
-        // e.code tidak terpengaruh Shift/Alt/layout keyboard -> lebih akurat
         const letter = code.startsWith('Key') ? code.slice(3) : key.toUpperCase();
 
         if (key === 'F12' || code === 'F12')        { reportDevTools('F12');          return; }
@@ -77,6 +64,43 @@
         if (ctrl && e.shiftKey && letter === 'K')   { reportDevTools('Ctrl+Shift+K'); return; }
         if (ctrl && !e.shiftKey && letter === 'U')  { reportDevTools('Ctrl+U');       return; }
     }, true);
+
+    // 2. Deteksi Docked DevTools (Panel samping atau bawah terbuka)
+    function checkDockedDevTools() {
+        if (_reported) return;
+        const widthDiff = window.outerWidth - window.innerWidth;
+        const heightDiff = window.outerHeight - window.innerHeight;
+        // Pada desktop, window border < 25px. DevTools yang terbuka docked selalu > 160px
+        if (widthDiff > 160 || heightDiff > 160) {
+            reportDevTools('devtools-open');
+        }
+    }
+
+    window.addEventListener('resize', checkDockedDevTools);
+    setTimeout(checkDockedDevTools, 800);
+    setInterval(checkDockedDevTools, 2500);
+
+    // 3. Deteksi saat Klik Kanan -> Inspect
+    document.addEventListener('contextmenu', function() {
+        setTimeout(checkDockedDevTools, 600);
+        setTimeout(checkDockedDevTools, 1500);
+    }, true);
+
+    // 4. Deteksi Console / Undocked DevTools via Console Getter
+    try {
+        const probe = document.createElement('div');
+        Object.defineProperty(probe, 'id', {
+            get: function() {
+                reportDevTools('devtools-open');
+                return 'karyaku-shield';
+            }
+        });
+        setInterval(function() {
+            if (_reported) return;
+            console.log(probe);
+            console.clear();
+        }, 2000);
+    } catch(e) {}
 
 })();
 </script>

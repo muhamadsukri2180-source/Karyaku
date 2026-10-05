@@ -35,18 +35,18 @@
 
         <!-- TABEL WITH INTERNAL SCROLLBAR -->
         <div class="w-full overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[800px]">
+            <table class="w-full text-left border-collapse min-w-[960px]">
                 <thead>
-                    <tr class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-slate-200 text-[11px] uppercase tracking-wider font-bold whitespace-nowrap">
-                        <th class="py-3.5 px-6">Alamat IP</th>
-                        <th class="py-3.5 px-6">Ancaman / Alasan</th>
-                        <th class="py-3.5 px-6">File & Lokasi Dibobol</th>
-                        <th class="py-3.5 px-6 text-center">Total Permintaan</th>
-                        <th class="py-3.5 px-6">Waktu Terakhir</th>
-                        <th class="py-3.5 px-6 text-center">Aksi</th>
+                    <tr class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-slate-200 text-[11px] uppercase tracking-wider font-bold">
+                        <th class="py-4 px-5 w-[23%] min-w-[220px]">Alamat IP &amp; Akun</th>
+                        <th class="py-4 px-5 w-[28%] min-w-[260px]">Ancaman / Alasan</th>
+                        <th class="py-4 px-5 w-[25%] min-w-[240px]">File &amp; Lokasi Dibobol</th>
+                        <th class="py-4 px-4 w-[8%] min-w-[90px] text-center">Permintaan</th>
+                        <th class="py-4 px-4 w-[10%] min-w-[130px]">Waktu Terakhir</th>
+                        <th class="py-4 px-4 w-[6%] min-w-[110px] text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="text-xs divide-y divide-slate-100">
+                <tbody class="text-xs divide-y divide-slate-100 bg-white">
                     @forelse($abnormalIps as $ipAddress => $logs)
                     @php
                         $first = $logs->sortByDesc('last_activity_at')->first();
@@ -57,75 +57,85 @@
                         $userEmail = $userObj?->email;
                         $userRole = $userObj?->role?->role_name;
                         $userLabel = $userName ?? $userEmail;
-                        if (!$userLabel) {
-                            $loginHist = \App\Models\LoginHistory::where('ip_address', $ipAddress)->whereNotNull('username')->latest()->first();
-                            if ($loginHist) { $userLabel = $loginHist->username; }
-                        }
                         if (!$userLabel && isset($loginHistoryLookup[$ipAddress])) {
                             $userLabel = $loginHistoryLookup[$ipAddress];
                         }
+                        $reasonText = $first->reason ?? '-';
+                        $catInfo = \App\Support\BanReason::present($reasonText);
                     @endphp
-                    <tr class="hover:bg-red-50/40 transition-colors bg-white odd:bg-slate-50/30 whitespace-nowrap">
-                        <td class="py-4 px-6 font-mono font-bold text-red-600">
+                    <tr class="hover:bg-red-50/40 transition-colors odd:bg-slate-50/40">
+                        <!-- KOLOM 1: IP & AKUN -->
+                        <td class="py-4 px-5 align-middle">
                             <div class="flex items-center gap-2">
-                                <span>{{ $ipAddress }}</span>
-                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded bg-red-100 text-red-700 text-[10px] hover:bg-red-200 cursor-pointer">
-                                    {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
+                                <span class="font-mono font-black text-red-600 text-[13px] tracking-tight">{{ $ipAddress }}</span>
+                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[10px] font-bold hover:bg-red-200 transition-colors cursor-pointer flex items-center gap-1">
+                                    <span>{{ $logs->count() }} Sesi</span>
+                                    <i class="fa-solid fa-chevron-down text-[8px]"></i>
                                 </button>
                             </div>
                             @if($userLabel)
-                                <div class="mt-1.5 space-y-0.5">
-                                    <div class="text-[10px] font-sans font-bold text-red-800 flex items-center gap-1">
-                                        <i class="fa-solid fa-user text-[9px]"></i>
+                                <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-slate-800 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
+                                        <i class="fa-solid fa-circle-user text-slate-500 text-[10px]"></i>
                                         <span>{{ $userLabel }}</span>
                                         @if($userEmail && $userLabel !== $userEmail)
-                                            <span class="text-red-500 font-normal">&lt;{{ $userEmail }}&gt;</span>
+                                            <span class="text-slate-400 font-normal text-[10px]">&lt;{{ $userEmail }}&gt;</span>
                                         @endif
-                                    </div>
+                                    </span>
                                     @if($userRole)
-                                        <div class="text-[9px] font-sans font-semibold text-white bg-red-600 px-1.5 py-0.5 rounded w-fit capitalize">{{ $userRole }}</div>
+                                        <span class="text-[9px] font-black uppercase text-white bg-red-600 px-2 py-0.5 rounded shadow-2xs tracking-wider">{{ $userRole }}</span>
                                     @endif
                                 </div>
                             @endif
                         </td>
-                        <td class="py-4 px-6 text-slate-700 font-semibold max-w-xs">
-                            @php
-                                $reasonText = $first->reason ?? '-';
-                                $isDevTools = str_contains($reasonText, 'DevTools') || str_contains($reasonText, 'Inspect') || str_contains($reasonText, 'F12') || str_contains($reasonText, 'Ctrl+') || str_contains($reasonText, 'Klik Kanan') || str_contains($reasonText, 'View Source') || str_contains($reasonText, 'Console');
-                            @endphp
-                            @if($isDevTools)
-                                <span class="inline-flex items-center gap-1 bg-purple-100 text-purple-800 border border-purple-300 text-[10px] font-extrabold px-2 py-1 rounded-md">
-                                    <i class="fa-solid fa-bug text-[9px]"></i>
-                                    {{ $reasonText }}
-                                </span>
-                            @else
-                                <span class="truncate block max-w-[200px]">{{ $reasonText }}</span>
-                            @endif
+
+                        <!-- KOLOM 2: ANCAMAN / ALASAN (BERJARAK LEGA & TIDAK BERDEMPETAN) -->
+                        <td class="py-4 px-5 align-middle">
+                            <div class="inline-flex items-start gap-2 p-2.5 rounded-xl border text-xs font-bold leading-snug shadow-2xs max-w-full"
+                                style="background-color: {{ $catInfo['category'] === 'devtools' ? '#f5f3ff' : ($catInfo['category'] === 'sqli' ? '#fef2f2' : ($catInfo['category'] === 'xss' ? '#fffbeb' : '#f8fafc')) }};
+                                       color: {{ $catInfo['category'] === 'devtools' ? '#6b21a8' : ($catInfo['category'] === 'sqli' ? '#991b1b' : ($catInfo['category'] === 'xss' ? '#92400e' : '#1e293b')) }};
+                                       border-color: {{ $catInfo['category'] === 'devtools' ? '#ddd6fe' : ($catInfo['category'] === 'sqli' ? '#fecaca' : ($catInfo['category'] === 'xss' ? '#fde68a' : '#e2e8f0')) }};">
+                                <i class="{{ $catInfo['icon'] }} text-xs mt-0.5 shrink-0"></i>
+                                <span class="break-words">{{ $reasonText }}</span>
+                            </div>
                         </td>
 
-                        
-                        <td class="py-4 px-6 font-mono text-[11px] text-slate-600">
+                        <!-- KOLOM 3: FILE & LOKASI DIBOBOL -->
+                        <td class="py-4 px-5 align-middle">
                             <div class="flex items-center gap-2">
-                                <span class="truncate max-w-[220px] bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200 font-bold">{{ $first->last_activity ?? 'N/A' }}</span>
-                                <button type="button" class="btn-jailbreak-detail w-8 h-8 rounded-lg bg-red-100 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-xs flex items-center justify-center text-xs shrink-0 cursor-pointer"
+                                <div class="bg-slate-50 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-mono text-[11px] font-bold max-w-[220px] truncate shadow-2xs" title="{{ $first->last_activity ?? 'N/A' }}">
+                                    {{ $first->last_activity ?? 'N/A' }}
+                                </div>
+                                <button type="button" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-xs flex items-center justify-center text-xs shrink-0 cursor-pointer"
                                     onclick="showJailbreakDetail('{{ $ipAddress }}', '{{ addslashes($first->last_activity) }}', '{{ addslashes($first->reason) }}', '{{ addslashes($first->user_agent) }}')"
-                                    title="Lihat Lokasi File & Payload">
+                                    title="Lihat Detail Payload">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                             </div>
                         </td>
 
-                        <td class="py-4 px-6 text-center font-bold text-slate-700"><span class="bg-red-100 text-red-700 px-2.5 py-1 rounded-md text-[11px] border border-red-200">{{ $totalReq }}x</span></td>
-                        <td class="py-4 px-6 text-slate-500 font-medium">{{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
-                        <td class="py-4 px-6 text-center">
+                        <!-- KOLOM 4: PERMINTAAN -->
+                        <td class="py-4 px-4 text-center align-middle">
+                            <span class="inline-block bg-red-100 text-red-700 px-2.5 py-1 rounded-md text-[11px] font-extrabold border border-red-200 shadow-2xs">
+                                {{ $totalReq }}x
+                            </span>
+                        </td>
+
+                        <!-- KOLOM 5: WAKTU TERAKHIR -->
+                        <td class="py-4 px-4 text-slate-600 font-medium text-[11px] align-middle">
+                            {{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}
+                        </td>
+
+                        <!-- KOLOM 6: AKSI BAN / BUKA BLOKIR -->
+                        <td class="py-4 px-4 text-center align-middle">
                             <form action="{{ route('admin.security.toggle', $first->id) }}" method="POST" class="inline-block">
                                 @csrf
                                 @if($first->status === 'abnormal')
-                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
-                                        <i class="fa-solid fa-check"></i> Buka Blokir
+                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                        <i class="fa-solid fa-unlock"></i> Buka Blokir
                                     </button>
                                 @else
-                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
                                         <i class="fa-solid fa-ban"></i> Ban
                                     </button>
                                 @endif
@@ -184,18 +194,18 @@
 
         <!-- TABEL WITH INTERNAL SCROLLBAR -->
         <div class="w-full overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[800px]">
+            <table class="w-full text-left border-collapse min-w-[960px]">
                 <thead>
-                    <tr class="bg-amber-700 text-amber-50 text-[11px] uppercase tracking-wider font-bold whitespace-nowrap">
-                        <th class="py-3.5 px-6">Alamat IP</th>
-                        <th class="py-3.5 px-6">Aktivitas Terakhir</th>
-                        <th class="py-3.5 px-6">User Agent / Browser</th>
-                        <th class="py-3.5 px-6 text-center">Total Permintaan</th>
-                        <th class="py-3.5 px-6">Waktu Terakhir</th>
-                        <th class="py-3.5 px-6 text-center">Aksi / Bekukan</th>
+                    <tr class="bg-amber-700 text-amber-50 text-[11px] uppercase tracking-wider font-bold">
+                        <th class="py-4 px-5 w-[24%] min-w-[220px]">Alamat IP &amp; Akun</th>
+                        <th class="py-4 px-5 w-[28%] min-w-[250px]">Aktivitas Terakhir</th>
+                        <th class="py-4 px-5 w-[24%] min-w-[220px]">User Agent / Browser</th>
+                        <th class="py-4 px-4 w-[8%] min-w-[90px] text-center">Permintaan</th>
+                        <th class="py-4 px-4 w-[10%] min-w-[130px]">Waktu Terakhir</th>
+                        <th class="py-4 px-4 w-[6%] min-w-[110px] text-center">Aksi / Bekukan</th>
                     </tr>
                 </thead>
-                <tbody class="text-xs divide-y divide-amber-200 text-amber-950 font-medium">
+                <tbody class="text-xs divide-y divide-amber-200 text-amber-950 font-medium bg-white">
                     @forelse($normalIps as $ipAddress => $logs)
                     @php
                         $first = $logs->sortByDesc('last_activity_at')->first();
@@ -214,38 +224,52 @@
                             $userLabel = $loginHistoryLookup[$ipAddress];
                         }
                     @endphp
-                    <tr class="hover:bg-amber-100/80 transition-colors bg-white odd:bg-amber-50/50 whitespace-nowrap">
-                        <td class="py-4 px-6 font-mono font-bold text-amber-900">
+                    <tr class="hover:bg-amber-100/70 transition-colors odd:bg-amber-50/40">
+                        <td class="py-4 px-5 align-middle">
                             <div class="flex items-center gap-2">
-                                <span>{{ $ipAddress }}</span>
-                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded bg-amber-200 text-amber-800 text-[10px] hover:bg-amber-300 cursor-pointer">
-                                    {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
+                                <span class="font-mono font-bold text-amber-950 text-[13px]">{{ $ipAddress }}</span>
+                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded-md bg-amber-200/80 text-amber-800 text-[10px] font-bold hover:bg-amber-300 transition-colors cursor-pointer flex items-center gap-1">
+                                    <span>{{ $logs->count() }} Sesi</span>
+                                    <i class="fa-solid fa-chevron-down text-[8px]"></i>
                                 </button>
                             </div>
                             @if($userLabel)
-                                <div class="mt-1 space-y-0.5">
-                                    <div class="text-[10px] font-sans font-semibold text-amber-900 flex items-center gap-1">
-                                        <i class="fa-solid fa-user text-[9px]"></i>
+                                <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-md border border-amber-300/60">
+                                        <i class="fa-solid fa-circle-user text-amber-700 text-[10px]"></i>
                                         <span>{{ $userLabel }}</span>
                                         @if($userEmail && $userLabel !== $userEmail)
-                                            <span class="text-amber-600 font-normal text-[9px]">&lt;{{ $userEmail }}&gt;</span>
+                                            <span class="text-amber-700 font-normal text-[10px]">&lt;{{ $userEmail }}&gt;</span>
                                         @endif
-                                    </div>
+                                    </span>
                                     @if($userRole)
-                                        <div class="text-[9px] font-semibold text-white bg-amber-600 px-1.5 py-0.5 rounded w-fit capitalize">{{ $userRole }}</div>
+                                        <span class="text-[9px] font-black uppercase text-white bg-amber-600 px-2 py-0.5 rounded shadow-2xs tracking-wider">{{ $userRole }}</span>
                                     @endif
                                 </div>
                             @else
-                                <div class="text-[10px] font-sans text-amber-400 mt-1 italic">Tamu / Belum Login</div>
+                                <div class="text-[10px] font-sans text-amber-600 mt-1 italic flex items-center gap-1">
+                                    <i class="fa-solid fa-user-clock text-[9px]"></i>
+                                    <span>Tamu / Belum Login</span>
+                                </div>
                             @endif
                         </td>
-                        <td class="py-4 px-6 font-mono text-[11px] text-amber-900 max-w-xs truncate">{{ $first->last_activity }}</td>
-                        <td class="py-4 px-6 text-amber-800 max-w-xs truncate" title="{{ $first->user_agent }}">{{ $first->user_agent }}</td>
-                        <td class="py-4 px-6 text-center font-bold text-amber-900">
-                            <span class="bg-amber-200/80 px-2.5 py-1 rounded-md text-[11px] border border-amber-300 font-extrabold text-amber-950">{{ $totalReq }}x</span>
+                        <td class="py-4 px-5 align-middle">
+                            <div class="bg-amber-100/50 border border-amber-200/80 text-amber-900 font-mono text-[11px] px-2.5 py-1.5 rounded-lg max-w-[240px] truncate shadow-2xs" title="{{ $first->last_activity }}">
+                                {{ $first->last_activity }}
+                            </div>
                         </td>
-                        <td class="py-4 px-6 text-amber-900 font-semibold">{{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
-                        <td class="py-4 px-6 text-center">
+                        <td class="py-4 px-5 text-slate-600 text-[11px] max-w-[220px] truncate align-middle" title="{{ $first->user_agent }}">
+                            {{ $first->user_agent }}
+                        </td>
+                        <td class="py-4 px-4 text-center align-middle font-bold text-amber-950">
+                            <span class="inline-block bg-amber-200/80 px-2.5 py-1 rounded-md text-[11px] border border-amber-300 font-black text-amber-950 shadow-2xs">
+                                {{ $totalReq }}x
+                            </span>
+                        </td>
+                        <td class="py-4 px-4 text-amber-900 font-medium text-[11px] align-middle">
+                            {{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}
+                        </td>
+                        <td class="py-4 px-4 text-center align-middle">
                             <!-- TOMBOL BEKUKAN AKSES UTAMA -->
                             <button type="button" onclick="openFreezeTimerModal('{{ $first->id }}', '{{ $ipAddress }}')" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold shadow-sm transition-all cursor-pointer">
                                 <i class="fa-solid fa-key"></i> Kunci
@@ -300,51 +324,66 @@
         </div>
 
         <div class="w-full overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[800px]">
+            <table class="w-full text-left border-collapse min-w-[960px]">
                 <thead>
-                    <tr class="bg-indigo-700 text-indigo-50 text-[11px] uppercase tracking-wider font-bold whitespace-nowrap">
-                        <th class="py-3.5 px-6">Alamat IP Bot</th>
-                        <th class="py-3.5 px-6">Tipe Serangan</th>
-                        <th class="py-3.5 px-6">User Agent Palsu / Bot Name</th>
-                        <th class="py-3.5 px-6 text-center">Spam Request</th>
-                        <th class="py-3.5 px-6">Terakhir Menyerang</th>
-                        <th class="py-3.5 px-6 text-center">Aksi</th>
+                    <tr class="bg-indigo-700 text-indigo-50 text-[11px] uppercase tracking-wider font-bold">
+                        <th class="py-4 px-5 w-[24%] min-w-[220px]">Alamat IP Bot</th>
+                        <th class="py-4 px-5 w-[28%] min-w-[250px]">Tipe Serangan</th>
+                        <th class="py-4 px-5 w-[24%] min-w-[220px]">User Agent Palsu / Bot Name</th>
+                        <th class="py-4 px-4 w-[8%] min-w-[90px] text-center">Spam Request</th>
+                        <th class="py-4 px-4 w-[10%] min-w-[130px]">Terakhir Menyerang</th>
+                        <th class="py-4 px-4 w-[6%] min-w-[110px] text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="text-xs divide-y divide-indigo-100 text-indigo-950 font-medium">
+                <tbody class="text-xs divide-y divide-indigo-100 text-indigo-950 font-medium bg-white">
                     @forelse($botIps as $ipAddress => $logs)
                     @php
                         $first = $logs->sortByDesc('last_activity_at')->first();
                         $totalReq = $logs->sum('request_count');
                         $groupId = 'bot-'.$loop->index;
                     @endphp
-                    <tr class="hover:bg-indigo-100/80 transition-colors bg-white odd:bg-indigo-50/50 whitespace-nowrap">
-                        <td class="py-4 px-6 font-mono font-bold text-indigo-900">
+                    <tr class="hover:bg-indigo-100/70 transition-colors odd:bg-indigo-50/40">
+                        <td class="py-4 px-5 align-middle">
                             <div class="flex items-center gap-2">
-                                <span>{{ $ipAddress }}</span>
-                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded bg-indigo-200 text-indigo-800 text-[10px] hover:bg-indigo-300 cursor-pointer">
-                                    {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
+                                <span class="font-mono font-bold text-indigo-950 text-[13px]">{{ $ipAddress }}</span>
+                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded-md bg-indigo-200 text-indigo-800 text-[10px] font-bold hover:bg-indigo-300 transition-colors cursor-pointer flex items-center gap-1">
+                                    <span>{{ $logs->count() }} Sesi</span>
+                                    <i class="fa-solid fa-chevron-down text-[8px]"></i>
                                 </button>
                             </div>
                             @if($first->user)
-                                <div class="text-[10px] font-sans font-medium text-indigo-700 mt-1"><i class="fa-solid fa-user text-[9px] mr-1"></i> {{ $first->user->name ?? $first->user->email }}</div>
+                                <div class="text-[10px] font-sans font-medium text-indigo-700 mt-1 flex items-center gap-1">
+                                    <i class="fa-solid fa-user text-[9px]"></i>
+                                    <span>{{ $first->user->name ?? $first->user->email }}</span>
+                                </div>
                             @endif
                         </td>
-                        <td class="py-4 px-6 text-indigo-800 max-w-xs truncate font-semibold"><span class="bg-indigo-100 px-2 py-1 rounded border border-indigo-200">{{ $first->reason }}</span></td>
-                        <td class="py-4 px-6 text-indigo-700 max-w-xs truncate" title="{{ $first->user_agent }}">{{ $first->user_agent ?? 'Unknown/Empty' }}</td>
-                        <td class="py-4 px-6 text-center font-bold">
-                            <span class="bg-red-100 px-2.5 py-1 rounded-md text-[11px] border border-red-300 text-red-700">{{ $totalReq }}x Req</span>
+                        <td class="py-4 px-5 align-middle">
+                            <span class="inline-block bg-indigo-50 text-indigo-900 border border-indigo-200 px-2.5 py-1.5 rounded-lg text-xs font-bold leading-snug break-words shadow-2xs">
+                                <i class="fa-solid fa-robot mr-1 text-indigo-600"></i>
+                                {{ $first->reason }}
+                            </span>
                         </td>
-                        <td class="py-4 px-6 text-indigo-600 font-semibold">{{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
-                        <td class="py-4 px-6 text-center">
+                        <td class="py-4 px-5 text-slate-600 text-[11px] max-w-[220px] truncate align-middle" title="{{ $first->user_agent }}">
+                            {{ $first->user_agent ?? 'Unknown/Empty' }}
+                        </td>
+                        <td class="py-4 px-4 text-center align-middle font-bold">
+                            <span class="inline-block bg-red-100 text-red-700 px-2.5 py-1 rounded-md text-[11px] border border-red-300 font-black shadow-2xs">
+                                {{ $totalReq }}x
+                            </span>
+                        </td>
+                        <td class="py-4 px-4 text-indigo-900 font-medium text-[11px] align-middle">
+                            {{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}
+                        </td>
+                        <td class="py-4 px-4 text-center align-middle">
                             <form action="{{ route('admin.security.toggle', $first->id) }}" method="POST" class="inline-block">
                                 @csrf
                                 @if($first->status === 'abnormal')
-                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
-                                        <i class="fa-solid fa-check"></i> Buka Blokir
+                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                        <i class="fa-solid fa-unlock"></i> Buka Blokir
                                     </button>
                                 @else
-                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
                                         <i class="fa-solid fa-ban"></i> Ban
                                     </button>
                                 @endif

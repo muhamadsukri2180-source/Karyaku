@@ -399,5 +399,6 @@
             }
         });
     </script>
+    @include('layouts.partials.devtools-detector')
 </body>
 </html>
