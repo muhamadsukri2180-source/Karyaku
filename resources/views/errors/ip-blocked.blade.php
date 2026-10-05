@@ -1,9 +1,15 @@
+@php
+    $displayIp  = $ip ?? request()->ip();
+    $rawReason  = $reason ?? null;
+    $rawCat     = $category ?? null;
+    $reasonData = \App\Support\BanReason::present($rawReason, $rawCat);
+@endphp
 <!DOCTYPE html>
 <html lang="id" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Akses Ditolak - Akun & IP Diblokir | Karyaku Security</title>
+    <title>Akses Ditolak - Alamat IP &amp; Akun Diblokir | Karyaku Security</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,8 +46,8 @@
         body {
             background-color: #060911;
             background-image: 
-                radial-gradient(at 0% 0%, rgba(220, 38, 38, 0.18) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.12) 0px, transparent 50%),
+                radial-gradient(at 0% 0%, rgba(220, 38, 38, 0.20) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.15) 0px, transparent 50%),
                 radial-gradient(at 50% 50%, rgba(13, 21, 39, 0.7) 0px, transparent 100%);
             background-attachment: fixed;
         }
@@ -67,22 +73,31 @@
             <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-600 via-rose-500 to-amber-500"></div>
 
             <!-- Shield Icon & Badge -->
-            <div class="text-center mb-7">
+            <div class="text-center mb-6">
                 <div class="relative inline-flex items-center justify-center mb-5">
                     <div class="w-24 h-24 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center shadow-inner relative group">
                         <span class="absolute inset-0 rounded-2xl bg-red-500/20 animate-ping opacity-30"></span>
-                        <i class="fa-solid fa-user-lock text-4xl sm:text-5xl text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]"></i>
+                        <i class="{{ $reasonData['icon'] }} text-4xl sm:text-5xl text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]"></i>
                     </div>
                     <div class="absolute -bottom-2 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-0.5 rounded-full shadow-lg border border-red-400">
-                        AKUN &amp; IP DIBLOKIR
+                        {{ $reasonData['label'] }}
                     </div>
                 </div>
 
                 <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2">
-                    Akses Sistem Ditolak
+                    {{ $reasonData['title'] }}
                 </h1>
+
+                <!-- Dynamic Reason Headline: "Anda terkena ban karena telah..." -->
+                <div class="mt-3 mb-3 p-4 rounded-2xl bg-red-950/60 border border-red-500/30 shadow-inner">
+                    <p class="text-xs sm:text-sm font-bold text-red-200 leading-relaxed text-center">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1.5"></i>
+                        {{ $reasonData['headline'] }}
+                    </p>
+                </div>
+
                 <p class="text-slate-400 text-xs sm:text-sm font-medium leading-relaxed max-w-md mx-auto">
-                    Akun pengguna dan alamat IP Anda telah diblokir oleh <span class="text-red-400 font-bold">Administrator Karyaku</span>. Anda tidak dapat melakukan login maupun mengakses fitur platform.
+                    Alamat IP Anda diblokir oleh <span class="text-red-400 font-bold">Administrator Karyaku</span>. Anda tidak dapat mengakses landing page, login, maupun menggunakan fitur platform.
                 </p>
             </div>
 
@@ -93,7 +108,7 @@
                 <!-- Target User Account -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-3 border-b border-slate-800/80">
                     <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-solid fa-user-tag text-rose-400 text-xs"></i> Akun Pengguna
+                        <i class="fa-solid fa-user-tag text-rose-400 text-xs"></i> Akun Terkait
                     </span>
                     <span class="font-sans text-xs sm:text-sm font-bold text-white bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 flex items-center gap-1.5">
                         <i class="fa-solid fa-circle-user text-red-400"></i>
@@ -111,17 +126,27 @@
                         <i class="fa-solid fa-network-wired text-red-400 text-xs"></i> Alamat IP Terdeteksi
                     </span>
                     <span class="font-mono text-xs sm:text-sm font-bold text-red-400 bg-red-950/60 px-2.5 py-1 rounded-lg border border-red-900/60">
-                        {{ $ip ?? request()->ip() }}
+                        {{ $displayIp }}
                     </span>
                 </div>
 
-                <!-- Block Reason -->
+                <!-- Category -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-3 border-b border-slate-800/80">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-shield-halved text-amber-400 text-xs"></i> Kategori Pelanggaran
+                    </span>
+                    <span class="text-xs font-bold text-amber-300 bg-amber-950/50 px-2.5 py-1 rounded-lg border border-amber-900/60">
+                        {{ $reasonData['label'] }}
+                    </span>
+                </div>
+
+                <!-- Block Reason Detail -->
                 <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-1 pb-3 border-b border-slate-800/80">
                     <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 shrink-0 mt-0.5">
-                        <i class="fa-solid fa-triangle-exclamation text-amber-400 text-xs"></i> Alasan Pemblokiran
+                        <i class="fa-solid fa-circle-info text-sky-400 text-xs"></i> Rincian Indikasi
                     </span>
-                    <span class="text-xs font-semibold text-slate-200 text-left sm:text-right bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800">
-                        {{ $reason ?? 'Akun dan Alamat IP Anda diblokir oleh Administrator sistem.' }}
+                    <span class="text-xs font-medium text-slate-200 text-left sm:text-right bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800 break-words">
+                        {{ $reasonData['detail'] }}
                     </span>
                 </div>
 
@@ -138,10 +163,10 @@
                 <!-- Reference Code -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-solid fa-fingerprint text-slate-400 text-xs"></i> Security Incident Code
+                        <i class="fa-solid fa-fingerprint text-slate-400 text-xs"></i> Incident Reference
                     </span>
                     <span class="font-mono text-[11px] text-slate-400">
-                        SEC-BLOCK-{{ strtoupper(substr(md5(($ip ?? request()->ip()) . ($username ?? '') . config('app.key')), 0, 10)) }}
+                        SEC-{{ strtoupper($reasonData['category']) }}-{{ strtoupper(substr(md5($displayIp . ($username ?? '') . config('app.key')), 0, 8)) }}
                     </span>
                 </div>
 
@@ -149,15 +174,15 @@
 
             <!-- Notice & Advisory -->
             <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3.5 mb-6 flex items-start gap-3">
-                <i class="fa-solid fa-circle-exclamation text-red-400 text-sm mt-0.5 shrink-0"></i>
+                <i class="fa-solid fa-shield-virus text-red-400 text-base mt-0.5 shrink-0"></i>
                 <div class="text-[11px] text-red-200/90 leading-relaxed font-normal">
-                    <strong class="font-bold text-red-300">Peringatan Keamanan:</strong> Sesi akun telah dinonaktifkan oleh Administrator. Segala percobaan login atau akses fitur akan otomatis diblokir sampai blokir dibuka oleh Admin.
+                    <strong class="font-bold text-red-300">Keamanan Sistem Aktif:</strong> Segala akses dari alamat IP ini ke seluruh halaman website ditolak secara otomatis demi melindungi integritas sistem. Untuk permohonan pembukaan blokir, hubungi admin melalui kontak resmi di bawah.
                 </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="space-y-3">
-                <a href="https://wa.me/6281234567890?text={{ urlencode('Halo Admin Karyaku, akun/IP saya (' . ($username ?? $ip ?? request()->ip()) . ') diblokir oleh Admin dengan alasan: ' . ($reason ?? '-') . '. Mohon bantuan peninjauan/pembukaan blokir.') }}" 
+                <a href="https://wa.me/6281234567890?text={{ urlencode('Halo Admin Karyaku, akses saya diblokir pada IP: ' . $displayIp . (!empty($username) ? ' (Akun: ' . $username . ')' : '') . '. Keterangan: ' . $reasonData['headline'] . '. Mohon bantuan peninjauan/pembukaan blokir.') }}" 
                    target="_blank" 
                    rel="noopener noreferrer" 
                    class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-900/30 transition-all cursor-pointer">
@@ -165,7 +190,7 @@
                 </a>
 
                 <div class="flex flex-col sm:flex-row gap-2.5">
-                    <a href="mailto:support@karyaku.com?subject={{ urlencode('Permohonan Pembukaan Blokir: ' . ($username ?? $ip ?? request()->ip())) }}&body={{ urlencode('Halo Tim Support Karyaku,\n\nSaya ingin mengajukan permohonan pembukaan blokir untuk akun: ' . ($username ?? 'N/A') . ' / IP: ' . ($ip ?? request()->ip()) . '\nAlasan terblokir: ' . ($reason ?? 'N/A') . '\n\nTerima kasih.') }}" 
+                    <a href="mailto:support@karyaku.com?subject={{ urlencode('Banding Pemblokiran IP: ' . $displayIp) }}&body={{ urlencode('Halo Tim Support Karyaku,\n\nSaya ingin mengajukan permohonan pembukaan blokir:\n- IP: ' . $displayIp . '\n- Akun: ' . ($username ?? 'N/A') . '\n- Pelanggaran: ' . $reasonData['label'] . '\n- Rincian: ' . $reasonData['headline'] . '\n\nMohon ditinjau kembali. Terima kasih.') }}" 
                        class="flex-1 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all">
                         <i class="fa-solid fa-envelope"></i> Kirim Email Support
                     </a>
@@ -179,7 +204,7 @@
             <!-- Footer Branding -->
             <div class="mt-8 text-center pt-5 border-t border-slate-800/80">
                 <div class="flex items-center justify-center gap-1.5 text-xs text-slate-500 font-semibold">
-                    <i class="fa-solid fa-shield-virus text-slate-600"></i>
+                    <i class="fa-solid fa-shield-halved text-slate-600"></i>
                     <span>Karyaku Cyber Shield Protection System &bull; 2026</span>
                 </div>
             </div>

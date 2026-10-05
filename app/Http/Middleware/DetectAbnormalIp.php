@@ -8,6 +8,8 @@ use App\Models\IpLog;
 use App\Models\AllowedIp;
 use App\Models\LoginHistory;
 use App\Models\User;
+use App\Models\IpBan;
+use App\Support\BanReason;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
@@ -96,13 +98,30 @@ class DetectAbnormalIp
         });
 
         // 4. CEK APAKAH ALAMAT IP DIBLOKIR (BAN CHECK GLOBAL)
-        if (!$isWhitelisted && !$isAdminOrStaff && !in_array($ip, ['127.0.0.1', '::1'])) {
-            $isBanned = Cache::has("banned_ip_{$ip}");
+        if (!$isWhitelisted && !$isAdminOrStaff) {
+            $isBanned = false;
             $banReason = null;
+            $banCategory = null;
 
-            if ($isBanned) {
+            // Prioritas 1: Cek dari model IpBan
+            try {
+                $activeBan = IpBan::activeFor($ip);
+                if ($activeBan) {
+                    $isBanned = true;
+                    $banReason = $activeBan->reason;
+                    $banCategory = $activeBan->category;
+                }
+            } catch (\Throwable $e) {}
+
+            // Prioritas 2: Cek dari Cache
+            if (!$isBanned && Cache::has("banned_ip_{$ip}")) {
+                $isBanned = true;
                 $banReason = Cache::get("banned_ip_{$ip}");
-            } else {
+                $banCategory = BanReason::categorize($banReason);
+            }
+
+            // Prioritas 3: Cek dari ip_logs status abnormal
+            if (!$isBanned) {
                 try {
                     $bannedLog = IpLog::where('ip_address', $ip)
                         ->where('status', 'abnormal')
@@ -112,25 +131,31 @@ class DetectAbnormalIp
                     if ($bannedLog) {
                         $isBanned = true;
                         $banReason = $bannedLog->reason ?: 'Akses Anda diblokir oleh Administrator sistem.';
+                        $banCategory = BanReason::categorize($banReason);
                         Cache::put("banned_ip_{$ip}", $banReason, 86400);
                     }
                 } catch (\Throwable $e) {}
             }
 
             if ($isBanned) {
-                if (Auth::check()) {
-                    Auth::logout();
-                    if ($request->hasSession()) {
-                        $request->session()->invalidate();
-                        $request->session()->regenerateToken();
+                // Izinkan rute auth/login agar Admin/Staff yang sedang logout tetap bisa login dari IP ini
+                $isLoginRoute = $request->is('auth/login*') || $request->is('login*');
+                if (!$isLoginRoute) {
+                    if (Auth::check()) {
+                        Auth::logout();
+                        if ($request->hasSession()) {
+                            $request->session()->invalidate();
+                            $request->session()->regenerateToken();
+                        }
                     }
-                }
 
-                return response()->view('errors.ip-blocked', [
-                    'ip'         => $ip,
-                    'reason'     => $banReason ?: 'Alamat IP Anda diblokir sementara oleh Admin karena aktivitas mencurigakan atau pembekuan akun.',
-                    'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
-                ], 403);
+                    return response()->view('errors.ip-blocked', [
+                        'ip'         => $ip,
+                        'reason'     => $banReason ?: 'Alamat IP Anda diblokir oleh Administrator sistem.',
+                        'category'   => $banCategory,
+                        'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
+                    ], 403);
+                }
             }
         }
 
@@ -261,10 +286,15 @@ class DetectAbnormalIp
             $ipLog = $query->first();
 
             if (!$ipLog) {
+                $isCurrentlyBanned = Cache::has("banned_ip_{$ip}") 
+                    || IpBan::where('ip_address', $ip)->exists();
                 $attributes = [
                     'ip_address' => $ip,
-                    'status'     => 'normal',
+                    'status'     => $isCurrentlyBanned ? 'abnormal' : 'normal',
                 ];
+                if ($isCurrentlyBanned) {
+                    $attributes['reason'] = Cache::get("banned_ip_{$ip}") ?? 'Alamat IP diblokir oleh Administrator.';
+                }
                 if ($hasSessionIdCol && $sessionId) {
                     $attributes['session_id'] = $sessionId;
                 }
@@ -331,18 +361,22 @@ class DetectAbnormalIp
 
             // Blokir HANYA jika Admin sudah memblokir manual ('abnormal'). Staff tidak pernah diblokir.
             if (!$isWhitelisted && !$isAdminOrStaff && $ipLog->status === 'abnormal') {
-                if (Auth::check()) {
-                    Auth::logout();
-                    if ($request->hasSession()) {
-                        $request->session()->invalidate();
-                        $request->session()->regenerateToken();
+                $isLoginRoute = $request->is('auth/login*') || $request->is('login*');
+                if (!$isLoginRoute) {
+                    if (Auth::check()) {
+                        Auth::logout();
+                        if ($request->hasSession()) {
+                            $request->session()->invalidate();
+                            $request->session()->regenerateToken();
+                        }
                     }
+                    return response()->view('errors.ip-blocked', [
+                        'ip'         => $ip,
+                        'reason'     => $ipLog->reason ?: 'Alamat IP Anda diblokir oleh Administrator.',
+                        'category'   => BanReason::categorize($ipLog->reason),
+                        'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
+                    ], 403);
                 }
-                return response()->view('errors.ip-blocked', [
-                    'ip'         => $ip,
-                    'reason'     => $ipLog->reason ?: 'Alamat IP Anda diblokir oleh Administrator.',
-                    'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
-                ], 403);
             }
 
         } catch (\Throwable $e) {

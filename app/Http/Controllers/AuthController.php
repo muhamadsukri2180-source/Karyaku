@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Models\LoginHistory;
+use App\Models\IpBan;
+use App\Support\BanReason;
 
 class AuthController extends Controller
 {
@@ -27,11 +29,13 @@ class AuthController extends Controller
     public function showSuspendedNotice()
     {
         $info = session('suspended_info') ?? [];
+        $rawReason = $info['reason'] ?? 'Akun dan alamat IP Anda telah diblokir oleh Administrator sistem.';
         return response()->view('errors.ip-blocked', [
             'ip'         => request()->ip(),
             'username'   => $info['username'] ?? null,
             'email'      => $info['email'] ?? null,
-            'reason'     => $info['reason'] ?? 'Akun dan alamat IP Anda telah diblokir oleh Administrator sistem.',
+            'category'   => BanReason::categorize($rawReason),
+            'reason'     => $rawReason,
             'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
         ], 403);
     }
@@ -68,51 +72,81 @@ class AuthController extends Controller
     {
         $ip = $request->ip();
 
-        // 1. Cek apakah IP Pengunjung sedang diblokir
-        $isIpBanned = \Illuminate\Support\Facades\Cache::has("banned_ip_{$ip}") 
-            || \App\Models\IpLog::where('ip_address', $ip)->where('status', 'abnormal')->exists();
-
-        $isWhitelistedIp = in_array($ip, \App\Models\AllowedIp::pluck('ip_address')->toArray());
-
-        if ($isIpBanned && !$isWhitelistedIp) {
-            $reason = \Illuminate\Support\Facades\Cache::get("banned_ip_{$ip}") 
-                ?? \App\Models\IpLog::where('ip_address', $ip)->where('status', 'abnormal')->value('reason') 
-                ?? 'Alamat IP Anda telah diblokir oleh Administrator.';
-
-            return response()->view('errors.ip-blocked', [
-                'ip'         => $ip,
-                'reason'     => $reason,
-                'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
-            ], 403);
-        }
-
         $credentials = $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        // 2. Cek apakah Akun Pengguna yang coba login sedang diblokir oleh Admin
-        $checkUser = User::where('name', $credentials['username'])
+        // Cari user yang sedang login
+        $checkUser = User::with('role')
+            ->where('name', $credentials['username'])
             ->orWhere('email', $credentials['username'])
             ->first();
 
-        if ($checkUser && ($checkUser->status === 'blocked' || \Illuminate\Support\Facades\Cache::has("banned_user_{$checkUser->id_user}"))) {
+        // 1. Staff (Admin, Verifikator, CS) SELALU diizinkan login (kebal terhadap IP ban agar admin tidak terkunci)
+        $isStaff = $checkUser && in_array(strtolower($checkUser->role?->role_name ?? ''), ['admin', 'verifikator', 'customer_service']);
+
+        if ($isStaff) {
+            if (Auth::attempt(['name' => $checkUser->name, 'password' => $credentials['password']])) {
+                $request->session()->regenerate();
+                LoginHistory::create([
+                    'username'   => $checkUser->name,
+                    'ip_address' => $ip,
+                    'user_agent' => $request->userAgent(),
+                    'type'       => 'login'
+                ]);
+                return $this->redirectByRole($checkUser);
+            }
+            throw ValidationException::withMessages([
+                'username' => 'Username atau password salah.',
+            ]);
+        }
+
+        // 2. Cek apakah IP Pengunjung sedang diblokir
+        $activeBan = IpBan::activeFor($ip);
+        $isIpBanned = (bool)$activeBan
+            || Cache::has("banned_ip_{$ip}") 
+            || \App\Models\IpLog::where('ip_address', $ip)->where('status', 'abnormal')->exists();
+
+        $isWhitelistedIp = in_array($ip, \App\Models\AllowedIp::pluck('ip_address')->toArray());
+
+        if ($isIpBanned && !$isWhitelistedIp) {
+            $banReason = $activeBan?->reason 
+                ?: Cache::get("banned_ip_{$ip}") 
+                ?: \App\Models\IpLog::where('ip_address', $ip)->where('status', 'abnormal')->latest('last_activity_at')->value('reason') 
+                ?: 'Alamat IP Anda telah diblokir oleh Administrator.';
+
+            $banCategory = $activeBan?->category ?: BanReason::categorize($banReason);
+
+            return response()->view('errors.ip-blocked', [
+                'ip'         => $ip,
+                'username'   => $checkUser?->name,
+                'email'      => $checkUser?->email,
+                'category'   => $banCategory,
+                'reason'     => $banReason,
+                'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
+            ], 403);
+        }
+
+        // 3. Cek apakah Akun Pengguna yang coba login sedang diblokir oleh Admin
+        if ($checkUser && ($checkUser->status === 'blocked' || Cache::has("banned_user_{$checkUser->id_user}"))) {
             // Auto Unsuspend jika waktu pembekuan sudah selesai
             if ($checkUser->suspended_until && $checkUser->suspended_until->isPast()) {
                 $checkUser->status = 'active';
                 $checkUser->suspended_until = null;
                 $checkUser->suspend_reason = null;
                 $checkUser->save();
-                \Illuminate\Support\Facades\Cache::forget("banned_user_{$checkUser->id_user}");
+                Cache::forget("banned_user_{$checkUser->id_user}");
             } else {
                 $reason = $checkUser->suspend_reason 
-                    ?: \Illuminate\Support\Facades\Cache::get("banned_user_{$checkUser->id_user}") 
+                    ?: Cache::get("banned_user_{$checkUser->id_user}") 
                     ?: 'Akun dan alamat IP Anda telah diblokir oleh Administrator sistem.';
 
                 return response()->view('errors.ip-blocked', [
                     'ip'         => $ip,
                     'username'   => $checkUser->name,
                     'email'      => $checkUser->email,
+                    'category'   => BanReason::categorize($reason),
                     'reason'     => $reason,
                     'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
                 ], 403);
@@ -127,9 +161,9 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        if ($user->status === 'blocked' || \Illuminate\Support\Facades\Cache::has("banned_user_{$user->id_user}")) {
+        if ($user->status === 'blocked' || Cache::has("banned_user_{$user->id_user}")) {
             $reason = $user->suspend_reason 
-                ?: \Illuminate\Support\Facades\Cache::get("banned_user_{$user->id_user}") 
+                ?: Cache::get("banned_user_{$user->id_user}") 
                 ?: 'Akun dan alamat IP Anda telah diblokir oleh Administrator.';
 
             $userName = $user->name;
@@ -143,6 +177,7 @@ class AuthController extends Controller
                 'ip'         => $ip,
                 'username'   => $userName,
                 'email'      => $userEmail,
+                'category'   => BanReason::categorize($reason),
                 'reason'     => $reason,
                 'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
             ], 403);
