@@ -52,7 +52,7 @@
                         $first = $logs->sortByDesc('last_activity_at')->first();
                         $totalReq = $logs->sum('request_count');
                         $groupId = 'abnormal-'.$loop->index;
-                        $userObj = $logs->first(fn($l) => $l->user !== null)?->user;
+                        $userObj = $logs->first(fn($l) => $l->relationLoaded('user') && $l->user !== null)?->user;
                         $userName = $userObj?->name;
                         $userEmail = $userObj?->email;
                         $userRole = $userObj?->role?->role_name;

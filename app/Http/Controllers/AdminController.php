@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\{Product, Order, OrderItem, User, Role, Category, Membership, IdentityVerification, Withdrawal, Report, CustomerService, Notification, IpLog, AllowedIp, AccountAppeal, LoginHistory};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{Artisan, Hash, Storage, DB, Schema};
+use Illuminate\Support\Facades\{Artisan, Hash, Storage, DB, Schema, Cache};
 use Carbon\Carbon;
 use ZipArchive;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -911,41 +911,69 @@ class AdminController extends Controller
         $adminIps[] = '::1';
         $adminIps = array_unique(array_filter($adminIps));
 
-        // Eager load user beserta role-nya, kecualikan IP Admin & staff dari tabel ancaman
-        $allSuspiciousLogs = IpLog::with(['user.role'])
-            ->whereIn('status', ['abnormal', 'suspicious'])
+        // Periksa apakah kolom user_id ada di database (Self-Healing Migration jika belum ter-migrate)
+        $hasUserIdCol = Schema::hasColumn('ip_logs', 'user_id');
+        if (!$hasUserIdCol) {
+            try {
+                Schema::table('ip_logs', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->unsignedBigInteger('user_id')->nullable()->after('ip_address');
+                });
+                $hasUserIdCol = true;
+            } catch (\Throwable $e) {}
+        }
+
+        // Query log mencurigakan secara aman (tidak akan error meskipun kolom user_id belum ada)
+        $suspiciousQuery = IpLog::query();
+        if ($hasUserIdCol) {
+            $suspiciousQuery->with(['user.role']);
+        }
+
+        $suspiciousQuery->whereIn('status', ['abnormal', 'suspicious'])
             ->where('reason', '!=', 'Aktivitas Normal Pengguna')
-            ->whereNotIn('ip_address', $adminIps)
-            ->where(function($q) {
+            ->whereNotIn('ip_address', $adminIps);
+
+        if ($hasUserIdCol) {
+            $suspiciousQuery->where(function($q) {
                 $q->whereDoesntHave('user.role', fn($rq) => $rq->whereIn('role_name', ['admin', 'verifikator', 'customer_service']))
                   ->orWhereNull('user_id');
-            })
-            ->latest('last_activity_at')
-            ->get();
+            });
+        }
 
-        // Pastikan setiap log tanpa user_id dilengkapi dari LoginHistory
-        foreach ($allSuspiciousLogs as $log) {
-            if (!$log->user_id && isset($loginHistoryLookup[$log->ip_address])) {
-                $username = $loginHistoryLookup[$log->ip_address];
-                $foundUser = User::where('name', $username)->orWhere('email', $username)->first();
-                if ($foundUser) {
-                    try {
-                        IpLog::where('id', $log->id)->update(['user_id' => $foundUser->id_user]);
-                        $log->user_id = $foundUser->id_user;
-                        $log->setRelation('user', $foundUser->load('role'));
-                    } catch (\Throwable $e) {}
+        $allSuspiciousLogs = $suspiciousQuery->latest('last_activity_at')->get();
+
+        // Pastikan setiap log tanpa user_id dilengkapi dari LoginHistory jika kolom user_id ada
+        if ($hasUserIdCol) {
+            foreach ($allSuspiciousLogs as $log) {
+                if (!$log->user_id && isset($loginHistoryLookup[$log->ip_address])) {
+                    $username = $loginHistoryLookup[$log->ip_address];
+                    $foundUser = User::where('name', $username)->orWhere('email', $username)->first();
+                    if ($foundUser) {
+                        try {
+                            IpLog::where('id', $log->id)->update(['user_id' => $foundUser->id_user]);
+                            $log->user_id = $foundUser->id_user;
+                            $log->setRelation('user', $foundUser->load('role'));
+                        } catch (\Throwable $e) {}
+                    }
                 }
             }
         }
 
+        $normalQuery = IpLog::query();
+        if ($hasUserIdCol) $normalQuery->with(['user.role']);
+        $normalIps = $normalQuery->where(function($q) {
+            $q->where('status', 'normal')->orWhereNull('status');
+        })->latest('last_activity_at')->get()->groupBy('ip_address');
+
+        $botQuery = IpLog::query();
+        if ($hasUserIdCol) $botQuery->with(['user.role']);
+        $botIps = $botQuery->where(function($q) {
+            $q->where('reason', 'like', '%Bot%')->orWhere('reason', 'like', '%Spam%')->orWhere('reason', 'like', '%DoS%')->orWhere('reason', 'like', '%Flood%');
+        })->latest('last_activity_at')->get()->groupBy('ip_address');
+
         return view('admin.security.index', [
-            'normalIps' => IpLog::with(['user.role'])->where(function($q) {
-                $q->where('status', 'normal')->orWhereNull('status');
-            })->latest('last_activity_at')->get()->groupBy('ip_address'),
+            'normalIps' => $normalIps,
             'abnormalIps' => $allSuspiciousLogs->groupBy('ip_address'),
-            'botIps' => IpLog::with(['user.role'])->where(function($q) {
-                $q->where('reason', 'like', '%Bot%')->orWhere('reason', 'like', '%Spam%')->orWhere('reason', 'like', '%DoS%')->orWhere('reason', 'like', '%Flood%');
-            })->latest('last_activity_at')->get()->groupBy('ip_address'),
+            'botIps' => $botIps,
             'loginHistories' => LoginHistory::latest()->simplePaginate(10),
             'loginHistoryLookup' => $loginHistoryLookup,
             'allowedIps' => AllowedIp::latest()->get(), 
@@ -960,64 +988,150 @@ class AdminController extends Controller
         $targetIp = $ip->ip_address;
         $currentAdminIp = $request->ip();
 
-        // Keamanan: Jangan izinkan admin memblokir IP mereka sendiri atau localhost
-        if ($targetIp === $currentAdminIp || in_array($targetIp, ['127.0.0.1', '::1'])) {
-            return back()->with('error', 'Tidak dapat memblokir IP Admin sendiri atau localhost!');
+        // 1. Temukan Akun Pengguna yang terikat dengan log ini atau IP ini
+        $targetUser = null;
+        if (!empty($ip->user_id)) {
+            $targetUser = User::find($ip->user_id);
+        }
+        if (!$targetUser) {
+            $loginHist = LoginHistory::where('ip_address', $targetIp)->whereNotNull('username')->latest()->first();
+            if ($loginHist) {
+                $targetUser = User::where('name', $loginHist->username)->orWhere('email', $loginHist->username)->first();
+            }
         }
 
-        // Tentukan status baru (toggle antara abnormal vs normal)
-        $isCurrentlyBanned = ($ip->status === 'abnormal') || Cache::has("banned_ip_{$targetIp}");
+        // Keamanan: Cegah Admin memblokir akun mereka sendiri atau akun staff lainnya
+        if (auth()->check() && $targetUser && $targetUser->id_user === auth()->id()) {
+            return back()->with('error', 'Tidak dapat memblokir akun Administrator Anda sendiri!');
+        }
+        if ($targetUser && in_array(strtolower($targetUser->role?->role_name ?? ''), ['admin', 'verifikator', 'customer_service'])) {
+            return back()->with('error', 'Tidak dapat memblokir akun Staff atau Admin!');
+        }
+
+        // Tentukan status baru (toggle abnormal vs normal)
+        $isUserBanned = $targetUser && ($targetUser->status === 'blocked' || Cache::has("banned_user_{$targetUser->id_user}"));
+        $isIpBanned   = ($ip->status === 'abnormal') || Cache::has("banned_ip_{$targetIp}");
+        $isCurrentlyBanned = $isUserBanned || $isIpBanned;
+
         $newStatus = $isCurrentlyBanned ? 'normal' : 'abnormal';
         
         $reason = $request->input('reason');
         if (empty($reason)) {
             $reason = ($newStatus === 'abnormal') 
-                ? 'Dibekukan & diblokir total oleh Administrator' 
+                ? 'Akun dan Alamat IP Anda telah diblokir oleh Administrator sistem.' 
                 : 'Aktivitas Normal Pengguna';
         }
 
         if ($newStatus === 'abnormal') {
-            // 1. Update SEMUA baris riwayat pada IP ini agar tidak ada sesi lolos
-            IpLog::where('ip_address', $targetIp)->update([
-                'status' => 'abnormal',
-                'reason' => $reason,
-            ]);
-
-            // 2. Simpan ban ke Cache secara permanen atau durasi yang diminta
             $days = (int) $request->input('freeze_days', 0);
             $hours = (int) $request->input('freeze_hours', 0);
             $seconds = (int) $request->input('freeze_seconds', 0);
             $totalSeconds = ($days * 86400) + ($hours * 3600) + $seconds;
-            
-            if ($totalSeconds > 0) {
-                Cache::put("banned_ip_{$targetIp}", $reason, now()->addSeconds($totalSeconds));
-            } else {
-                Cache::forever("banned_ip_{$targetIp}", $reason);
+
+            // 1. Blokir Akun Pengguna Terkait
+            if ($targetUser) {
+                $targetUser->status = 'blocked';
+                $targetUser->suspend_reason = $reason;
+                if ($totalSeconds > 0) {
+                    $targetUser->suspended_until = now()->addSeconds($totalSeconds);
+                    Cache::put("banned_user_{$targetUser->id_user}", $reason, now()->addSeconds($totalSeconds));
+                } else {
+                    $targetUser->suspended_until = null;
+                    Cache::forever("banned_user_{$targetUser->id_user}", $reason);
+                }
+                $targetUser->save();
             }
 
-            // 3. Bekukan session yang terdata
-            if (!empty($ip->session_id)) {
-                Cache::forever("frozen_session_{$ip->session_id}", true);
+            // 2. Blokir semua akun non-admin lain yang login dari IP ini
+            $hasUserIdCol = Schema::hasColumn('ip_logs', 'user_id');
+            $allLinkedUserIds = [];
+            if ($hasUserIdCol) {
+                $allLinkedUserIds = IpLog::where('ip_address', $targetIp)->whereNotNull('user_id')->pluck('user_id')->toArray();
+            }
+            $historyUsernames = LoginHistory::where('ip_address', $targetIp)->whereNotNull('username')->pluck('username')->toArray();
+            if (!empty($historyUsernames)) {
+                $fromHistory = User::whereIn('name', $historyUsernames)->orWhereIn('email', $historyUsernames)->pluck('id_user')->toArray();
+                $allLinkedUserIds = array_unique(array_merge($allLinkedUserIds, $fromHistory));
             }
 
-            // 4. Putuskan & bekukan akun pengguna yang terikat pada IP ini (kecuali akun staff/admin)
-            $userIds = IpLog::where('ip_address', $targetIp)
-                ->whereNotNull('user_id')
-                ->pluck('user_id')
-                ->toArray();
-
-            if (!empty($userIds)) {
-                User::whereIn('id_user', $userIds)
+            if (!empty($allLinkedUserIds)) {
+                User::whereIn('id_user', $allLinkedUserIds)
                     ->whereDoesntHave('role', fn($rq) => $rq->whereIn('role_name', ['admin', 'verifikator', 'customer_service']))
                     ->update([
                         'status'         => 'blocked',
                         'suspend_reason' => $reason
                     ]);
+                foreach ($allLinkedUserIds as $uId) {
+                    if ($totalSeconds > 0) {
+                        Cache::put("banned_user_{$uId}", $reason, now()->addSeconds($totalSeconds));
+                    } else {
+                        Cache::forever("banned_user_{$uId}", $reason);
+                    }
+                }
             }
 
-            return back()->with('success', "IP {$targetIp} berhasil DIBLOKIR TOTAL. Akses Landing Page dan Akun ditolak sepenuhnya.");
+            // 3. Update status log IP di database
+            IpLog::where('ip_address', $targetIp)->update([
+                'status' => 'abnormal',
+                'reason' => $reason,
+            ]);
+
+            // 4. Simpan ban ke Cache secara global berdasarkan IP (jika bukan IP admin aktif)
+            if ($targetIp !== $currentAdminIp && !in_array($targetIp, ['127.0.0.1', '::1'])) {
+                if ($totalSeconds > 0) {
+                    Cache::put("banned_ip_{$targetIp}", $reason, now()->addSeconds($totalSeconds));
+                } else {
+                    Cache::forever("banned_ip_{$targetIp}", $reason);
+                }
+            }
+
+            // 5. Bekukan session yang terdata
+            if (!empty($ip->session_id)) {
+                if ($totalSeconds > 0) {
+                    Cache::put("frozen_session_{$ip->session_id}", true, now()->addSeconds($totalSeconds));
+                } else {
+                    Cache::forever("frozen_session_{$ip->session_id}", true);
+                }
+            }
+
+            $userDisplayName = $targetUser ? "Pengguna '{$targetUser->name}' & IP {$targetIp}" : "IP {$targetIp}";
+            return back()->with('success', "{$userDisplayName} berhasil DIBLOKIR TOTAL. Pengguna tidak dapat login maupun mengakses platform.");
         } else {
-            // Buka Blokir (Unban)
+            // BUKA BLOKIR (UNBAN)
+            if ($targetUser) {
+                $targetUser->status = 'active';
+                $targetUser->suspended_until = null;
+                $targetUser->suspend_reason = null;
+                $targetUser->save();
+                Cache::forget("banned_user_{$targetUser->id_user}");
+            }
+
+            // Aktifkan kembali akun non-admin yang tadinya terblokir oleh IP ini
+            $hasUserIdCol = Schema::hasColumn('ip_logs', 'user_id');
+            $allLinkedUserIds = [];
+            if ($hasUserIdCol) {
+                $allLinkedUserIds = IpLog::where('ip_address', $targetIp)->whereNotNull('user_id')->pluck('user_id')->toArray();
+            }
+            $historyUsernames = LoginHistory::where('ip_address', $targetIp)->whereNotNull('username')->pluck('username')->toArray();
+            if (!empty($historyUsernames)) {
+                $fromHistory = User::whereIn('name', $historyUsernames)->orWhereIn('email', $historyUsernames)->pluck('id_user')->toArray();
+                $allLinkedUserIds = array_unique(array_merge($allLinkedUserIds, $fromHistory));
+            }
+
+            if (!empty($allLinkedUserIds)) {
+                User::whereIn('id_user', $allLinkedUserIds)
+                    ->where('status', 'blocked')
+                    ->whereDoesntHave('role', fn($rq) => $rq->whereIn('role_name', ['admin', 'verifikator', 'customer_service']))
+                    ->update([
+                        'status'         => 'active',
+                        'suspend_reason' => null
+                    ]);
+                foreach ($allLinkedUserIds as $uId) {
+                    Cache::forget("banned_user_{$uId}");
+                }
+            }
+
+            // Normalkan IP Log
             IpLog::where('ip_address', $targetIp)->update([
                 'status' => 'normal',
                 'reason' => 'Aktivitas Normal Pengguna',
@@ -1028,23 +1142,8 @@ class AdminController extends Controller
                 Cache::forget("frozen_session_{$ip->session_id}");
             }
 
-            // Pulihkan akun non-admin yang tadinya terblokir oleh ban IP
-            $userIds = IpLog::where('ip_address', $targetIp)
-                ->whereNotNull('user_id')
-                ->pluck('user_id')
-                ->toArray();
-
-            if (!empty($userIds)) {
-                User::whereIn('id_user', $userIds)
-                    ->where('status', 'blocked')
-                    ->whereDoesntHave('role', fn($rq) => $rq->whereIn('role_name', ['admin', 'verifikator', 'customer_service']))
-                    ->update([
-                        'status'         => 'active',
-                        'suspend_reason' => null
-                    ]);
-            }
-
-            return back()->with('success', "Blokir IP {$targetIp} berhasil DIBUKA. Pengguna dapat mengakses kembali secara normal.");
+            $userDisplayName = $targetUser ? "Pengguna '{$targetUser->name}' & IP {$targetIp}" : "IP {$targetIp}";
+            return back()->with('success', "Blokir {$userDisplayName} berhasil DIBUKA. Pengguna dapat mengakses dan login kembali secara normal.");
         }
     }
 

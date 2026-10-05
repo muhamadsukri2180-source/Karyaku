@@ -54,7 +54,23 @@ try {
         $app = require_once $baseDir . '/bootstrap/app.php';
         $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-        // 1. Netralkan semua log false-positive
+        // 1. Pastikan struktur kolom ip_logs lengkap (user_id & session_id)
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('ip_logs', 'user_id')) {
+            try {
+                \Illuminate\Support\Facades\Schema::table('ip_logs', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->unsignedBigInteger('user_id')->nullable()->after('ip_address');
+                });
+            } catch (\Throwable $e) {}
+        }
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('ip_logs', 'session_id')) {
+            try {
+                \Illuminate\Support\Facades\Schema::table('ip_logs', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->string('session_id', 64)->nullable()->after('ip_address');
+                });
+            } catch (\Throwable $e) {}
+        }
+
+        // 2. Netralkan semua log false-positive
         $dbCleanedCount = \Illuminate\Support\Facades\DB::table('ip_logs')
             ->where(function($q) {
                 $q->where('reason', 'like', '%Resize Window%')

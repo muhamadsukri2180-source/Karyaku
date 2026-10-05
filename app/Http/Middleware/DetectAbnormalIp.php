@@ -34,8 +34,56 @@ class DetectAbnormalIp
             }
         }
 
-        // Cek apakah IP terdaftar di Whitelist (Manual dari Admin, Localhost, atau IP Admin Aktif)
-        $isWhitelisted = $isAdminOrStaff || in_array($ip, ['127.0.0.1', '::1']) || Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
+        // Jika Admin atau Staff aktif yang login, lewati seluruh pemblokiran keamanan
+        if ($isAdminOrStaff) {
+            return $next($request);
+        }
+
+        // 2. CEK APAKAH AKUN USER YANG SEDANG LOGIN DIBLOKIR / DIBEKUKAN
+        if (Auth::check()) {
+            $currUser = Auth::user();
+            if ($currUser->status === 'blocked' || Cache::has("banned_user_{$currUser->id_user}")) {
+                $uName = $currUser->name;
+                $uEmail = $currUser->email;
+                $uReason = $currUser->suspend_reason 
+                    ?: Cache::get("banned_user_{$currUser->id_user}") 
+                    ?: 'Akun dan alamat IP Anda telah diblokir oleh Administrator sistem.';
+
+                Auth::logout();
+                if ($request->hasSession()) {
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                }
+
+                return response()->view('errors.ip-blocked', [
+                    'ip'         => $ip,
+                    'username'   => $uName,
+                    'email'      => $uEmail,
+                    'reason'     => $uReason,
+                    'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
+                ], 403);
+            }
+        }
+
+        // 3. CEK APAKAH SESI BROWSER DIBEKUKAN (FROZEN SESSION)
+        if ($request->hasSession()) {
+            $sessId = substr(md5($request->session()->getId()), 0, 16);
+            if (Cache::has("frozen_session_{$sessId}")) {
+                if (Auth::check()) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                }
+                return response()->view('errors.ip-blocked', [
+                    'ip'         => $ip,
+                    'reason'     => 'Sesi browser Anda sedang dibekukan oleh Administrator karena indikasi pelanggaran.',
+                    'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
+                ], 403);
+            }
+        }
+
+        // Cek apakah IP terdaftar di Whitelist Eksplisit
+        $isWhitelisted = Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
             try {
                 return AllowedIp::where('ip_address', $ip)->exists();
             } catch (\Throwable $e) {
@@ -43,16 +91,14 @@ class DetectAbnormalIp
             }
         });
 
-        // 2. CEK APAKAH IP DIBLOKIR / DIBEKUKAN OLEH ADMIN (BAN CHECK KETAT)
-        // Jika IP diblokir, blokir SELURUH rute (termasuk landing page '/', dashboard, dan akun).
-        if (!$isWhitelisted) {
+        // 4. CEK APAKAH ALAMAT IP DIBLOKIR (BAN CHECK GLOBAL)
+        if (!$isWhitelisted && !in_array($ip, ['127.0.0.1', '::1'])) {
             $isBanned = Cache::has("banned_ip_{$ip}");
             $banReason = null;
 
             if ($isBanned) {
                 $banReason = Cache::get("banned_ip_{$ip}");
             } else {
-                // Periksa di database jika cache belum ada
                 try {
                     $bannedLog = IpLog::where('ip_address', $ip)
                         ->where('status', 'abnormal')
@@ -67,18 +113,7 @@ class DetectAbnormalIp
                 } catch (\Throwable $e) {}
             }
 
-            // Periksa session freeze jika ada
-            if (!$isBanned && $request->hasSession()) {
-                $sessId = substr(md5($request->session()->getId()), 0, 16);
-                if (Cache::has("frozen_session_{$sessId}")) {
-                    $isBanned = true;
-                    $banReason = 'Sesi Anda sedang dibekukan oleh Administrator.';
-                }
-            }
-
-            // JIKA TERKONFIRMASI DIBLOKIR:
             if ($isBanned) {
-                // 1. Putuskan sesi login pengguna jika ada agar akun tidak bisa dilihat lagi
                 if (Auth::check()) {
                     Auth::logout();
                     if ($request->hasSession()) {
@@ -87,10 +122,9 @@ class DetectAbnormalIp
                     }
                 }
 
-                // 2. Tampilkan halaman khusus IP DIBLOKIR (Errors 403 / ip-blocked)
                 return response()->view('errors.ip-blocked', [
                     'ip'         => $ip,
-                    'reason'     => $banReason ?: 'Akses Anda diblokir sementara oleh Admin karena aktivitas mencurigakan atau pembekuan akun.',
+                    'reason'     => $banReason ?: 'Alamat IP Anda diblokir sementara oleh Admin karena aktivitas mencurigakan atau pembekuan akun.',
                     'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
                 ], 403);
             }
@@ -253,20 +287,23 @@ class DetectAbnormalIp
             $ipLog->request_count = ($ipLog->request_count ?? 0) + 1;
             $ipLog->last_activity_at = now();
 
-            if (auth()->check()) {
-                $ipLog->user_id = auth()->id();
-            } elseif (!$ipLog->user_id) {
-                // Fallback: cari user dari riwayat login berdasarkan IP yang sama
-                $loginHist = LoginHistory::where('ip_address', $ip)
-                    ->whereNotNull('username')
-                    ->latest()
-                    ->first();
-                if ($loginHist) {
-                    $foundUser = User::where('name', $loginHist->username)
-                        ->orWhere('email', $loginHist->username)
+            $hasUserIdCol = Schema::hasColumn('ip_logs', 'user_id');
+            if ($hasUserIdCol) {
+                if (auth()->check()) {
+                    $ipLog->user_id = auth()->id();
+                } elseif (!$ipLog->user_id) {
+                    // Fallback: cari user dari riwayat login berdasarkan IP yang sama
+                    $loginHist = LoginHistory::where('ip_address', $ip)
+                        ->whereNotNull('username')
+                        ->latest()
                         ->first();
-                    if ($foundUser) {
-                        $ipLog->user_id = $foundUser->id_user;
+                    if ($loginHist) {
+                        $foundUser = User::where('name', $loginHist->username)
+                            ->orWhere('email', $loginHist->username)
+                            ->first();
+                        if ($foundUser) {
+                            $ipLog->user_id = $foundUser->id_user;
+                        }
                     }
                 }
             }
