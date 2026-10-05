@@ -6,6 +6,8 @@ use Closure;
 use Illuminate\Http\Request;
 use App\Models\IpLog;
 use App\Models\AllowedIp;
+use App\Models\LoginHistory;
+use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 
@@ -182,6 +184,20 @@ class DetectAbnormalIp
 
             if (auth()->check()) {
                 $ipLog->user_id = auth()->id();
+            } elseif (!$ipLog->user_id) {
+                // Fallback: cari user dari riwayat login berdasarkan IP yang sama
+                $loginHist = LoginHistory::where('ip_address', $ip)
+                    ->whereNotNull('username')
+                    ->latest()
+                    ->first();
+                if ($loginHist) {
+                    $foundUser = User::where('name', $loginHist->username)
+                        ->orWhere('email', $loginHist->username)
+                        ->first();
+                    if ($foundUser) {
+                        $ipLog->user_id = $foundUser->id_user;
+                    }
+                }
             }
 
             try {

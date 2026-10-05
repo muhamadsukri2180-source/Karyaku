@@ -1286,6 +1286,7 @@
         .catch(() => alert('Gagal memperbarui Disukai. Coba lagi.'));
     });
 </script>
+@include('layouts.partials.devtools-detector')
 @stack('scripts')
 </body>
 </html>

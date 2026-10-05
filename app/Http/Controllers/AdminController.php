@@ -869,15 +869,46 @@ class AdminController extends Controller
     public function securityIndex(Request $request)
     {
         if (!session()->has('security_verified_at')) return redirect()->route('admin.security.verify')->with('warning', 'Verifikasi dahulu.');
+
+        // Bangun lookup: ip_address => username dari LoginHistory (untuk IP yang belum ada user_id)
+        $loginHistoryLookup = LoginHistory::whereNotNull('username')
+            ->latest()
+            ->get()
+            ->groupBy('ip_address')
+            ->map(fn($items) => $items->first()->username);
+
+        // Eager load user beserta role-nya, serta lookup user_id dari LoginHistory untuk IP tanpa akun
+        $allSuspiciousLogs = IpLog::with(['user.role'])
+            ->whereIn('status', ['abnormal', 'suspicious'])
+            ->latest('last_activity_at')
+            ->get();
+
+        // Pastikan setiap log tanpa user_id dilengkapi dari LoginHistory
+        foreach ($allSuspiciousLogs as $log) {
+            if (!$log->user_id && isset($loginHistoryLookup[$log->ip_address])) {
+                // Coba temukan user dari login history
+                $username = $loginHistoryLookup[$log->ip_address];
+                $foundUser = User::where('name', $username)->orWhere('email', $username)->first();
+                if ($foundUser) {
+                    try {
+                        IpLog::where('id', $log->id)->update(['user_id' => $foundUser->id_user]);
+                        $log->user_id = $foundUser->id_user;
+                        $log->setRelation('user', $foundUser->load('role'));
+                    } catch (\Throwable $e) {}
+                }
+            }
+        }
+
         return view('admin.security.index', [
-            'normalIps' => IpLog::with('user')->where(function($q) {
+            'normalIps' => IpLog::with(['user.role'])->where(function($q) {
                 $q->where('status', 'normal')->orWhereNull('status');
             })->latest('last_activity_at')->get()->groupBy('ip_address'),
-            'abnormalIps' => IpLog::with('user')->whereIn('status', ['abnormal', 'suspicious'])->latest('last_activity_at')->get()->groupBy('ip_address'),
-            'botIps' => IpLog::with('user')->where(function($q) {
+            'abnormalIps' => $allSuspiciousLogs->groupBy('ip_address'),
+            'botIps' => IpLog::with(['user.role'])->where(function($q) {
                 $q->where('reason', 'like', '%Bot%')->orWhere('reason', 'like', '%Spam%')->orWhere('reason', 'like', '%DoS%')->orWhere('reason', 'like', '%Flood%');
             })->latest('last_activity_at')->get()->groupBy('ip_address'),
             'loginHistories' => LoginHistory::latest()->simplePaginate(10),
+            'loginHistoryLookup' => $loginHistoryLookup,
             'allowedIps' => AllowedIp::latest()->get(), 'myIp' => $request->ip()
         ]);
     }
@@ -953,6 +984,132 @@ class AdminController extends Controller
         $allowedIp->delete();
 
         return back()->with('success', "IP {$ip} berhasil dihapus dari Whitelist.");
+    }
+
+    /**
+     * Endpoint untuk menerima beacon deteksi DevTools / Inspect Element dari browser.
+     * Dipanggil via navigator.sendBeacon() atau fetch() dari script JS di semua halaman.
+     * Mencatat IP pengunjung ke ip_logs sebagai 'suspicious' dengan detail metode deteksi.
+     */
+    public function devtoolsPing(Request $request)
+    {
+        try {
+            $ip = $request->ip();
+
+            // Jika yang membuka adalah Admin sendiri, abaikan (admin bebas inspect)
+            if (auth()->check() && auth()->user()->role?->role_name === 'admin') {
+                return response()->json(['ok' => true]);
+            }
+
+            // Abaikan jika IP ada di whitelist atau localhost
+            $isWhitelisted = in_array($ip, ['127.0.0.1', '::1']) ||
+                \Illuminate\Support\Facades\Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
+                    try { return AllowedIp::where('ip_address', $ip)->exists(); } catch (\Throwable $e) { return false; }
+                });
+
+            if ($isWhitelisted) {
+                return response()->json(['ok' => true]);
+            }
+
+            // Baca body JSON dari sendBeacon (Content-Type: application/json)
+            $body = [];
+            $contentType = $request->header('Content-Type', '');
+            if (str_contains($contentType, 'application/json')) {
+                $body = json_decode($request->getContent(), true) ?? [];
+            } else {
+                $body = $request->all();
+            }
+
+            // Tentukan alasan berdasarkan metode deteksi yang dikirim JS
+            $method     = $body['method'] ?? 'unknown';
+            $methodMap  = [
+                'F12'              => 'Menekan tombol F12 (DevTools)',
+                'Ctrl+Shift+I'     => 'Menekan Ctrl+Shift+I (DevTools)',
+                'Ctrl+Shift+C'     => 'Menekan Ctrl+Shift+C (Inspect Element)',
+                'Ctrl+Shift+J'     => 'Menekan Ctrl+Shift+J (Console DevTools)',
+                'Ctrl+Shift+K'     => 'Menekan Ctrl+Shift+K (Web Console)',
+                'Ctrl+U'           => 'Membuka View Source (Ctrl+U)',
+                'right-click'      => 'Klik Kanan → Inspect Element',
+                'window-resize'    => 'DevTools Terdeteksi via Resize Window',
+                'console-getter'   => 'DevTools Terdeteksi via Console Object Getter',
+                'debugger-timing'  => 'DevTools Terdeteksi via Debugger Timing',
+                'unknown'          => 'Membuka DevTools / Inspect Element',
+            ];
+            $reason = 'Terdeteksi: ' . ($methodMap[$method] ?? 'Membuka DevTools / Inspect Element');
+
+            $userAgent = $request->header('User-Agent') ?? 'Unknown';
+
+            // Buat session_id yang konsisten
+            $sessionIdCookie = $request->cookie(config('session.cookie'));
+            $sessionId = $sessionIdCookie
+                ? substr(md5($sessionIdCookie), 0, 16)
+                : substr(md5($userAgent . $ip . now()->toDateString()), 0, 16);
+
+            $today = now()->toDateString();
+            $hasSessionIdCol = \Illuminate\Support\Facades\Schema::hasColumn('ip_logs', 'session_id');
+            $hasUserIdCol    = \Illuminate\Support\Facades\Schema::hasColumn('ip_logs', 'user_id');
+
+            // Cari log hari ini berdasarkan IP + session
+            $query = IpLog::where('ip_address', $ip)->whereDate('created_at', $today);
+            if ($hasSessionIdCol && $sessionId) {
+                $query->where('session_id', $sessionId);
+            }
+            $ipLog = $query->first();
+
+            if (!$ipLog) {
+                $attrs = ['ip_address' => $ip, 'status' => 'normal'];
+                if ($hasSessionIdCol && $sessionId) $attrs['session_id'] = $sessionId;
+                $ipLog = new IpLog($attrs);
+            }
+
+            // Tandai suspicious (jangan override jika sudah abnormal/diblokir)
+            if ($ipLog->status !== 'abnormal') {
+                $ipLog->status = 'suspicious';
+                $ipLog->reason = $reason;
+            }
+
+            $referer = $request->header('Referer', 'N/A');
+            $ipLog->user_agent       = substr($userAgent, 0, 255);
+            $ipLog->last_activity    = substr("[DevTools] {$referer}", 0, 500);
+            $ipLog->request_count    = ($ipLog->request_count ?? 0) + 1;
+            $ipLog->last_activity_at = now();
+
+            // Hubungkan dengan akun user yang sedang login
+            if ($hasUserIdCol) {
+                if (auth()->check()) {
+                    $ipLog->user_id = auth()->id();
+                } elseif (!$ipLog->user_id) {
+                    // Fallback: cari dari riwayat login berdasarkan IP
+                    $loginHist = LoginHistory::where('ip_address', $ip)
+                        ->whereNotNull('username')
+                        ->latest()
+                        ->first();
+                    if ($loginHist) {
+                        $foundUser = User::where('name', $loginHist->username)
+                            ->orWhere('email', $loginHist->username)
+                            ->first();
+                        if ($foundUser) {
+                            $ipLog->user_id = $foundUser->id_user;
+                        }
+                    }
+                }
+            }
+
+            try {
+                $ipLog->save();
+            } catch (\Throwable $saveEx) {
+                // Fallback: hosting lama mungkin belum punya enum 'suspicious'
+                if ($ipLog->status === 'suspicious') {
+                    $ipLog->status = 'normal';
+                    try { $ipLog->save(); } catch (\Throwable $e2) {}
+                }
+            }
+
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('DevTools ping error: ' . $e->getMessage());
+        }
+
+        return response()->json(['ok' => true]);
     }
 
     public function clearCache(Request $request)

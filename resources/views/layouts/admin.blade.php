@@ -492,6 +492,7 @@
         if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
     </script>
     </script>
+    @include('layouts.partials.devtools-detector')
     @stack('scripts')
 </body>
 </html>

@@ -7,6 +7,9 @@
 @endsection
 
 @section('header_right')
+    <button onclick="refreshPage()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-emerald-700 active:translate-y-[4px] transition-all cursor-pointer">
+        <i class="fa-solid fa-rotate-right"></i> Refresh
+    </button>
     <a href="{{ route('admin.security.verify', ['reset' => 1]) }}" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-[0_4px_0_0_#cbd5e1] hover:bg-blue-700 active:translate-y-[4px] transition-all cursor-pointer">
         <i class="fa-solid fa-lock"></i> Kunci Kembali
     </a>
@@ -50,10 +53,16 @@
                         $totalReq = $logs->sum('request_count');
                         $groupId = 'abnormal-'.$loop->index;
                         $userObj = $logs->first(fn($l) => $l->user !== null)?->user;
-                        $userLabel = $userObj?->name ?? $userObj?->email;
+                        $userName = $userObj?->name;
+                        $userEmail = $userObj?->email;
+                        $userRole = $userObj?->role?->role_name;
+                        $userLabel = $userName ?? $userEmail;
                         if (!$userLabel) {
                             $loginHist = \App\Models\LoginHistory::where('ip_address', $ipAddress)->whereNotNull('username')->latest()->first();
                             if ($loginHist) { $userLabel = $loginHist->username; }
+                        }
+                        if (!$userLabel && isset($loginHistoryLookup[$ipAddress])) {
+                            $userLabel = $loginHistoryLookup[$ipAddress];
                         }
                     @endphp
                     <tr class="hover:bg-red-50/40 transition-colors bg-white odd:bg-slate-50/30 whitespace-nowrap">
@@ -65,10 +74,35 @@
                                 </button>
                             </div>
                             @if($userLabel)
-                                <div class="text-[10px] font-sans font-medium text-red-800 mt-1 flex items-center gap-1"><i class="fa-solid fa-user text-[9px] mr-0.5"></i> <span>{{ $userLabel }}</span></div>
+                                <div class="mt-1.5 space-y-0.5">
+                                    <div class="text-[10px] font-sans font-bold text-red-800 flex items-center gap-1">
+                                        <i class="fa-solid fa-user text-[9px]"></i>
+                                        <span>{{ $userLabel }}</span>
+                                        @if($userEmail && $userLabel !== $userEmail)
+                                            <span class="text-red-500 font-normal">&lt;{{ $userEmail }}&gt;</span>
+                                        @endif
+                                    </div>
+                                    @if($userRole)
+                                        <div class="text-[9px] font-sans font-semibold text-white bg-red-600 px-1.5 py-0.5 rounded w-fit capitalize">{{ $userRole }}</div>
+                                    @endif
+                                </div>
                             @endif
                         </td>
-                        <td class="py-4 px-6 text-slate-700 font-semibold max-w-xs truncate">{{ $first->reason ?? '-' }}</td>
+                        <td class="py-4 px-6 text-slate-700 font-semibold max-w-xs">
+                            @php
+                                $reasonText = $first->reason ?? '-';
+                                $isDevTools = str_contains($reasonText, 'DevTools') || str_contains($reasonText, 'Inspect') || str_contains($reasonText, 'F12') || str_contains($reasonText, 'Ctrl+') || str_contains($reasonText, 'Klik Kanan') || str_contains($reasonText, 'View Source') || str_contains($reasonText, 'Console');
+                            @endphp
+                            @if($isDevTools)
+                                <span class="inline-flex items-center gap-1 bg-purple-100 text-purple-800 border border-purple-300 text-[10px] font-extrabold px-2 py-1 rounded-md">
+                                    <i class="fa-solid fa-bug text-[9px]"></i>
+                                    {{ $reasonText }}
+                                </span>
+                            @else
+                                <span class="truncate block max-w-[200px]">{{ $reasonText }}</span>
+                            @endif
+                        </td>
+
                         
                         <td class="py-4 px-6 font-mono text-[11px] text-slate-600">
                             <div class="flex items-center gap-2">
@@ -168,10 +202,16 @@
                         $totalReq = $logs->sum('request_count');
                         $groupId = 'normal-'.$loop->index;
                         $userObj = $logs->first(fn($l) => $l->user !== null)?->user;
-                        $userLabel = $userObj?->name ?? $userObj?->email;
+                        $userName = $userObj?->name;
+                        $userEmail = $userObj?->email;
+                        $userRole = $userObj?->role?->role_name;
+                        $userLabel = $userName ?? $userEmail;
                         if (!$userLabel) {
                             $loginHist = \App\Models\LoginHistory::where('ip_address', $ipAddress)->whereNotNull('username')->latest()->first();
                             if ($loginHist) { $userLabel = $loginHist->username; }
+                        }
+                        if (!$userLabel && isset($loginHistoryLookup[$ipAddress])) {
+                            $userLabel = $loginHistoryLookup[$ipAddress];
                         }
                     @endphp
                     <tr class="hover:bg-amber-100/80 transition-colors bg-white odd:bg-amber-50/50 whitespace-nowrap">
@@ -183,7 +223,20 @@
                                 </button>
                             </div>
                             @if($userLabel)
-                                <div class="text-[10px] font-sans font-medium text-amber-800 mt-1 flex items-center gap-1"><i class="fa-solid fa-user text-[9px] mr-0.5"></i> <span>{{ $userLabel }}</span></div>
+                                <div class="mt-1 space-y-0.5">
+                                    <div class="text-[10px] font-sans font-semibold text-amber-900 flex items-center gap-1">
+                                        <i class="fa-solid fa-user text-[9px]"></i>
+                                        <span>{{ $userLabel }}</span>
+                                        @if($userEmail && $userLabel !== $userEmail)
+                                            <span class="text-amber-600 font-normal text-[9px]">&lt;{{ $userEmail }}&gt;</span>
+                                        @endif
+                                    </div>
+                                    @if($userRole)
+                                        <div class="text-[9px] font-semibold text-white bg-amber-600 px-1.5 py-0.5 rounded w-fit capitalize">{{ $userRole }}</div>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="text-[10px] font-sans text-amber-400 mt-1 italic">Tamu / Belum Login</div>
                             @endif
                         </td>
                         <td class="py-4 px-6 font-mono text-[11px] text-amber-900 max-w-xs truncate">{{ $first->last_activity }}</td>
@@ -474,6 +527,23 @@
             title: 'Hapus Log IP?', text: "Catatan riwayat IP ini akan dihapus permanen!",
             icon: 'error', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#94a3b8', confirmButtonText: 'Ya, Hapus!'
         }).then((result) => { if (result.isConfirmed) document.getElementById(formId).submit(); });
+    }
+
+    // Refresh halaman dengan cache-busting (paksa load ulang code terbaru dari server)
+    function refreshPage() {
+        const btn = event.currentTarget;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memuat...';
+
+        // Hapus semua cache di browser untuk halaman ini
+        if ('caches' in window) {
+            caches.keys().then(names => names.forEach(name => caches.delete(name)));
+        }
+
+        // Reload dengan cache-buster di query string agar tidak pakai cache lama
+        const url = new URL(window.location.href);
+        url.searchParams.set('_refresh', Date.now());
+        window.location.replace(url.toString());
     }
 </script>
 @endpush

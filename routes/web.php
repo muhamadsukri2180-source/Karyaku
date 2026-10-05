@@ -32,6 +32,14 @@ Route::get('/run-migration-secret', function () {
     }
 });
 
+// ==========================================
+// ENDPOINT DETEKSI DEVTOOLS / INSPECT ELEMENT
+// Dipanggil via JavaScript Beacon saat browser mendeteksi DevTools terbuka
+// ==========================================
+Route::post('/security/devtools-ping', [AdminController::class, 'devtoolsPing'])
+    ->name('security.devtools_ping')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
 Route::get('/', function () {
     $memberships = \App\Models\Membership::orderBy('price', 'asc')->get();
     $bestProducts = \App\Models\Product::with(['seller', 'category'])
