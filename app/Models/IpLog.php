@@ -18,9 +18,15 @@ class IpLog extends Model
         'last_activity',
         'request_count',
         'last_activity_at',
+        'user_id',
     ];
 
     protected $casts = [
         'last_activity_at' => 'datetime',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id_user');
+    }
 }

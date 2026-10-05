@@ -494,6 +494,7 @@
         });
     }
 </script>
+@include('layouts.partials.devtools-detector')
 @stack('scripts')
 </body>
 </html>

@@ -22,15 +22,34 @@ use App\Http\Controllers\CsController;
 // ==========================================
 use Illuminate\Support\Facades\Artisan;
 
-// Route rahasia sementara untuk update database di Hosting
+// Route rahasia sementara untuk update database & bersihkan cache di Hosting
 Route::get('/run-migration-secret', function () {
     try {
+        @unlink(base_path('bootstrap/cache/packages.php'));
+        @unlink(base_path('bootstrap/cache/services.php'));
+        @unlink(base_path('bootstrap/cache/config.php'));
+        @unlink(base_path('bootstrap/cache/routes-v7.php'));
+        Artisan::call('optimize:clear');
         Artisan::call('migrate', ['--force' => true]);
-        return 'Migrasi berhasil dijalankan di Hosting! Output: ' . Artisan::output();
-    } catch (\Exception $e) {
+        try {
+            \App\Models\IpLog::where('reason', 'like', '%Resize Window%')
+                ->orWhere('reason', 'like', '%right-click%')
+                ->orWhere('reason', 'like', '%Klik Kanan%')
+                ->update(['status' => 'normal', 'reason' => 'Aktivitas Normal']);
+        } catch (\Throwable $e) {}
+        return 'Migrasi, reset log false-positive, dan pembersihan cache berhasil! Output: ' . Artisan::output();
+    } catch (\Throwable $e) {
         return 'Gagal: ' . $e->getMessage();
     }
 });
+
+// ==========================================
+// ENDPOINT DETEKSI DEVTOOLS / INSPECT ELEMENT
+// Dipanggil via JavaScript Beacon saat browser mendeteksi DevTools terbuka
+// ==========================================
+Route::post('/security/devtools-ping', [AdminController::class, 'devtoolsPing'])
+    ->name('security.devtools_ping')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
 Route::get('/', function () {
     $memberships = \App\Models\Membership::orderBy('price', 'asc')->get();
@@ -330,4 +349,25 @@ Route::middleware(['auth', 'suspended', 'role:customer_service'])->prefix('cs')-
     Route::post('/laporan/appeal/{id}/tindak', [CsController::class, 'tindakAppeal'])->name('laporan.appeal.tindak');
 
     Route::get('/notifikasi', [CsController::class, 'notifikasi'])->name('notifikasi');
+});
+
+// ROUTE RAHASIA UNTUK MIGRASI & PERBAIKAN CACHE DI HOSTING FTP
+Route::get('/run-migration-secret-88', function () {
+    try {
+        @unlink(base_path('bootstrap/cache/packages.php'));
+        @unlink(base_path('bootstrap/cache/services.php'));
+        @unlink(base_path('bootstrap/cache/config.php'));
+        @unlink(base_path('bootstrap/cache/routes-v7.php'));
+        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        try {
+            \App\Models\IpLog::where('reason', 'like', '%Resize Window%')
+                ->orWhere('reason', 'like', '%right-click%')
+                ->orWhere('reason', 'like', '%Klik Kanan%')
+                ->update(['status' => 'normal', 'reason' => 'Aktivitas Normal']);
+        } catch (\Throwable $e) {}
+        return "Migrasi, reset log false-positive, & pembersihan cache berhasil dijalankan. Output: " . \Illuminate\Support\Facades\Artisan::output();
+    } catch (\Throwable $e) {
+        return "Migrasi gagal: " . $e->getMessage();
+    }
 });
