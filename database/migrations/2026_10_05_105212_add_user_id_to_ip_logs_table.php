@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('ip_logs', function (Blueprint $table) {
             $table->unsignedBigInteger('user_id')->nullable()->after('ip_address');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('user_id')->references('id_user')->on('users')->onDelete('set null');
         });
     }
 
