@@ -151,6 +151,7 @@ class DetectAbnormalIp
                 $ipLog = new IpLog([
                     'ip_address' => $ip,
                     'session_id' => $sessionId,
+                    'status'     => 'normal',
                 ]);
             }
 
