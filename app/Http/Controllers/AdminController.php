@@ -877,9 +877,32 @@ class AdminController extends Controller
             ->groupBy('ip_address')
             ->map(fn($items) => $items->first()->username);
 
-        // Eager load user beserta role-nya, serta lookup user_id dari LoginHistory untuk IP tanpa akun
+        // Pembersihan otomatis: netralkan log false-positive (seperti resize window atau right-click)
+        try {
+            IpLog::where(function($q) {
+                $q->where('reason', 'like', '%Resize Window%')
+                  ->orWhere('reason', 'like', '%right-click%')
+                  ->orWhere('reason', 'like', '%Klik Kanan%');
+            })->where('status', '!=', 'normal')->update([
+                'status' => 'normal',
+                'reason' => 'Aktivitas Normal Pengguna'
+            ]);
+        } catch (\Throwable $e) {}
+
+        // Daftar IP Admin yang harus dikecualikan dari tabel ancaman
+        $adminIps = AllowedIp::pluck('ip_address')->toArray();
+        $adminIps[] = $request->ip();
+        $adminIps[] = '127.0.0.1';
+        $adminIps[] = '::1';
+
+        // Eager load user beserta role-nya, kecualikan IP Admin & staff dari tabel ancaman
         $allSuspiciousLogs = IpLog::with(['user.role'])
             ->whereIn('status', ['abnormal', 'suspicious'])
+            ->whereNotIn('ip_address', array_merge($adminIps, ['127.0.0.1', '::1', $request->ip()]))
+            ->where(function($q) {
+                $q->whereDoesntHave('user.role', fn($rq) => $rq->whereIn('role_name', ['admin', 'verifikator', 'customer_service']))
+                  ->orWhereNull('user_id');
+            })
             ->latest('last_activity_at')
             ->get();
 
@@ -996,7 +1019,19 @@ class AdminController extends Controller
         try {
             $ip = $request->ip();
 
-            // Abaikan jika IP ada di whitelist manual
+            // Abaikan jika user adalah admin, verifikator, atau customer service
+            if (auth()->check()) {
+                $userRole = strtolower(auth()->user()->role?->role_name ?? '');
+                if (in_array($userRole, ['admin', 'verifikator', 'customer_service'])) {
+                    return response()->json(['ok' => true]);
+                }
+            }
+
+            // Abaikan jika IP ada di whitelist manual atau localhost
+            if (in_array($ip, ['127.0.0.1', '::1'])) {
+                return response()->json(['ok' => true]);
+            }
+
             $isWhitelisted = \Illuminate\Support\Facades\Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
                     try { return AllowedIp::where('ip_address', $ip)->exists(); } catch (\Throwable $e) { return false; }
                 });
@@ -1015,21 +1050,23 @@ class AdminController extends Controller
             }
 
             // Tentukan alasan berdasarkan metode deteksi yang dikirim JS
-            $method     = $body['method'] ?? 'unknown';
-            $methodMap  = [
-                'F12'              => 'Menekan tombol F12 (DevTools)',
-                'Ctrl+Shift+I'     => 'Menekan Ctrl+Shift+I (DevTools)',
-                'Ctrl+Shift+C'     => 'Menekan Ctrl+Shift+C (Inspect Element)',
-                'Ctrl+Shift+J'     => 'Menekan Ctrl+Shift+J (Console DevTools)',
-                'Ctrl+Shift+K'     => 'Menekan Ctrl+Shift+K (Web Console)',
-                'Ctrl+U'           => 'Membuka View Source (Ctrl+U)',
-                'right-click'      => 'Klik Kanan → Inspect Element',
-                'window-resize'    => 'DevTools Terdeteksi via Resize Window',
-                'console-getter'   => 'DevTools Terdeteksi via Console Object Getter',
-                'debugger-timing'  => 'DevTools Terdeteksi via Debugger Timing',
-                'unknown'          => 'Membuka DevTools / Inspect Element',
+            $method = $body['method'] ?? 'unknown';
+
+            // PENTING: Abaikan metode false-positive (seperti resize window, klik kanan, atau debugger timing)
+            if (in_array($method, ['window-resize', 'right-click', 'debugger-timing', 'console-getter'])) {
+                return response()->json(['ok' => true]);
+            }
+
+            $methodMap = [
+                'F12'          => 'Menekan tombol F12 (DevTools)',
+                'Ctrl+Shift+I' => 'Menekan Ctrl+Shift+I (DevTools)',
+                'Ctrl+Shift+C' => 'Menekan Ctrl+Shift+C (Inspect Element)',
+                'Ctrl+Shift+J' => 'Menekan Ctrl+Shift+J (Console DevTools)',
+                'Ctrl+Shift+K' => 'Menekan Ctrl+Shift+K (Web Console)',
+                'Ctrl+U'       => 'Membuka View Source (Ctrl+U)',
+                'unknown'      => 'Shortcut DevTools Terdeteksi',
             ];
-            $reason = 'Terdeteksi: ' . ($methodMap[$method] ?? 'Membuka DevTools / Inspect Element');
+            $reason = 'Terdeteksi: ' . ($methodMap[$method] ?? 'Shortcut DevTools Terdeteksi');
 
             $userAgent = $request->header('User-Agent') ?? 'Unknown';
 

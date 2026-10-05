@@ -1,33 +1,40 @@
 {{-- ============================================================
      KARYAKU DEVTOOLS DETECTOR - Partial Layout
      Dipasang di semua layout (admin, pembeli, penjual, verifikator, cs).
-     Mendeteksi saat user membuka DevTools / Inspect Element
-     dan melaporkannya ke server via beacon POST.
-     Admin (role: admin) dikecualikan dari pelacakan ini.
+     Mendeteksi HANYA shortcut tombol developer (F12 / Inspect)
+     PENTING:
+     1. Admin, Verifikator, dan CS DIKECUALIKAN sepenuhnya.
+     2. Window resize dan Right-click dinonaktifkan agar TIDAK
+        menimbulkan false-positive (salah deteksi) pada pengguna biasa.
 ============================================================ --}}
 
 @php
-    $currentUserRole = auth()->check() ? (auth()->user()->role?->role_name ?? '') : '';
+    $currentUserRole = auth()->check() ? strtolower(auth()->user()->role?->role_name ?? '') : '';
+    $isStaffOrAdmin  = in_array($currentUserRole, ['admin', 'verifikator', 'customer_service']);
 @endphp
 
+@if(!$isStaffOrAdmin)
 <script>
 (function() {
     'use strict';
 
-    // Hanya laporkan sekali per session page-load, jangan spam server
+    // Hanya laporkan sekali per halaman agar tidak membebani server
     let _reported = false;
 
-    // Kirim sinyal ke server bahwa DevTools terbuka
     function reportDevTools(method) {
         if (_reported) return;
         _reported = true;
 
         const url = '{{ url('/security/devtools-ping') }}';
-        const csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}';
-        const payloadObj = { _signal: 'devtools_open', method: method, ts: Date.now(), _token: csrfToken };
-        const payload = JSON.stringify(payloadObj);
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '{{ csrf_token() }}';
+        const payload = JSON.stringify({
+            _signal: 'devtools_open',
+            method: method,
+            ts: Date.now(),
+            _token: csrfToken
+        });
 
-        // Gunakan fetch biasa dengan CSRF header (sendBeacon tidak mendukung custom header dengan mudah untuk CSRF, jadi fetch lebih aman)
         fetch(url, {
             method: 'POST',
             headers: { 
@@ -40,12 +47,13 @@
     }
 
     // ─────────────────────────────────────────────
-    // METODE 1: Keyboard Shortcut DevTools
+    // Deteksi HANYA shortcut keyboard spesifik DevTools:
     // F12 / Ctrl+Shift+I / Ctrl+Shift+C / Ctrl+Shift+J / Ctrl+U
+    // (Bebas dari kesalahan resize layar atau klik kanan)
     // ─────────────────────────────────────────────
     document.addEventListener('keydown', function(e) {
         const key = e.key;
-        const ctrl = e.ctrlKey;
+        const ctrl = e.ctrlKey || e.metaKey;
         const shift = e.shiftKey;
         const keyUpper = key ? key.toUpperCase() : '';
 
@@ -57,85 +65,6 @@
         if (ctrl && keyUpper === 'U')          { reportDevTools('Ctrl+U');       return; }
     }, true);
 
-    // ─────────────────────────────────────────────
-    // METODE 2: Klik Kanan (Context Menu → "Inspect")
-    // ─────────────────────────────────────────────
-    document.addEventListener('contextmenu', function(e) {
-        reportDevTools('right-click');
-    }, true);
-
-    // ─────────────────────────────────────────────
-    // METODE 3: Window Resize Detection
-    // DevTools dock akan mempersempit window (threshold > 160px)
-    // ─────────────────────────────────────────────
-    function checkByWindowSize() {
-        const wDiff = window.outerWidth - window.innerWidth;
-        const hDiff = window.outerHeight - window.innerHeight;
-        if (wDiff > 160 || hDiff > 160) {
-            reportDevTools('window-resize');
-            return true;
-        }
-        return false;
-    }
-
-    // ─────────────────────────────────────────────
-    // METODE 4: console.log Object Getter Trick
-    // DevTools terbuka => toString() dipanggil browser
-    // ─────────────────────────────────────────────
-    function checkByConsoleGetter() {
-        if (_reported) return;
-        let triggered = false;
-        const probe = Object.defineProperty({}, 'id', {
-            get: function() { triggered = true; }
-        });
-        // Panggil tanpa menampilkan output ke konsol
-        const noop = function() {};
-        try {
-            const origLog = console.log;
-            console.log = noop;
-            console.log(probe);
-            console.log = origLog;
-        } catch(e) {}
-        if (triggered) reportDevTools('console-getter');
-    }
-
-    // ─────────────────────────────────────────────
-    // METODE 5: debugger Timing Trick
-    // Saat DevTools terbuka, 'debugger' memakan waktu lebih lama
-    // ─────────────────────────────────────────────
-    function checkByDebuggerTiming() {
-        if (_reported) return;
-        const start = performance.now();
-        // eslint-disable-next-line no-debugger
-        debugger;
-        const elapsed = performance.now() - start;
-        if (elapsed > 100) {
-            reportDevTools('debugger-timing');
-        }
-    }
-
-    // ─────────────────────────────────────────────
-    // Inisialisasi: jalankan cek sekali saat load
-    // lalu polling berkala setiap 2 detik
-    // ─────────────────────────────────────────────
-    setTimeout(function() {
-        checkByWindowSize();
-        checkByConsoleGetter();
-        checkByDebuggerTiming();
-    }, 800);
-
-    // Polling resize & console setiap 2 detik
-    setInterval(function() {
-        if (!_reported) {
-            checkByWindowSize();
-            checkByConsoleGetter();
-        }
-    }, 2000);
-
-    // Juga cek saat user meresize window
-    window.addEventListener('resize', function() {
-        if (!_reported) checkByWindowSize();
-    });
-
 })();
 </script>
+@endif

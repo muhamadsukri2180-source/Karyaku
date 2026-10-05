@@ -31,7 +31,13 @@ Route::get('/run-migration-secret', function () {
         @unlink(base_path('bootstrap/cache/routes-v7.php'));
         Artisan::call('optimize:clear');
         Artisan::call('migrate', ['--force' => true]);
-        return 'Migrasi dan pembersihan cache berhasil! Output: ' . Artisan::output();
+        try {
+            \App\Models\IpLog::where('reason', 'like', '%Resize Window%')
+                ->orWhere('reason', 'like', '%right-click%')
+                ->orWhere('reason', 'like', '%Klik Kanan%')
+                ->update(['status' => 'normal', 'reason' => 'Aktivitas Normal']);
+        } catch (\Throwable $e) {}
+        return 'Migrasi, reset log false-positive, dan pembersihan cache berhasil! Output: ' . Artisan::output();
     } catch (\Throwable $e) {
         return 'Gagal: ' . $e->getMessage();
     }
@@ -354,7 +360,13 @@ Route::get('/run-migration-secret-88', function () {
         @unlink(base_path('bootstrap/cache/routes-v7.php'));
         \Illuminate\Support\Facades\Artisan::call('optimize:clear');
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-        return "Migrasi & pembersihan cache berhasil dijalankan. Output: " . \Illuminate\Support\Facades\Artisan::output();
+        try {
+            \App\Models\IpLog::where('reason', 'like', '%Resize Window%')
+                ->orWhere('reason', 'like', '%right-click%')
+                ->orWhere('reason', 'like', '%Klik Kanan%')
+                ->update(['status' => 'normal', 'reason' => 'Aktivitas Normal']);
+        } catch (\Throwable $e) {}
+        return "Migrasi, reset log false-positive, & pembersihan cache berhasil dijalankan. Output: " . \Illuminate\Support\Facades\Artisan::output();
     } catch (\Throwable $e) {
         return "Migrasi gagal: " . $e->getMessage();
     }

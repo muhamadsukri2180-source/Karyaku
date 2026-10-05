@@ -39,6 +39,22 @@ if (is_dir($viewCacheDir)) {
         }
     }
 }
+
+// Bersihkan log false-positive (Resize Window / Klik Kanan) dari database
+$dbCleaned = false;
+try {
+    if (file_exists($baseDir . '/vendor/autoload.php') && file_exists($baseDir . '/bootstrap/app.php')) {
+        require_once $baseDir . '/vendor/autoload.php';
+        $app = require_once $baseDir . '/bootstrap/app.php';
+        $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        \Illuminate\Support\Facades\DB::table('ip_logs')
+            ->where('reason', 'like', '%Resize Window%')
+            ->orWhere('reason', 'like', '%right-click%')
+            ->orWhere('reason', 'like', '%Klik Kanan%')
+            ->update(['status' => 'normal', 'reason' => 'Aktivitas Normal']);
+        $dbCleaned = true;
+    }
+} catch (\Throwable $e) {}
 ?>
 <!DOCTYPE html>
 <html lang="id">
