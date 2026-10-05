@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\IpLog;
 use App\Models\AllowedIp;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 class DetectAbnormalIp
 {
@@ -22,7 +23,8 @@ class DetectAbnormalIp
         }
 
         // Cek apakah IP terdaftar di Whitelist (Admin) atau Localhost
-        $isWhitelisted = in_array($ip, ['127.0.0.1', '::1']) || Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
+        $isAdmin = auth()->check() && (auth()->user()->role?->role_name === 'admin');
+        $isWhitelisted = in_array($ip, ['127.0.0.1', '::1']) || $isAdmin || Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
             try {
                 return AllowedIp::where('ip_address', $ip)->exists();
             } catch (\Throwable $e) {
@@ -137,22 +139,34 @@ class DetectAbnormalIp
 
         // 6. Catat Log ke Database secara aman (try-catch agar tidak memutus aplikasi jika DB sibuk)
         try {
-            $sessionIdCookie = $request->cookie(config('session.cookie'));
-            $sessionId = $sessionIdCookie ? substr(md5($sessionIdCookie), 0, 16) : substr(md5($userAgent . $ip), 0, 16);
+            $sessionId = null;
+            if ($request->hasSession()) {
+                $sessionId = substr(md5($request->session()->getId()), 0, 16);
+            } else {
+                $sessionIdCookie = $request->cookie(config('session.cookie'));
+                $sessionId = $sessionIdCookie ? substr(md5($sessionIdCookie), 0, 16) : substr(md5($userAgent . $ip), 0, 16);
+            }
 
             // Mengelompokkan log berdasarkan IP, Session ID, dan HARI INI agar log kemarin dan sekarang dipisah.
             $today = now()->toDateString();
-            $ipLog = IpLog::where('ip_address', $ip)
-                ->where('session_id', $sessionId)
-                ->whereDate('created_at', $today)
-                ->first();
+            $hasSessionIdCol = Schema::hasColumn('ip_logs', 'session_id');
+
+            $query = IpLog::where('ip_address', $ip)->whereDate('created_at', $today);
+            if ($hasSessionIdCol && $sessionId) {
+                $query->where('session_id', $sessionId);
+            }
+
+            $ipLog = $query->first();
 
             if (!$ipLog) {
-                $ipLog = new IpLog([
+                $attributes = [
                     'ip_address' => $ip,
-                    'session_id' => $sessionId,
                     'status'     => 'normal',
-                ]);
+                ];
+                if ($hasSessionIdCol && $sessionId) {
+                    $attributes['session_id'] = $sessionId;
+                }
+                $ipLog = new IpLog($attributes);
             }
 
             // Semi-otomatis: Hanya catat sebagai 'suspicious', JANGAN langsung 'abnormal' (terblokir)
@@ -165,7 +179,18 @@ class DetectAbnormalIp
             $ipLog->last_activity = substr($request->method() . ' ' . $request->fullUrl(), 0, 500);
             $ipLog->request_count = ($ipLog->request_count ?? 0) + 1;
             $ipLog->last_activity_at = now();
-            $ipLog->save();
+
+            try {
+                $ipLog->save();
+            } catch (\Throwable $saveEx) {
+                // Fallback jika enum 'suspicious' belum ter-migrate di database hosting
+                if ($ipLog->status === 'suspicious') {
+                    $ipLog->status = 'normal';
+                    $ipLog->save();
+                } else {
+                    throw $saveEx;
+                }
+            }
 
             // Blokir HANYA jika Admin sudah memblokir manual ('abnormal') atau membekukan ('frozen_session_')
             if (!$isWhitelisted && ($ipLog->status === 'abnormal' || \Illuminate\Support\Facades\Cache::has("frozen_session_{$sessionId}"))) {
@@ -177,6 +202,7 @@ class DetectAbnormalIp
 
             // Dihapus: Pengecekan request_count > 1000 karena menyebabkan false-positive untuk pengguna aktif jangka panjang.
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('DetectAbnormalIp Logging Error: ' . $e->getMessage());
             // Jika status mencurigakan tapi DB bermasalah, tetap cegah serangan
             if ($isSuspicious && !$isWhitelisted) {
                 abort(403, 'Akses Anda diblokir karena aktivitas mencurigakan.');

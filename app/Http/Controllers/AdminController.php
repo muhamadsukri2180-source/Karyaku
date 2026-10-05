@@ -870,7 +870,9 @@ class AdminController extends Controller
     {
         if (!session()->has('security_verified_at')) return redirect()->route('admin.security.verify')->with('warning', 'Verifikasi dahulu.');
         return view('admin.security.index', [
-            'normalIps' => IpLog::where('status', 'normal')->latest('last_activity_at')->get()->groupBy('ip_address'),
+            'normalIps' => IpLog::where(function($q) {
+                $q->where('status', 'normal')->orWhereNull('status');
+            })->latest('last_activity_at')->get()->groupBy('ip_address'),
             'abnormalIps' => IpLog::whereIn('status', ['abnormal', 'suspicious'])->latest('last_activity_at')->get()->groupBy('ip_address'),
             'botIps' => IpLog::where(function($q) {
                 $q->where('reason', 'like', '%Bot%')->orWhere('reason', 'like', '%Spam%')->orWhere('reason', 'like', '%DoS%')->orWhere('reason', 'like', '%Flood%');

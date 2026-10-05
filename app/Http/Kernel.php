@@ -20,7 +20,6 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-        \App\Http\Middleware\DetectAbnormalIp::class,
     ];
 
     /**
@@ -42,6 +41,9 @@ class Kernel extends HttpKernel
 
             // Header Keamanan Cyber (Anti-XSS, Anti-Clickjacking, Anti-Sniffing)
             \App\Http\Middleware\SecurityHeaders::class,
+
+            // Deteksi & Monitoring IP Pengunjung (Normal, Suspicious, DDoS)
+            \App\Http\Middleware\DetectAbnormalIp::class,
         ],
 
         'api' => [
