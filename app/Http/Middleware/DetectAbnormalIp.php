@@ -10,6 +10,7 @@ use App\Models\LoginHistory;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Auth;
 
 class DetectAbnormalIp
 {
@@ -19,13 +20,22 @@ class DetectAbnormalIp
         $path = $request->path();
         $userAgent = $request->header('User-Agent') ?? 'Unknown';
 
-        // 1. Lewati asset statis biasa untuk efisiensi performa, kecuali jika path mencurigakan
+        // 1. Lewati asset statis biasa untuk efisiensi performa
         if (preg_match('/\.(css|js|png|jpg|jpeg|webp|gif|svg|ico|woff|woff2|ttf|map)$/i', $path)) {
             return $next($request);
         }
 
-        // Cek apakah IP terdaftar di Whitelist (Manual dari Admin)
-        $isWhitelisted = Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
+        // Cek apakah Admin/Staff sedang login (Admin, Verifikator, CS selalu dikecualikan dari pemblokiran & false-positive)
+        $isAdminOrStaff = false;
+        if (Auth::check()) {
+            $userRole = strtolower(Auth::user()->role?->role_name ?? '');
+            if (in_array($userRole, ['admin', 'verifikator', 'customer_service'])) {
+                $isAdminOrStaff = true;
+            }
+        }
+
+        // Cek apakah IP terdaftar di Whitelist (Manual dari Admin, Localhost, atau IP Admin Aktif)
+        $isWhitelisted = $isAdminOrStaff || in_array($ip, ['127.0.0.1', '::1']) || Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
             try {
                 return AllowedIp::where('ip_address', $ip)->exists();
             } catch (\Throwable $e) {
@@ -33,7 +43,60 @@ class DetectAbnormalIp
             }
         });
 
-        // 2. Daftar endpoint jebakan (Honeypot) yang sering dicari bot/peretas
+        // 2. CEK APAKAH IP DIBLOKIR / DIBEKUKAN OLEH ADMIN (BAN CHECK KETAT)
+        // Jika IP diblokir, blokir SELURUH rute (termasuk landing page '/', dashboard, dan akun).
+        if (!$isWhitelisted) {
+            $isBanned = Cache::has("banned_ip_{$ip}");
+            $banReason = null;
+
+            if ($isBanned) {
+                $banReason = Cache::get("banned_ip_{$ip}");
+            } else {
+                // Periksa di database jika cache belum ada
+                try {
+                    $bannedLog = IpLog::where('ip_address', $ip)
+                        ->where('status', 'abnormal')
+                        ->latest('last_activity_at')
+                        ->first();
+
+                    if ($bannedLog) {
+                        $isBanned = true;
+                        $banReason = $bannedLog->reason ?: 'Akses Anda diblokir oleh Administrator sistem.';
+                        Cache::put("banned_ip_{$ip}", $banReason, 86400);
+                    }
+                } catch (\Throwable $e) {}
+            }
+
+            // Periksa session freeze jika ada
+            if (!$isBanned && $request->hasSession()) {
+                $sessId = substr(md5($request->session()->getId()), 0, 16);
+                if (Cache::has("frozen_session_{$sessId}")) {
+                    $isBanned = true;
+                    $banReason = 'Sesi Anda sedang dibekukan oleh Administrator.';
+                }
+            }
+
+            // JIKA TERKONFIRMASI DIBLOKIR:
+            if ($isBanned) {
+                // 1. Putuskan sesi login pengguna jika ada agar akun tidak bisa dilihat lagi
+                if (Auth::check()) {
+                    Auth::logout();
+                    if ($request->hasSession()) {
+                        $request->session()->invalidate();
+                        $request->session()->regenerateToken();
+                    }
+                }
+
+                // 2. Tampilkan halaman khusus IP DIBLOKIR (Errors 403 / ip-blocked)
+                return response()->view('errors.ip-blocked', [
+                    'ip'         => $ip,
+                    'reason'     => $banReason ?: 'Akses Anda diblokir sementara oleh Admin karena aktivitas mencurigakan atau pembekuan akun.',
+                    'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
+                ], 403);
+            }
+        }
+
+        // 3. Daftar endpoint jebakan (Honeypot) yang sering dicari bot/peretas
         $suspiciousPaths = [
             'wp-admin', 'wp-login.php', '.env', 'phpmyadmin', 
             'admin.php', 'config.json', 'backup.sql', 'xmlrpc.php',
@@ -53,15 +116,15 @@ class DetectAbnormalIp
             }
         }
 
-        // 3. Cek SQL Injection dan XSS dari Input Data dan URL
-        if (!$isSuspicious && !$isWhitelisted && !$request->is('admin/product*') && !$request->is('seller/product*')) {
+        // 4. Cek SQL Injection dan XSS dari Input Data dan URL (Hanya untuk non-whitelist)
+        if (!$isSuspicious && !$isWhitelisted && !$isAdminOrStaff && !$request->is('admin/product*') && !$request->is('seller/product*')) {
             $inputData = urldecode($request->fullUrl()) . ' ' . json_encode($request->all());
 
             // Pola SQLi yang dipertajam (Akurasi Tinggi, Bebas False-Positive)
             $sqliPatterns = [
                 '/\bunion\s+(all\s+)?select\b/i',
                 '/\b(drop|truncate|alter)\s+table\b/i',
-                '/\b(and|or)\b\s+[\'"]?\d+[\'"]?\s*=\s*[\'"]?\d+/i', // Contoh: or 1=1
+                '/\b(and|or)\b\s+[\'"]?\d+[\'"]?\s*=\s*[\'"]?\d+/i',
                 '/\binformation_schema\b/i',
                 '/\bload_file\s*\(/i',
                 '/\binto\s+(outfile|dumpfile)\b/i',
@@ -97,8 +160,8 @@ class DetectAbnormalIp
             }
         }
 
-        // 4. Deteksi Bot / Scraper dari User-Agent
-        if (!$isSuspicious && !$isWhitelisted) {
+        // 5. Deteksi Bot / Scraper dari User-Agent (Hanya untuk non-whitelist)
+        if (!$isSuspicious && !$isWhitelisted && !$isAdminOrStaff) {
             $lowerUa = strtolower($userAgent);
             
             // Jika User-Agent benar-benar kosong atau terlalu pendek
@@ -124,8 +187,8 @@ class DetectAbnormalIp
             }
         }
 
-        // 5. Deteksi DDoS & Rate Flooding (>120 request/menit untuk non-whitelist)
-        if (!$isWhitelisted) {
+        // 6. Deteksi DDoS & Rate Flooding (>120 request/menit untuk non-whitelist)
+        if (!$isWhitelisted && !$isAdminOrStaff) {
             $floodKey = "ddos_flood_count_{$ip}";
             $reqInMinute = Cache::increment($floodKey);
             if ($reqInMinute === 1) {
@@ -138,7 +201,7 @@ class DetectAbnormalIp
             }
         }
 
-        // 6. Catat Log ke Database secara aman (try-catch agar tidak memutus aplikasi jika DB sibuk)
+        // 7. Catat Log ke Database secara aman
         try {
             $sessionId = null;
             if ($request->hasSession()) {
@@ -148,7 +211,7 @@ class DetectAbnormalIp
                 $sessionId = $sessionIdCookie ? substr(md5($sessionIdCookie), 0, 16) : substr(md5($userAgent . $ip), 0, 16);
             }
 
-            // Mengelompokkan log berdasarkan IP, Session ID, dan HARI INI agar log kemarin dan sekarang dipisah.
+            // Mengelompokkan log berdasarkan IP, Session ID, dan HARI INI
             $today = now()->toDateString();
             $hasSessionIdCol = Schema::hasColumn('ip_logs', 'session_id');
 
@@ -170,8 +233,17 @@ class DetectAbnormalIp
                 $ipLog = new IpLog($attributes);
             }
 
-            // Semi-otomatis: Hanya catat sebagai 'suspicious', JANGAN langsung 'abnormal' (terblokir)
-            if ($isSuspicious && !$isWhitelisted && $ipLog->status !== 'abnormal') {
+            // Pembersihan otomatis: jika log sebelumnya pernah mencatat false positive devtools/resize window, normalkan
+            if ($ipLog->status === 'suspicious') {
+                $r = $ipLog->reason ?? '';
+                if (str_contains($r, 'Resize Window') || str_contains($r, 'right-click') || str_contains($r, 'Klik Kanan') || str_contains($r, 'DevTools Terdeteksi via Resize Window')) {
+                    $ipLog->status = 'normal';
+                    $ipLog->reason = 'Aktivitas Normal Pengguna';
+                }
+            }
+
+            // Semi-otomatis: Hanya catat sebagai 'suspicious' jika benar-benar terdeteksi ancaman dan bukan whitelist/staff
+            if ($isSuspicious && !$isWhitelisted && !$isAdminOrStaff && $ipLog->status !== 'abnormal') {
                 $ipLog->status = 'suspicious';
                 $ipLog->reason = $reason;
             }
@@ -202,7 +274,6 @@ class DetectAbnormalIp
             try {
                 $ipLog->save();
             } catch (\Throwable $saveEx) {
-                // Fallback jika enum 'suspicious' belum ter-migrate di database hosting
                 if ($ipLog->status === 'suspicious') {
                     $ipLog->status = 'normal';
                     $ipLog->save();
@@ -211,19 +282,25 @@ class DetectAbnormalIp
                 }
             }
 
-            // Blokir HANYA jika Admin sudah memblokir manual ('abnormal') atau membekukan ('frozen_session_')
-            if (!$isWhitelisted && ($ipLog->status === 'abnormal' || \Illuminate\Support\Facades\Cache::has("frozen_session_{$sessionId}"))) {
-                if (str_contains($ipLog->reason ?? '', 'DoS') || str_contains($ipLog->reason ?? '', 'Flooding')) {
-                    abort(429, 'Terlalu banyak permintaan (DDoS Mitigation System). Silakan tunggu beberapa saat.');
+            // Blokir HANYA jika Admin sudah memblokir manual ('abnormal')
+            if (!$isWhitelisted && $ipLog->status === 'abnormal') {
+                if (Auth::check()) {
+                    Auth::logout();
+                    if ($request->hasSession()) {
+                        $request->session()->invalidate();
+                        $request->session()->regenerateToken();
+                    }
                 }
-                abort(403, 'Akses Anda diblokir sementara oleh Admin karena aktivitas mencurigakan atau pembekuan akun.');
+                return response()->view('errors.ip-blocked', [
+                    'ip'         => $ip,
+                    'reason'     => $ipLog->reason ?: 'Alamat IP Anda diblokir oleh Administrator.',
+                    'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
+                ], 403);
             }
 
-            // Dihapus: Pengecekan request_count > 1000 karena menyebabkan false-positive untuk pengguna aktif jangka panjang.
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('DetectAbnormalIp Logging Error: ' . $e->getMessage());
-            // Jika status mencurigakan tapi DB bermasalah, tetap cegah serangan
-            if ($isSuspicious && !$isWhitelisted) {
+            if ($isSuspicious && !$isWhitelisted && !$isAdminOrStaff) {
                 abort(403, 'Akses Anda diblokir karena aktivitas mencurigakan.');
             }
         }

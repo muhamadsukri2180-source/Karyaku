@@ -111,7 +111,6 @@
         if (sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', toggleSidebar);
         if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
     </script>
-@include('layouts.partials.devtools-detector')
 @stack('scripts')
 </body>
 </html>
