@@ -331,3 +331,13 @@ Route::middleware(['auth', 'suspended', 'role:customer_service'])->prefix('cs')-
 
     Route::get('/notifikasi', [CsController::class, 'notifikasi'])->name('notifikasi');
 });
+
+// ROUTE RAHASIA UNTUK MIGRASI DI HOSTING FTP
+Route::get('/run-migration-secret-88', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return "Migrasi berhasil dijalankan. Output: " . \Illuminate\Support\Facades\Artisan::output();
+    } catch (\Exception $e) {
+        return "Migrasi gagal: " . $e->getMessage();
+    }
+});
