@@ -49,6 +49,12 @@
                         $first = $logs->sortByDesc('last_activity_at')->first();
                         $totalReq = $logs->sum('request_count');
                         $groupId = 'abnormal-'.$loop->index;
+                        $userObj = $logs->first(fn($l) => $l->user !== null)?->user;
+                        $userLabel = $userObj?->name ?? $userObj?->email;
+                        if (!$userLabel) {
+                            $loginHist = \App\Models\LoginHistory::where('ip_address', $ipAddress)->whereNotNull('username')->latest()->first();
+                            if ($loginHist) { $userLabel = $loginHist->username; }
+                        }
                     @endphp
                     <tr class="hover:bg-red-50/40 transition-colors bg-white odd:bg-slate-50/30 whitespace-nowrap">
                         <td class="py-4 px-6 font-mono font-bold text-red-600">
@@ -58,8 +64,8 @@
                                     {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
                                 </button>
                             </div>
-                            @if($first->user)
-                                <div class="text-[10px] font-sans font-medium text-red-800 mt-1"><i class="fa-solid fa-user text-[9px] mr-1"></i> {{ $first->user->name ?? $first->user->email }}</div>
+                            @if($userLabel)
+                                <div class="text-[10px] font-sans font-medium text-red-800 mt-1 flex items-center gap-1"><i class="fa-solid fa-user text-[9px] mr-0.5"></i> <span>{{ $userLabel }}</span></div>
                             @endif
                         </td>
                         <td class="py-4 px-6 text-slate-700 font-semibold max-w-xs truncate">{{ $first->reason ?? '-' }}</td>
@@ -161,6 +167,12 @@
                         $first = $logs->sortByDesc('last_activity_at')->first();
                         $totalReq = $logs->sum('request_count');
                         $groupId = 'normal-'.$loop->index;
+                        $userObj = $logs->first(fn($l) => $l->user !== null)?->user;
+                        $userLabel = $userObj?->name ?? $userObj?->email;
+                        if (!$userLabel) {
+                            $loginHist = \App\Models\LoginHistory::where('ip_address', $ipAddress)->whereNotNull('username')->latest()->first();
+                            if ($loginHist) { $userLabel = $loginHist->username; }
+                        }
                     @endphp
                     <tr class="hover:bg-amber-100/80 transition-colors bg-white odd:bg-amber-50/50 whitespace-nowrap">
                         <td class="py-4 px-6 font-mono font-bold text-amber-900">
@@ -170,8 +182,8 @@
                                     {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
                                 </button>
                             </div>
-                            @if($first->user)
-                                <div class="text-[10px] font-sans font-medium text-amber-700 mt-1"><i class="fa-solid fa-user text-[9px] mr-1"></i> {{ $first->user->name ?? $first->user->email }}</div>
+                            @if($userLabel)
+                                <div class="text-[10px] font-sans font-medium text-amber-800 mt-1 flex items-center gap-1"><i class="fa-solid fa-user text-[9px] mr-0.5"></i> <span>{{ $userLabel }}</span></div>
                             @endif
                         </td>
                         <td class="py-4 px-6 font-mono text-[11px] text-amber-900 max-w-xs truncate">{{ $first->last_activity }}</td>
