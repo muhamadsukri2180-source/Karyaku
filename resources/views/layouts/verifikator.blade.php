@@ -111,6 +111,6 @@
         if (sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', toggleSidebar);
         if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
     </script>
-    @stack('scripts')
+@stack('scripts')
 </body>
 </html>

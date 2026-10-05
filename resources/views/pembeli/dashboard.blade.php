@@ -278,6 +278,31 @@
         min-height: 380px;
     }
 
+    .hero-pop-empty-card {
+        background: #ffffff;
+        border: 2px dashed #cbd5e1;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+        min-height: 380px;
+        transition: all 0.25s ease;
+    }
+    .hero-pop-empty-card:hover {
+        border-color: #2563eb;
+        background: #f8fafc;
+    }
+    .pop-empty-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 20px;
+        background: #eff6ff;
+        color: #2563eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.1);
+    }
+
     .hero-pop-card-top {
         flex: 1.25;
         position: relative;
@@ -669,35 +694,51 @@
                                 </div>
                             </div>
                         </a>
+
+                        @if($pop2 || $pop3)
+                            <div class="hero-pop-bottom-row">
+                                @if($pop2)
+                                    <a href="{{ route('pembeli.produk.detail', $pop2->id_product) }}" class="hero-pop-card-sm text-decoration-none" title="{{ $pop2->title }}">
+                                        <img src="{{ $pop2->image_url }}" alt="{{ $pop2->title }}" class="pop-card-img" onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($pop2->title) }}&background=4f46e5&color=fff&size=256&bold=true'">
+                                        <div class="pop-card-overlay-sm">
+                                            <h6 class="pop-title-sm text-truncate">{{ $pop2->title }}</h6>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="pop-price-sm">Rp {{ number_format($pop2->price, 0, ',', '.') }}</span>
+                                                <span class="pop-seller-sm text-truncate">{{ $pop2->seller->name ?? '' }}</span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                @endif
+
+                                @if($pop3)
+                                    <a href="{{ route('pembeli.produk.detail', $pop3->id_product) }}" class="hero-pop-card-sm text-decoration-none" title="{{ $pop3->title }}">
+                                        <img src="{{ $pop3->image_url }}" alt="{{ $pop3->title }}" class="pop-card-img" onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($pop3->title) }}&background=059669&color=fff&size=256&bold=true'">
+                                        <div class="pop-card-overlay-sm">
+                                            <h6 class="pop-title-sm text-truncate">{{ $pop3->title }}</h6>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="pop-price-sm">Rp {{ number_format($pop3->price, 0, ',', '.') }}</span>
+                                                <span class="pop-seller-sm text-truncate">{{ $pop3->seller->name ?? '' }}</span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                @endif
+                            </div>
+                        @endif
+                    @else
+                        {{-- EMPTY STATE APABILA PRODUK BELUM TERSEDIA --}}
+                        <div class="hero-pop-empty-card d-flex flex-column align-items-center justify-content-center text-center p-4 h-100">
+                            <div class="pop-empty-icon mb-3">
+                                <i class="bi bi-box-seam-fill"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-1">Produk Tidak Tersedia</h6>
+                            <p class="small text-muted mb-3" style="max-width: 280px; font-size: 12px; line-height: 1.5;">
+                                Belum ada produk populer yang tersedia saat ini. Silakan jelajahi karya digital lainnya di marketplace.
+                            </p>
+                            <a href="{{ route('pembeli.marketplace') }}" class="btn btn-sm btn-primary fw-bold px-4 py-2 rounded-pill shadow-sm">
+                                <i class="bi bi-shop me-1"></i> Jelajahi Marketplace
+                            </a>
+                        </div>
                     @endif
-
-                    <div class="hero-pop-bottom-row">
-                        @if($pop2)
-                            <a href="{{ route('pembeli.produk.detail', $pop2->id_product) }}" class="hero-pop-card-sm text-decoration-none" title="{{ $pop2->title }}">
-                                <img src="{{ $pop2->image_url }}" alt="{{ $pop2->title }}" class="pop-card-img" onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($pop2->title) }}&background=4f46e5&color=fff&size=256&bold=true'">
-                                <div class="pop-card-overlay-sm">
-                                    <h6 class="pop-title-sm text-truncate">{{ $pop2->title }}</h6>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="pop-price-sm">Rp {{ number_format($pop2->price, 0, ',', '.') }}</span>
-                                        <span class="pop-seller-sm text-truncate">{{ $pop2->seller->name ?? '' }}</span>
-                                    </div>
-                                </div>
-                            </a>
-                        @endif
-
-                        @if($pop3)
-                            <a href="{{ route('pembeli.produk.detail', $pop3->id_product) }}" class="hero-pop-card-sm text-decoration-none" title="{{ $pop3->title }}">
-                                <img src="{{ $pop3->image_url }}" alt="{{ $pop3->title }}" class="pop-card-img" onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($pop3->title) }}&background=059669&color=fff&size=256&bold=true'">
-                                <div class="pop-card-overlay-sm">
-                                    <h6 class="pop-title-sm text-truncate">{{ $pop3->title }}</h6>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="pop-price-sm">Rp {{ number_format($pop3->price, 0, ',', '.') }}</span>
-                                        <span class="pop-seller-sm text-truncate">{{ $pop3->seller->name ?? '' }}</span>
-                                    </div>
-                                </div>
-                            </a>
-                        @endif
-                    </div>
                 </div>
             </div>
         </div>

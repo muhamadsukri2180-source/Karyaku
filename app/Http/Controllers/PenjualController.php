@@ -15,6 +15,7 @@ use App\Models\Withdrawal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Services\CloudinaryService;
 
 class PenjualController extends Controller
 {
@@ -154,21 +155,33 @@ class PenjualController extends Controller
             'images'      => 'nullable|array|max:5',
             'images.*'    => 'image|mimes:jpeg,png,jpg,webp|max:4096',
             'video'       => 'nullable|file|mimes:mp4,webm,ogg,mov,avi|max:51200',
-            'file'        => 'required|file|max:51200',
+            'file'        => 'required|file|mimes:zip,rar,7z,tar,gz,pdf,doc,docx,xls,xlsx,ppt,pptx,psd,ai,fig,sketch,mp3,wav,ogg,mp4,mkv,avi,png,jpg,jpeg,webp,txt,epub,csv|max:51200',
+        ], [
+            'file.mimes'  => 'Format file digital tidak diizinkan. Gunakan format arsip (ZIP/RAR), dokumen, gambar, audio, atau video yang aman.',
+            'file.max'    => 'Ukuran file digital maksimal adalah 50MB.',
         ]);
 
-        $thumbPath = $request->hasFile('thumbnail') ? $request->file('thumbnail')->store('products/thumbnails', 'public') : null;
+        // Verifikasi keamanan tambahan: Blokir ekstensi berbahaya (Malware / Script Executable Prevention)
+        $dangerousExtensions = ['php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phar', 'exe', 'bat', 'sh', 'cmd', 'cgi', 'pl', 'py', 'jar', 'vbs', 'com', 'scr', 'msi', 'htm', 'html', 'js', 'svg'];
+        if ($request->hasFile('file')) {
+            $ext = strtolower($request->file('file')->getClientOriginalExtension());
+            if (in_array($ext, $dangerousExtensions)) {
+                return back()->withInput()->with('error', "Ekstensi file (.{$ext}) terdeteksi berisiko/berbahaya dan ditolak demi keamanan server.");
+            }
+        }
+
+        $thumbPath = $request->hasFile('thumbnail') ? CloudinaryService::uploadFile($request->file('thumbnail'), 'products/thumbnails', 'products/thumbnails') : null;
         
         $galleryPaths = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $imgFile) {
                 if (count($galleryPaths) < 5) {
-                    $galleryPaths[] = $imgFile->store('products/gallery', 'public');
+                    $galleryPaths[] = CloudinaryService::uploadFile($imgFile, 'products/gallery', 'products/gallery');
                 }
             }
         }
 
-        $videoPath = $request->hasFile('video') ? $request->file('video')->store('products/videos', 'public') : null;
+        $videoPath = $request->hasFile('video') ? CloudinaryService::uploadFile($request->file('video'), 'products/videos', 'products/videos') : null;
         $filePath = $request->hasFile('file') ? $request->file('file')->store('products/files', 'public') : null;
 
         Product::create([
@@ -216,14 +229,26 @@ class PenjualController extends Controller
             'images'      => 'nullable|array|max:5',
             'images.*'    => 'image|mimes:jpeg,png,jpg,webp|max:4096',
             'video'       => 'nullable|file|mimes:mp4,webm,ogg,mov,avi|max:51200',
-            'file'        => 'nullable|file|max:51200',
+            'file'        => 'nullable|file|mimes:zip,rar,7z,tar,gz,pdf,doc,docx,xls,xlsx,ppt,pptx,psd,ai,fig,sketch,mp3,wav,ogg,mp4,mkv,avi,png,jpg,jpeg,webp,txt,epub,csv|max:51200',
+        ], [
+            'file.mimes'  => 'Format file digital tidak diizinkan. Gunakan format arsip (ZIP/RAR), dokumen, gambar, audio, atau video yang aman.',
+            'file.max'    => 'Ukuran file digital maksimal adalah 50MB.',
         ]);
 
+        // Verifikasi keamanan tambahan: Blokir ekstensi berbahaya (Malware / Script Executable Prevention)
+        $dangerousExtensions = ['php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phar', 'exe', 'bat', 'sh', 'cmd', 'cgi', 'pl', 'py', 'jar', 'vbs', 'com', 'scr', 'msi', 'htm', 'html', 'js', 'svg'];
+        if ($request->hasFile('file')) {
+            $ext = strtolower($request->file('file')->getClientOriginalExtension());
+            if (in_array($ext, $dangerousExtensions)) {
+                return back()->withInput()->with('error', "Ekstensi file (.{$ext}) terdeteksi berisiko/berbahaya dan ditolak demi keamanan server.");
+            }
+        }
+
         if ($request->hasFile('thumbnail')) {
-            if ($product->thumbnail && Storage::disk('public')->exists($product->thumbnail)) {
+            if ($product->thumbnail && !str_starts_with($product->thumbnail, 'http') && Storage::disk('public')->exists($product->thumbnail)) {
                 Storage::disk('public')->delete($product->thumbnail);
             }
-            $product->thumbnail = $request->file('thumbnail')->store('products/thumbnails', 'public');
+            $product->thumbnail = CloudinaryService::uploadFile($request->file('thumbnail'), 'products/thumbnails', 'products/thumbnails');
         }
 
         $galleryPaths = is_array($product->images) ? $product->images : [];
@@ -231,17 +256,17 @@ class PenjualController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $imgFile) {
                 if (count($galleryPaths) < 5) {
-                    $galleryPaths[] = $imgFile->store('products/gallery', 'public');
+                    $galleryPaths[] = CloudinaryService::uploadFile($imgFile, 'products/gallery', 'products/gallery');
                 }
             }
         }
         $product->images = array_slice($galleryPaths, 0, 5);
 
         if ($request->hasFile('video')) {
-            if ($product->video && Storage::disk('public')->exists($product->video)) {
+            if ($product->video && !str_starts_with($product->video, 'http') && Storage::disk('public')->exists($product->video)) {
                 Storage::disk('public')->delete($product->video);
             }
-            $product->video = $request->file('video')->store('products/videos', 'public');
+            $product->video = CloudinaryService::uploadFile($request->file('video'), 'products/videos', 'products/videos');
         }
 
         if ($request->hasFile('file')) {
@@ -319,7 +344,7 @@ class PenjualController extends Controller
         ];
 
         if ($request->hasFile('ad_video')) {
-            $videoPath = $request->file('ad_video')->store('products/videos', 'public');
+            $videoPath = CloudinaryService::uploadFile($request->file('ad_video'), 'products/videos', 'products/videos');
             $updateData['video'] = $videoPath;
         }
 
@@ -470,7 +495,7 @@ class PenjualController extends Controller
             'payment_proof.max'       => 'Ukuran foto bukti transfer tidak boleh lebih dari 3 MB.',
         ]);
 
-        $proofPath = $request->file('payment_proof')->store('identity-verifications/payment', 'public');
+        $proofPath = CloudinaryService::uploadFile($request->file('payment_proof'), 'verifications/payments', 'identity-verifications/payment');
 
         $lastVerif = IdentityVerification::where('user_id', $user->id_user)->latest('id_identity_verification')->first();
 

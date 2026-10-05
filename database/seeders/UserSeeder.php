@@ -19,17 +19,17 @@ class UserSeeder extends Seeder
         }
 
         User::updateOrCreate(
-            ['email' => 'admin@karyaku.com'], // kunci pencarian, biar tidak duplikat kalau di-seed ulang
+            ['email' => 'admin.secured@karyaku.com'], // Kunci pencarian berdasar email
             [
                 'id_role'  => $adminRole->id_role,
-                'name'     => 'admin',
-                'password' => Hash::make('admin123'),
+                'name'     => 'Admin_KaryakuX#77Secure',
+                'password' => Hash::make('KaryakuAdm!n#2026$ecureZ7'),
                 'phone'    => null,
                 'avatar'   => null,
                 'status'   => 'active',
             ]
         );
 
-        $this->command->info('Admin user berhasil dibuat: admin / admin123');
+        $this->command->info('Admin user berhasil diperbarui: Admin_KaryakuX#77Secure / KaryakuAdm!n#2026$ecureZ7');
     }
 }

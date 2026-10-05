@@ -66,6 +66,13 @@
         .menu-chevron { transition: transform .3s ease; }
         .menu-chevron.rotated { transform: rotate(180deg); }
 
+        .active-tab {
+            background-color: #f0f9ff !important; /* bg-sky-50 */
+            color: #0284c7 !important; /* text-sky-600 */
+            border-color: #bae6fd !important; /* border-sky-200 */
+            box-shadow: 0 2px 4px rgba(14, 165, 233, 0.1);
+        }
+
         .card-hover {
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             cursor: default;
@@ -364,7 +371,7 @@
                     <span>Pelanggaran</span>
                 </a>
 
-                 <a href="{{ route('admin.security.index') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl {{ request()->routeIs('admin.security.*') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }} transition-all group mt-1">
+                 <a href="{{ route('admin.security.verify') }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl {{ request()->routeIs('admin.security.*') ? 'active-menu' : 'hover:bg-white/10 hover:text-white' }} transition-all group mt-1">
                     <i class="fa-solid fa-shield-halved w-4 text-center text-white"></i><span>Keamanan System</span>
                 </a>
 
@@ -483,6 +490,7 @@
         if (sidebarToggleBtn) sidebarToggleBtn.addEventListener('click', toggleSidebar);
         if (sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', toggleSidebar);
         if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
+    </script>
     </script>
     @stack('scripts')
 </body>

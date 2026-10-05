@@ -33,6 +33,12 @@
         @media (max-width: 1023px) { #sidebar.closed { transform: translateX(-100%); } #sidebar.open { transform: translateX(0); } }
         .card-hover { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); cursor: default; }
         .card-hover:hover { transform: scale(1.025) translateY(-5px); box-shadow: 0 20px 35px -10px rgba(14, 165, 233, 0.3); border-color: rgba(14, 165, 233, 0.6); }
+        .active-tab {
+            background-color: #f0f9ff !important; /* bg-sky-50 */
+            color: #0284c7 !important; /* text-sky-600 */
+            border-color: #bae6fd !important; /* border-sky-200 */
+            box-shadow: 0 2px 4px rgba(14, 165, 233, 0.1);
+        }
     </style>
     @stack('styles')
 </head>

@@ -1,4 +1,4 @@
-﻿@extends('layouts.penjual')
+@extends('layouts.penjual')
 @section('title', 'Paket Membership Penjual')
 
 @section('content')
@@ -30,14 +30,93 @@
         box-shadow: var(--shadow-hover);
     }
 
+    /* ====== KARTU MEMBERSHIP MODERN ====== */
     .kk-membership {
         position: relative;
-        transition: transform .25s ease, box-shadow .25s ease;
-        border-radius: 20px;
+        transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 22px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0 !important;
+        background: #ffffff;
     }
     .kk-membership:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--shadow-hover);
+        transform: translateY(-6px);
+        box-shadow: 0 18px 36px rgba(37, 99, 235, 0.13) !important;
+    }
+
+    .kk-membership.is-featured {
+        border: 2px solid var(--primary) !important;
+        background: linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%);
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.12) !important;
+    }
+    .kk-membership.is-current-plan {
+        border: 2px solid #10b981 !important;
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.12) !important;
+    }
+
+    .plan-header-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        text-align: center;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #ffffff;
+        font-size: 10.5px;
+        font-weight: 800;
+        padding: 5px 0;
+        letter-spacing: .5px;
+        text-transform: uppercase;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .plan-icon-wrapper {
+        width: 50px;
+        height: 50px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+        transition: transform .25s ease;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    }
+    .kk-membership:hover .plan-icon-wrapper {
+        transform: scale(1.08) rotate(-4deg);
+    }
+
+    .plan-feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 20px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 11px;
+    }
+    .plan-feature-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 12.5px;
+        color: #334155;
+    }
+    .plan-feature-icon {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #dcfce7;
+        color: #16a34a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+    .plan-feature-icon.highlight {
+        background: #dbeafe;
+        color: #2563eb;
     }
 
     .upload-zone {
@@ -223,50 +302,84 @@
         @php
             $isCurrent = $user->id_membership == $m->id_membership && !$isExpired;
             $lower = strtolower($m->name);
-            $isDiamond = str_contains($lower, 'diamond') || str_contains($lower, 'platinum');
-            $isGold = str_contains($lower, 'gold');
+            $isDiamond = str_contains($lower, 'diamond') || str_contains($lower, 'platinum') || str_contains($lower, 'pro') || str_contains($lower, 'bisnis');
+            $isGold = str_contains($lower, 'gold') || str_contains($lower, 'perak') || str_contains($lower, 'silver');
+            
+            if ($isDiamond) {
+                $iconClass = 'bi-gem';
+                $iconBg = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
+                $iconColor = '#ffffff';
+                $tierBadge = 'PRO TIER';
+                $tierBadgeBg = '#dbeafe';
+                $tierBadgeColor = '#1e40af';
+            } elseif ($isGold) {
+                $iconClass = 'bi-award-fill';
+                $iconBg = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+                $iconColor = '#ffffff';
+                $tierBadge = 'PLUS TIER';
+                $tierBadgeBg = '#fef3c7';
+                $tierBadgeColor = '#92400e';
+            } else {
+                $iconClass = 'bi-shield-check';
+                $iconBg = '#eff6ff';
+                $iconColor = '#2563eb';
+                $tierBadge = 'BASIC TIER';
+                $tierBadgeBg = '#f1f5f9';
+                $tierBadgeColor = '#475569';
+            }
         @endphp
         <div class="col-md-6 col-lg-3">
-            <div class="kk-card kk-membership p-4 h-100 {{ $isDiamond ? 'shadow' : '' }} d-flex flex-column justify-content-between" style="{{ $isDiamond ? 'border-color: var(--primary) !important; background: linear-gradient(180deg, #ffffff 0%, #f0f7ff 100%);' : '' }}">
-                @if($isDiamond)
-                    <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill px-3 py-1.5 shadow fw-bold" style="font-size: 10.5px; background:var(--primary); color:#fff; letter-spacing:.3px;">
-                        <i class="bi bi-star-fill me-1"></i> REKOMENDASI UTAMA
-                    </span>
+            <div class="kk-card kk-membership p-4 h-100 d-flex flex-column justify-content-between {{ $isDiamond ? 'is-featured' : ($isCurrent ? 'is-current-plan' : '') }}" style="{{ ($isCurrent || $isDiamond || $isGold) ? 'padding-top: 2.2rem !important;' : '' }}">
+                
+                @if($isCurrent)
+                    <div class="plan-header-badge" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        <i class="bi bi-check-circle-fill me-1"></i> PAKET AKTIF SAAT INI
+                    </div>
+                @elseif($isDiamond)
+                    <div class="plan-header-badge">
+                        <i class="bi bi-star-fill me-1 text-warning"></i> REKOMENDASI UTAMA
+                    </div>
+                @elseif($isGold)
+                    <div class="plan-header-badge" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <i class="bi bi-fire me-1 text-warning"></i> PAKET POPULER
+                    </div>
                 @endif
 
-                <div>
+                <div class="{{ ($isCurrent || $isDiamond || $isGold) ? 'mt-2' : '' }}">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div>
-                            <h5 class="fw-bold mb-0" style="color: {{ $isDiamond ? 'var(--primary)' : 'var(--text-dark)' }};">{{ $m->name }}</h5>
-                            @if($isCurrent)
-                                <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold mt-1" style="font-size:10px;">Paket Anda Saat Ini</span>
-                            @endif
+                            <span class="badge px-2.5 py-1 rounded-pill fw-bold text-uppercase mb-1" style="font-size:10px; background: {{ $tierBadgeBg }}; color: {{ $tierBadgeColor }};">
+                                {{ $tierBadge }}
+                            </span>
+                            <h5 class="fw-bold mb-0" style="color:var(--text-dark);">{{ $m->name }}</h5>
                         </div>
-                        <div class="rounded-circle p-2.5 d-flex align-items-center justify-content-center" style="width:42px; height:42px; background: {{ $isDiamond ? 'var(--primary-light)' : ($isGold ? '#fff7ed' : '#f8fafc') }}; color: {{ $isDiamond ? 'var(--primary)' : ($isGold ? '#f59e0b' : '#64748b') }};">
-                            <i class="bi {{ $isDiamond ? 'bi-gem' : ($isGold ? 'bi-award' : 'bi-shield-check') }} fs-5"></i>
+                        <div class="plan-icon-wrapper" style="background: {{ $iconBg }}; color: {{ $iconColor }};">
+                            <i class="bi {{ $iconClass }}"></i>
                         </div>
                     </div>
 
-                    <div class="mb-3 pb-3" style="border-bottom: 1px solid var(--border-color);">
+                    <div class="mb-3 pb-3 border-bottom">
                         <div class="d-flex align-items-baseline gap-1">
-                            <h3 class="fw-bold mb-0" style="color:var(--text-dark);">Rp {{ number_format($m->price, 0, ',', '.') }}</h3>
+                            <h3 class="fw-extrabold mb-0" style="color:var(--text-dark); letter-spacing:-.5px;">Rp {{ number_format($m->price, 0, ',', '.') }}</h3>
                         </div>
-                        <small style="color:var(--text-muted);"><i class="bi bi-calendar-check me-1"></i>Masa aktif <strong>{{ $m->duration_days }} hari</strong></small>
+                        <div class="small text-muted mt-1">
+                            <i class="bi bi-clock-history me-1 text-primary"></i> Masa aktif <strong>{{ $m->duration_days }} hari</strong>
+                        </div>
                     </div>
 
-                    <ul class="list-unstyled small mb-4 d-flex flex-column gap-2.5" style="color:var(--text-muted);">
-                        <li class="d-flex align-items-center gap-2">
-                            <i class="bi bi-check-circle-fill text-success"></i>
+                    <ul class="plan-feature-list">
+                        <li class="plan-feature-item">
+                            <span class="plan-feature-icon"><i class="bi bi-check-lg"></i></span>
                             <span>Batas Unggah: <strong class="text-dark">{{ $m->max_upload }} Produk</strong></span>
                         </li>
-                        <li class="d-flex align-items-center gap-2">
-                            <i class="bi bi-check-circle-fill text-success"></i>
-                            <span>Durasi Paket: <strong class="text-dark">{{ $m->duration_days }} Hari</strong></span>
+                        <li class="plan-feature-item">
+                            <span class="plan-feature-icon"><i class="bi bi-check-lg"></i></span>
+                            <span>Durasi Paket: <strong class="text-dark">{{ $m->duration_days }} Hari Masa Berlaku</strong></span>
                         </li>
                         @if($isDiamond || $isGold)
-                            <li class="d-flex align-items-center gap-2">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                                <span>Fitur Iklan Video: <strong class="text-primary">Tersedia</strong></span>
+                            <li class="plan-feature-item">
+                                <span class="plan-feature-icon highlight"><i class="bi bi-broadcast"></i></span>
+                                <span>Fitur Iklan Video: <strong class="text-primary">Tersedia di Dashboard</strong></span>
                             </li>
                         @endif
                         @if($m->benefit)
@@ -275,8 +388,8 @@
                             @endphp
                             @foreach($benefitsList as $b)
                                 @if(trim($b))
-                                    <li class="d-flex align-items-start gap-2">
-                                        <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                                    <li class="plan-feature-item">
+                                        <span class="plan-feature-icon"><i class="bi bi-check-lg"></i></span>
                                         <span>{{ trim($b) }}</span>
                                     </li>
                                 @endif
@@ -285,19 +398,19 @@
                     </ul>
                 </div>
 
-                <div>
+                <div class="pt-2">
                     @if($pendingPayment)
                         <button type="button" class="btn w-100 fw-bold py-2.5 rounded-3 btn-secondary" disabled>
-                            <i class="bi bi-hourglass me-1"></i> Menunggu Verifikasi
+                            <i class="bi bi-hourglass-split me-1"></i> Menunggu Verifikasi
                         </button>
                     @else
                         <button type="button" 
-                            class="btn w-100 fw-bold py-2.5 rounded-3 transition shadow-sm {{ $isDiamond ? 'btn-primary' : ($isCurrent ? 'btn-outline-primary' : 'btn-dark') }}"
+                            class="btn w-100 fw-bold py-2.5 rounded-3 transition shadow-sm {{ $isDiamond ? 'btn-primary' : ($isCurrent ? 'btn-outline-primary' : ($isGold ? 'btn-warning text-dark' : 'btn-dark')) }}"
                             onclick="openPaymentModal({{ $m->id_membership }}, '{{ addslashes($m->name) }}', {{ $m->price }}, {{ $m->duration_days }}, {{ $m->max_upload }}, {{ $isCurrent ? 'true' : 'false' }})">
                             @if($isCurrent)
                                 <i class="bi bi-arrow-repeat me-1"></i> Perpanjang Paket Ini
                             @else
-                                <i class="bi bi-credit-card me-1"></i> {{ $isDiamond ? 'Upgrade ke Diamond' : 'Pilih & Bayar Paket' }}
+                                <i class="bi bi-lightning-charge-fill me-1"></i> {{ $isDiamond ? 'Upgrade ke Diamond' : 'Pilih & Bayar Paket' }}
                             @endif
                         </button>
                     @endif

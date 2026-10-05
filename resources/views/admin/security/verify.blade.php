@@ -14,14 +14,14 @@
         </div>
 
         <h3 class="font-extrabold text-slate-900 text-xl font-display">Verifikasi Akses Admin</h3>
-        <p class="text-xs text-slate-500 font-medium mt-1 mb-6">Masukkan Password Akun & Kode PIN 6-Digit rahasia Anda untuk melanjutkan.</p>
+        <p class="text-xs text-slate-500 font-medium mt-1 mb-6">Masukkan Security Password, Kode PIN rahasia, dan selesaikan tantangan keamanan untuk melanjutkan.</p>
 
         <form action="{{ route('admin.security.process_verify') }}" method="POST" class="space-y-5 text-left">
             @csrf
             <div>
-                <label class="text-[11px] font-extrabold text-slate-600 uppercase tracking-wider block mb-1.5">Password Admin</label>
+                <label class="text-[11px] font-extrabold text-slate-600 uppercase tracking-wider block mb-1.5">Security Password</label>
                 <div class="relative">
-                    <input type="password" name="password" required placeholder="Masukkan password akun admin..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all shadow-sm">
+                    <input type="password" name="password" required placeholder="Masukkan security password..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all shadow-sm">
                     <i class="fa-solid fa-key absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
                 </div>
             </div>
@@ -31,6 +31,14 @@
                 <div class="relative">
                     <input type="password" name="pin" maxlength="6" required placeholder="******" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-800 font-mono tracking-widest focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all shadow-sm">
                     <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[11px] font-extrabold text-slate-600 uppercase tracking-wider block mb-1.5">Keamanan Ekstra: Berapa {{ session('security_captcha_q') }}?</label>
+                <div class="relative">
+                    <input type="number" name="captcha" required placeholder="Jawaban..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-800 font-mono focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all shadow-sm">
+                    <i class="fa-solid fa-calculator absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
                 </div>
             </div>
 

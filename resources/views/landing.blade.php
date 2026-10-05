@@ -196,7 +196,7 @@
                     Beranda
                 </a>
                 <a href="#tentang" class="hover:text-white transition">
-                    Tentang Kami
+                    Tentang
                 </a>
                 <a href="#kategori" class="hover:text-white transition">
                     Kategori
@@ -222,6 +222,7 @@
             </div>
         </div>
     </div>
+
     <div id="mobileMenu" class="lg:hidden bg-white border-t border-slate-200 shadow-xl">
         <nav class="flex flex-col px-4 py-4 space-y-1 text-sm font-semibold text-slate-600">
             <a href="#hero" class="px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-primary">
@@ -230,7 +231,7 @@
             </a>
             <a href="#tentang" class="px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-primary">
                 <i class="fa-solid fa-circle-info w-5"></i>
-                Tentang Kami
+                Tentang
             </a>
             <a href="#kategori" class="px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-primary">
                 <i class="fa-solid fa-grid-2 w-5"></i>
@@ -349,9 +350,6 @@
 <section id="kategori" class="py-20 lg:py-24 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mb-12 reveal">
-            <span class="text-primary text-xs font-bold uppercase tracking-widest">
-                Jelajahi
-            </span>
             <h2 class="font-display text-2xl sm:text-3xl font-bold text-textMain mt-2 mb-3">
                 Eksplorasi Kategori Jasa
             </h2>
@@ -492,9 +490,6 @@
 <section id="cara-kerja" class="py-20 lg:py-24 bg-bgLight border-y border-borderSoft">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-2xl mx-auto mb-14 reveal">
-            <span class="text-primary text-xs font-bold uppercase tracking-widest">
-                Proses Sederhana
-            </span>
             <h2 class="font-display text-2xl sm:text-3xl font-bold mt-2 mb-3">
                 Cara Kerja Karyaku
             </h2>
@@ -509,7 +504,7 @@
                     1
                 </div>
                 <h3 class="font-bold mb-2">
-                    Cari Kreator
+                    Cari Karya
                 </h3>
                 <p class="text-textMuted text-sm leading-relaxed max-w-xs">
                     Temukan jasa atau karya sesuai kebutuhanmu.
@@ -544,9 +539,6 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 gap-4 reveal">
             <div>
-                <span class="text-primary text-xs font-bold uppercase tracking-widest">
-                    Toko Digital
-                </span>
                 <h2 class="font-display text-2xl sm:text-3xl font-bold mt-2 mb-2">
                     Karya & Jasa Paling Laris
                 </h2>
@@ -737,10 +729,6 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid lg:grid-cols-2 gap-12 items-center">
             <div class="reveal">
-                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 border border-blue-400 text-xs font-bold uppercase tracking-widest">
-                    <i class="fa-solid fa-store text-orange-300"></i>
-                    Pusat Penjual
-                </span>
                 <h2 class="font-display text-3xl sm:text-4xl font-bold leading-tight mt-5 mb-5">
                     Punya Karya?
                     <br>
@@ -809,10 +797,6 @@
 <section id="paket-penjual" class="py-20 lg:py-28 bg-bgLight border-y border-borderSoft">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-3xl mx-auto mb-14 reveal">
-            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 text-primary text-xs font-bold uppercase tracking-widest">
-                <i class="fa-solid fa-crown"></i>
-                Paket Penjual
-            </span>
             <h2 class="font-display text-3xl sm:text-4xl font-bold text-textMain mt-4 mb-4">
                 Pilih Paket yang Cocok
                 <span class="text-primary">untuk Toko Kamu</span>

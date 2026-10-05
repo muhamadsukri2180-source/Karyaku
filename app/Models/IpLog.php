@@ -11,6 +11,7 @@ class IpLog extends Model
 
     protected $fillable = [
         'ip_address',
+        'session_id',
         'user_agent',
         'status',
         'reason',

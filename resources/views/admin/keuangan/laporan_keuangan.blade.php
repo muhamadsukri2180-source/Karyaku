@@ -13,7 +13,7 @@
         box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
     }
     @media print {
-        aside, #sidebar, #topNavbar, .no-print, #sidebarOverlay, .filter-box, #mainScreenWrapper {
+        aside, header, #sidebar, #topNavbar, .no-print, #sidebarOverlay, .filter-box, #mainScreenWrapper {
             display: none !important;
         }
         html, body {
@@ -93,39 +93,39 @@
     <div class="hidden sm:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
         @if(!empty($dateRange['has_prev']))
             <a href="{{ route('admin.laporan.keuangan', ['month' => $dateRange['prev_month'], 'year' => $dateRange['prev_year']]) }}" 
-               class="px-2.5 py-1 rounded-lg text-slate-600 hover:bg-white hover:text-sky transition-all flex items-center gap-1" title="Bulan Sebelumnya">
-                <i class="fa-solid fa-chevron-left text-[10px]"></i>
+               class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:bg-white hover:text-sky-600 hover:shadow-sm transition-all" title="Bulan Sebelumnya">
+                <i class="fa-solid fa-chevron-left text-[11px]"></i>
             </a>
         @else
-            <span class="px-2.5 py-1 rounded-lg text-slate-300 cursor-not-allowed opacity-40 flex items-center gap-1" title="Batas Awal Tahun Launching (2026)">
-                <i class="fa-solid fa-chevron-left text-[10px]"></i>
+            <span class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 cursor-not-allowed opacity-50" title="Batas Awal Tahun Launching (2026)">
+                <i class="fa-solid fa-chevron-left text-[11px]"></i>
             </span>
         @endif
 
-        <span class="px-3 py-1 font-bold text-skyDeep">
+        <span class="px-3 py-1 font-bold text-sky-700 min-w-[120px] text-center">
             {{ $dateRange['month_name'] }} {{ $dateRange['year'] }}
         </span>
 
         @if(!empty($dateRange['has_next']))
             <a href="{{ route('admin.laporan.keuangan', ['month' => $dateRange['next_month'], 'year' => $dateRange['next_year']]) }}" 
-               class="px-2.5 py-1 rounded-lg text-slate-600 hover:bg-white hover:text-sky transition-all flex items-center gap-1" title="Bulan Berikutnya">
-                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+               class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:bg-white hover:text-sky-600 hover:shadow-sm transition-all" title="Bulan Berikutnya">
+                <i class="fa-solid fa-chevron-right text-[11px]"></i>
             </a>
         @else
-            <span class="px-2.5 py-1 rounded-lg text-slate-300 cursor-not-allowed opacity-40 flex items-center gap-1" title="Bulan Terkini">
-                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            <span class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 cursor-not-allowed opacity-50" title="Bulan Terkini">
+                <i class="fa-solid fa-chevron-right text-[11px]"></i>
             </span>
         @endif
     </div>
 
     <!-- Smart Print Button with Dropdown -->
     <div class="relative inline-block text-left" id="printDropdownContainer">
-        <div class="flex items-center">
+        <div class="flex items-stretch">
             <button type="button" onclick="triggerPrint('all')" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-l-xl border border-slate-200 shadow-sm transition-all flex items-center gap-2">
                 <i class="fa-solid fa-print text-sky-600"></i>
                 <span>Cetak Laporan</span>
             </button>
-            <button type="button" onclick="togglePrintDropdown(event)" class="px-2 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-r-xl border-t border-r border-b border-slate-200 shadow-sm transition-all" title="Pilihan Cetak">
+            <button type="button" onclick="togglePrintDropdown(event)" class="px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-r-xl border-t border-r border-b border-slate-200 shadow-sm transition-all flex items-center justify-center" title="Pilihan Cetak">
                 <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
             </button>
         </div>
@@ -180,7 +180,7 @@
 @endsection
 
 @section('content')
-
+<div class="no-print w-full flex flex-col gap-6">
 
                 <!-- FILTER CONTROLS CARD -->
                 <div class="bg-gradient-to-b from-white to-sky-50/30 border border-sky-200 rounded-2xl p-5 sm:p-6 shadow-sm filter-box">
@@ -400,12 +400,12 @@
                                 <span>Transaksi Penjualan</span>
                                 <span class="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px]">{{ $orders->count() }}</span>
                             </button>
-                            <button type="button" onclick="switchTab('withdrawals')" id="tabBtnWithdrawals" class="tab-btn px-4 py-2 rounded-lg transition-all flex items-center gap-2 hover:text-slate-900">
+                            <button type="button" onclick="switchTab('withdrawals')" id="tabBtnWithdrawals" class="tab-btn px-4 py-2 rounded-lg transition-all flex items-center gap-2">
                                 <i class="fa-solid fa-wallet text-xs"></i>
                                 <span>Penarikan Saldo</span>
                                 <span class="px-1.5 py-0.5 rounded-full bg-slate-300 text-slate-700 text-[10px]">{{ $withdrawals->count() }}</span>
                             </button>
-                            <button type="button" onclick="switchTab('daily')" id="tabBtnDaily" class="tab-btn px-4 py-2 rounded-lg transition-all flex items-center gap-2 hover:text-slate-900">
+                            <button type="button" onclick="switchTab('daily')" id="tabBtnDaily" class="tab-btn px-4 py-2 rounded-lg transition-all flex items-center gap-2">
                                 <i class="fa-solid fa-calendar-day text-xs"></i>
                                 <span>Rekap Harian</span>
                                 <span class="px-1.5 py-0.5 rounded-full bg-slate-300 text-slate-700 text-[10px]">{{ count($dailyBreakdown) }} Hari</span>
@@ -426,8 +426,6 @@
                             <table class="w-full text-left text-xs text-slate-700" id="ordersTable">
                                 <thead class="bg-slate-100/80 text-[11px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-200">
                                     <tr>
-                                        <th class="py-3 px-4 text-center w-12">No</th>
-                                        <th class="py-3 px-4">Kode Order</th>
                                         <th class="py-3 px-4">Tanggal & Waktu</th>
                                         <th class="py-3 px-4">Pembeli</th>
                                         <th class="py-3 px-4">Detail Produk / Item</th>
@@ -440,10 +438,6 @@
                                 <tbody class="divide-y divide-slate-100">
                                     @forelse($orders as $index => $order)
                                     <tr class="hover:bg-sky-50/40 transition-colors">
-                                        <td class="py-3 px-4 text-center font-semibold text-slate-400">{{ $index + 1 }}</td>
-                                        <td class="py-3 px-4 font-bold text-skyDeep">
-                                            #{{ $order->id_order }}
-                                        </td>
                                         <td class="py-3 px-4 text-slate-500 whitespace-nowrap">
                                             {{ $order->created_at ? $order->created_at->format('d/m/Y H:i') : '-' }}
                                         </td>
@@ -500,7 +494,7 @@
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="9" class="py-8 text-center text-slate-400">
+                                        <td colspan="7" class="py-8 text-center text-slate-400">
                                             <i class="fa-solid fa-inbox text-3xl mb-2 block text-slate-300"></i>
                                             Tidak ada data transaksi pesanan pada periode {{ $dateRange['month_name'] }} {{ $dateRange['year'] }}.
                                         </td>
@@ -510,7 +504,7 @@
                                 @if($orders->count() > 0)
                                 <tfoot class="bg-slate-100 font-extrabold text-slate-800 border-t-2 border-slate-200">
                                     <tr>
-                                        <td colspan="7" class="py-3 px-4 text-right">TOTAL TRANSAKSI KESELURUHAN:</td>
+                                        <td colspan="5" class="py-3 px-4 text-right">TOTAL TRANSAKSI KESELURUHAN:</td>
                                         <td class="py-3 px-4 text-right text-emerald-700">Rp {{ number_format($orders->sum('total_price'), 0, ',', '.') }}</td>
                                         <td class="py-3 px-4 text-right text-sky-700">Rp {{ number_format($orders->sum('total_price') * 0.05, 0, ',', '.') }}</td>
                                     </tr>
@@ -526,8 +520,6 @@
                             <table class="w-full text-left text-xs text-slate-700" id="withdrawalsTable">
                                 <thead class="bg-slate-100/80 text-[11px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-200">
                                     <tr>
-                                        <th class="py-3 px-4 text-center w-12">No</th>
-                                        <th class="py-3 px-4">ID Penarikan</th>
                                         <th class="py-3 px-4">Tanggal Pengajuan</th>
                                         <th class="py-3 px-4">Nama Penjual</th>
                                         <th class="py-3 px-4">Bank & Rekening</th>
@@ -540,10 +532,6 @@
                                 <tbody class="divide-y divide-slate-100">
                                     @forelse($withdrawals as $index => $w)
                                     <tr class="hover:bg-sky-50/40 transition-colors">
-                                        <td class="py-3 px-4 text-center font-semibold text-slate-400">{{ $index + 1 }}</td>
-                                        <td class="py-3 px-4 font-bold text-teal-800">
-                                            #WD-{{ $w->id_withdrawal }}
-                                        </td>
                                         <td class="py-3 px-4 text-slate-500 whitespace-nowrap">
                                             {{ $w->created_at ? $w->created_at->format('d/m/Y H:i') : '-' }}
                                         </td>
@@ -582,7 +570,7 @@
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="9" class="py-8 text-center text-slate-400">
+                                        <td colspan="7" class="py-8 text-center text-slate-400">
                                             <i class="fa-solid fa-inbox text-3xl mb-2 block text-slate-300"></i>
                                             Tidak ada data pengajuan penarikan saldo pada periode ini.
                                         </td>
@@ -592,7 +580,7 @@
                                 @if($withdrawals->count() > 0)
                                 <tfoot class="bg-slate-100 font-extrabold text-slate-800 border-t-2 border-slate-200">
                                     <tr>
-                                        <td colspan="6" class="py-3 px-4 text-right">TOTAL PENARIKAN SALDO:</td>
+                                        <td colspan="4" class="py-3 px-4 text-right">TOTAL PENARIKAN SALDO:</td>
                                         <td class="py-3 px-4 text-right text-amber-700">Rp {{ number_format($withdrawals->sum('amount'), 0, ',', '.') }}</td>
                                         <td colspan="2"></td>
                                     </tr>
@@ -608,7 +596,6 @@
                             <table class="w-full text-left text-xs text-slate-700" id="dailyTable">
                                 <thead class="bg-slate-100/80 text-[11px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-200">
                                     <tr>
-                                        <th class="py-3 px-4 text-center w-12">No</th>
                                         <th class="py-3 px-4">Tanggal</th>
                                         <th class="py-3 px-4">Hari</th>
                                         <th class="py-3 px-4 text-center">Transaksi Lunas</th>
@@ -621,7 +608,6 @@
                                 <tbody class="divide-y divide-slate-100">
                                     @foreach($dailyBreakdown as $idx => $day)
                                     <tr class="hover:bg-sky-50/40 transition-colors {{ $day['inflow'] > 0 || $day['outflow'] > 0 ? 'bg-white' : 'bg-slate-50/30' }}">
-                                        <td class="py-2.5 px-4 text-center font-semibold text-slate-400">{{ $idx + 1 }}</td>
                                         <td class="py-2.5 px-4 font-bold text-slate-800">{{ $day['formatted'] }}</td>
                                         <td class="py-2.5 px-4 text-slate-500">{{ $day['day_name'] }}</td>
                                         <td class="py-2.5 px-4 text-center font-bold {{ $day['order_count'] > 0 ? 'text-sky-600' : 'text-slate-400' }}">
@@ -644,7 +630,7 @@
                                 </tbody>
                                 <tfoot class="bg-slate-100 font-extrabold text-slate-800 border-t-2 border-slate-200">
                                     <tr>
-                                        <td colspan="3" class="py-3 px-4 text-right">TOTAL BULANAN:</td>
+                                        <td colspan="2" class="py-3 px-4 text-right">TOTAL BULANAN:</td>
                                         <td class="py-3 px-4 text-center text-sky-700">{{ $summary['total_orders_paid'] }}</td>
                                         <td class="py-3 px-4 text-right text-emerald-700">Rp {{ number_format($summary['total_pemasukan'], 0, ',', '.') }}</td>
                                         <td class="py-3 px-4 text-right text-sky-700">Rp {{ number_format($summary['total_komisi_platform'], 0, ',', '.') }}</td>
@@ -657,9 +643,7 @@
                     </div>
                 </div>
 
-            </div>
-        </main>
-    </div>
+</div>
 
     <!-- DEDICATED OFFICIAL PRINT DOCUMENT (Only rendered when printing) -->
     <div id="printDocument" class="hidden">
@@ -776,7 +760,6 @@
             <table class="print-table">
                 <thead>
                     <tr>
-                        <th style="width: 25px; text-align: center;">No</th>
                         <th style="width: 75px; text-align: left;">Kode Order</th>
                         <th style="width: 90px; text-align: left;">Waktu</th>
                         <th style="width: 105px; text-align: left;">Pembeli</th>
@@ -790,7 +773,6 @@
                 <tbody>
                     @forelse($orders as $idx => $order)
                     <tr>
-                        <td style="text-align: center; color: #64748b;">{{ $idx + 1 }}</td>
                         <td style="font-weight: 700; color: #0B3D62;">#{{ $order->id_order }}</td>
                         <td style="white-space: nowrap; font-size: 7pt;">{{ $order->created_at ? $order->created_at->format('d/m/Y H:i') : '-' }}</td>
                         <td style="font-weight: 600;">{{ $order->buyer->name ?? 'User #' . $order->buyer_id }}</td>
@@ -822,7 +804,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" style="text-align: center; padding: 10px; color: #94a3b8; font-style: italic;">
+                        <td colspan="8" style="text-align: center; padding: 10px; color: #94a3b8; font-style: italic;">
                             Tidak ada catatan transaksi penjualan pada periode ini.
                         </td>
                     </tr>
@@ -831,7 +813,7 @@
                 @if($orders->count() > 0)
                 <tfoot>
                     <tr>
-                        <td colspan="7" style="text-align: right; font-weight: 800;">TOTAL TRANSAKSI KESELURUHAN:</td>
+                        <td colspan="6" style="text-align: right; font-weight: 800;">TOTAL TRANSAKSI KESELURUHAN:</td>
                         <td style="text-align: right; font-weight: 800; color: #047857; white-space: nowrap;">Rp {{ number_format($orders->sum('total_price'), 0, ',', '.') }}</td>
                         <td style="text-align: right; font-weight: 800; color: #0284C7; white-space: nowrap;">Rp {{ number_format($orders->sum('total_price') * 0.05, 0, ',', '.') }}</td>
                     </tr>
@@ -849,8 +831,6 @@
             <table class="print-table">
                 <thead>
                     <tr>
-                        <th style="width: 25px; text-align: center;">No</th>
-                        <th style="width: 75px; text-align: left;">ID Penarikan</th>
                         <th style="width: 90px; text-align: left;">Tgl Pengajuan</th>
                         <th style="width: 110px; text-align: left;">Nama Penjual</th>
                         <th style="text-align: left;">Bank & Rekening</th>
@@ -863,8 +843,6 @@
                 <tbody>
                     @forelse($withdrawals as $idx => $w)
                     <tr>
-                        <td style="text-align: center; color: #64748b;">{{ $idx + 1 }}</td>
-                        <td style="font-weight: 700; color: #0F766E;">#WD-{{ $w->id_withdrawal }}</td>
                         <td style="white-space: nowrap; font-size: 7pt;">{{ $w->created_at ? $w->created_at->format('d/m/Y H:i') : '-' }}</td>
                         <td style="font-weight: 600;">{{ $w->user->name ?? 'Penjual #' . $w->user_id }}</td>
                         <td>
@@ -886,7 +864,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" style="text-align: center; padding: 10px; color: #94a3b8; font-style: italic;">
+                        <td colspan="7" style="text-align: center; padding: 10px; color: #94a3b8; font-style: italic;">
                             Tidak ada data pengajuan penarikan saldo pada periode ini.
                         </td>
                     </tr>
@@ -895,7 +873,7 @@
                 @if($withdrawals->count() > 0)
                 <tfoot>
                     <tr>
-                        <td colspan="6" style="text-align: right; font-weight: 800;">TOTAL PENARIKAN SALDO:</td>
+                        <td colspan="4" style="text-align: right; font-weight: 800;">TOTAL PENARIKAN SALDO:</td>
                         <td style="text-align: right; font-weight: 800; color: #b45309; white-space: nowrap;">Rp {{ number_format($withdrawals->sum('amount'), 0, ',', '.') }}</td>
                         <td colspan="2"></td>
                     </tr>
@@ -913,7 +891,6 @@
             <table class="print-table">
                 <thead>
                     <tr>
-                        <th style="width: 25px; text-align: center;">No</th>
                         <th style="width: 80px; text-align: left;">Tanggal</th>
                         <th style="width: 60px; text-align: left;">Hari</th>
                         <th style="width: 55px; text-align: center;">Lunas</th>
@@ -926,7 +903,6 @@
                 <tbody>
                     @foreach($dailyBreakdown as $idx => $day)
                     <tr style="{{ $day['inflow'] > 0 || $day['outflow'] > 0 ? '' : 'color: #94a3b8;' }}">
-                        <td style="text-align: center;">{{ $idx + 1 }}</td>
                         <td style="font-weight: 700;">{{ $day['formatted'] }}</td>
                         <td>{{ $day['day_name'] }}</td>
                         <td style="text-align: center; font-weight: 700;">{{ $day['order_count'] }}</td>
@@ -941,7 +917,7 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="3" style="text-align: right; font-weight: 800;">TOTAL AKUMULASI BULANAN:</td>
+                        <td colspan="2" style="text-align: right; font-weight: 800;">TOTAL AKUMULASI BULANAN:</td>
                         <td style="text-align: center; font-weight: 800;">{{ $summary['total_orders_paid'] }}</td>
                         <td style="text-align: right; font-weight: 800; color: #047857; white-space: nowrap;">Rp {{ number_format($summary['total_pemasukan'], 0, ',', '.') }}</td>
                         <td style="text-align: right; font-weight: 800; color: #0284C7; white-space: nowrap;">Rp {{ number_format($summary['total_komisi_platform'], 0, ',', '.') }}</td>

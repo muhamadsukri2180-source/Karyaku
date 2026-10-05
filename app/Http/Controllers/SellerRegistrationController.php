@@ -7,6 +7,7 @@ use App\Models\Membership;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Services\CloudinaryService;
 
 class SellerRegistrationController extends Controller
 {
@@ -76,7 +77,7 @@ class SellerRegistrationController extends Controller
 
         IdentityVerification::create([
             'user_id'              => $user->id_user,
-            'identity_document'    => $request->file('identity_document')->store('identity-verifications/ktp', 'public'),
+            'identity_document'    => CloudinaryService::uploadFile($request->file('identity_document'), 'verifications/ktp', 'identity-verifications/ktp'),
             'status'               => 'pending',
             'nik'                  => $validated['nik'],
             'address'              => $validated['address'],
@@ -85,7 +86,7 @@ class SellerRegistrationController extends Controller
             'account_number'       => $validated['account_number'],
             'membership_id'        => $membership->id_membership,
             'payment_method'       => $validated['payment_method'],
-            'payment_proof'        => $request->file('payment_proof')->store('identity-verifications/payment', 'public'),
+            'payment_proof'        => CloudinaryService::uploadFile($request->file('payment_proof'), 'verifications/payments', 'identity-verifications/payment'),
             'payment_amount'       => $membership->price,
             'payment_submitted_at' => now(),
             'submitted_at'         => now(),

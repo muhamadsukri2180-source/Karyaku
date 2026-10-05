@@ -44,39 +44,67 @@
                     </tr>
                 </thead>
                 <tbody class="text-xs divide-y divide-slate-100">
-                    @forelse($abnormalIps as $index => $ip)
+                    @forelse($abnormalIps as $ipAddress => $logs)
+                    @php
+                        $first = $logs->sortByDesc('last_activity_at')->first();
+                        $totalReq = $logs->sum('request_count');
+                        $groupId = 'abnormal-'.$loop->index;
+                    @endphp
                     <tr class="hover:bg-red-50/40 transition-colors bg-white odd:bg-slate-50/30 whitespace-nowrap">
-                        <td class="py-4 px-6 font-mono font-bold text-red-600">{{ $ip->ip_address }}</td>
-                        <td class="py-4 px-6 text-slate-700 font-semibold max-w-xs truncate">{{ $ip->reason ?? '-' }}</td>
+                        <td class="py-4 px-6 font-mono font-bold text-red-600">
+                            {{ $ipAddress }}
+                            <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="ml-2 px-2 py-0.5 rounded bg-red-100 text-red-700 text-[10px] hover:bg-red-200 cursor-pointer">
+                                {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                        </td>
+                        <td class="py-4 px-6 text-slate-700 font-semibold max-w-xs truncate">{{ $first->reason ?? '-' }}</td>
                         
                         <td class="py-4 px-6 font-mono text-[11px] text-slate-600">
                             <div class="flex items-center gap-2">
-                                <span class="truncate max-w-[220px] bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200 font-bold">{{ $ip->last_activity ?? 'N/A' }}</span>
-                                <!-- ICON MATA UNTUK DETAIL BOBOL -->
-                                <button type="button" onclick="showJailbreakDetail('{{ $ip->ip_address }}', '{{ addslashes($ip->last_activity) }}', '{{ addslashes($ip->reason) }}', '{{ addslashes($ip->user_agent) }}')" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-xs flex items-center justify-center text-xs shrink-0 cursor-pointer" title="Lihat Lokasi File & Payload">
+                                <span class="truncate max-w-[220px] bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200 font-bold">{{ $first->last_activity ?? 'N/A' }}</span>
+                                <button type="button" class="btn-jailbreak-detail w-8 h-8 rounded-lg bg-red-100 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-xs flex items-center justify-center text-xs shrink-0 cursor-pointer"
+                                    onclick="showJailbreakDetail('{{ $ipAddress }}', '{{ addslashes($first->last_activity) }}', '{{ addslashes($first->reason) }}', '{{ addslashes($first->user_agent) }}')"
+                                    title="Lihat Lokasi File & Payload">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                             </div>
                         </td>
 
-                        <td class="py-4 px-6 text-center font-bold text-slate-700"><span class="bg-red-100 text-red-700 px-2.5 py-1 rounded-md text-[11px] border border-red-200">{{ $ip->request_count }}x</span></td>
-                        <td class="py-4 px-6 text-slate-500 font-medium">{{ $ip->last_activity_at?->diffForHumans() }}</td>
-                        <td class="py-4 px-6">
-                            <div class="flex items-center justify-center gap-2">
-                                <form action="{{ route('admin.security.toggle', $ip->id) }}" method="POST">
-                                    @csrf
+                        <td class="py-4 px-6 text-center font-bold text-slate-700"><span class="bg-red-100 text-red-700 px-2.5 py-1 rounded-md text-[11px] border border-red-200">{{ $totalReq }}x</span></td>
+                        <td class="py-4 px-6 text-slate-500 font-medium">{{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                        <td class="py-4 px-6 text-center">
+                            <form action="{{ route('admin.security.toggle', $first->id) }}" method="POST" class="inline-block">
+                                @csrf
+                                @if($first->status === 'abnormal')
                                     <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
-                                        Normal
+                                        <i class="fa-solid fa-check"></i> Buka Blokir
                                     </button>
-                                </form>
-
-                                <form id="delete-log-{{ $index }}" action="{{ route('admin.security.log.destroy', $ip->id) }}" method="POST">
-                                    @csrf @method('DELETE')
-                                    <button type="button" onclick="confirmDeleteLog('delete-log-{{ $index }}')" class="w-7 h-7 rounded-lg bg-slate-200 hover:bg-red-600 text-slate-700 hover:text-white transition-all shadow-xs flex items-center justify-center text-xs cursor-pointer" title="Hapus Log">
-                                        <i class="fa-solid fa-trash-can"></i>
+                                @else
+                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                        <i class="fa-solid fa-ban"></i> Ban
                                     </button>
-                                </form>
-                            </div>
+                                @endif
+                            </form>
+                        </td>
+                    </tr>
+                    
+                    <!-- DROPDOWN SESSIONS -->
+                    <tr id="{{ $groupId }}" class="hidden bg-slate-50/50">
+                        <td colspan="6" class="p-0 border-b border-slate-200">
+                            <table class="w-full text-left">
+                                @foreach($logs as $log)
+                                <tr class="border-t border-slate-200 hover:bg-slate-100 text-[11px]">
+                                    <td class="py-3 px-10 text-slate-500 font-mono">Sesi: #{{ !empty($log->session_id) ? substr($log->session_id, 0, 8) : 'Main' }}</td>
+                                    <td class="py-3 px-6 text-slate-600 truncate max-w-[150px]">{{ $log->reason }}</td>
+                                    <td class="py-3 px-6 text-slate-600 font-mono truncate max-w-[150px]">{{ $log->last_activity }}</td>
+                                    <td class="py-3 px-6 text-center text-slate-600 font-bold">{{ $log->request_count }}x</td>
+                                    <td class="py-3 px-6 text-slate-500 font-medium">{{ $log->last_activity_at ? $log->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                                    <td class="py-3 px-6 text-center text-slate-400 italic">
+                                        -
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </table>
                         </td>
                     </tr>
                     @empty
@@ -123,20 +151,50 @@
                     </tr>
                 </thead>
                 <tbody class="text-xs divide-y divide-amber-200 text-amber-950 font-medium">
-                    @forelse($normalIps as $ip)
+                    @forelse($normalIps as $ipAddress => $logs)
+                    @php
+                        $first = $logs->sortByDesc('last_activity_at')->first();
+                        $totalReq = $logs->sum('request_count');
+                        $groupId = 'normal-'.$loop->index;
+                    @endphp
                     <tr class="hover:bg-amber-100/80 transition-colors bg-white odd:bg-amber-50/50 whitespace-nowrap">
-                        <td class="py-4 px-6 font-mono font-bold text-amber-900">{{ $ip->ip_address }}</td>
-                        <td class="py-4 px-6 font-mono text-[11px] text-amber-900 max-w-xs truncate">{{ $ip->last_activity }}</td>
-                        <td class="py-4 px-6 text-amber-800 max-w-xs truncate">{{ $ip->user_agent }}</td>
-                        <td class="py-4 px-6 text-center font-bold text-amber-900">
-                            <span class="bg-amber-200/80 px-2.5 py-1 rounded-md text-[11px] border border-amber-300 font-extrabold text-amber-950">{{ $ip->request_count }}x</span>
-                        </td>
-                        <td class="py-4 px-6 text-amber-900 font-semibold">{{ $ip->last_activity_at?->diffForHumans() }}</td>
-                        <td class="py-4 px-6 text-center">
-                            <!-- TOMBOL BEKUKAN AKSES -->
-                            <button type="button" onclick="openFreezeTimerModal('{{ $ip->id }}', '{{ $ip->ip_address }}')" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer">
-                                <i class="fa-solid fa-key"></i> Kunci (Bekukan)
+                        <td class="py-4 px-6 font-mono font-bold text-amber-900">
+                            {{ $ipAddress }}
+                            <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="ml-2 px-2 py-0.5 rounded bg-amber-200 text-amber-800 text-[10px] hover:bg-amber-300 cursor-pointer">
+                                {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
                             </button>
+                        </td>
+                        <td class="py-4 px-6 font-mono text-[11px] text-amber-900 max-w-xs truncate">{{ $first->last_activity }}</td>
+                        <td class="py-4 px-6 text-amber-800 max-w-xs truncate" title="{{ $first->user_agent }}">{{ $first->user_agent }}</td>
+                        <td class="py-4 px-6 text-center font-bold text-amber-900">
+                            <span class="bg-amber-200/80 px-2.5 py-1 rounded-md text-[11px] border border-amber-300 font-extrabold text-amber-950">{{ $totalReq }}x</span>
+                        </td>
+                        <td class="py-4 px-6 text-amber-900 font-semibold">{{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                        <td class="py-4 px-6 text-center">
+                            <!-- TOMBOL BEKUKAN AKSES UTAMA -->
+                            <button type="button" onclick="openFreezeTimerModal('{{ $first->id }}', '{{ $ipAddress }}')" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold shadow-sm transition-all cursor-pointer">
+                                <i class="fa-solid fa-key"></i> Kunci
+                            </button>
+                        </td>
+                    </tr>
+                    
+                    <!-- DROPDOWN SESSIONS -->
+                    <tr id="{{ $groupId }}" class="hidden bg-amber-50/40">
+                        <td colspan="6" class="p-0 border-b border-amber-200">
+                            <table class="w-full text-left">
+                                @foreach($logs as $log)
+                                <tr class="border-t border-amber-100 hover:bg-amber-100/80 text-[11px]">
+                                    <td class="py-3 px-10 text-amber-700 font-mono">Sesi: #{{ !empty($log->session_id) ? substr($log->session_id, 0, 8) : 'Main' }}</td>
+                                    <td class="py-3 px-6 text-amber-800 font-mono truncate max-w-[200px]">{{ $log->last_activity }}</td>
+                                    <td class="py-3 px-6 text-amber-800 truncate max-w-[200px]" title="{{ $log->user_agent }}">{{ $log->user_agent }}</td>
+                                    <td class="py-3 px-6 text-center text-amber-800 font-bold">{{ $log->request_count }}x</td>
+                                    <td class="py-3 px-6 text-amber-800 font-semibold">{{ $log->last_activity_at ? $log->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                                    <td class="py-3 px-6 text-center text-amber-600/80 italic">
+                                        -
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </table>
                         </td>
                     </tr>
                     @empty
@@ -151,6 +209,162 @@
             </table>
         </div>
     </div>
+    <!-- TABEL ANTI BOT -->
+    <div class="bg-indigo-50 border border-indigo-200 rounded-2xl shadow-lg shadow-indigo-500/10 overflow-hidden">
+        <div class="p-5 border-b border-indigo-100 bg-gradient-to-r from-indigo-500/10 via-white to-indigo-50 flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-indigo-500 text-white flex items-center justify-center border border-indigo-600 shadow-sm shrink-0">
+                    <i class="fa-solid fa-robot text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-indigo-950 text-base font-display">Tabel Anti Bot & Serangan Otomatis</h3>
+                    <p class="text-[11px] text-indigo-800/80 font-medium">Log aktivitas dari Bot atau serangan DDoS. Silakan klik "Blokir Manual" untuk membekukan IP tersebut.</p>
+                </div>
+            </div>
+            <span class="bg-indigo-600 text-white text-[10px] px-3 py-1 rounded-full font-extrabold shadow-sm">{{ $botIps->count() }} Bot Terdeteksi</span>
+        </div>
+
+        <div class="w-full overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                    <tr class="bg-indigo-700 text-indigo-50 text-[11px] uppercase tracking-wider font-bold whitespace-nowrap">
+                        <th class="py-3.5 px-6">Alamat IP Bot</th>
+                        <th class="py-3.5 px-6">Tipe Serangan</th>
+                        <th class="py-3.5 px-6">User Agent Palsu / Bot Name</th>
+                        <th class="py-3.5 px-6 text-center">Spam Request</th>
+                        <th class="py-3.5 px-6">Terakhir Menyerang</th>
+                        <th class="py-3.5 px-6 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs divide-y divide-indigo-100 text-indigo-950 font-medium">
+                    @forelse($botIps as $ipAddress => $logs)
+                    @php
+                        $first = $logs->sortByDesc('last_activity_at')->first();
+                        $totalReq = $logs->sum('request_count');
+                        $groupId = 'bot-'.$loop->index;
+                    @endphp
+                    <tr class="hover:bg-indigo-100/80 transition-colors bg-white odd:bg-indigo-50/50 whitespace-nowrap">
+                        <td class="py-4 px-6 font-mono font-bold text-indigo-900">
+                            {{ $ipAddress }}
+                            <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="ml-2 px-2 py-0.5 rounded bg-indigo-200 text-indigo-800 text-[10px] hover:bg-indigo-300 cursor-pointer">
+                                {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                        </td>
+                        <td class="py-4 px-6 text-indigo-800 max-w-xs truncate font-semibold"><span class="bg-indigo-100 px-2 py-1 rounded border border-indigo-200">{{ $first->reason }}</span></td>
+                        <td class="py-4 px-6 text-indigo-700 max-w-xs truncate" title="{{ $first->user_agent }}">{{ $first->user_agent ?? 'Unknown/Empty' }}</td>
+                        <td class="py-4 px-6 text-center font-bold">
+                            <span class="bg-red-100 px-2.5 py-1 rounded-md text-[11px] border border-red-300 text-red-700">{{ $totalReq }}x Req</span>
+                        </td>
+                        <td class="py-4 px-6 text-indigo-600 font-semibold">{{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                        <td class="py-4 px-6 text-center">
+                            <form action="{{ route('admin.security.toggle', $first->id) }}" method="POST" class="inline-block">
+                                @csrf
+                                @if($first->status === 'abnormal')
+                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                        <i class="fa-solid fa-check"></i> Buka Blokir
+                                    </button>
+                                @else
+                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                        <i class="fa-solid fa-ban"></i> Ban
+                                    </button>
+                                @endif
+                            </form>
+                        </td>
+                    </tr>
+                    
+                    <!-- DROPDOWN SESSIONS -->
+                    <tr id="{{ $groupId }}" class="hidden bg-indigo-50/40">
+                        <td colspan="6" class="p-0 border-b border-indigo-200">
+                            <table class="w-full text-left">
+                                @foreach($logs as $log)
+                                <tr class="border-t border-indigo-100 hover:bg-indigo-100/50 text-[11px]">
+                                    <td class="py-3 px-10 text-indigo-700 font-mono">Sesi: #{{ !empty($log->session_id) ? substr($log->session_id, 0, 8) : 'Main' }}</td>
+                                    <td class="py-3 px-6 text-indigo-800 font-semibold truncate max-w-[150px]">{{ $log->reason }}</td>
+                                    <td class="py-3 px-6 text-indigo-700 truncate max-w-[150px]" title="{{ $log->user_agent }}">{{ $log->user_agent }}</td>
+                                    <td class="py-3 px-6 text-center text-red-700 font-bold">{{ $log->request_count }}x</td>
+                                    <td class="py-3 px-6 text-indigo-600 font-semibold">{{ $log->last_activity_at ? $log->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                                    <td class="py-3 px-6 text-center text-indigo-400 italic">
+                                        -
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </table>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center py-10 text-indigo-900 text-xs font-semibold bg-indigo-50/20">
+                            <i class="fa-solid fa-shield-virus text-indigo-400 text-xl block mb-2"></i>
+                            Sistem bebas dari serangan Bot / DDoS saat ini.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TABEL RIWAYAT LOGIN / LOGOUT -->
+    <div class="bg-slate-50 border border-slate-200 rounded-2xl shadow-lg shadow-slate-500/10 overflow-hidden">
+        <div class="p-5 border-b border-slate-100 bg-gradient-to-r from-slate-100 via-white to-slate-50 flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-slate-800 text-white flex items-center justify-center border border-slate-900 shadow-sm shrink-0">
+                    <i class="fa-solid fa-clock-rotate-left text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-slate-900 text-base font-display">Tabel Riwayat Login & Logout Pengguna</h3>
+                    <p class="text-[11px] text-slate-500 font-medium">Memantau sesi akun, lokasi IP Login, dan waktu Logout secara real-time.</p>
+                </div>
+            </div>
+            <span class="bg-slate-800 text-white text-[10px] px-3 py-1 rounded-full font-extrabold shadow-sm">10 Riwayat per Halaman</span>
+        </div>
+
+        <div class="w-full overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold whitespace-nowrap">
+                        <th class="py-3.5 px-6">Username / Akun</th>
+                        <th class="py-3.5 px-6">Status Aktivitas</th>
+                        <th class="py-3.5 px-6">Alamat IP (Lokasi)</th>
+                        <th class="py-3.5 px-6">Perangkat / Browser</th>
+                        <th class="py-3.5 px-6">Waktu Kejadian (Tanggal & Waktu)</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs divide-y divide-slate-100 text-slate-700 font-medium">
+                    @forelse($loginHistories as $log)
+                    <tr class="hover:bg-slate-50 transition-colors bg-white whitespace-nowrap">
+                        <td class="py-4 px-6 font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-user-circle text-slate-400"></i> {{ $log->username ?? 'Unknown' }}
+                        </td>
+                        <td class="py-4 px-6">
+                            @if($log->type == 'login')
+                                <span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded border border-emerald-200 font-bold text-[10px] uppercase tracking-wider"><i class="fa-solid fa-right-to-bracket mr-1"></i> Sedang Login</span>
+                            @else
+                                <span class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded border border-slate-200 font-bold text-[10px] uppercase tracking-wider"><i class="fa-solid fa-right-from-bracket mr-1"></i> Telah Logout</span>
+                            @endif
+                        </td>
+                        <td class="py-4 px-6 font-mono font-semibold text-slate-800">{{ $log->ip_address }}</td>
+                        <td class="py-4 px-6 text-slate-500 max-w-xs truncate" title="{{ $log->user_agent }}">{{ $log->user_agent }}</td>
+                        <td class="py-4 px-6 text-slate-500 font-semibold">{{ $log->created_at->format('d M Y, H:i:s') }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="text-center py-10 text-slate-500 text-xs font-semibold bg-slate-50">
+                            <i class="fa-solid fa-ghost text-slate-300 text-xl block mb-2"></i>
+                            Belum ada riwayat aktivitas masuk/keluar.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div class="p-4 border-t border-slate-100 bg-white">
+            {{ $loginHistories->links() }}
+        </div>
+    </div>
+
+
+
 </div>
 @endsection
 
@@ -226,12 +440,7 @@
         });
     }
 
-    function confirmDeleteAllowed(formId) {
-        Swal.fire({
-            title: 'Hapus IP Whitelist?', text: "IP ini tidak akan bisa mengakses menu Keamanan System lagi!",
-            icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#94a3b8', confirmButtonText: 'Ya, Hapus!'
-        }).then((result) => { if (result.isConfirmed) document.getElementById(formId).submit(); });
-    }
+
 
     function confirmDeleteLog(formId) {
         Swal.fire({

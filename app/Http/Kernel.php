@@ -38,6 +38,12 @@ class Kernel extends HttpKernel
             
             // Middleware kustom maintenance aplikasi
             \App\Http\Middleware\CheckMaintenanceMode::class,
+
+            // Header Keamanan Cyber (Anti-XSS, Anti-Clickjacking, Anti-Sniffing)
+            \App\Http\Middleware\SecurityHeaders::class,
+
+            // Deteksi & Monitoring IP Pengunjung (Normal, Suspicious, DDoS)
+            \App\Http\Middleware\DetectAbnormalIp::class,
         ],
 
         'api' => [
@@ -68,5 +74,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'role' => \App\Http\Middleware\CheckRole::class,
         'suspended' => \App\Http\Middleware\CheckSuspended::class,
+        'security.access' => \App\Http\Middleware\CheckSecurityAccess::class,
     ];
 }

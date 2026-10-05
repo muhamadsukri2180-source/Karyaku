@@ -20,3 +20,4 @@ yarn-error.log
 /storage/app/google-drive-key.json
 /storage/app/*.json
 /storage/app/backups/
+sync_config.jsonc
