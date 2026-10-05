@@ -180,6 +180,10 @@ class DetectAbnormalIp
             $ipLog->request_count = ($ipLog->request_count ?? 0) + 1;
             $ipLog->last_activity_at = now();
 
+            if (auth()->check()) {
+                $ipLog->user_id = auth()->id();
+            }
+
             try {
                 $ipLog->save();
             } catch (\Throwable $saveEx) {

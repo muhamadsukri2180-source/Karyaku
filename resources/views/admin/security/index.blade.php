@@ -52,10 +52,15 @@
                     @endphp
                     <tr class="hover:bg-red-50/40 transition-colors bg-white odd:bg-slate-50/30 whitespace-nowrap">
                         <td class="py-4 px-6 font-mono font-bold text-red-600">
-                            {{ $ipAddress }}
-                            <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="ml-2 px-2 py-0.5 rounded bg-red-100 text-red-700 text-[10px] hover:bg-red-200 cursor-pointer">
-                                {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <span>{{ $ipAddress }}</span>
+                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded bg-red-100 text-red-700 text-[10px] hover:bg-red-200 cursor-pointer">
+                                    {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
+                                </button>
+                            </div>
+                            @if($first->user)
+                                <div class="text-[10px] font-sans font-medium text-red-800 mt-1"><i class="fa-solid fa-user text-[9px] mr-1"></i> {{ $first->user->name ?? $first->user->email }}</div>
+                            @endif
                         </td>
                         <td class="py-4 px-6 text-slate-700 font-semibold max-w-xs truncate">{{ $first->reason ?? '-' }}</td>
                         
@@ -159,10 +164,15 @@
                     @endphp
                     <tr class="hover:bg-amber-100/80 transition-colors bg-white odd:bg-amber-50/50 whitespace-nowrap">
                         <td class="py-4 px-6 font-mono font-bold text-amber-900">
-                            {{ $ipAddress }}
-                            <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="ml-2 px-2 py-0.5 rounded bg-amber-200 text-amber-800 text-[10px] hover:bg-amber-300 cursor-pointer">
-                                {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <span>{{ $ipAddress }}</span>
+                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded bg-amber-200 text-amber-800 text-[10px] hover:bg-amber-300 cursor-pointer">
+                                    {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
+                                </button>
+                            </div>
+                            @if($first->user)
+                                <div class="text-[10px] font-sans font-medium text-amber-700 mt-1"><i class="fa-solid fa-user text-[9px] mr-1"></i> {{ $first->user->name ?? $first->user->email }}</div>
+                            @endif
                         </td>
                         <td class="py-4 px-6 font-mono text-[11px] text-amber-900 max-w-xs truncate">{{ $first->last_activity }}</td>
                         <td class="py-4 px-6 text-amber-800 max-w-xs truncate" title="{{ $first->user_agent }}">{{ $first->user_agent }}</td>
@@ -245,10 +255,15 @@
                     @endphp
                     <tr class="hover:bg-indigo-100/80 transition-colors bg-white odd:bg-indigo-50/50 whitespace-nowrap">
                         <td class="py-4 px-6 font-mono font-bold text-indigo-900">
-                            {{ $ipAddress }}
-                            <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="ml-2 px-2 py-0.5 rounded bg-indigo-200 text-indigo-800 text-[10px] hover:bg-indigo-300 cursor-pointer">
-                                {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <span>{{ $ipAddress }}</span>
+                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded bg-indigo-200 text-indigo-800 text-[10px] hover:bg-indigo-300 cursor-pointer">
+                                    {{ $logs->count() }} Sesi <i class="fa-solid fa-chevron-down"></i>
+                                </button>
+                            </div>
+                            @if($first->user)
+                                <div class="text-[10px] font-sans font-medium text-indigo-700 mt-1"><i class="fa-solid fa-user text-[9px] mr-1"></i> {{ $first->user->name ?? $first->user->email }}</div>
+                            @endif
                         </td>
                         <td class="py-4 px-6 text-indigo-800 max-w-xs truncate font-semibold"><span class="bg-indigo-100 px-2 py-1 rounded border border-indigo-200">{{ $first->reason }}</span></td>
                         <td class="py-4 px-6 text-indigo-700 max-w-xs truncate" title="{{ $first->user_agent }}">{{ $first->user_agent ?? 'Unknown/Empty' }}</td>
