@@ -10,7 +10,6 @@
     $currentUserRole = auth()->check() ? (auth()->user()->role?->role_name ?? '') : '';
 @endphp
 
-@if($currentUserRole !== 'admin')
 <script>
 (function() {
     'use strict';
@@ -24,21 +23,20 @@
         _reported = true;
 
         const url = '{{ url('/security/devtools-ping') }}';
-        const payload = JSON.stringify({ _signal: 'devtools_open', method: method, ts: Date.now() });
+        const csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}';
+        const payloadObj = { _signal: 'devtools_open', method: method, ts: Date.now(), _token: csrfToken };
+        const payload = JSON.stringify(payloadObj);
 
-        // Gunakan sendBeacon (non-blocking, tetap dikirim walau halaman di-unload)
-        if (navigator.sendBeacon) {
-            const blob = new Blob([payload], { type: 'application/json' });
-            navigator.sendBeacon(url, blob);
-        } else {
-            // Fallback: fetch biasa
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: payload,
-                keepalive: true
-            }).catch(function() {});
-        }
+        // Gunakan fetch biasa dengan CSRF header (sendBeacon tidak mendukung custom header dengan mudah untuk CSRF, jadi fetch lebih aman)
+        fetch(url, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: payload,
+            keepalive: true
+        }).catch(function() {});
     }
 
     // ─────────────────────────────────────────────
@@ -141,4 +139,3 @@
 
 })();
 </script>
-@endif

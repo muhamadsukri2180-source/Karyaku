@@ -996,14 +996,8 @@ class AdminController extends Controller
         try {
             $ip = $request->ip();
 
-            // Jika yang membuka adalah Admin sendiri, abaikan (admin bebas inspect)
-            if (auth()->check() && auth()->user()->role?->role_name === 'admin') {
-                return response()->json(['ok' => true]);
-            }
-
-            // Abaikan jika IP ada di whitelist atau localhost
-            $isWhitelisted = in_array($ip, ['127.0.0.1', '::1']) ||
-                \Illuminate\Support\Facades\Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
+            // Abaikan jika IP ada di whitelist manual
+            $isWhitelisted = \Illuminate\Support\Facades\Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
                     try { return AllowedIp::where('ip_address', $ip)->exists(); } catch (\Throwable $e) { return false; }
                 });
 

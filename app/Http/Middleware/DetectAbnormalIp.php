@@ -24,9 +24,8 @@ class DetectAbnormalIp
             return $next($request);
         }
 
-        // Cek apakah IP terdaftar di Whitelist (Admin) atau Localhost
-        $isAdmin = auth()->check() && (auth()->user()->role?->role_name === 'admin');
-        $isWhitelisted = in_array($ip, ['127.0.0.1', '::1']) || $isAdmin || Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
+        // Cek apakah IP terdaftar di Whitelist (Manual dari Admin)
+        $isWhitelisted = Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
             try {
                 return AllowedIp::where('ip_address', $ip)->exists();
             } catch (\Throwable $e) {
