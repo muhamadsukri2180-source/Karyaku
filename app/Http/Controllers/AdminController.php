@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Product, Order, OrderItem, User, Role, Category, Membership, IdentityVerification, Withdrawal, Report, CustomerService, Notification, IpLog, AllowedIp, AccountAppeal, LoginHistory};
+use App\Models\{Product, Order, OrderItem, User, Role, Category, Membership, IdentityVerification, Withdrawal, Report, CustomerService, Notification, IpLog, AllowedIp, AccountAppeal, LoginHistory, IpBan};
+use App\Support\BanReason;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Artisan, Hash, Storage, DB, Schema, Cache};
 use Carbon\Carbon;
@@ -1008,16 +1009,23 @@ class AdminController extends Controller
 
         // Tentukan status baru (toggle abnormal vs normal)
         $isUserBanned = $targetUser && ($targetUser->status === 'blocked' || Cache::has("banned_user_{$targetUser->id_user}"));
-        $isIpBanned   = ($ip->status === 'abnormal') || Cache::has("banned_ip_{$targetIp}");
+        $isIpBanned   = ($ip->status === 'abnormal') 
+            || Cache::has("banned_ip_{$targetIp}") 
+            || IpBan::where('ip_address', $targetIp)->exists();
         $isCurrentlyBanned = $isUserBanned || $isIpBanned;
 
         $newStatus = $isCurrentlyBanned ? 'normal' : 'abnormal';
         
         $reason = $request->input('reason');
         if (empty($reason)) {
-            $reason = ($newStatus === 'abnormal') 
-                ? 'Akun dan Alamat IP Anda telah diblokir oleh Administrator sistem.' 
-                : 'Aktivitas Normal Pengguna';
+            $existingReason = $ip->reason;
+            if ($newStatus === 'abnormal') {
+                $reason = (!empty($existingReason) && !str_contains($existingReason, 'Aktivitas Normal'))
+                    ? $existingReason
+                    : 'Akun dan Alamat IP Anda telah diblokir oleh Administrator sistem.';
+            } else {
+                $reason = 'Aktivitas Normal Pengguna';
+            }
         }
 
         if ($newStatus === 'abnormal') {
@@ -1026,7 +1034,24 @@ class AdminController extends Controller
             $seconds = (int) $request->input('freeze_seconds', 0);
             $totalSeconds = ($days * 86400) + ($hours * 3600) + $seconds;
 
-            // 1. Blokir Akun Pengguna Terkait
+            // 1. Simpan ke Model IpBan (Tabel ip_bans) secara permanen / dengan durasi
+            try {
+                IpBan::ensureTable();
+                IpBan::updateOrCreate(
+                    ['ip_address' => $targetIp],
+                    [
+                        'user_id'      => $targetUser?->id_user,
+                        'category'     => BanReason::categorize($reason),
+                        'reason'       => $reason,
+                        'banned_until' => $totalSeconds > 0 ? now()->addSeconds($totalSeconds) : null,
+                        'banned_by'    => auth()->user()?->name ?? 'Admin',
+                    ]
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Gagal menyimpan IpBan: ' . $e->getMessage());
+            }
+
+            // 2. Blokir Akun Pengguna Terkait
             if ($targetUser) {
                 $targetUser->status = 'blocked';
                 $targetUser->suspend_reason = $reason;
@@ -1040,7 +1065,7 @@ class AdminController extends Controller
                 $targetUser->save();
             }
 
-            // 2. Blokir semua akun non-admin lain yang login dari IP ini
+            // 3. Blokir semua akun non-admin lain yang login dari IP ini
             $hasUserIdCol = Schema::hasColumn('ip_logs', 'user_id');
             $allLinkedUserIds = [];
             if ($hasUserIdCol) {
@@ -1068,22 +1093,20 @@ class AdminController extends Controller
                 }
             }
 
-            // 3. Update status log IP di database
+            // 4. Update status log IP di database
             IpLog::where('ip_address', $targetIp)->update([
                 'status' => 'abnormal',
                 'reason' => $reason,
             ]);
 
-            // 4. Simpan ban ke Cache secara global berdasarkan IP (jika bukan IP admin aktif)
-            if ($targetIp !== $currentAdminIp && !in_array($targetIp, ['127.0.0.1', '::1'])) {
-                if ($totalSeconds > 0) {
-                    Cache::put("banned_ip_{$targetIp}", $reason, now()->addSeconds($totalSeconds));
-                } else {
-                    Cache::forever("banned_ip_{$targetIp}", $reason);
-                }
+            // 5. Simpan ban ke Cache secara global berdasarkan IP
+            if ($totalSeconds > 0) {
+                Cache::put("banned_ip_{$targetIp}", $reason, now()->addSeconds($totalSeconds));
+            } else {
+                Cache::forever("banned_ip_{$targetIp}", $reason);
             }
 
-            // 5. Bekukan session yang terdata
+            // 6. Bekukan session yang terdata
             if (!empty($ip->session_id)) {
                 if ($totalSeconds > 0) {
                     Cache::put("frozen_session_{$ip->session_id}", true, now()->addSeconds($totalSeconds));
@@ -1093,9 +1116,14 @@ class AdminController extends Controller
             }
 
             $userDisplayName = $targetUser ? "Pengguna '{$targetUser->name}' & IP {$targetIp}" : "IP {$targetIp}";
-            return back()->with('success', "{$userDisplayName} berhasil DIBLOKIR TOTAL. Pengguna tidak dapat login maupun mengakses platform.");
+            return back()->with('success', "{$userDisplayName} berhasil DIBLOKIR TOTAL. Pengguna tidak dapat login maupun mengakses landing page/platform.");
         } else {
             // BUKA BLOKIR (UNBAN)
+            // 1. Hapus dari IpBan model & cache
+            IpBan::lift($targetIp);
+            Cache::forget("banned_ip_{$targetIp}");
+
+            // 2. Aktifkan kembali akun user utama
             if ($targetUser) {
                 $targetUser->status = 'active';
                 $targetUser->suspended_until = null;
@@ -1104,7 +1132,7 @@ class AdminController extends Controller
                 Cache::forget("banned_user_{$targetUser->id_user}");
             }
 
-            // Aktifkan kembali akun non-admin yang tadinya terblokir oleh IP ini
+            // 3. Aktifkan kembali akun non-admin yang tadinya terblokir oleh IP ini
             $hasUserIdCol = Schema::hasColumn('ip_logs', 'user_id');
             $allLinkedUserIds = [];
             if ($hasUserIdCol) {
@@ -1129,13 +1157,12 @@ class AdminController extends Controller
                 }
             }
 
-            // Normalkan IP Log
+            // 4. Normalkan IP Log
             IpLog::where('ip_address', $targetIp)->update([
                 'status' => 'normal',
                 'reason' => 'Aktivitas Normal Pengguna',
             ]);
 
-            Cache::forget("banned_ip_{$targetIp}");
             if (!empty($ip->session_id)) {
                 Cache::forget("frozen_session_{$ip->session_id}");
             }
@@ -1148,7 +1175,16 @@ class AdminController extends Controller
     public function securityDestroyLog(string|int $id)
     {
         if (!session()->has('security_verified_at')) return redirect()->route('admin.security.verify');
-        IpLog::findOrFail($id)->delete();
+        $log = IpLog::findOrFail($id);
+        $targetIp = $log->ip_address;
+        
+        $otherLogs = IpLog::where('ip_address', $targetIp)->where('id', '!=', $id)->where('status', 'abnormal')->count();
+        if ($otherLogs === 0) {
+            IpBan::lift($targetIp);
+            Cache::forget("banned_ip_{$targetIp}");
+        }
+
+        $log->delete();
         return back()->with('success', 'Log IP dihapus.');
     }
 
