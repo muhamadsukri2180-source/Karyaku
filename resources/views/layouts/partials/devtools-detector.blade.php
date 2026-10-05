@@ -1,9 +1,11 @@
 {{-- ============================================================
      KARYAKU DEVTOOLS DETECTOR - Partial Layout
-     Dipasang di semua layout (admin, pembeli, penjual, verifikator, cs).
-     Mendeteksi HANYA shortcut tombol developer (F12 / Inspect)
+     Dipasang di semua layout (admin, pembeli, penjual, verifikator, cs,
+     landing, login, register).
+     Mendeteksi HANYA shortcut tombol developer (F12 / Inspect / View Source)
      PENTING:
-     1. Admin, Verifikator, dan CS DIKECUALIKAN sepenuhnya.
+     1. Staff (Admin/Verifikator/CS) hanya dikecualikan jika
+        SECURITY_EXEMPT_STAFF=true di .env (default: tetap dideteksi).
      2. Window resize dan Right-click dinonaktifkan agar TIDAK
         menimbulkan false-positive (salah deteksi) pada pengguna biasa.
 ============================================================ --}}
@@ -11,58 +13,69 @@
 @php
     $currentUserRole = auth()->check() ? strtolower(auth()->user()->role?->role_name ?? '') : '';
     $isStaffOrAdmin  = in_array($currentUserRole, ['admin', 'verifikator', 'customer_service']);
+    $skipDetector    = $isStaffOrAdmin && config('security_monitor.exempt_staff', false);
 @endphp
 
-@if(!$isStaffOrAdmin)
+@if(!$skipDetector)
 <script>
 (function() {
     'use strict';
 
-    // Hanya laporkan sekali per halaman agar tidak membebani server
-    let _reported = false;
+    // Cegah script terpasang dua kali di halaman yang sama
+    if (window.__karyakuDevtoolsDetector) return;
+    window.__karyakuDevtoolsDetector = true;
+
+    // Laporkan maksimal 1x per metode per halaman agar tidak membebani server
+    const _reported = {};
 
     function reportDevTools(method) {
-        if (_reported) return;
-        _reported = true;
+        if (_reported[method]) return;
+        _reported[method] = true;
 
-        const url = '{{ url('/security/devtools-ping') }}';
+        // URL relatif -> selalu mengarah ke host/port yang sedang dibuka
+        // (tidak bergantung APP_URL di .env, aman untuk lokal maupun hosting)
+        const url = @json(route('security.devtools_ping', [], false));
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-        const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '{{ csrf_token() }}';
-        const payload = JSON.stringify({
-            _signal: 'devtools_open',
-            method: method,
-            ts: Date.now(),
-            _token: csrfToken
-        });
+        const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : @json(csrf_token());
 
         fetch(url, {
             method: 'POST',
-            headers: { 
+            credentials: 'same-origin',
+            keepalive: true,
+            headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': csrfToken
             },
-            body: payload,
-            keepalive: true
+            body: JSON.stringify({
+                _signal: 'devtools_open',
+                method: method,
+                page: window.location.pathname,
+                ts: Date.now()
+            })
         }).catch(function() {});
     }
 
     // ─────────────────────────────────────────────
     // Deteksi HANYA shortcut keyboard spesifik DevTools:
-    // F12 / Ctrl+Shift+I / Ctrl+Shift+C / Ctrl+Shift+J / Ctrl+U
-    // (Bebas dari kesalahan resize layar atau klik kanan)
+    // F12 / Ctrl+Shift+I / Ctrl+Shift+C / Ctrl+Shift+J / Ctrl+Shift+K / Ctrl+U
+    // (Mac: Cmd+Opt+I / Cmd+Opt+C / Cmd+Opt+J / Cmd+Opt+U)
     // ─────────────────────────────────────────────
     document.addEventListener('keydown', function(e) {
-        const key = e.key;
+        const key  = e.key || '';
+        const code = e.code || '';
         const ctrl = e.ctrlKey || e.metaKey;
-        const shift = e.shiftKey;
-        const keyUpper = key ? key.toUpperCase() : '';
+        const shiftOrAlt = e.shiftKey || (e.metaKey && e.altKey);
+        // e.code tidak terpengaruh Shift/Alt/layout keyboard -> lebih akurat
+        const letter = code.startsWith('Key') ? code.slice(3) : key.toUpperCase();
 
-        if (key === 'F12') { reportDevTools('F12'); return; }
-        if (ctrl && shift && keyUpper === 'I') { reportDevTools('Ctrl+Shift+I'); return; }
-        if (ctrl && shift && keyUpper === 'C') { reportDevTools('Ctrl+Shift+C'); return; }
-        if (ctrl && shift && keyUpper === 'J') { reportDevTools('Ctrl+Shift+J'); return; }
-        if (ctrl && shift && keyUpper === 'K') { reportDevTools('Ctrl+Shift+K'); return; }
-        if (ctrl && keyUpper === 'U')          { reportDevTools('Ctrl+U');       return; }
+        if (key === 'F12' || code === 'F12')        { reportDevTools('F12');          return; }
+        if (ctrl && shiftOrAlt && letter === 'I')   { reportDevTools('Ctrl+Shift+I'); return; }
+        if (ctrl && shiftOrAlt && letter === 'C')   { reportDevTools('Ctrl+Shift+C'); return; }
+        if (ctrl && shiftOrAlt && letter === 'J')   { reportDevTools('Ctrl+Shift+J'); return; }
+        if (ctrl && e.shiftKey && letter === 'K')   { reportDevTools('Ctrl+Shift+K'); return; }
+        if (ctrl && !e.shiftKey && letter === 'U')  { reportDevTools('Ctrl+U');       return; }
     }, true);
 
 })();

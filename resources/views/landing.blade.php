@@ -1255,5 +1255,6 @@
         }, 4000);
     </script>
 @endif
+@include('layouts.partials.devtools-detector')
 </body>
 </html>

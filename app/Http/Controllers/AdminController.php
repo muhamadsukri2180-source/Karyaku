@@ -855,13 +855,10 @@ class AdminController extends Controller
         
         session(['security_verified_at' => now()]);
 
-        // Otomatis masukkan IP Admin yang berhasil verifikasi ke Whitelist
-        try {
-            AllowedIp::firstOrCreate(
-                ['ip_address' => $request->ip()],
-                ['label' => 'Admin Verified (' . (auth()->user()->name ?? 'Admin') . ')', 'added_by' => auth()->user()->name ?? 'Admin']
-            );
-        } catch (\Throwable $e) {}
+        // CATATAN: IP Admin TIDAK lagi otomatis dimasukkan ke Whitelist.
+        // Auto-whitelist IP membuat semua pengunjung yang berbagi IP yang sama
+        // (localhost / WiFi yang sama / NAT hosting) ikut tidak terdeteksi.
+        // Admin tetap aman karena staff tidak pernah diblokir (lihat DetectAbnormalIp).
 
         return redirect()->route('admin.security.index')->with('success', 'Akses Keamanan Diberikan.');
     }
@@ -871,17 +868,20 @@ class AdminController extends Controller
         if (!session()->has('security_verified_at')) return redirect()->route('admin.security.verify')->with('warning', 'Verifikasi dahulu.');
 
         $currentAdminIp = $request->ip();
+        $exemptStaff    = (bool) config('security_monitor.exempt_staff', false);
 
-        // 1. Otomatis Whitelist IP Admin yang sedang login agar tidak pernah terdeteksi ancaman
+        // 1. Hapus whitelist IP OTOMATIS lama ("IP Admin Otomatis" / "Admin Verified").
+        //    Entri ini dulu dibuat otomatis dan menyebabkan log ancaman dari IP tsb
+        //    (mis. 127.0.0.1 atau IP publik hosting) tidak pernah muncul di tabel.
+        //    Whitelist yang ditambahkan MANUAL oleh admin tidak disentuh.
         try {
-            AllowedIp::firstOrCreate(
-                ['ip_address' => $currentAdminIp],
-                [
-                    'label'    => 'IP Admin Otomatis (' . (auth()->user()->name ?? 'Administrator') . ')',
-                    'added_by' => auth()->user()->name ?? 'System'
-                ]
-            );
-            Cache::put("allowed_ip_{$currentAdminIp}", true, 86400);
+            $autoEntries = AllowedIp::where('label', 'like', 'IP Admin Otomatis%')
+                ->orWhere('label', 'like', 'Admin Verified%')
+                ->get();
+            foreach ($autoEntries as $entry) {
+                Cache::forget("allowed_ip_{$entry->ip_address}");
+                $entry->delete();
+            }
         } catch (\Throwable $e) {}
 
         // 2. Pembersihan otomatis log false-positive (seperti resize window, klik kanan, atau devtools lama)
@@ -904,12 +904,6 @@ class AdminController extends Controller
             ->groupBy('ip_address')
             ->map(fn($items) => $items->first()->username);
 
-        // Daftar IP Admin & Whitelist yang harus dikecualikan dari tabel ancaman
-        $adminIps = AllowedIp::pluck('ip_address')->toArray();
-        $adminIps[] = $currentAdminIp;
-        $adminIps[] = '127.0.0.1';
-        $adminIps[] = '::1';
-        $adminIps = array_unique(array_filter($adminIps));
 
         // Periksa apakah kolom user_id ada di database (Self-Healing Migration jika belum ter-migrate)
         $hasUserIdCol = Schema::hasColumn('ip_logs', 'user_id');
@@ -928,11 +922,15 @@ class AdminController extends Controller
             $suspiciousQuery->with(['user.role']);
         }
 
+        // Filter HANYA berdasarkan status, bukan IP. Banyak user bisa berbagi IP yang sama
+        // (localhost, WiFi kampus/kantor), jadi mengecualikan IP = log ancaman ikut hilang.
         $suspiciousQuery->whereIn('status', ['abnormal', 'suspicious'])
-            ->where('reason', '!=', 'Aktivitas Normal Pengguna')
-            ->whereNotIn('ip_address', $adminIps);
+            ->where(function ($q) {
+                $q->whereNull('reason')->orWhere('reason', '!=', 'Aktivitas Normal Pengguna');
+            });
 
-        if ($hasUserIdCol) {
+        // Sembunyikan log milik akun staff HANYA jika SECURITY_EXEMPT_STAFF=true
+        if ($hasUserIdCol && $exemptStaff) {
             $suspiciousQuery->where(function($q) {
                 $q->whereDoesntHave('user.role', fn($rq) => $rq->whereIn('role_name', ['admin', 'verifikator', 'customer_service']))
                   ->orWhereNull('user_id');
@@ -1193,25 +1191,21 @@ class AdminController extends Controller
         try {
             $ip = $request->ip();
 
-            // Abaikan jika user adalah admin, verifikator, atau customer service
-            if (auth()->check()) {
+            // Abaikan staff HANYA jika SECURITY_EXEMPT_STAFF=true di .env
+            if (auth()->check() && config('security_monitor.exempt_staff', false)) {
                 $userRole = strtolower(auth()->user()->role?->role_name ?? '');
                 if (in_array($userRole, ['admin', 'verifikator', 'customer_service'])) {
-                    return response()->json(['ok' => true]);
+                    return response()->json(['ok' => true, 'logged' => false, 'why' => 'staff_exempt']);
                 }
             }
 
-            // Abaikan jika IP ada di whitelist manual atau localhost
-            if (in_array($ip, ['127.0.0.1', '::1'])) {
-                return response()->json(['ok' => true]);
-            }
-
+            // Abaikan jika IP ada di whitelist MANUAL (localhost tidak lagi dikecualikan)
             $isWhitelisted = \Illuminate\Support\Facades\Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
                     try { return AllowedIp::where('ip_address', $ip)->exists(); } catch (\Throwable $e) { return false; }
                 });
 
             if ($isWhitelisted) {
-                return response()->json(['ok' => true]);
+                return response()->json(['ok' => true, 'logged' => false, 'why' => 'ip_whitelisted']);
             }
 
             // Baca body JSON dari sendBeacon (Content-Type: application/json)
@@ -1244,11 +1238,16 @@ class AdminController extends Controller
 
             $userAgent = $request->header('User-Agent') ?? 'Unknown';
 
-            // Buat session_id yang konsisten
-            $sessionIdCookie = $request->cookie(config('session.cookie'));
-            $sessionId = $sessionIdCookie
-                ? substr(md5($sessionIdCookie), 0, 16)
-                : substr(md5($userAgent . $ip . now()->toDateString()), 0, 16);
+            // Buat session_id yang SAMA dengan middleware DetectAbnormalIp
+            // agar log ping menempel pada baris log sesi yang sama (tidak dobel)
+            if ($request->hasSession()) {
+                $sessionId = substr(md5($request->session()->getId()), 0, 16);
+            } else {
+                $sessionIdCookie = $request->cookie(config('session.cookie'));
+                $sessionId = $sessionIdCookie
+                    ? substr(md5($sessionIdCookie), 0, 16)
+                    : substr(md5($userAgent . $ip), 0, 16);
+            }
 
             $today = now()->toDateString();
             $hasSessionIdCol = \Illuminate\Support\Facades\Schema::hasColumn('ip_logs', 'session_id');
@@ -1273,7 +1272,7 @@ class AdminController extends Controller
                 $ipLog->reason = $reason;
             }
 
-            $referer = $request->header('Referer', 'N/A');
+            $referer = $request->header('Referer') ?: ($body['page'] ?? 'N/A');
             $ipLog->user_agent       = substr($userAgent, 0, 255);
             $ipLog->last_activity    = substr("[DevTools] {$referer}", 0, 500);
             $ipLog->request_count    = ($ipLog->request_count ?? 0) + 1;
@@ -1303,18 +1302,23 @@ class AdminController extends Controller
             try {
                 $ipLog->save();
             } catch (\Throwable $saveEx) {
-                // Fallback: hosting lama mungkin belum punya enum 'suspicious'
-                if ($ipLog->status === 'suspicious') {
-                    $ipLog->status = 'normal';
-                    try { $ipLog->save(); } catch (\Throwable $e2) {}
+                // Hosting lama mungkin belum punya enum 'suspicious' -> perbaiki kolom lalu simpan ulang
+                try {
+                    \Illuminate\Support\Facades\DB::statement("ALTER TABLE ip_logs MODIFY COLUMN status ENUM('normal', 'abnormal', 'suspicious') NOT NULL DEFAULT 'normal'");
+                    $ipLog->save();
+                } catch (\Throwable $e2) {
+                    \Illuminate\Support\Facades\Log::warning('DevTools ping save error: ' . $saveEx->getMessage());
+                    return response()->json(['ok' => false, 'logged' => false, 'why' => 'save_failed']);
                 }
             }
+
+            return response()->json(['ok' => true, 'logged' => true, 'reason' => $reason]);
 
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('DevTools ping error: ' . $e->getMessage());
         }
 
-        return response()->json(['ok' => true]);
+        return response()->json(['ok' => false, 'logged' => false]);
     }
 
     public function clearCache(Request $request)

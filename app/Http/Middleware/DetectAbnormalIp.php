@@ -25,7 +25,9 @@ class DetectAbnormalIp
             return $next($request);
         }
 
-        // Cek apakah Admin/Staff sedang login (Admin, Verifikator, CS selalu dikecualikan dari pemblokiran & false-positive)
+        // Cek apakah Admin/Staff sedang login.
+        // Staff (Admin, Verifikator, CS) TIDAK PERNAH diblokir, tetapi tetap DIDETEKSI
+        // kecuali SECURITY_EXEMPT_STAFF=true di .env (config/security_monitor.php)
         $isAdminOrStaff = false;
         if (Auth::check()) {
             $userRole = strtolower(Auth::user()->role?->role_name ?? '');
@@ -34,13 +36,15 @@ class DetectAbnormalIp
             }
         }
 
-        // Jika Admin atau Staff aktif yang login, lewati seluruh pemblokiran keamanan
-        if ($isAdminOrStaff) {
+        $exemptStaff = (bool) config('security_monitor.exempt_staff', false);
+
+        // Jika staff dikecualikan penuh lewat config, lewati seluruh pemeriksaan
+        if ($isAdminOrStaff && $exemptStaff) {
             return $next($request);
         }
 
-        // 2. CEK APAKAH AKUN USER YANG SEDANG LOGIN DIBLOKIR / DIBEKUKAN
-        if (Auth::check()) {
+        // 2. CEK APAKAH AKUN USER YANG SEDANG LOGIN DIBLOKIR / DIBEKUKAN (staff tidak pernah diblokir)
+        if (Auth::check() && !$isAdminOrStaff) {
             $currUser = Auth::user();
             if ($currUser->status === 'blocked' || Cache::has("banned_user_{$currUser->id_user}")) {
                 $uName = $currUser->name;
@@ -66,7 +70,7 @@ class DetectAbnormalIp
         }
 
         // 3. CEK APAKAH SESI BROWSER DIBEKUKAN (FROZEN SESSION)
-        if ($request->hasSession()) {
+        if ($request->hasSession() && !$isAdminOrStaff) {
             $sessId = substr(md5($request->session()->getId()), 0, 16);
             if (Cache::has("frozen_session_{$sessId}")) {
                 if (Auth::check()) {
@@ -92,7 +96,7 @@ class DetectAbnormalIp
         });
 
         // 4. CEK APAKAH ALAMAT IP DIBLOKIR (BAN CHECK GLOBAL)
-        if (!$isWhitelisted && !in_array($ip, ['127.0.0.1', '::1'])) {
+        if (!$isWhitelisted && !$isAdminOrStaff && !in_array($ip, ['127.0.0.1', '::1'])) {
             $isBanned = Cache::has("banned_ip_{$ip}");
             $banReason = null;
 
@@ -151,7 +155,7 @@ class DetectAbnormalIp
         }
 
         // 4. Cek SQL Injection dan XSS dari Input Data dan URL (Hanya untuk non-whitelist)
-        if (!$isSuspicious && !$isWhitelisted && !$isAdminOrStaff && !$request->is('admin/product*') && !$request->is('seller/product*')) {
+        if (!$isSuspicious && !$isWhitelisted && !$request->is('admin/product*') && !$request->is('seller/product*')) {
             $inputData = urldecode($request->fullUrl()) . ' ' . json_encode($request->all());
 
             // Pola SQLi yang dipertajam (Akurasi Tinggi, Bebas False-Positive)
@@ -195,7 +199,7 @@ class DetectAbnormalIp
         }
 
         // 5. Deteksi Bot / Scraper dari User-Agent (Hanya untuk non-whitelist)
-        if (!$isSuspicious && !$isWhitelisted && !$isAdminOrStaff) {
+        if (!$isSuspicious && !$isWhitelisted) {
             $lowerUa = strtolower($userAgent);
             
             // Jika User-Agent benar-benar kosong atau terlalu pendek
@@ -276,8 +280,8 @@ class DetectAbnormalIp
                 }
             }
 
-            // Semi-otomatis: Hanya catat sebagai 'suspicious' jika benar-benar terdeteksi ancaman dan bukan whitelist/staff
-            if ($isSuspicious && !$isWhitelisted && !$isAdminOrStaff && $ipLog->status !== 'abnormal') {
+            // Catat sebagai 'suspicious' jika benar-benar terdeteksi ancaman dan bukan whitelist manual
+            if ($isSuspicious && !$isWhitelisted && $ipLog->status !== 'abnormal') {
                 $ipLog->status = 'suspicious';
                 $ipLog->reason = $reason;
             }
@@ -312,15 +316,21 @@ class DetectAbnormalIp
                 $ipLog->save();
             } catch (\Throwable $saveEx) {
                 if ($ipLog->status === 'suspicious') {
-                    $ipLog->status = 'normal';
-                    $ipLog->save();
+                    // Hosting lama mungkin belum punya enum 'suspicious' -> perbaiki kolom lalu simpan ulang
+                    try {
+                        \Illuminate\Support\Facades\DB::statement("ALTER TABLE ip_logs MODIFY COLUMN status ENUM('normal', 'abnormal', 'suspicious') NOT NULL DEFAULT 'normal'");
+                        $ipLog->save();
+                    } catch (\Throwable $alterEx) {
+                        $ipLog->status = 'normal';
+                        $ipLog->save();
+                    }
                 } else {
                     throw $saveEx;
                 }
             }
 
-            // Blokir HANYA jika Admin sudah memblokir manual ('abnormal')
-            if (!$isWhitelisted && $ipLog->status === 'abnormal') {
+            // Blokir HANYA jika Admin sudah memblokir manual ('abnormal'). Staff tidak pernah diblokir.
+            if (!$isWhitelisted && !$isAdminOrStaff && $ipLog->status === 'abnormal') {
                 if (Auth::check()) {
                     Auth::logout();
                     if ($request->hasSession()) {
