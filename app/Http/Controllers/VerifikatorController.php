@@ -1,0 +1,499 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use App\Models\Role;
+use App\Models\Product;
+use App\Models\Order;
+use App\Models\IdentityVerification;
+use App\Models\Report;
+use App\Models\Notification;
+use App\Models\Membership;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+
+class VerifikatorController extends Controller
+{
+    private function isAdmin(): bool
+    {
+        $user = Auth::user();
+        return $user && in_array(strtolower($user->role->role_name ?? ''), ['admin', 'verifikator'], true);
+    }
+
+    public function dashboard()
+    {
+        $pending = IdentityVerification::select(['id_identity_verification', 'user_id', 'membership_id', 'status', 'payment_method', 'submitted_at'])
+            ->with(['user:id_user,name,email', 'membership:id_membership,name'])
+            ->where('status', 'pending')
+            ->latest('id_identity_verification')
+            ->paginate(10);
+
+        $identityStats = IdentityVerification::selectRaw("
+            COUNT(CASE WHEN status = 'pending' THEN 1 END) AS pending_ktp,
+            COUNT(CASE WHEN status = 'approved' THEN 1 END) AS approved,
+            COUNT(CASE WHEN status = 'rejected' THEN 1 END) AS rejected
+        ")->first();
+
+        $productStats = Product::selectRaw("
+            COUNT(CASE WHEN status = 'pending' THEN 1 END) AS pending_produk,
+            COUNT(CASE WHEN status = 'approved' THEN 1 END) AS approved,
+            COUNT(CASE WHEN status = 'rejected' THEN 1 END) AS rejected
+        ")->first();
+
+        $pendingPembayaran = IdentityVerification::where('status', 'pending')->whereNotNull('payment_method')->count() 
+            + Order::where('payment_status', 'pending')->whereNotNull('payment_proof')->count();
+        $laporanMasuk = Report::where('status', 'pending')->count();
+
+        $approvedCount = ($identityStats->approved ?? 0) + ($productStats->approved ?? 0);
+        $rejectedCount = ($identityStats->rejected ?? 0) + ($productStats->rejected ?? 0);
+        $pendingKtp = $identityStats->pending_ktp ?? 0;
+        $pendingProduk = $productStats->pending_produk ?? 0;
+
+        return view('verifikator.dashboard', compact(
+            'pending', 'pendingKtp', 'pendingProduk', 'pendingPembayaran', 'laporanMasuk', 'approvedCount', 'rejectedCount'
+        ));
+    }
+
+    public function identitas(Request $request)
+    {
+        $tab = $request->get('tab', 'pending');
+        $query = IdentityVerification::select([
+            'id_identity_verification', 'user_id', 'membership_id', 'verifier_id',
+            'status', 'notes', 'nik', 'address', 'bank_name', 'account_name',
+            'account_number', 'payment_method', 'payment_amount', 'submitted_at', 'verified_at'
+        ])
+        ->with(['user:id_user,name,email', 'membership:id_membership,name', 'verifier:id_user,name']);
+
+        if ($tab === 'history') {
+            $verifications = $query->whereIn('status', ['approved', 'rejected'])->latest('id_identity_verification')->paginate(10)->withQueryString();
+        } else {
+            $verifications = $query->where('status', 'pending')->latest('id_identity_verification')->paginate(10)->withQueryString();
+        }
+
+        return view('verifikator.identitas', compact('verifications', 'tab'));
+    }
+
+    public function show($id)
+    {
+        $registration = IdentityVerification::with(['user', 'membership', 'verifier'])->findOrFail($id);
+        $verification = $registration;
+        return view('verifikator.detail-pendaftaran', compact('registration', 'verification'));
+    }
+
+    public function approve($id)
+    {
+        if (!$this->isAdmin()) return redirect()->back()->with('error', 'Akses ditolak!');
+
+        try {
+            DB::transaction(function () use ($id) {
+                $verification = IdentityVerification::lockForUpdate()->findOrFail($id);
+                if ($verification->status !== 'pending') throw new \RuntimeException('Pengajuan ini sudah diproses sebelumnya.');
+
+                $sellerRole = Role::where('role_name', 'penjual')->firstOrFail();
+                $user = User::where('id_user', $verification->user_id)->lockForUpdate()->firstOrFail();
+
+                $userData = ['id_role' => $sellerRole->id_role, 'status' => 'active'];
+
+                if ($verification->membership_id && $membership = Membership::find($verification->membership_id)) {
+                    $userData['id_membership'] = $membership->id_membership;
+                    $durationDays = $membership->duration_days ?? 30;
+
+                    $isSamePlanActive = ($user->id_membership == $membership->id_membership) && $user->membership_expires_at && $user->membership_expires_at->isFuture();
+
+                    $userData['membership_expires_at'] = $isSamePlanActive
+                        ? $user->membership_expires_at->copy()->addDays($durationDays)
+                        : now()->addDays($durationDays);
+                }
+
+                $user->update($userData);
+                $verification->update(['status' => 'approved', 'verifier_id' => Auth::id(), 'verified_at' => now()]);
+
+                $membershipName = $verification->membership->name ?? 'Membership Penjual';
+                Notification::create([
+                    'user_id'     => $verification->user_id,
+                    'name'        => 'Pembayaran Paket Disetujui',
+                    'description' => 'Selamat! Pembayaran paket ' . $membershipName . ' Anda telah disetujui. Paket telah aktif hingga ' . ($user->fresh()->membership_expires_at ? $user->fresh()->membership_expires_at->translatedFormat('d F Y H:i') : '-') . '.',
+                    'is_read'     => false,
+                ]);
+            });
+
+            return redirect()->back()->with('success', 'Pendaftaran / Pembayaran membership berhasil disetujui.');
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', 'Gagal memproses verifikasi: ' . $e->getMessage());
+        }
+    }
+
+    public function reject(Request $request, $id)
+    {
+        if (!$this->isAdmin()) return redirect()->back()->with('error', 'Akses ditolak!');
+
+        $note = $request->input('notes') ?: $request->input('rejection_note');
+        if (!$note) return redirect()->back()->with('error', 'Catatan / alasan penolakan wajib diisi.');
+
+        try {
+            DB::transaction(function () use ($id, $note) {
+                $verification = IdentityVerification::lockForUpdate()->findOrFail($id);
+                if ($verification->status !== 'pending') throw new \RuntimeException('Pengajuan ini sudah diproses sebelumnya.');
+
+                $verification->update(['status' => 'rejected', 'notes' => $note, 'verifier_id' => Auth::id(), 'verified_at' => now()]);
+
+                $membershipName = $verification->membership->name ?? 'Paket Membership';
+                Notification::create([
+                    'user_id'     => $verification->user_id,
+                    'name'        => 'Pembayaran / Verifikasi Ditolak',
+                    'description' => 'Pembayaran/pengajuan paket ' . $membershipName . ' Anda ditolak. Catatan: ' . $note,
+                    'is_read'     => false,
+                ]);
+            });
+
+            return redirect()->back()->with('success', 'Pengajuan / Pembayaran berhasil ditolak.');
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', 'Gagal menolak verifikasi: ' . $e->getMessage());
+        }
+    }
+
+    public function produk(Request $request)
+    {
+        $tab = $request->get('tab', 'pending');
+        $query = Product::select(['id_product', 'seller_id', 'category_id', 'title', 'price', 'status', 'rejection_note', 'created_at'])
+            ->with(['seller:id_user,name,email', 'user:id_user,name,email', 'category:id_category,name']);
+
+        if ($tab === 'history') {
+            $query->whereIn('status', ['approved', 'rejected', 'active', 'inactive']);
+        } else {
+            $query->where('status', 'pending');
+        }
+
+        $products = $query->latest('id_product')->paginate(10)->withQueryString();
+        return view('verifikator.produk', compact('products', 'tab'));
+    }
+
+    public function showProduk($id)
+    {
+        $product = Product::with(['seller', 'user', 'category'])->findOrFail($id);
+        return view('verifikator.detail-produk', compact('product'));
+    }
+
+    public function approveProduk($id)
+    {
+        if (!$this->isAdmin()) return redirect()->back()->with('error', 'Akses ditolak!');
+
+        try {
+            DB::transaction(function () use ($id) {
+                $product = Product::lockForUpdate()->findOrFail($id);
+                if ($product->status !== 'pending') throw new \RuntimeException('Produk ini sudah diproses sebelumnya.');
+
+                $product->update(['status' => 'active', 'rejection_note' => null]);
+
+                Notification::create([
+                    'user_id'     => $product->seller_id ?? $product->user_id,
+                    'name'        => 'Produk Disetujui',
+                    'description' => 'Produk "' . ($product->title ?? $product->name) . '" Anda telah diverifikasi dan diterbitkan.',
+                    'is_read'     => false,
+                ]);
+            });
+
+            return redirect()->route('verifikator.produk')->with('success', 'Produk berhasil disetujui.');
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', 'Gagal menyetujui produk: ' . $e->getMessage());
+        }
+    }
+
+    public function rejectProduk(Request $request, $id)
+    {
+        if (!$this->isAdmin()) return redirect()->back()->with('error', 'Akses ditolak!');
+
+        $validated = $request->validate(['rejection_note' => 'required|string|max:500']);
+
+        try {
+            DB::transaction(function () use ($id, $validated) {
+                $product = Product::lockForUpdate()->findOrFail($id);
+                if ($product->status !== 'pending') throw new \RuntimeException('Produk ini sudah diproses sebelumnya.');
+
+                $product->update(['status' => 'rejected', 'rejection_note' => $validated['rejection_note']]);
+
+                Notification::create([
+                    'user_id'     => $product->seller_id ?? $product->user_id,
+                    'name'        => 'Produk Ditolak',
+                    'description' => 'Produk "' . ($product->title ?? $product->name) . '" ditolak. Catatan: ' . $validated['rejection_note'],
+                    'is_read'     => false,
+                ]);
+            });
+
+            return redirect()->route('verifikator.produk')->with('success', 'Produk berhasil ditolak.');
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', 'Gagal menolak produk: ' . $e->getMessage());
+        }
+    }
+
+    public function pembayaran(Request $request)
+    {
+        $sub = $request->get('sub', 'transaksi');
+        $tab = $request->get('tab', 'pending');
+
+        if ($sub === 'membership') {
+            $query = IdentityVerification::select([
+                'id_identity_verification', 'user_id', 'membership_id', 'verifier_id',
+                'status', 'payment_method', 'payment_amount', 'notes', 'submitted_at', 'verified_at'
+            ])
+            ->with(['user:id_user,name,email', 'membership:id_membership,name,price,duration_days', 'verifier:id_user,name'])
+            ->whereNotNull('payment_method');
+
+            if ($tab === 'history') {
+                $payments = $query->whereIn('status', ['approved', 'rejected'])->latest('id_identity_verification')->paginate(10)->withQueryString();
+            } else {
+                $payments = $query->where('status', 'pending')->latest('id_identity_verification')->paginate(10)->withQueryString();
+            }
+        } else {
+            $query = Order::with(['buyer:id_user,name,email', 'items.product.seller:id_user,name,email', 'verifier:id_user,name'])
+                ->whereNotNull('payment_proof');
+
+            if ($tab === 'history') {
+                $payments = $query->whereIn('payment_status', ['paid', 'failed', 'rejected'])->latest('id_order')->paginate(10)->withQueryString();
+            } else {
+                $payments = $query->where('payment_status', 'pending')->latest('id_order')->paginate(10)->withQueryString();
+            }
+        }
+
+        $pendingOrderCount = Order::where('payment_status', 'pending')->whereNotNull('payment_proof')->count();
+        $pendingMembershipCount = IdentityVerification::where('status', 'pending')->whereNotNull('payment_method')->count();
+
+        return view('verifikator.pembayaran', compact('payments', 'tab', 'sub', 'pendingOrderCount', 'pendingMembershipCount'));
+    }
+
+    public function showPembayaran($id)
+    {
+        $payment = IdentityVerification::with(['user', 'membership', 'verifier'])->findOrFail($id);
+        return view('verifikator.detail-pembayaran', compact('payment'));
+    }
+
+    public function approvePembayaran($id)
+    {
+        return $this->approve($id);
+    }
+
+    public function rejectPembayaran(Request $request, $id)
+    {
+        return $this->reject($request, $id);
+    }
+
+    public function showTransaksiPembayaran($id)
+    {
+        $order = Order::with(['buyer', 'items.product.seller', 'verifier'])->findOrFail($id);
+        return view('verifikator.detail-transaksi', compact('order'));
+    }
+
+    public function approveTransaksiPembayaran($id)
+    {
+        if (!$this->isAdmin()) return redirect()->back()->with('error', 'Akses ditolak!');
+
+        try {
+            DB::transaction(function () use ($id) {
+                $order = Order::lockForUpdate()->findOrFail($id);
+                if ($order->payment_status === 'paid') {
+                    throw new \RuntimeException('Pembayaran transaksi ini sudah disetujui sebelumnya.');
+                }
+
+                $order->update([
+                    'payment_status' => 'paid',
+                    'status'         => 'selesai',
+                    'verifier_id'    => Auth::id(),
+                    'verified_at'    => now(),
+                ]);
+
+                Notification::create([
+                    'user_id'     => $order->buyer_id,
+                    'name'        => 'Transaksi Pembelian Disetujui',
+                    'description' => 'Pembayaran untuk pesanan #' . $order->kode_order . ' sebesar Rp ' . number_format($order->total_price, 0, ',', '.') . ' telah diverifikasi oleh Verifikator. Berkas karya digital kini sudah dapat Anda unduh.',
+                    'is_read'     => false,
+                ]);
+
+                $sellerIds = [];
+                foreach ($order->items as $item) {
+                    if ($item->product && $item->product->seller_id) {
+                        $sellerIds[$item->product->seller_id] = true;
+                    }
+                }
+
+                foreach (array_keys($sellerIds) as $sellerId) {
+                    Notification::create([
+                        'user_id'     => $sellerId,
+                        'name'        => 'Transaksi Masuk Diverifikasi',
+                        'description' => 'Pembayaran pesanan #' . $order->kode_order . ' telah diverifikasi oleh Verifikator platform. Saldo pendapatan Anda telah diperbarui.',
+                        'is_read'     => false,
+                    ]);
+                }
+            });
+
+            return redirect()->route('verifikator.pembayaran', ['sub' => 'transaksi', 'tab' => 'pending'])
+                ->with('success', 'Transaksi pembayaran berhasil disetujui. Berkas telah terbuka untuk pembeli dan dana diteruskan ke penjual.');
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', 'Gagal memproses verifikasi transaksi: ' . $e->getMessage());
+        }
+    }
+
+    public function rejectTransaksiPembayaran(Request $request, $id)
+    {
+        if (!$this->isAdmin()) return redirect()->back()->with('error', 'Akses ditolak!');
+
+        $validated = $request->validate(['rejection_note' => 'required|string|max:500']);
+
+        try {
+            DB::transaction(function () use ($id, $validated) {
+                $order = Order::lockForUpdate()->findOrFail($id);
+
+                $order->update([
+                    'payment_status' => 'rejected',
+                    'status'         => 'dibatalkan',
+                    'rejection_note' => $validated['rejection_note'],
+                    'verifier_id'    => Auth::id(),
+                    'verified_at'    => now(),
+                ]);
+
+                Notification::create([
+                    'user_id'     => $order->buyer_id,
+                    'name'        => 'Bukti Pembayaran Ditolak',
+                    'description' => 'Bukti pembayaran pesanan #' . $order->kode_order . ' ditolak oleh Verifikator. Alasan: ' . $validated['rejection_note'] . '. Silakan kirimkan bukti transfer yang valid.',
+                    'is_read'     => false,
+                ]);
+            });
+
+            return redirect()->route('verifikator.pembayaran', ['sub' => 'transaksi', 'tab' => 'pending'])
+                ->with('success', 'Transaksi pembayaran berhasil ditolak.');
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', 'Gagal menolak transaksi: ' . $e->getMessage());
+        }
+    }
+
+    public function laporan(Request $request)
+    {
+        $tab = $request->get('tab', 'pending');
+        $query = Report::with(['reporter', 'reportedUser', 'product']);
+
+        if ($tab === 'history') {
+            $query->whereIn('status', ['resolved', 'dismissed', 'action_taken']);
+        } else {
+            $query->where('status', 'pending');
+        }
+
+        $reports = $query->latest()->paginate(10)->withQueryString();
+        return view('verifikator.laporan', compact('reports', 'tab'));
+    }
+
+    public function showLaporan($id)
+    {
+        $report = Report::with(['reporter', 'reportedUser', 'product'])->findOrFail($id);
+        return view('verifikator.detail-laporan', compact('report'));
+    }
+
+    public function actionLaporan(Request $request, $id)
+    {
+        if (!$this->isAdmin()) return redirect()->back()->with('error', 'Akses ditolak!');
+
+        $validated = $request->validate([
+            'action' => 'required|in:warning,takedown,dismiss',
+            'note'   => 'nullable|string|max:500',
+        ]);
+
+        try {
+            DB::transaction(function () use ($id, $validated) {
+                $report = Report::with('product')->lockForUpdate()->findOrFail($id);
+                if ($report->status !== 'pending') throw new \RuntimeException('Laporan ini sudah diproses sebelumnya.');
+
+                $action = $validated['action'];
+                $note = $validated['note'] ?? null;
+                $targetUserId = $report->reported_user_id ?? ($report->product->seller_id ?? null);
+
+                if ($action === 'warning') {
+                    $report->status = 'resolved';
+                    if ($targetUserId) {
+                        Notification::create([
+                            'user_id'     => $targetUserId,
+                            'name'        => 'Peringatan Pelanggaran',
+                            'description' => 'Akun Anda mendapatkan teguran terkait laporan: ' . ($note ?? 'Pelanggaran ketentuan platform.'),
+                            'is_read'     => false,
+                        ]);
+                    }
+                } elseif ($action === 'takedown') {
+                    $report->status = 'resolved';
+                    if ($report->product_id) Product::where('id_product', $report->product_id)->update(['status' => 'inactive']);
+                    if ($targetUserId) {
+                        Notification::create([
+                            'user_id'     => $targetUserId,
+                            'name'        => 'Tindakan Disiplin (Takedown)',
+                            'description' => 'Produk/Konten Anda telah diturunkan karena terbukti melanggar aturan.',
+                            'is_read'     => false,
+                        ]);
+                    }
+                } else {
+                    $report->status = 'dismissed';
+                }
+
+                $report->update([
+                    'reported_user_id' => $targetUserId,
+                    'action_taken'     => $action,
+                    'admin_note'       => $note,
+                    'reviewed_by'      => Auth::id(),
+                    'reviewed_at'      => now(),
+                ]);
+            });
+
+            return redirect()->route('verifikator.laporan')->with('success', 'Tindakan laporan pelanggaran berhasil diproses.');
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', 'Gagal memproses tindakan laporan: ' . $e->getMessage());
+        }
+    }
+
+    public function profile()
+    {
+        $user = Auth::user();
+        return view('verifikator.profile', compact('user'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|max:255|unique:users,email,' . $user->id_user . ',id_user',
+            'phone'    => ['nullable', 'string', 'max:20', 'regex:/^(\+62|08)[0-9]{8,13}$/'],
+            'avatar'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'password' => 'nullable|string|min:6|confirmed',
+        ], [
+            'phone.regex' => 'No. telepon harus diawali 08 atau +62 dan minimal 10 digit.',
+        ]);
+
+        $data = [
+            'name'  => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+        ];
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        }
+
+        if (!empty($validated['password'])) {
+            $data['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($data);
+
+        return redirect()->route('verifikator.profile')->with('success', 'Profil berhasil diperbarui.');
+    }
+}
