@@ -10,11 +10,14 @@
                 <i class="bi bi-heart-fill text-danger me-2"></i>Disukai
             </h4>
             <p class="text-muted small mb-0">Daftar produk karya digital favorit yang Anda simpan untuk dibeli nanti.</p>
-        </div>
-        <a href="{{ route('pembeli.marketplace') }}" class="btn btn-sm fw-bold px-3 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-1" style="background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary-soft); transition: all 0.2s ease;">
-            </i> Jelajahi Toko
-        </a>
-    </div>
+      
+</div>
+<a href="{{ route('pembeli.marketplace') }}"
+   class="btn btn-primary px-4 py-2 fw-bold rounded-pill shadow-sm d-inline-flex align-items-center gap-2">
+    <i class="bi bi-shop-window"></i>
+    Jelajahi Toko
+</a>
+</div>
 
     @if ($wishlists->isEmpty())
         <div class="card-box p-5 text-center text-muted">

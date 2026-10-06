@@ -71,12 +71,14 @@
             <p class="text-muted mb-0 small">
                 Pantau status pembayaran, riwayat transaksi, dan unduh berkas digital pesanan Anda.
             </p>
-        </div>
-
-        <a href="{{ route('pembeli.download') }}" class="btn btn-sm fw-bold px-3.5 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5" style="background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary-soft);"> File Download Saya
-        </a>
-    </div>
-
+    
+</div>
+<a href="{{ route('pembeli.download') }}"
+   class="btn btn-primary px-4 py-2 fw-bold rounded-pill shadow-sm d-inline-flex align-items-center gap-2">
+    <i class="bi bi-download"></i>
+    File Download Saya
+</a>
+</div>
     {{-- TAB FILTER STATUS --}}
     <div class="card-box p-2 mb-4 rounded-4 shadow-sm border">
         <ul class="nav nav-pills gap-2 flex-nowrap overflow-x-auto pb-1" style="scrollbar-width: none;">

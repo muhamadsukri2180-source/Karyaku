@@ -60,11 +60,14 @@
             <i class="bi bi-cart-fill text-primary me-2"></i>Keranjang Belanja
         </h4>
         <p class="text-muted small mb-0">Kelola dan pilih produk yang ingin Anda checkout sekarang.</p>
-    </div>
-    <a href="{{ route('pembeli.marketplace') }}" class="btn btn-sm fw-bold px-3 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-1" style="background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary-soft);">
-        Tambah Produk Lain
-    </a>
 </div>
+<a href="{{ route('pembeli.marketplace') }}"
+   class="btn btn-primary px-4 py-2 fw-bold rounded-pill shadow-sm d-inline-flex align-items-center gap-2">
+    <i class="bi bi-shop-window"></i>
+    Jelajahi Toko
+</a>
+</div>
+
 
 @if($items->isEmpty())
     <div class="cart-container-box p-5 text-center text-muted">

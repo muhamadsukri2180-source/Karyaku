@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('ip_address')->index();
             $table->string('user_agent')->nullable();
-            $table->enum('status', ['normal', 'abnormal'])->default('normal');
+           $table->enum('status', ['normal', 'suspicious', 'abnormal'])->default('normal');
             $table->text('reason')->nullable();
             $table->text('last_activity')->nullable();
             $table->integer('request_count')->default(1);
