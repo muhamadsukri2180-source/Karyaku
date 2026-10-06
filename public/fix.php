@@ -70,15 +70,18 @@ try {
             } catch (\Throwable $e) {}
         }
 
-        // 2. Netralkan semua log false-positive
+        // 2. Netralkan HANYA log false-positive (resize window / klik kanan).
+        //    Deteksi DevTools asli TIDAK disentuh agar tetap tampil di tabel IP Mencurigakan.
         $dbCleanedCount = \Illuminate\Support\Facades\DB::table('ip_logs')
             ->where(function($q) {
                 $q->where('reason', 'like', '%Resize Window%')
                   ->orWhere('reason', 'like', '%right-click%')
                   ->orWhere('reason', 'like', '%Klik Kanan%')
-                  ->orWhere('reason', 'like', '%DevTools%');
+                  ->orWhere('reason', 'like', '%panel DevTools%')
+                  ->orWhere('reason', 'like', '%devtools-open%');
             })
             ->update(['status' => 'normal', 'reason' => 'Aktivitas Normal Pengguna']);
+
 
         // 2. Daftarkan IP pengunjung fix.php ini ke allowed_ips jika belum ada
         if (!in_array($visitorIp, ['127.0.0.1', '::1'])) {
@@ -99,6 +102,9 @@ try {
 
         // 3. Clear cache aplikasi
         \Illuminate\Support\Facades\Artisan::call('cache:clear');
+        \Illuminate\Support\Facades\Artisan::call('view:clear');
+        \Illuminate\Support\Facades\Artisan::call('route:clear');
+        \Illuminate\Support\Facades\Artisan::call('config:clear');
     }
 } catch (\Throwable $e) {
     $errors[] = "DB/Artisan Notice: " . $e->getMessage();

@@ -18,31 +18,10 @@ class CheckSecurityAccess
             return redirect()->route('admin.security.verify')->with('warning', 'Sesi keamanan Anda telah berakhir. Silakan verifikasi ulang.');
         }
 
-        $userIp = $request->ip();
-
-        // Ambil daftar IP Whitelist
-        $allowedIps = AllowedIp::pluck('ip_address')->toArray();
-
-        // Selalu izinkan IP Localhost (Laragon/Development)
-        $whitelist = array_merge($allowedIps, ['127.0.0.1', '::1']);
-
-        // Jika IP pengguna belum di-whitelist tapi sudah lulus verifikasi PIN (session security_verified_at aktif),
-        // otomatis tambahkan IP publik saat ini ke Whitelist agar Admin tidak terblokir saat IP berubah/hosting!
-        if (!in_array($userIp, $whitelist)) {
-            try {
-                AllowedIp::firstOrCreate(
-                    ['ip_address' => $userIp],
-                    ['label' => 'Admin Verified (' . (auth()->user()->name ?? 'Admin') . ')', 'added_by' => auth()->user()->name ?? 'Admin']
-                );
-                Cache::forget("allowed_ip_{$userIp}");
-                $whitelist[] = $userIp;
-            } catch (\Throwable $e) {}
-        }
-
-        // 2. CEK WHITELIST IP
-        if (!in_array($userIp, $whitelist)) {
-            return redirect()->route('admin.security.verify')->with('warning', 'IP Anda (' . $userIp . ') belum terverifikasi. Silakan verifikasi PIN terlebih dahulu.');
-        }
+        // CATATAN: IP admin TIDAK lagi otomatis dimasukkan ke Whitelist.
+        // Dulu setiap kali admin membuka halaman ini, IP-nya di-whitelist otomatis,
+        // sehingga SEMUA pengunjung yang berbagi IP tsb (WiFi/NAT yang sama) ikut kebal
+        // deteksi & ban. Halaman ini sudah dilindungi Password + PIN + Captcha di atas.
 
         return $next($request);
     }

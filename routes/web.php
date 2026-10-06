@@ -35,8 +35,11 @@ Route::get('/run-migration-secret', function () {
             \App\Models\IpLog::where('reason', 'like', '%Resize Window%')
                 ->orWhere('reason', 'like', '%right-click%')
                 ->orWhere('reason', 'like', '%Klik Kanan%')
+                ->orWhere('reason', 'like', '%panel DevTools%')
+                ->orWhere('reason', 'like', '%devtools-open%')
                 ->update(['status' => 'normal', 'reason' => 'Aktivitas Normal']);
         } catch (\Throwable $e) {}
+
         return 'Migrasi, reset log false-positive, dan pembersihan cache berhasil! Output: ' . Artisan::output();
     } catch (\Throwable $e) {
         return 'Gagal: ' . $e->getMessage();
@@ -50,6 +53,10 @@ Route::get('/run-migration-secret', function () {
 Route::post('/security/devtools-ping', [AdminController::class, 'devtoolsPing'])
     ->name('security.devtools_ping')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+// Route menampilkan gambar bukti banding pemblokiran akun secara langsung & aman
+Route::get('/appeal-proof/{id}', [AdminController::class, 'showAppealProof'])->name('appeal.proof_image');
+
 
 Route::get('/', function () {
     $memberships = \App\Models\Membership::orderBy('price', 'asc')->get();
@@ -187,7 +194,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/security/allowed-ip', [AdminController::class, 'securityStoreAllowedIp'])->name('security.allowed_ip.store');
         Route::delete('/security/allowed-ip/{id}', [AdminController::class, 'securityDestroyAllowedIp'])->name('security.allowed_ip.destroy');
         Route::post('/security/toggle/{id}', [AdminController::class, 'securityToggleStatus'])->name('security.toggle');
+        Route::post('/security/toggle-user/{id}', [AdminController::class, 'securityToggleUserStatus'])->name('security.toggle_user');
         Route::delete('/security/log/{id}', [AdminController::class, 'securityDestroyLog'])->name('security.log.destroy');
+        Route::post('/security/reset-normal-logs', [AdminController::class, 'securityResetNormalLogs'])->name('security.reset_normal');
     });
 
 

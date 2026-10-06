@@ -18,5 +18,5 @@
 */
 
 return [
-    'exempt_staff' => (bool) env('SECURITY_EXEMPT_STAFF', false),
+    'exempt_staff' => (bool) env('SECURITY_EXEMPT_STAFF', true),
 ];

@@ -158,5 +158,6 @@
         </div>
     </div>
 
+    @include('layouts.partials.devtools-detector')
 </body>
 </html>

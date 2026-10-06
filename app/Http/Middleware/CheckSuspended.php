@@ -11,7 +11,27 @@ class CheckSuspended
 {
     public function handle(Request $request, Closure $next)
     {
+        $ip = $request->ip();
+
+        // Jika IP diblokir, langsung tampilkan halaman IP diblokir (errors.ip-blocked)
+        if (\App\Models\IpBan::isBanned($ip) || \Illuminate\Support\Facades\Cache::has("banned_ip_{$ip}")) {
+            $ban = \App\Models\IpBan::activeFor($ip);
+            $reason = $ban?->reason ?: (\Illuminate\Support\Facades\Cache::get("banned_ip_{$ip}") ?: 'Akses Anda diblokir oleh Administrator.');
+            $category = $ban?->category ?: \App\Support\BanReason::categorize($reason);
+            $blockedAt = ($ban?->created_at ?? now())->translatedFormat('d F Y, H:i') . ' WIB';
+            $bannedUntil = $ban?->banned_until ? $ban->banned_until->translatedFormat('d F Y, H:i') . ' WIB' : null;
+
+            return response()->view('errors.ip-blocked', [
+                'ip'           => $ip,
+                'reason'       => $reason,
+                'category'     => $category,
+                'blocked_at'   => $blockedAt,
+                'banned_until' => $bannedUntil,
+            ], 403);
+        }
+
         if (Auth::check()) {
+
             $user = Auth::user();
 
             if ($user->status === 'blocked') {

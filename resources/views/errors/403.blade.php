@@ -118,9 +118,9 @@
                 </a>
 
                 <div class="flex flex-col sm:flex-row gap-2.5">
-                    <a href="mailto:support@karyaku.com?subject={{ urlencode('Banding 403: ' . $clientIp) }}&body={{ urlencode('Halo Tim Support Karyaku,\n\nSaya ingin mengajukan permohonan pembukaan blokir untuk IP: ' . $clientIp . '\nAlasan: ' . $reasonData['headline'] . '\n\nTerima kasih.') }}" 
+                    <a href="mailto:karyakuustore@gmail.com?subject={{ urlencode('Banding 403: ' . $clientIp) }}&body={{ urlencode('Halo Tim Support Karyaku,\n\nSaya ingin mengajukan permohonan pembukaan blokir untuk IP: ' . $clientIp . '\nAlasan: ' . $reasonData['headline'] . '\n\nTerima kasih.') }}" 
                        class="flex-1 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all">
-                        <i class="fa-solid fa-envelope"></i> Kirim Email Support
+                        <i class="fa-solid fa-envelope"></i> Kirim Email Support (karyakuustore@gmail.com)
                     </a>
                     <button type="button" onclick="window.location.reload()" 
                             class="flex-1 py-2.5 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/80 text-slate-300 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer">

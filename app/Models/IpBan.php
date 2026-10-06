@@ -4,7 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class IpBan extends Model
 {
@@ -40,29 +41,62 @@ class IpBan extends Model
 
     /**
      * Pastikan tabel ip_bans tersedia (self-healing untuk hosting yang belum migrate).
+     * Menggunakan CREATE TABLE IF NOT EXISTS murni sehingga instan dan tidak error.
      */
     public static function ensureTable(): bool
     {
-        if (Cache::get('ip_bans_table_ready')) {
-            return true;
-        }
-
         try {
-            if (!Schema::hasTable('ip_bans')) {
-                Schema::create('ip_bans', function ($table) {
-                    $table->id();
-                    $table->string('ip_address', 45)->unique();
-                    $table->unsignedBigInteger('user_id')->nullable();
-                    $table->string('category', 30)->default('manual');
-                    $table->text('reason')->nullable();
-                    $table->timestamp('banned_until')->nullable();
-                    $table->string('banned_by', 100)->nullable();
-                    $table->timestamps();
-                });
-            }
-            Cache::forever('ip_bans_table_ready', true);
+            DB::statement("
+                CREATE TABLE IF NOT EXISTS `ip_bans` (
+                    `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+                    `ip_address` varchar(45) NOT NULL,
+                    `user_id` bigint(20) unsigned DEFAULT NULL,
+                    `category` varchar(30) NOT NULL DEFAULT 'manual',
+                    `reason` text DEFAULT NULL,
+                    `banned_until` timestamp NULL DEFAULT NULL,
+                    `banned_by` varchar(100) DEFAULT NULL,
+                    `created_at` timestamp NULL DEFAULT NULL,
+                    `updated_at` timestamp NULL DEFAULT NULL,
+                    PRIMARY KEY (`id`),
+                    UNIQUE KEY `ip_bans_ip_address_unique` (`ip_address`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
             return true;
         } catch (\Throwable $e) {
+            try {
+                Log::warning('IpBan::ensureTable warning: ' . $e->getMessage());
+            } catch (\Throwable $e2) {}
+            return false;
+        }
+    }
+
+    /**
+     * Cek apakah IP sedang dalam daftar ban aktif (Aman dari QueryException jika tabel belum ada).
+     */
+    public static function isBanned(string $ip): bool
+    {
+        try {
+            self::ensureTable();
+            return self::where('ip_address', $ip)->exists();
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Simpan atau perbarui status ban untuk sebuah IP.
+     */
+    public static function recordBan(string $ip, array $attributes): bool
+    {
+        try {
+            self::ensureTable();
+            self::updateOrCreate(['ip_address' => $ip], $attributes);
+            self::forgetCache($ip);
+            return true;
+        } catch (\Throwable $e) {
+            try {
+                Log::warning('IpBan::recordBan warning: ' . $e->getMessage());
+            } catch (\Throwable $e2) {}
             return false;
         }
     }
@@ -73,30 +107,34 @@ class IpBan extends Model
      */
     public static function activeFor(string $ip): ?self
     {
-        if (!self::ensureTable()) {
-            return null;
-        }
+        try {
+            self::ensureTable();
+        } catch (\Throwable $e) {}
 
-        $cached = Cache::remember("ip_ban_lookup_{$ip}", 60, function () use ($ip) {
-            try {
-                return self::where('ip_address', $ip)->first()?->getAttributes() ?? false;
-            } catch (\Throwable $e) {
-                return false;
+        try {
+            $cached = Cache::remember("ip_ban_lookup_{$ip}", 60, function () use ($ip) {
+                try {
+                    return self::where('ip_address', $ip)->first()?->getAttributes() ?? false;
+                } catch (\Throwable $e) {
+                    return false;
+                }
+            });
+
+            if (!$cached) {
+                return null;
             }
-        });
 
-        if (!$cached) {
+            $ban = (new self())->newFromBuilder($cached);
+
+            if ($ban->isExpired()) {
+                self::lift($ip);
+                return null;
+            }
+
+            return $ban;
+        } catch (\Throwable $e) {
             return null;
         }
-
-        $ban = (new self())->newFromBuilder($cached);
-
-        if ($ban->isExpired()) {
-            self::lift($ip);
-            return null;
-        }
-
-        return $ban;
     }
 
     public static function forgetCache(string $ip): void
@@ -111,6 +149,7 @@ class IpBan extends Model
     public static function lift(string $ip): void
     {
         try {
+            self::ensureTable();
             self::where('ip_address', $ip)->delete();
         } catch (\Throwable $e) {}
         self::forgetCache($ip);
