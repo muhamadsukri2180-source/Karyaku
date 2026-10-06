@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 use App\Models\LoginHistory;
 use App\Models\IpBan;
 use App\Support\BanReason;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -316,7 +318,7 @@ class AuthController extends Controller
         }
 
 
-        AccountAppeal::create([
+        $appeal = AccountAppeal::create([
             'user_id'     => $request->user_id,
             'reason'      => $request->reason,
             'proof_image' => $imagePath,
@@ -327,7 +329,39 @@ class AuthController extends Controller
 
         $user = User::find($request->user_id);
         $countdown = $user ? $user->suspend_countdown : ['formatted' => '-'];
-        $appeal = AccountAppeal::where('user_id', $request->user_id)->latest()->first();
+
+        // Kirim notifikasi email ke karyakuustore@gmail.com
+        $targetEmail = 'karyakuustore@gmail.com';
+        try {
+            Mail::send('emails.ban_appeal', [
+                'user'       => $user,
+                'appeal'     => $appeal,
+                'userReason' => $request->reason,
+                'countdown'  => $countdown,
+                'imagePath'  => $imagePath,
+            ], function ($message) use ($targetEmail, $user, $imagePath) {
+                $username  = $user->name ?? 'Pengguna';
+                $userEmail = $user->email ?? '-';
+
+                $message->to($targetEmail)
+                        ->subject("[Karyaku] Pengajuan Banding Akun Ditangguhkan - {$username} ({$userEmail})");
+
+                if ($user && $user->email && filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+                    $message->replyTo($user->email, $username);
+                }
+
+                if ($imagePath) {
+                    $filePath = storage_path('app/public/' . $imagePath);
+                    if (file_exists($filePath)) {
+                        $message->attach($filePath, [
+                            'as' => 'bukti_banding_' . basename($imagePath),
+                        ]);
+                    }
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::warning('Gagal mengirim notifikasi email banding ke ' . $targetEmail . ': ' . $e->getMessage());
+        }
 
         $suspendedInfo = [
             'user_id'          => $user->id_user ?? $request->user_id,

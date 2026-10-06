@@ -33,8 +33,20 @@
             <span class="bg-red-600 text-white text-[10px] px-3 py-1 rounded-full font-extrabold shadow-sm">{{ $abnormalIps->count() }} Terdeteksi</span>
         </div>
 
-        <!-- TABEL WITH INTERNAL SCROLLBAR -->
-        <div class="w-full overflow-x-auto">
+        <!-- TAB SELECTOR: SUDAH LOGIN vs TAMU -->
+        <div class="px-5 pt-3.5 pb-2.5 border-b border-red-200/80 bg-red-100/50 flex items-center gap-2">
+            <button type="button" onclick="switchAbnormalTab('logged')" id="tab-abnormal-btn-logged" class="px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-2 bg-red-600 text-white cursor-pointer">
+                <i class="fa-solid fa-user-check text-xs"></i>
+                <span>Sudah Login ({{ $abnormalLoggedInIps->count() }})</span>
+            </button>
+            <button type="button" onclick="switchAbnormalTab('guest')" id="tab-abnormal-btn-guest" class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white text-red-950 border border-red-300 hover:bg-red-100/80 cursor-pointer">
+                <i class="fa-solid fa-user-secret text-xs"></i>
+                <span>Belum Login / Tamu ({{ $abnormalGuestIps->count() }})</span>
+            </button>
+        </div>
+
+        <!-- 1A. TAB VIEW: PENGGUNA SUDAH LOGIN (MENCURIGAKAN) -->
+        <div id="abnormal-view-logged" class="w-full overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[960px]">
                 <thead>
                     <tr class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-slate-200 text-[11px] uppercase tracking-wider font-bold">
@@ -47,11 +59,11 @@
                     </tr>
                 </thead>
                 <tbody class="text-xs divide-y divide-slate-100 bg-white">
-                    @forelse($abnormalIps as $ipAddress => $logs)
+                    @forelse($abnormalLoggedInIps as $ipAddress => $logs)
                     @php
                         $first = $logs->sortByDesc('last_activity_at')->first();
                         $totalReq = $logs->sum('request_count');
-                        $groupId = 'abnormal-'.$loop->index;
+                        $groupId = 'abnormallogged-'.$loop->index;
                         $staffIdsView = $staffUserIds ?? [];
                         $nsLookup = $nonStaffLoginLookup ?? collect();
                         // Ambil akun NON-staff yang benar-benar login saat melakukan pelanggaran
@@ -111,7 +123,7 @@
                             @endif
                         </td>
 
-                        <!-- KOLOM 2: ANCAMAN / ALASAN (BERJARAK LEGA & TIDAK BERDEMPETAN) -->
+                        <!-- KOLOM 2: ANCAMAN / ALASAN -->
                         <td class="py-4 px-6 align-middle min-w-[260px]">
                             <div class="inline-flex items-start gap-3 px-4 py-3 rounded-xl border text-xs font-bold leading-relaxed shadow-xs max-w-full my-1"
                                 style="background-color: {{ $catInfo['category'] === 'devtools' ? '#f5f3ff' : ($catInfo['category'] === 'sqli' ? '#fef2f2' : ($catInfo['category'] === 'xss' ? '#fffbeb' : '#f8fafc')) }};
@@ -164,13 +176,121 @@
                             </form>
                         </td>
                     </tr>
-
                     @empty
                     <tr>
                         <td colspan="6" class="text-center py-10 text-slate-400 text-xs font-semibold bg-slate-50/20">
                             <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2 rounded-xl">
                                 <i class="fa-solid fa-circle-check text-base"></i>
-                                <span>Sistem Aman! Belum ada aktivitas percobaan bobol/jailbreak terdeteksi.</span>
+                                <span>Aman! Belum ada aktivitas mencurigakan dari akun pengguna yang sudah login.</span>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 1B. TAB VIEW: PENGUNJUNG BELUM LOGIN (TAMU MENCURIGAKAN) -->
+        <div id="abnormal-view-guest" class="hidden w-full overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[960px]">
+                <thead>
+                    <tr class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-slate-200 text-[11px] uppercase tracking-wider font-bold">
+                        <th class="py-4 px-5 w-[23%] min-w-[220px]">Alamat IP Tamu (Anonim)</th>
+                        <th class="py-4 px-5 w-[28%] min-w-[260px]">Ancaman / Alasan</th>
+                        <th class="py-4 px-5 w-[25%] min-w-[240px]">File &amp; Lokasi Dibobol</th>
+                        <th class="py-4 px-4 w-[8%] min-w-[90px] text-center">Permintaan</th>
+                        <th class="py-4 px-4 w-[10%] min-w-[130px]">Waktu Terakhir</th>
+                        <th class="py-4 px-4 w-[6%] min-w-[110px] text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs divide-y divide-slate-100 bg-white">
+                    @forelse($abnormalGuestIps as $ipAddress => $logs)
+                    @php
+                        $first = $logs->sortByDesc('last_activity_at')->first();
+                        $totalReq = $logs->sum('request_count');
+                        $groupId = 'abnormalguest-'.$loop->index;
+                        $reasonText = $first->reason ?? '-';
+                        $catInfo = \App\Support\BanReason::present($reasonText);
+                    @endphp
+                    <tr class="hover:bg-red-50/40 transition-colors odd:bg-slate-50/40">
+                        <!-- KOLOM 1: IP & STATUS TAMU -->
+                        <td class="py-4 px-5 align-middle">
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono font-black text-red-600 text-[13px] tracking-tight">{{ $ipAddress }}</span>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
+                                    {{ str_contains($ipAddress, ':') ? 'IPv6' : 'IPv4' }}
+                                </span>
+                                @if($first->status === 'abnormal')
+                                    <span class="px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-wider border border-red-200">
+                                        Diblokir
+                                    </span>
+                                @endif
+                            </div>
+                            <div class="text-[10px] font-sans text-slate-400 mt-1.5 italic flex items-center gap-1">
+                                <i class="fa-solid fa-user-secret text-[9px]"></i>
+                                <span>Tamu / Belum Login</span>
+                            </div>
+                        </td>
+
+                        <!-- KOLOM 2: ANCAMAN / ALASAN -->
+                        <td class="py-4 px-6 align-middle min-w-[260px]">
+                            <div class="inline-flex items-start gap-3 px-4 py-3 rounded-xl border text-xs font-bold leading-relaxed shadow-xs max-w-full my-1"
+                                style="background-color: {{ $catInfo['category'] === 'devtools' ? '#f5f3ff' : ($catInfo['category'] === 'sqli' ? '#fef2f2' : ($catInfo['category'] === 'xss' ? '#fffbeb' : '#f8fafc')) }};
+                                       color: {{ $catInfo['category'] === 'devtools' ? '#6b21a8' : ($catInfo['category'] === 'sqli' ? '#991b1b' : ($catInfo['category'] === 'xss' ? '#92400e' : '#1e293b')) }};
+                                       border-color: {{ $catInfo['category'] === 'devtools' ? '#ddd6fe' : ($catInfo['category'] === 'sqli' ? '#fecaca' : ($catInfo['category'] === 'xss' ? '#fde68a' : '#e2e8f0')) }};">
+                                <i class="{{ $catInfo['icon'] }} text-sm mt-0.5 shrink-0"></i>
+                                <span class="break-words tracking-wide">{{ $reasonText }}</span>
+                            </div>
+                        </td>
+
+                        <!-- KOLOM 3: FILE & LOKASI DIBOBOL -->
+                        <td class="py-4 px-5 align-middle">
+                            <div class="flex items-center gap-2">
+                                <div class="bg-slate-50 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-mono text-[11px] font-bold max-w-[220px] truncate shadow-2xs" title="{{ $first->last_activity ?? 'N/A' }}">
+                                    {{ $first->last_activity ?? 'N/A' }}
+                                </div>
+                                <button type="button" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-xs flex items-center justify-center text-xs shrink-0 cursor-pointer"
+                                    onclick="showJailbreakDetail('{{ $ipAddress }}', '{{ addslashes($first->last_activity) }}', '{{ addslashes($first->reason) }}', '{{ addslashes($first->user_agent) }}')"
+                                    title="Lihat Detail Payload">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
+                        </td>
+
+                        <!-- KOLOM 4: PERMINTAAN -->
+                        <td class="py-4 px-4 text-center align-middle">
+                            <span class="inline-block bg-red-100 text-red-700 px-2.5 py-1 rounded-md text-[11px] font-extrabold border border-red-200 shadow-2xs">
+                                {{ $totalReq }}x
+                            </span>
+                        </td>
+
+                        <!-- KOLOM 5: WAKTU TERAKHIR -->
+                        <td class="py-4 px-4 text-slate-600 font-medium text-[11px] align-middle">
+                            {{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}
+                        </td>
+
+                        <!-- KOLOM 6: AKSI BAN / BUKA BLOKIR -->
+                        <td class="py-4 px-4 text-center align-middle">
+                            <form action="{{ route('admin.security.toggle', $first->id) }}" method="POST" class="inline-block">
+                                @csrf
+                                @if($first->status === 'abnormal')
+                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                        <i class="fa-solid fa-unlock"></i> Buka Blokir
+                                    </button>
+                                @else
+                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                        <i class="fa-solid fa-ban"></i> Ban
+                                    </button>
+                                @endif
+                            </form>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center py-10 text-slate-400 text-xs font-semibold bg-slate-50/20">
+                            <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2 rounded-xl">
+                                <i class="fa-solid fa-circle-check text-base"></i>
+                                <span>Aman! Belum ada aktivitas mencurigakan dari pengunjung tamu/anonim.</span>
                             </div>
                         </td>
                     </tr>
@@ -721,6 +841,26 @@
                 document.getElementById('freezeForm').submit();
             }
         });
+    }
+
+    // TAB SWITCHER: SUDAH LOGIN vs TAMU (TABEL 1 - IP MENCURIGAKAN)
+    function switchAbnormalTab(tab) {
+        const loggedView = document.getElementById('abnormal-view-logged');
+        const guestView = document.getElementById('abnormal-view-guest');
+        const btnLogged = document.getElementById('tab-abnormal-btn-logged');
+        const btnGuest = document.getElementById('tab-abnormal-btn-guest');
+
+        if (tab === 'logged') {
+            loggedView.classList.remove('hidden');
+            guestView.classList.add('hidden');
+            btnLogged.className = 'px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-2 bg-red-600 text-white cursor-pointer';
+            btnGuest.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white text-red-950 border border-red-300 hover:bg-red-100/80 cursor-pointer';
+        } else {
+            loggedView.classList.add('hidden');
+            guestView.classList.remove('hidden');
+            btnGuest.className = 'px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-2 bg-red-600 text-white cursor-pointer';
+            btnLogged.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white text-red-950 border border-red-300 hover:bg-red-100/80 cursor-pointer';
+        }
     }
 
     // TAB SWITCHER: SUDAH LOGIN vs TAMU (TABEL 2)

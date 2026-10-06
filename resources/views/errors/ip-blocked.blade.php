@@ -219,9 +219,9 @@
 
         <!-- Action Buttons — Email Only -->
         <div class="space-y-2.5">
-            <a href="mailto:support@karyaku.com?subject={{ urlencode('Banding Pemblokiran IP: ' . $displayIp) }}&body={{ urlencode('Halo Tim Support Karyaku,' . "\n\n" . 'Saya ingin mengajukan permohonan pembukaan blokir:' . "\n" . '- IP: ' . $displayIp . "\n" . '- Akun: ' . ($username ?? 'N/A') . "\n" . '- Pelanggaran: ' . $reasonData['label'] . "\n" . '- Rincian: ' . $reasonData['headline'] . "\n\n" . 'Mohon ditinjau kembali. Terima kasih.') }}"
+            <a href="mailto:karyakuustore@gmail.com?subject={{ urlencode('Banding Pemblokiran IP: ' . $displayIp) }}&body={{ urlencode('Halo Tim Support Karyaku,' . "\n\n" . 'Saya ingin mengajukan permohonan pembukaan blokir:' . "\n" . '- IP: ' . $displayIp . "\n" . '- Akun: ' . ($username ?? 'N/A') . "\n" . '- Pelanggaran: ' . $reasonData['label'] . "\n" . '- Rincian: ' . $reasonData['headline'] . "\n\n" . 'Mohon ditinjau kembali. Terima kasih.') }}"
                class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-sky-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-900/20 transition-all cursor-pointer">
-                <i class="fa-solid fa-envelope text-sm"></i> Kirim Email Banding ke Admin
+                <i class="fa-solid fa-envelope text-sm"></i> Kirim Email Banding ke Admin (karyakuustore@gmail.com)
             </a>
 
             <button type="button" onclick="window.location.reload()"

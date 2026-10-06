@@ -203,8 +203,8 @@
                 <div class="bg-blue-50 border border-blue-100 rounded-xl p-3.5 flex items-start gap-2.5">
                     <i class="fa-solid fa-envelope text-blue-400 mt-0.5 shrink-0"></i>
                     <p class="text-[11px] text-slate-600 leading-relaxed">
-                        Untuk pertanyaan, hubungi tim support kami melalui email resmi:
-                        <a href="mailto:support@karyaku.com" class="text-blue-600 font-bold hover:underline">support@karyaku.com</a>
+                        Untuk pertanyaan atau bantuan banding, hubungi tim support kami melalui email resmi:
+                        <a href="mailto:karyakuustore@gmail.com?subject={{ urlencode('Banding Akun Ditangguhkan: ' . ($info['username'] ?? 'User') . ' (' . ($info['email'] ?? '-') . ')') }}&body={{ urlencode('Halo Tim Karyaku,' . "\n\n" . 'Saya ingin mengajukan permohonan peninjauan kembali akun saya:' . "\n" . '- Username: ' . ($info['username'] ?? '-') . "\n" . '- Email: ' . ($info['email'] ?? '-') . "\n" . '- Alasan Banding: ' . "\n\n" . 'Terima kasih.') }}" class="text-blue-600 font-bold hover:underline">karyakuustore@gmail.com</a>
                     </p>
                 </div>
 
@@ -306,7 +306,7 @@
                         <div class="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3">
                             <i class="fa-solid fa-envelope text-blue-400 text-xs mt-0.5 shrink-0"></i>
                             <p class="text-[10px] text-slate-500 leading-relaxed">
-                                Pengajuan banding akan dikirimkan ke tim Admin &amp; CS Karyaku dan hasilnya dikonfirmasi melalui <span class="font-bold text-blue-600">email</span> terdaftar Anda.
+                                Pengajuan banding akan dikirimkan langsung ke email Admin &amp; CS Karyaku (<span class="font-bold text-blue-600">karyakuustore@gmail.com</span>) dan diproses melalui sistem.
                             </p>
                         </div>
 

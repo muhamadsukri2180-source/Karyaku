@@ -1080,6 +1080,34 @@ class AdminController extends Controller
         }
 
         $allSuspiciousLogs = $suspiciousQuery->latest('last_activity_at')->get();
+        $abnormalIps = $allSuspiciousLogs->groupBy('ip_address');
+
+        // Pisahkan IP Mencurigakan: Sudah Login vs Belum Login (Tamu)
+        $abnormalLoggedInIps = collect();
+        $abnormalGuestIps = collect();
+
+        foreach ($abnormalIps as $ipAddress => $logs) {
+            $userObj = $logs->first(fn($l) => $l->relationLoaded('user') && $l->user !== null && !in_array($l->user_id, $staffUserIds))?->user;
+            if (!$userObj) {
+                $anyUserId = $logs->first(fn($l) => !empty($l->user_id) && !in_array($l->user_id, $staffUserIds))?->user_id;
+                if ($anyUserId) {
+                    $userObj = User::with('role')->find($anyUserId);
+                }
+            }
+            if (!$userObj && isset($nonStaffLoginLookup[$ipAddress])) {
+                $uName = $nonStaffLoginLookup[$ipAddress];
+                $userObj = User::with('role')->where(fn($q) => $q->where('name', $uName)->orWhere('email', $uName))->first();
+                if ($userObj && in_array($userObj->id_user, $staffUserIds)) {
+                    $userObj = null;
+                }
+            }
+
+            if ($userObj) {
+                $abnormalLoggedInIps->put($ipAddress, $logs);
+            } else {
+                $abnormalGuestIps->put($ipAddress, $logs);
+            }
+        }
 
         // 5. Query Log Normal 1 Hari Terakhir (Siklus 24 Jam)
         $normalQuery = IpLog::query();
@@ -1146,18 +1174,20 @@ class AdminController extends Controller
         $nextResetTimestamp = now()->endOfDay()->timestamp;
 
         return view('admin.security.index', [
-            'normalIps'          => $normalIps,
-            'normalLoggedInIps'  => $normalLoggedInIps,
-            'normalGuestIps'     => $normalGuestIps,
-            'abnormalIps'        => $allSuspiciousLogs->groupBy('ip_address'),
-            'botIps'             => $botIps,
-            'loginHistories'     => LoginHistory::latest()->simplePaginate(10),
-            'loginHistoryLookup' => $loginHistoryLookup,
-            'nonStaffLoginLookup'=> $nonStaffLoginLookup,
-            'staffUserIds'       => $staffUserIds,
-            'allowedIps'         => AllowedIp::latest()->get(), 
-            'myIp'               => $currentAdminIp,
-            'nextResetTimestamp' => $nextResetTimestamp,
+            'normalIps'           => $normalIps,
+            'normalLoggedInIps'   => $normalLoggedInIps,
+            'normalGuestIps'      => $normalGuestIps,
+            'abnormalIps'         => $abnormalIps,
+            'abnormalLoggedInIps' => $abnormalLoggedInIps,
+            'abnormalGuestIps'    => $abnormalGuestIps,
+            'botIps'              => $botIps,
+            'loginHistories'      => LoginHistory::latest()->simplePaginate(10),
+            'loginHistoryLookup'  => $loginHistoryLookup,
+            'nonStaffLoginLookup' => $nonStaffLoginLookup,
+            'staffUserIds'        => $staffUserIds,
+            'allowedIps'          => AllowedIp::latest()->get(), 
+            'myIp'                => $currentAdminIp,
+            'nextResetTimestamp'  => $nextResetTimestamp,
         ]);
     }
 
