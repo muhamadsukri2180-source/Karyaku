@@ -187,6 +187,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/security/allowed-ip', [AdminController::class, 'securityStoreAllowedIp'])->name('security.allowed_ip.store');
         Route::delete('/security/allowed-ip/{id}', [AdminController::class, 'securityDestroyAllowedIp'])->name('security.allowed_ip.destroy');
         Route::post('/security/toggle/{id}', [AdminController::class, 'securityToggleStatus'])->name('security.toggle');
+        Route::post('/security/toggle-user/{id}', [AdminController::class, 'securityToggleUserStatus'])->name('security.toggle_user');
         Route::delete('/security/log/{id}', [AdminController::class, 'securityDestroyLog'])->name('security.log.destroy');
         Route::post('/security/reset-normal-logs', [AdminController::class, 'securityResetNormalLogs'])->name('security.reset_normal');
     });

@@ -172,6 +172,7 @@ class CsController extends Controller
                         'suspended_until' => null,
                         'suspend_reason'  => null,
                     ]);
+                    \Illuminate\Support\Facades\Cache::forget("banned_user_{$user->id_user}");
                 }
 
                 Notification::create([

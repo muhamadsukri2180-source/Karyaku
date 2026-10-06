@@ -1,6 +1,6 @@
 @php
-    $info = session('suspended_info') ?? [
-        'user_id'          => old('user_id'),
+    $info = session('suspended_info') ?? ($info ?? [
+        'user_id'          => old('user_id') ?? session('suspended_user_id'),
         'username'         => 'Pengguna',
         'email'            => '',
         'reason'           => 'Pelanggaran syarat dan ketentuan komunitas Karyaku',
@@ -11,7 +11,7 @@
         'appeal_status'    => null,
         'appeal_date'      => null,
         'appeal_admin_note'=> null,
-    ];
+    ]);
 @endphp
 
 <!DOCTYPE html>
@@ -251,7 +251,16 @@
 
                     <form action="{{ route('appeal.submit') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                         @csrf
-                        <input type="hidden" name="user_id" value="{{ $info['user_id'] }}">
+                        @if(!empty($info['user_id']))
+                            <input type="hidden" name="user_id" value="{{ $info['user_id'] }}">
+                        @else
+                            <div>
+                                <label for="account_identifier" class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide mb-1.5">
+                                    Email atau Username Akun Anda <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" name="account_identifier" id="account_identifier" required placeholder="Masukkan email atau username akun yang dibekukan" class="w-full bg-skyPale/50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800 focus:bg-white focus:outline-none focus:border-sky focus:ring-2 focus:ring-sky/20 transition">
+                            </div>
+                        @endif
 
                         <div>
                             <label for="reason" class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide mb-1.5">

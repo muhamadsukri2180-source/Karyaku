@@ -53,13 +53,14 @@
                         $totalReq = $logs->sum('request_count');
                         $groupId = 'abnormal-'.$loop->index;
                         $userObj = $logs->first(fn($l) => $l->relationLoaded('user') && $l->user !== null)?->user;
+                        if (!$userObj && isset($loginHistoryLookup[$ipAddress])) {
+                            $uName = $loginHistoryLookup[$ipAddress];
+                            $userObj = \App\Models\User::with('role')->where('name', $uName)->orWhere('email', $uName)->first();
+                        }
                         $userName = $userObj?->name;
                         $userEmail = $userObj?->email;
                         $userRole = $userObj?->role?->role_name;
-                        $userLabel = $userName ?? $userEmail;
-                        if (!$userLabel && isset($loginHistoryLookup[$ipAddress])) {
-                            $userLabel = $loginHistoryLookup[$ipAddress];
-                        }
+                        $userLabel = $userName ?? $userEmail ?? ($loginHistoryLookup[$ipAddress] ?? null);
                         $reasonText = $first->reason ?? '-';
                         $catInfo = \App\Support\BanReason::present($reasonText);
                     @endphp
@@ -85,6 +86,11 @@
                                     @if($userRole)
                                         <span class="text-[9px] font-black uppercase text-white bg-red-600 px-2 py-0.5 rounded shadow-2xs tracking-wider">{{ $userRole }}</span>
                                     @endif
+                                </div>
+                            @else
+                                <div class="text-[10px] font-sans text-slate-400 mt-1.5 italic flex items-center gap-1">
+                                    <i class="fa-solid fa-user-secret text-[9px]"></i>
+                                    <span>Tamu / Belum Login</span>
                                 </div>
                             @endif
                         </td>
@@ -219,8 +225,20 @@
             </div>
         </div>
 
-        <!-- TABEL WITH INTERNAL SCROLLBAR -->
-        <div class="w-full overflow-x-auto">
+        <!-- TAB SELECTOR: SUDAH LOGIN vs TAMU -->
+        <div class="px-5 pt-3.5 pb-2.5 border-b border-amber-200/80 bg-amber-100/50 flex items-center gap-2">
+            <button type="button" onclick="switchNormalTab('logged')" id="tab-btn-logged" class="px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-2 bg-amber-600 text-white cursor-pointer">
+                <i class="fa-solid fa-user-check text-xs"></i>
+                <span>Sudah Login ({{ $normalLoggedInIps->count() }})</span>
+            </button>
+            <button type="button" onclick="switchNormalTab('guest')" id="tab-btn-guest" class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white text-amber-950 border border-amber-300 hover:bg-amber-100/80 cursor-pointer">
+                <i class="fa-solid fa-user-secret text-xs"></i>
+                <span>Belum Login / Tamu ({{ $normalGuestIps->count() }})</span>
+            </button>
+        </div>
+
+        <!-- 2A. TAB VIEW: PENGGUNA SUDAH LOGIN -->
+        <div id="normal-view-logged" class="w-full overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[960px]">
                 <thead>
                     <tr class="bg-amber-700 text-amber-50 text-[11px] uppercase tracking-wider font-bold">
@@ -229,27 +247,25 @@
                         <th class="py-4 px-5 w-[24%] min-w-[220px]">User Agent / Browser</th>
                         <th class="py-4 px-4 w-[8%] min-w-[90px] text-center">Permintaan</th>
                         <th class="py-4 px-4 w-[10%] min-w-[130px]">Waktu Terakhir</th>
-                        <th class="py-4 px-4 w-[6%] min-w-[110px] text-center">Aksi / Bekukan</th>
+                        <th class="py-4 px-4 w-[6%] min-w-[110px] text-center">Aksi / Kunci Akun</th>
                     </tr>
                 </thead>
                 <tbody class="text-xs divide-y divide-amber-200 text-amber-950 font-medium bg-white">
-                    @forelse($normalIps as $ipAddress => $logs)
+                    @forelse($normalLoggedInIps as $ipAddress => $logs)
                     @php
                         $first = $logs->sortByDesc('last_activity_at')->first();
                         $totalReq = $logs->sum('request_count');
-                        $groupId = 'normal-'.$loop->index;
-                        $userObj = $logs->first(fn($l) => $l->user !== null)?->user;
+                        $groupId = 'normallogged-'.$loop->index;
+                        $userObj = $logs->first(fn($l) => $l->relationLoaded('user') && $l->user !== null)?->user;
+                        if (!$userObj && isset($loginHistoryLookup[$ipAddress])) {
+                            $uName = $loginHistoryLookup[$ipAddress];
+                            $userObj = \App\Models\User::with('role')->where('name', $uName)->orWhere('email', $uName)->first();
+                        }
                         $userName = $userObj?->name;
                         $userEmail = $userObj?->email;
                         $userRole = $userObj?->role?->role_name;
-                        $userLabel = $userName ?? $userEmail;
-                        if (!$userLabel) {
-                            $loginHist = \App\Models\LoginHistory::where('ip_address', $ipAddress)->whereNotNull('username')->latest()->first();
-                            if ($loginHist) { $userLabel = $loginHist->username; }
-                        }
-                        if (!$userLabel && isset($loginHistoryLookup[$ipAddress])) {
-                            $userLabel = $loginHistoryLookup[$ipAddress];
-                        }
+                        $userLabel = $userName ?? $userEmail ?? ($loginHistoryLookup[$ipAddress] ?? 'Pengguna');
+                        $isUserBlocked = $userObj && ($userObj->status === 'blocked' || \Illuminate\Support\Facades\Cache::has("banned_user_{$userObj->id_user}"));
                     @endphp
                     <tr class="hover:bg-amber-100/70 transition-colors odd:bg-amber-50/40">
                         <td class="py-4 px-5 align-middle">
@@ -260,25 +276,21 @@
                                     <i class="fa-solid fa-chevron-down text-[8px]"></i>
                                 </button>
                             </div>
-                            @if($userLabel)
-                                <div class="mt-2 flex flex-wrap items-center gap-1.5">
-                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-md border border-amber-300/60">
-                                        <i class="fa-solid fa-circle-user text-amber-700 text-[10px]"></i>
-                                        <span>{{ $userLabel }}</span>
-                                        @if($userEmail && $userLabel !== $userEmail)
-                                            <span class="text-amber-700 font-normal text-[10px]">&lt;{{ $userEmail }}&gt;</span>
-                                        @endif
-                                    </span>
-                                    @if($userRole)
-                                        <span class="text-[9px] font-black uppercase text-white bg-amber-600 px-2 py-0.5 rounded shadow-2xs tracking-wider">{{ $userRole }}</span>
+                            <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-md border border-amber-300/60">
+                                    <i class="fa-solid fa-circle-user text-amber-700 text-[10px]"></i>
+                                    <span>{{ $userLabel }}</span>
+                                    @if($userEmail && $userLabel !== $userEmail)
+                                        <span class="text-amber-700 font-normal text-[10px]">&lt;{{ $userEmail }}&gt;</span>
                                     @endif
-                                </div>
-                            @else
-                                <div class="text-[10px] font-sans text-amber-600 mt-1 italic flex items-center gap-1">
-                                    <i class="fa-solid fa-user-clock text-[9px]"></i>
-                                    <span>Tamu / Belum Login</span>
-                                </div>
-                            @endif
+                                </span>
+                                @if($userRole)
+                                    <span class="text-[9px] font-black uppercase text-white bg-amber-600 px-2 py-0.5 rounded shadow-2xs tracking-wider">{{ $userRole }}</span>
+                                @endif
+                                @if($isUserBlocked)
+                                    <span class="text-[9px] font-black uppercase text-white bg-rose-600 px-2 py-0.5 rounded shadow-2xs tracking-wider">Dibekukan</span>
+                                @endif
+                            </div>
                         </td>
                         <td class="py-4 px-5 align-middle">
                             <div class="bg-amber-100/50 border border-amber-200/80 text-amber-900 font-mono text-[11px] px-2.5 py-1.5 rounded-lg max-w-[240px] truncate shadow-2xs" title="{{ $first->last_activity }}">
@@ -297,10 +309,22 @@
                             {{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}
                         </td>
                         <td class="py-4 px-4 text-center align-middle">
-                            <!-- TOMBOL BEKUKAN AKSES UTAMA -->
-                            <button type="button" onclick="openFreezeTimerModal('{{ $first->id }}', '{{ $ipAddress }}')" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold shadow-sm transition-all cursor-pointer">
-                                <i class="fa-solid fa-key"></i> Kunci
-                            </button>
+                            @if($userObj)
+                                @if($isUserBlocked)
+                                    <form action="{{ route('admin.security.toggle_user', $userObj->id_user) }}" method="POST" class="inline-block">
+                                        @csrf
+                                        <button type="submit" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-sm transition-all cursor-pointer">
+                                            <i class="fa-solid fa-unlock"></i> Buka Kunci
+                                        </button>
+                                    </form>
+                                @else
+                                    <button type="button" onclick="openFreezeAccountModal('{{ $userObj->id_user }}', '{{ addslashes($userObj->name ?? $userLabel) }}', '{{ addslashes($userObj->email ?? '') }}')" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold shadow-sm transition-all cursor-pointer" title="Bekukan Akun Pengguna">
+                                        <i class="fa-solid fa-key"></i> Kunci
+                                    </button>
+                                @endif
+                            @else
+                                <span class="text-amber-400 italic text-xs font-semibold">-</span>
+                            @endif
                         </td>
                     </tr>
                     
@@ -315,9 +339,94 @@
                                     <td class="py-3 px-6 text-amber-800 truncate max-w-[200px]" title="{{ $log->user_agent }}">{{ $log->user_agent }}</td>
                                     <td class="py-3 px-6 text-center text-amber-800 font-bold">{{ $log->request_count }}x</td>
                                     <td class="py-3 px-6 text-amber-800 font-semibold">{{ $log->last_activity_at ? $log->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
-                                    <td class="py-3 px-6 text-center text-amber-600/80 italic">
-                                        -
-                                    </td>
+                                    <td class="py-3 px-6 text-center text-amber-600/80 italic">-</td>
+                                </tr>
+                                @endforeach
+                            </table>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center py-10 text-amber-900 text-xs font-semibold bg-amber-50/20">
+                            <i class="fa-solid fa-user-check text-amber-400 text-xl block mb-2"></i>
+                            Belum ada riwayat aktivitas pengguna yang sedang login hari ini.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 2B. TAB VIEW: PENGUNJUNG BELUM LOGIN (TAMU) - TANPA TOMBOL KUNCI -->
+        <div id="normal-view-guest" class="hidden w-full overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[960px]">
+                <thead>
+                    <tr class="bg-amber-700 text-amber-50 text-[11px] uppercase tracking-wider font-bold">
+                        <th class="py-4 px-5 w-[24%] min-w-[220px]">Alamat IP Tamu</th>
+                        <th class="py-4 px-5 w-[28%] min-w-[250px]">Aktivitas Terakhir</th>
+                        <th class="py-4 px-5 w-[24%] min-w-[220px]">User Agent / Browser</th>
+                        <th class="py-4 px-4 w-[8%] min-w-[90px] text-center">Permintaan</th>
+                        <th class="py-4 px-4 w-[10%] min-w-[130px]">Waktu Terakhir</th>
+                        <th class="py-4 px-4 w-[6%] min-w-[110px] text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs divide-y divide-amber-200 text-amber-950 font-medium bg-white">
+                    @forelse($normalGuestIps as $ipAddress => $logs)
+                    @php
+                        $first = $logs->sortByDesc('last_activity_at')->first();
+                        $totalReq = $logs->sum('request_count');
+                        $groupId = 'normalguest-'.$loop->index;
+                    @endphp
+                    <tr class="hover:bg-amber-100/70 transition-colors odd:bg-amber-50/40">
+                        <td class="py-4 px-5 align-middle">
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono font-bold text-amber-950 text-[13px]">{{ $ipAddress }}</span>
+                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded-md bg-amber-200/80 text-amber-800 text-[10px] font-bold hover:bg-amber-300 transition-colors cursor-pointer flex items-center gap-1">
+                                    <span>{{ $logs->count() }} Sesi</span>
+                                    <i class="fa-solid fa-chevron-down text-[8px]"></i>
+                                </button>
+                            </div>
+                            <div class="text-[10px] font-sans text-amber-600 mt-1.5 italic flex items-center gap-1">
+                                <i class="fa-solid fa-user-clock text-[9px]"></i>
+                                <span>Tamu / Belum Login</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-5 align-middle">
+                            <div class="bg-amber-100/50 border border-amber-200/80 text-amber-900 font-mono text-[11px] px-2.5 py-1.5 rounded-lg max-w-[240px] truncate shadow-2xs" title="{{ $first->last_activity }}">
+                                {{ $first->last_activity }}
+                            </div>
+                        </td>
+                        <td class="py-4 px-5 text-slate-600 text-[11px] max-w-[220px] truncate align-middle" title="{{ $first->user_agent }}">
+                            {{ $first->user_agent }}
+                        </td>
+                        <td class="py-4 px-4 text-center align-middle font-bold text-amber-950">
+                            <span class="inline-block bg-amber-200/80 px-2.5 py-1 rounded-md text-[11px] border border-amber-300 font-black text-amber-950 shadow-2xs">
+                                {{ $totalReq }}x
+                            </span>
+                        </td>
+                        <td class="py-4 px-4 text-amber-900 font-medium text-[11px] align-middle">
+                            {{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}
+                        </td>
+                        <td class="py-4 px-4 text-center align-middle">
+                            <!-- TIDAK ADA TOMBOL KUNCI UNTUK TAMU (HANYA INDIKATOR AKSES BEBAS) -->
+                            <span class="inline-block text-[10px] bg-amber-100/90 text-amber-800 font-bold px-2 py-0.5 rounded-md border border-amber-300/60">
+                                Tamu Bebas
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <!-- DROPDOWN SESSIONS -->
+                    <tr id="{{ $groupId }}" class="hidden bg-amber-50/40">
+                        <td colspan="6" class="p-0 border-b border-amber-200">
+                            <table class="w-full text-left">
+                                @foreach($logs as $log)
+                                <tr class="border-t border-amber-100 hover:bg-amber-100/80 text-[11px]">
+                                    <td class="py-3 px-10 text-amber-700 font-mono">Sesi: #{{ !empty($log->session_id) ? substr($log->session_id, 0, 8) : 'Main' }}</td>
+                                    <td class="py-3 px-6 text-amber-800 font-mono truncate max-w-[200px]">{{ $log->last_activity }}</td>
+                                    <td class="py-3 px-6 text-amber-800 truncate max-w-[200px]" title="{{ $log->user_agent }}">{{ $log->user_agent }}</td>
+                                    <td class="py-3 px-6 text-center text-amber-800 font-bold">{{ $log->request_count }}x</td>
+                                    <td class="py-3 px-6 text-amber-800 font-semibold">{{ $log->last_activity_at ? $log->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                                    <td class="py-3 px-6 text-center text-amber-600/80 italic">-</td>
                                 </tr>
                                 @endforeach
                             </table>
@@ -327,7 +436,7 @@
                     <tr>
                         <td colspan="6" class="text-center py-10 text-amber-900 text-xs font-semibold bg-amber-50/20">
                             <i class="fa-solid fa-inbox text-amber-400 text-xl block mb-2"></i>
-                            Belum ada riwayat aktivitas IP normal yang tercatat.
+                            Belum ada riwayat aktivitas pengunjung tamu hari ini.
                         </td>
                     </tr>
                     @endforelse
@@ -335,26 +444,27 @@
             </table>
         </div>
     </div>
-    <!-- TABEL 3: ANTI BOT & SERANGAN OTOMATIS (CYBER DEFENSE WAF) -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl shadow-indigo-950/30 overflow-hidden">
-        <div class="p-5 border-b border-slate-800 bg-gradient-to-r from-slate-950 via-indigo-950/70 to-slate-900 flex items-center justify-between flex-wrap gap-4">
+
+    <!-- TABEL 3: ANTI BOT & SERANGAN OTOMATIS (TAMPILAN TERANG INDIGO) -->
+    <div class="bg-indigo-50/90 border border-indigo-200 rounded-2xl shadow-lg shadow-indigo-500/10 overflow-hidden">
+        <div class="p-5 border-b border-indigo-200 bg-gradient-to-r from-indigo-500/15 via-indigo-100/60 to-white flex items-center justify-between flex-wrap gap-4">
             <div class="flex items-center gap-3.5">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30 shadow-inner shrink-0">
-                    <i class="fa-solid fa-shield-virus text-base text-indigo-300"></i>
+                <div class="w-10 h-10 rounded-xl bg-indigo-500 text-white flex items-center justify-center border border-indigo-600 shadow-sm shrink-0">
+                    <i class="fa-solid fa-shield-virus text-base"></i>
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h3 class="font-extrabold text-white text-base font-display tracking-tight">Tabel Anti Bot &amp; Serangan Otomatis</h3>
-                        <span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[9px] px-2 py-0.5 rounded-full font-black tracking-wider uppercase">WAF Defense</span>
+                        <h3 class="font-extrabold text-indigo-950 text-base font-display tracking-tight">Tabel Anti Bot &amp; Serangan Otomatis</h3>
+                        <span class="bg-indigo-200/80 text-indigo-800 border border-indigo-300 text-[9px] px-2 py-0.5 rounded-full font-black tracking-wider uppercase">WAF Defense</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 font-medium mt-0.5">Mendeteksi vulnerability scanner (sqlmap, nikto), scraper otomatis, CLI clients, dan anomali DoS secara real-time.</p>
+                    <p class="text-[11px] text-indigo-900/80 font-medium mt-0.5">Mendeteksi vulnerability scanner (sqlmap, nikto), scraper otomatis, CLI clients, dan anomali DoS secara real-time.</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <span class="inline-flex items-center gap-2 bg-indigo-950/80 border border-indigo-700/50 text-indigo-200 text-[11px] px-3.5 py-1.5 rounded-xl font-bold shadow-xs">
+                <span class="inline-flex items-center gap-2 bg-indigo-600 text-white text-[11px] px-3.5 py-1.5 rounded-xl font-bold shadow-xs">
                     <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-200 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                     </span>
                     <span>{{ $botIps->count() }} Bot Terdeteksi</span>
                 </span>
@@ -364,7 +474,7 @@
         <div class="w-full overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[960px]">
                 <thead>
-                    <tr class="bg-slate-950 text-slate-300 text-[11px] uppercase tracking-wider font-extrabold border-b border-slate-800">
+                    <tr class="bg-indigo-700 text-indigo-50 text-[11px] uppercase tracking-wider font-bold">
                         <th class="py-4 px-5 w-[24%] min-w-[220px]">Alamat IP &amp; Akun</th>
                         <th class="py-4 px-5 w-[28%] min-w-[250px]">Kategori &amp; Alasan Ancaman</th>
                         <th class="py-4 px-5 w-[24%] min-w-[220px]">User-Agent / Signature Bot</th>
@@ -373,7 +483,7 @@
                         <th class="py-4 px-4 w-[6%] min-w-[110px] text-center">Aksi / Mitigasi</th>
                     </tr>
                 </thead>
-                <tbody class="text-xs divide-y divide-slate-800/80 bg-slate-900/60 text-slate-200 font-medium">
+                <tbody class="text-xs divide-y divide-indigo-100 text-indigo-950 font-medium bg-white">
                     @forelse($botIps as $ipAddress => $logs)
                     @php
                         $first = $logs->sortByDesc('last_activity_at')->first();
@@ -382,49 +492,54 @@
                         $ua = $first->user_agent ?? 'Unknown/Empty';
                         $lowerUa = strtolower($ua);
                     @endphp
-                    <tr class="hover:bg-indigo-950/40 transition-colors odd:bg-slate-900/30">
+                    <tr class="hover:bg-indigo-100/70 transition-colors odd:bg-indigo-50/40">
                         <td class="py-4 px-5 align-middle">
                             <div class="flex items-center gap-2">
-                                <span class="font-mono font-bold text-rose-400 text-[13px] tracking-tight">{{ $ipAddress }}</span>
-                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded-md bg-indigo-950 text-indigo-300 border border-indigo-800 text-[10px] font-bold hover:bg-indigo-900 transition-colors cursor-pointer flex items-center gap-1">
+                                <span class="font-mono font-bold text-indigo-950 text-[13px] tracking-tight">{{ $ipAddress }}</span>
+                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded-md bg-indigo-200 text-indigo-800 text-[10px] font-bold hover:bg-indigo-300 transition-colors cursor-pointer flex items-center gap-1">
                                     <span>{{ $logs->count() }} Sesi</span>
                                     <i class="fa-solid fa-chevron-down text-[8px]"></i>
                                 </button>
                             </div>
                             @if($first->user)
-                                <div class="text-[10px] font-sans font-medium text-slate-400 mt-1.5 flex items-center gap-1">
-                                    <i class="fa-solid fa-user text-[9px] text-slate-500"></i>
+                                <div class="text-[10px] font-sans font-medium text-indigo-700 mt-1.5 flex items-center gap-1">
+                                    <i class="fa-solid fa-user text-[9px] text-indigo-500"></i>
                                     <span>{{ $first->user->name ?? $first->user->email }}</span>
+                                </div>
+                            @else
+                                <div class="text-[10px] font-sans text-indigo-500 mt-1.5 italic flex items-center gap-1">
+                                    <i class="fa-solid fa-user-secret text-[9px]"></i>
+                                    <span>Tamu / Belum Login</span>
                                 </div>
                             @endif
                         </td>
                         <td class="py-4 px-5 align-middle">
-                            <div class="inline-flex items-center gap-2 bg-rose-950/60 text-rose-200 border border-rose-800/60 px-3 py-1.5 rounded-xl text-xs font-bold shadow-xs">
+                            <div class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-900 border border-indigo-200 px-3 py-1.5 rounded-xl text-xs font-bold shadow-2xs">
                                 @if(str_contains($lowerUa, 'sqlmap'))
-                                    <i class="fa-solid fa-database text-rose-400"></i>
+                                    <i class="fa-solid fa-database text-red-600"></i>
                                 @elseif(str_contains($lowerUa, 'nikto') || str_contains($lowerUa, 'nmap'))
-                                    <i class="fa-solid fa-bug text-amber-400"></i>
+                                    <i class="fa-solid fa-bug text-amber-600"></i>
                                 @elseif(str_contains($lowerUa, 'curl') || str_contains($lowerUa, 'wget'))
-                                    <i class="fa-solid fa-terminal text-violet-400"></i>
+                                    <i class="fa-solid fa-terminal text-purple-600"></i>
                                 @elseif(str_contains($lowerUa, 'python'))
-                                    <i class="fa-brands fa-python text-sky-400"></i>
+                                    <i class="fa-brands fa-python text-sky-600"></i>
                                 @else
-                                    <i class="fa-solid fa-robot text-rose-400"></i>
+                                    <i class="fa-solid fa-robot text-indigo-600"></i>
                                 @endif
                                 <span>{{ $first->reason }}</span>
                             </div>
                         </td>
                         <td class="py-4 px-5 align-middle">
-                            <div class="bg-slate-950 text-slate-300 px-3 py-1.5 rounded-lg font-mono text-[11px] border border-slate-800 max-w-[220px] truncate shadow-2xs" title="{{ $ua }}">
+                            <div class="bg-indigo-50 text-indigo-900 px-3 py-1.5 rounded-lg font-mono text-[11px] border border-indigo-200 max-w-[220px] truncate shadow-2xs" title="{{ $ua }}">
                                 {{ $ua }}
                             </div>
                         </td>
                         <td class="py-4 px-4 text-center align-middle">
-                            <span class="inline-block bg-rose-950/80 text-rose-300 px-2.5 py-1 rounded-md text-[11px] border border-rose-800/80 font-black shadow-2xs">
+                            <span class="inline-block bg-red-100 text-red-700 px-2.5 py-1 rounded-md text-[11px] border border-red-300 font-black shadow-2xs">
                                 {{ $totalReq }}x
                             </span>
                         </td>
-                        <td class="py-4 px-4 text-slate-400 font-medium text-[11px] align-middle">
+                        <td class="py-4 px-4 text-indigo-900 font-medium text-[11px] align-middle">
                             {{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}
                         </td>
                         <td class="py-4 px-4 text-center align-middle">
@@ -444,17 +559,17 @@
                     </tr>
                     
                     <!-- DROPDOWN SESSIONS -->
-                    <tr id="{{ $groupId }}" class="hidden bg-slate-950/80">
-                        <td colspan="6" class="p-0 border-b border-slate-800">
+                    <tr id="{{ $groupId }}" class="hidden bg-indigo-50/60">
+                        <td colspan="6" class="p-0 border-b border-indigo-200">
                             <table class="w-full text-left">
                                 @foreach($logs as $log)
-                                <tr class="border-t border-slate-800/60 hover:bg-slate-900 text-[11px]">
-                                    <td class="py-3 px-10 text-indigo-400 font-mono">Sesi: #{{ !empty($log->session_id) ? substr($log->session_id, 0, 8) : 'Main' }}</td>
-                                    <td class="py-3 px-6 text-slate-300 font-semibold truncate max-w-[150px]">{{ $log->reason }}</td>
-                                    <td class="py-3 px-6 text-slate-400 font-mono truncate max-w-[150px]" title="{{ $log->user_agent }}">{{ $log->user_agent }}</td>
-                                    <td class="py-3 px-6 text-center text-rose-400 font-bold">{{ $log->request_count }}x</td>
-                                    <td class="py-3 px-6 text-slate-400 font-semibold">{{ $log->last_activity_at ? $log->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
-                                    <td class="py-3 px-6 text-center text-slate-500 italic">-</td>
+                                <tr class="border-t border-indigo-100 hover:bg-indigo-100/60 text-[11px]">
+                                    <td class="py-3 px-10 text-indigo-700 font-mono">Sesi: #{{ !empty($log->session_id) ? substr($log->session_id, 0, 8) : 'Main' }}</td>
+                                    <td class="py-3 px-6 text-indigo-900 font-semibold truncate max-w-[150px]">{{ $log->reason }}</td>
+                                    <td class="py-3 px-6 text-slate-600 font-mono truncate max-w-[150px]" title="{{ $log->user_agent }}">{{ $log->user_agent }}</td>
+                                    <td class="py-3 px-6 text-center text-red-700 font-bold">{{ $log->request_count }}x</td>
+                                    <td class="py-3 px-6 text-indigo-800 font-semibold">{{ $log->last_activity_at ? $log->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                                    <td class="py-3 px-6 text-center text-slate-400 italic">-</td>
                                 </tr>
                                 @endforeach
                             </table>
@@ -462,10 +577,10 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center py-10 text-slate-400 text-xs font-semibold bg-slate-900/40">
-                            <div class="inline-flex items-center gap-2 bg-indigo-950/60 text-indigo-300 border border-indigo-800/60 px-4 py-2 rounded-xl">
-                                <i class="fa-solid fa-shield-halved text-base text-emerald-400"></i>
-                                <span>Sistem Aman! Belum ada bot berbahaya atau crawler ilegal yang terdeteksi.</span>
+                        <td colspan="6" class="text-center py-10 text-indigo-900 text-xs font-semibold bg-indigo-50/20">
+                            <div class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-xl">
+                                <i class="fa-solid fa-shield-halved text-base text-emerald-600"></i>
+                                <span>Sistem Aman! Belum ada serangan Bot atau crawler ilegal yang terdeteksi.</span>
                             </div>
                         </td>
                     </tr>
@@ -607,6 +722,72 @@
             cancelButtonColor: '#94a3b8',
             preConfirm: () => {
                 document.getElementById('freezeForm').submit();
+            }
+        });
+    }
+
+    // TAB SWITCHER: SUDAH LOGIN vs TAMU (TABEL 2)
+    function switchNormalTab(tab) {
+        const loggedView = document.getElementById('normal-view-logged');
+        const guestView = document.getElementById('normal-view-guest');
+        const btnLogged = document.getElementById('tab-btn-logged');
+        const btnGuest = document.getElementById('tab-btn-guest');
+
+        if (tab === 'logged') {
+            loggedView.classList.remove('hidden');
+            guestView.classList.add('hidden');
+            btnLogged.className = 'px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-2 bg-amber-600 text-white cursor-pointer';
+            btnGuest.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white text-amber-950 border border-amber-300 hover:bg-amber-100/80 cursor-pointer';
+        } else {
+            loggedView.classList.add('hidden');
+            guestView.classList.remove('hidden');
+            btnGuest.className = 'px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-2 bg-amber-600 text-white cursor-pointer';
+            btnLogged.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white text-amber-950 border border-amber-300 hover:bg-amber-100/80 cursor-pointer';
+        }
+    }
+
+    // MODAL PEMBEKUAN AKUN PENGGUNA (TABEL 2) - KUNCI AKUN, BUKAN IP
+    function openFreezeAccountModal(userId, userName, userEmail) {
+        if (!userId) {
+            Swal.fire('Perhatian', 'ID akun pengguna tidak teridentifikasi pada log ini.', 'warning');
+            return;
+        }
+
+        Swal.fire({
+            title: '🔐 Bekukan Akun Pengguna',
+            text: `Tentukan durasi pembekuan untuk akun '${userName}' ${userEmail ? '(' + userEmail + ')' : ''}:`,
+            html: `
+                <form id="freezeAccountForm" action="{{ url('admin/security/toggle-user') }}/${userId}" method="POST" class="mt-4 text-left font-sans">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Hari</label>
+                            <input type="number" name="freeze_days" value="0" min="0" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-bold text-center">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Jam</label>
+                            <input type="number" name="freeze_hours" value="1" min="0" max="23" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-bold text-center">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Detik</label>
+                            <input type="number" name="freeze_seconds" value="0" min="0" max="59" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-bold text-center">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Catatan Pelanggaran (Alasan Bekukan Akun):</label>
+                        <textarea name="reason" rows="2" placeholder="Contoh: Terindikasi pelanggaran aturan transaksi atau kecurangan akun" required class="w-full border border-slate-300 rounded-lg p-2 text-xs font-medium focus:outline-none focus:border-amber-500"></textarea>
+                    </div>
+                </form>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-lock"></i> Terapkan Kunci Akun',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#d97706',
+            cancelButtonColor: '#94a3b8',
+            preConfirm: () => {
+                document.getElementById('freezeAccountForm').submit();
             }
         });
     }

@@ -803,6 +803,7 @@ class AdminController extends Controller
             $a->update(['status' => 'approved', 'admin_note' => $note ?: 'Disetujui. Akun aktif kembali.', 'reviewed_at' => now(), 'reviewed_by' => auth()->id()]);
             if ($u) {
                 $u->update(['status' => 'active', 'suspended_until' => null, 'suspend_reason' => null]);
+                Cache::forget("banned_user_{$u->id_user}");
                 $this->sendNotif($u->id_user, 'Banding Disetujui', 'Banding disetujui. ' . ($note ? 'Catatan: ' . $note : ''));
             }
             return back()->with('success', 'Banding disetujui.');
@@ -991,12 +992,31 @@ class AdminController extends Controller
         // 5. Query Log Normal 1 Hari Terakhir (Siklus 24 Jam)
         $normalQuery = IpLog::query();
         if ($hasUserIdCol) $normalQuery->with(['user.role']);
-        $normalIps = $normalQuery->where(function($q) {
+        $allNormalLogs = $normalQuery->where(function($q) {
             $q->where('status', 'normal')->orWhereNull('status');
         })->where('created_at', '>=', now()->subHours(24))
           ->latest('last_activity_at')
-          ->get()
-          ->groupBy('ip_address');
+          ->get();
+
+        $normalIps = $allNormalLogs->groupBy('ip_address');
+
+        // Pisahkan menjadi 2 Kategori: Sudah Login vs Belum Login (Tamu)
+        $normalLoggedInIps = collect();
+        $normalGuestIps = collect();
+
+        foreach ($normalIps as $ipAddress => $logs) {
+            $userObj = $logs->first(fn($l) => $l->relationLoaded('user') && $l->user !== null)?->user;
+            if (!$userObj && isset($loginHistoryLookup[$ipAddress])) {
+                $uName = $loginHistoryLookup[$ipAddress];
+                $userObj = User::with('role')->where('name', $uName)->orWhere('email', $uName)->first();
+            }
+
+            if ($userObj) {
+                $normalLoggedInIps->put($ipAddress, $logs);
+            } else {
+                $normalGuestIps->put($ipAddress, $logs);
+            }
+        }
 
         // 6. Query Log Anti Bot (Mengecualikan Staff/Admin 100%)
         $botQuery = IpLog::query();
@@ -1023,6 +1043,8 @@ class AdminController extends Controller
 
         return view('admin.security.index', [
             'normalIps'          => $normalIps,
+            'normalLoggedInIps'  => $normalLoggedInIps,
+            'normalGuestIps'     => $normalGuestIps,
             'abnormalIps'        => $allSuspiciousLogs->groupBy('ip_address'),
             'botIps'             => $botIps,
             'loginHistories'     => LoginHistory::latest()->simplePaginate(10),
@@ -1031,6 +1053,60 @@ class AdminController extends Controller
             'myIp'               => $currentAdminIp,
             'nextResetTimestamp' => $nextResetTimestamp,
         ]);
+    }
+
+    public function securityToggleUserStatus(Request $request, string|int $userId)
+    {
+        if (!session()->has('security_verified_at')) return redirect()->route('admin.security.verify');
+
+        $user = User::with('role')->findOrFail($userId);
+
+        // Keamanan: Cegah membekukan admin atau staff
+        if (auth()->check() && $user->id_user === auth()->id()) {
+            return back()->with('error', 'Tidak dapat membekukan akun Administrator Anda sendiri!');
+        }
+        if (in_array(strtolower($user->role?->role_name ?? ''), ['admin', 'verifikator', 'customer_service'])) {
+            return back()->with('error', 'Tidak dapat membekukan akun Administrator atau Staf!');
+        }
+
+        $isBlocked = ($user->status === 'blocked' || Cache::has("banned_user_{$user->id_user}"));
+
+        if ($isBlocked) {
+            // BUKA BLOKIR AKUN
+            $user->status = 'active';
+            $user->suspended_until = null;
+            $user->suspend_reason = null;
+            $user->save();
+            Cache::forget("banned_user_{$user->id_user}");
+
+            return back()->with('success', "Akun '{$user->name}' berhasil DIBUKA KEMBALI. Pengguna dapat login dan beraktivitas normal.");
+        } else {
+            // KUNCI / BEKUKAN AKUN (BUKAN KUNCI IP)
+            $days = (int) $request->input('freeze_days', 0);
+            $hours = (int) $request->input('freeze_hours', 1);
+            $seconds = (int) $request->input('freeze_seconds', 0);
+            $totalSeconds = ($days * 86400) + ($hours * 3600) + $seconds;
+
+            $reason = $request->input('reason', 'Pelanggaran syarat dan ketentuan komunitas Karyaku (terindikasi curang/cheat/abuse)');
+
+            $user->status = 'blocked';
+            $user->suspend_reason = $reason;
+
+            if ($totalSeconds > 0) {
+                $user->suspended_until = now()->addSeconds($totalSeconds);
+                Cache::put("banned_user_{$user->id_user}", $reason, now()->addSeconds($totalSeconds));
+            } else {
+                $user->suspended_until = null;
+                Cache::forever("banned_user_{$user->id_user}", $reason);
+            }
+            $user->save();
+
+            // CATATAN: IP TIDAK DIBLOKIR. HANYA AKUN PENGGUNA YANG DIBEKUKAN.
+            // Saat user mencoba login atau mengakses platform, dia akan diarahkan ke halaman
+            // Akun Ditangguhkan (disband.ban) dan dapat mengajukan banding yang masuk ke menu Pelanggaran.
+
+            return back()->with('success', "Akun '{$user->name}' berhasil DIBEKUKAN. Pengguna diarahkan ke halaman penangguhan akun dan dapat mengajukan banding.");
+        }
     }
 
     public function securityToggleStatus(Request $request, string|int $id)

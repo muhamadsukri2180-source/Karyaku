@@ -48,6 +48,12 @@ class DetectAbnormalIp
         // 2. CEK APAKAH AKUN USER YANG SEDANG LOGIN DIBLOKIR / DIBEKUKAN (staff tidak pernah diblokir)
         if (Auth::check() && !$isAdminOrStaff) {
             $currUser = Auth::user();
+
+            // Biarkan user yang disuspend membuka halaman banding & submit banding
+            if ($request->is('suspended-notice*') || $request->is('appeal*')) {
+                return $next($request);
+            }
+
             if ($currUser->status === 'blocked' || Cache::has("banned_user_{$currUser->id_user}")) {
                 // Auto-unban akun jika durasi pembekuan sudah lewat
                 if ($currUser->suspended_until && $currUser->suspended_until->isPast()) {
@@ -59,15 +65,31 @@ class DetectAbnormalIp
                 } else {
                     $uReason = $currUser->suspend_reason
                         ?: Cache::get("banned_user_{$currUser->id_user}")
-                        ?: 'Akun dan alamat IP Anda telah diblokir oleh Administrator sistem.';
+                        ?: 'Akun Anda sedang ditangguhkan oleh Administrator sistem.';
 
-                    return $this->banResponse($request, [
-                        'ip'           => $ip,
-                        'username'     => $currUser->name,
-                        'email'        => $currUser->email,
-                        'reason'       => $uReason,
-                        'banned_until' => $currUser->suspended_until,
-                    ]);
+                    $countdown = $currUser->suspend_countdown;
+                    $appeal = \App\Models\AccountAppeal::where('user_id', $currUser->id_user)->latest()->first();
+
+                    $suspendedInfo = [
+                        'user_id'          => $currUser->id_user,
+                        'username'         => $currUser->name,
+                        'email'            => $currUser->email,
+                        'reason'           => $uReason,
+                        'duration_text'    => $countdown['formatted'] ?? 'Permanen (Tanpa batas waktu)',
+                        'is_permanent'     => empty($currUser->suspended_until),
+                        'is_expired'       => false,
+                        'target_timestamp' => $currUser->suspended_until ? $currUser->suspended_until->timestamp * 1000 : null,
+                        'appeal_status'    => $appeal ? $appeal->status : null,
+                        'appeal_date'      => $appeal ? $appeal->created_at->translatedFormat('d M Y H:i') : null,
+                        'appeal_admin_note'=> $appeal ? $appeal->admin_note : null,
+                    ];
+
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    session(['suspended_user_id' => $currUser->id_user]);
+
+                    return redirect()->route('suspended.notice')->with('suspended_info', $suspendedInfo);
                 }
             }
         }

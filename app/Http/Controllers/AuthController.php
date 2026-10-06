@@ -28,16 +28,47 @@ class AuthController extends Controller
     }
     public function showSuspendedNotice()
     {
-        $info = session('suspended_info') ?? [];
-        $rawReason = $info['reason'] ?? 'Akun dan alamat IP Anda telah diblokir oleh Administrator sistem.';
-        return response()->view('errors.ip-blocked', [
-            'ip'         => request()->ip(),
-            'username'   => $info['username'] ?? null,
-            'email'      => $info['email'] ?? null,
-            'category'   => BanReason::categorize($rawReason),
-            'reason'     => $rawReason,
-            'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
-        ], 403);
+        $info = session('suspended_info');
+
+        if (!$info) {
+            $userId = session('suspended_user_id') ?? old('user_id');
+            $user = $userId ? User::find($userId) : (Auth::check() ? Auth::user() : null);
+
+            if ($user && ($user->status === 'blocked' || Cache::has("banned_user_{$user->id_user}"))) {
+                $countdown = $user->suspend_countdown;
+                $appeal = AccountAppeal::where('user_id', $user->id_user)->latest()->first();
+
+                $info = [
+                    'user_id'          => $user->id_user,
+                    'username'         => $user->name,
+                    'email'            => $user->email,
+                    'reason'           => $user->suspend_reason ?: (Cache::get("banned_user_{$user->id_user}") ?: 'Pelanggaran syarat dan ketentuan komunitas Karyaku'),
+                    'duration_text'    => $countdown['formatted'] ?? 'Permanen (Tanpa batas waktu)',
+                    'is_permanent'     => empty($user->suspended_until),
+                    'is_expired'       => false,
+                    'target_timestamp' => $user->suspended_until ? $user->suspended_until->timestamp * 1000 : null,
+                    'appeal_status'    => $appeal ? $appeal->status : null,
+                    'appeal_date'      => $appeal ? $appeal->created_at->translatedFormat('d M Y H:i') : null,
+                    'appeal_admin_note'=> $appeal ? $appeal->admin_note : null,
+                ];
+            } else {
+                $info = [
+                    'user_id'          => $userId,
+                    'username'         => 'Pengguna Karyaku',
+                    'email'            => '',
+                    'reason'           => 'Akun Anda sedang ditangguhkan karena indikasi pelanggaran aturan komunitas.',
+                    'duration_text'    => 'Permanen (Tanpa batas waktu)',
+                    'is_permanent'     => true,
+                    'is_expired'       => false,
+                    'target_timestamp' => null,
+                    'appeal_status'    => null,
+                    'appeal_date'      => null,
+                    'appeal_admin_note'=> null,
+                ];
+            }
+        }
+
+        return view('disband.ban', compact('info'));
     }
     public function register(Request $request)
     {
@@ -140,16 +171,27 @@ class AuthController extends Controller
             } else {
                 $reason = $checkUser->suspend_reason 
                     ?: Cache::get("banned_user_{$checkUser->id_user}") 
-                    ?: 'Akun dan alamat IP Anda telah diblokir oleh Administrator sistem.';
+                    ?: 'Pelanggaran syarat dan ketentuan komunitas Karyaku';
 
-                return response()->view('errors.ip-blocked', [
-                    'ip'         => $ip,
-                    'username'   => $checkUser->name,
-                    'email'      => $checkUser->email,
-                    'category'   => BanReason::categorize($reason),
-                    'reason'     => $reason,
-                    'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
-                ], 403);
+                $countdown = $checkUser->suspend_countdown;
+                $appeal = AccountAppeal::where('user_id', $checkUser->id_user)->latest()->first();
+
+                $suspendedInfo = [
+                    'user_id'          => $checkUser->id_user,
+                    'username'         => $checkUser->name,
+                    'email'            => $checkUser->email,
+                    'reason'           => $reason,
+                    'duration_text'    => $countdown['formatted'] ?? 'Permanen (Tanpa batas waktu)',
+                    'is_permanent'     => empty($checkUser->suspended_until),
+                    'is_expired'       => false,
+                    'target_timestamp' => $checkUser->suspended_until ? $checkUser->suspended_until->timestamp * 1000 : null,
+                    'appeal_status'    => $appeal ? $appeal->status : null,
+                    'appeal_date'      => $appeal ? $appeal->created_at->translatedFormat('d M Y H:i') : null,
+                    'appeal_admin_note'=> $appeal ? $appeal->admin_note : null,
+                ];
+
+                session(['suspended_user_id' => $checkUser->id_user]);
+                return redirect()->route('suspended.notice')->with('suspended_info', $suspendedInfo);
             }
         }
 
@@ -164,23 +206,31 @@ class AuthController extends Controller
         if ($user->status === 'blocked' || Cache::has("banned_user_{$user->id_user}")) {
             $reason = $user->suspend_reason 
                 ?: Cache::get("banned_user_{$user->id_user}") 
-                ?: 'Akun dan alamat IP Anda telah diblokir oleh Administrator.';
+                ?: 'Pelanggaran syarat dan ketentuan komunitas Karyaku';
 
-            $userName = $user->name;
-            $userEmail = $user->email;
+            $countdown = $user->suspend_countdown;
+            $appeal = AccountAppeal::where('user_id', $user->id_user)->latest()->first();
+
+            $suspendedInfo = [
+                'user_id'          => $user->id_user,
+                'username'         => $user->name,
+                'email'            => $user->email,
+                'reason'           => $reason,
+                'duration_text'    => $countdown['formatted'] ?? 'Permanen (Tanpa batas waktu)',
+                'is_permanent'     => empty($user->suspended_until),
+                'is_expired'       => false,
+                'target_timestamp' => $user->suspended_until ? $user->suspended_until->timestamp * 1000 : null,
+                'appeal_status'    => $appeal ? $appeal->status : null,
+                'appeal_date'      => $appeal ? $appeal->created_at->translatedFormat('d M Y H:i') : null,
+                'appeal_admin_note'=> $appeal ? $appeal->admin_note : null,
+            ];
 
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+            session(['suspended_user_id' => $user->id_user]);
 
-            return response()->view('errors.ip-blocked', [
-                'ip'         => $ip,
-                'username'   => $userName,
-                'email'      => $userEmail,
-                'category'   => BanReason::categorize($reason),
-                'reason'     => $reason,
-                'blocked_at' => now()->translatedFormat('d F Y, H:i') . ' WIB'
-            ], 403);
+            return redirect()->route('suspended.notice')->with('suspended_info', $suspendedInfo);
         }
 
         if ($user->status !== 'active') {
@@ -211,11 +261,22 @@ class AuthController extends Controller
     }
     public function submitAppeal(Request $request)
     {
+        // Jika user_id belum terisi di form tapi ada input email/username
+        if (!$request->filled('user_id') && $request->filled('account_identifier')) {
+            $identifier = trim($request->input('account_identifier'));
+            $foundUser = User::where('email', $identifier)->orWhere('name', $identifier)->first();
+            if ($foundUser) {
+                $request->merge(['user_id' => $foundUser->id_user]);
+            }
+        }
+
         $request->validate([
             'user_id'     => 'required|exists:users,id_user',
             'reason'      => 'required|string|min:5|max:2000',
             'proof_image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
         ], [
+            'user_id.required'  => 'Akun pengguna tidak teridentifikasi. Masukkan email atau username Anda.',
+            'user_id.exists'    => 'Akun pengguna tidak ditemukan dalam database.',
             'reason.required'   => 'Alasan pembelaan / penjelasan wajib diisi.',
             'reason.min'        => 'Alasan minimal 5 karakter.',
             'proof_image.image' => 'File bukti harus berupa gambar.',
@@ -233,6 +294,8 @@ class AuthController extends Controller
             'proof_image' => $imagePath,
             'status'      => 'pending',
         ]);
+
+        session(['suspended_user_id' => $request->user_id]);
 
         $user = User::find($request->user_id);
         $countdown = $user ? $user->suspend_countdown : ['formatted' => '-'];
