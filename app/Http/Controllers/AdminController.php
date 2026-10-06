@@ -981,13 +981,9 @@ class AdminController extends Controller
         //    B. Netralkan log milik AKUN staff saja
         //    C. Otomatis reset log aktivitas normal yang sudah lewat 1 hari (24 jam)
         try {
-            // Bersihkan semua log false-positive (panel DevTools, resize window, klik kanan, devtools-open)
+            // Bersihkan HANYA log false-positive (resize window biasa tanpa shortcut/inspect)
             IpLog::where(function($q) {
-                $q->where('reason', 'like', '%Resize Window%')
-                  ->orWhere('reason', 'like', '%right-click%')
-                  ->orWhere('reason', 'like', '%Klik Kanan%')
-                  ->orWhere('reason', 'like', '%panel DevTools%')
-                  ->orWhere('reason', 'like', '%devtools-open%');
+                $q->where('reason', 'like', '%Resize Window%');
             })->update([
                 'status' => 'normal',
                 'reason' => 'Aktivitas Normal Pengguna'
@@ -1019,9 +1015,12 @@ class AdminController extends Controller
                     $master->status = 'suspicious';
                 }
 
-                $anyUserId = $dupLogs->first(fn($l) => !empty($l->user_id))?->user_id;
-                if ($anyUserId && empty($master->user_id)) {
-                    $master->user_id = $anyUserId;
+                // Utamakan user_id akun non-staff (pelanggar) jika ada
+                $nonStaffUid = $dupLogs->first(fn($l) => !empty($l->user_id) && !in_array($l->user_id, $staffUserIds))?->user_id;
+                if ($nonStaffUid) {
+                    $master->user_id = $nonStaffUid;
+                } elseif (empty($master->user_id)) {
+                    $master->user_id = $dupLogs->first(fn($l) => !empty($l->user_id))?->user_id;
                 }
 
                 $master->save();
@@ -1550,23 +1549,28 @@ class AdminController extends Controller
             // Tentukan alasan berdasarkan metode deteksi yang dikirim JS
             $method = $body['method'] ?? $request->input('method', '');
 
-            // PENTING: Hanya catat shortcut DevTools yang nyata dan disengaja oleh pengguna.
-            // Abaikan sepenuhnya jika false-positive (seperti resize window atau devtools-open kalkulasi)
-            $allowedShortcuts = ['F12', 'Ctrl+Shift+I', 'Ctrl+Shift+C', 'Ctrl+Shift+J', 'Ctrl+Shift+K', 'Ctrl+U', 'right-click'];
-            if (!in_array($method, $allowedShortcuts)) {
+            // PENTING: Catat semua metode deteksi DevTools nyata (shortcut, klik kanan, docked panel, console probe)
+            $allowedMethods = [
+                'F12', 'Ctrl+Shift+I', 'Ctrl+Shift+C', 'Ctrl+Shift+J', 'Ctrl+Shift+K', 'Ctrl+U',
+                'right-click', 'devtools-open', 'inspect', 'docked'
+            ];
+            if (!in_array($method, $allowedMethods)) {
                 return response()->json(['ok' => true, 'logged' => false, 'why' => 'ignored_method']);
             }
 
             $methodMap = [
-                'F12'          => 'Menekan tombol F12 (DevTools)',
-                'Ctrl+Shift+I' => 'Menekan Ctrl+Shift+I (DevTools)',
-                'Ctrl+Shift+C' => 'Menekan Ctrl+Shift+C (Inspect Element)',
-                'Ctrl+Shift+J' => 'Menekan Ctrl+Shift+J (Console DevTools)',
-                'Ctrl+Shift+K' => 'Menekan Ctrl+Shift+K (Web Console)',
-                'Ctrl+U'       => 'Membuka View Source (Ctrl+U)',
-                'right-click'  => 'Klik Kanan → Inspect Element',
+                'F12'           => 'Menekan tombol F12 (DevTools)',
+                'Ctrl+Shift+I'  => 'Menekan Ctrl+Shift+I (DevTools)',
+                'Ctrl+Shift+C'  => 'Menekan Ctrl+Shift+C (Inspect Element)',
+                'Ctrl+Shift+J'  => 'Menekan Ctrl+Shift+J (Console DevTools)',
+                'Ctrl+Shift+K'  => 'Menekan Ctrl+Shift+K (Web Console)',
+                'Ctrl+U'        => 'Membuka View Source (Ctrl+U)',
+                'right-click'   => 'Klik Kanan (Menu Inspect Element)',
+                'devtools-open' => 'Membuka Inspect Element / DevTools',
+                'inspect'       => 'Membuka Inspect Element / DevTools',
+                'docked'        => 'Panel DevTools Terdeteksi Aktif',
             ];
-            $reason = 'Terdeteksi: ' . ($methodMap[$method] ?? 'Shortcut DevTools Terdeteksi');
+            $reason = 'Terdeteksi: ' . ($methodMap[$method] ?? 'Membuka Inspect Element / DevTools');
 
             $userAgent = $request->header('User-Agent') ?? 'Unknown';
 

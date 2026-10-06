@@ -3,9 +3,11 @@
      Mendeteksi pembukaan DevTools via:
      1. Shortcut Keyboard (F12, Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+Shift+J, Ctrl+U, Mac)
      2. Klik Kanan → Inspect Element (contextmenu)
+     3. Docked DevTools Panel (Bottom, Right, Left)
+     4. Undocked DevTools / Console Evaluator Probe
 
      CATATAN: Admin, Verifikator, dan Customer Service SELALU dikecualikan
-     dari deteksi ini.
+     secara permanen dari deteksi ini.
 ============================================================ --}}
 
 @php
@@ -107,10 +109,47 @@
         }
     }, true);
 
-    // 2. Deteksi Klik Kanan → Inspect Element
+    // 2. Deteksi Klik Kanan → Menu Inspect Element
     document.addEventListener('contextmenu', function(e) {
         reportDevTools('right-click');
-    }, true);
+        setTimeout(checkDockedDevTools, 800);
+        setTimeout(checkDockedDevTools, 2000);
+    }, { passive: true });
+
+    // 3. Deteksi Docked DevTools Panel via ukuran viewport window
+    let _windowStable = false;
+    setTimeout(function() { _windowStable = true; }, 1200);
+
+    function checkDockedDevTools() {
+        if (!_windowStable) return;
+        const widthDiff  = window.outerWidth  - window.innerWidth;
+        const heightDiff = window.outerHeight - window.innerHeight;
+
+        // Panel DevTools docked (bawah/kanan/kiri) umumnya memakai ruang > 160px
+        if (widthDiff > 160 || heightDiff > 160) {
+            reportDevTools('devtools-open');
+        }
+    }
+
+    window.addEventListener('resize', function() {
+        setTimeout(checkDockedDevTools, 250);
+    }, { passive: true });
+    setTimeout(checkDockedDevTools, 1500);
+
+    // 4. Deteksi Undocked DevTools / Console via Getter Probe
+    try {
+        const probeElement = new Image();
+        Object.defineProperty(probeElement, 'id', {
+            get: function() {
+                reportDevTools('devtools-open');
+                return 'karyaku-inspect';
+            }
+        });
+        setInterval(function() {
+            if (_reportedMethods['devtools-open']) return;
+            console.log(probeElement);
+        }, 2500);
+    } catch(e) {}
 
 })();
 </script>

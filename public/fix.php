@@ -70,35 +70,19 @@ try {
             } catch (\Throwable $e) {}
         }
 
-        // 2. Netralkan HANYA log false-positive (resize window / klik kanan).
+        // 2. Netralkan HANYA log false-positive (resize window biasa).
         //    Deteksi DevTools asli TIDAK disentuh agar tetap tampil di tabel IP Mencurigakan.
         $dbCleanedCount = \Illuminate\Support\Facades\DB::table('ip_logs')
             ->where(function($q) {
-                $q->where('reason', 'like', '%Resize Window%')
-                  ->orWhere('reason', 'like', '%right-click%')
-                  ->orWhere('reason', 'like', '%Klik Kanan%')
-                  ->orWhere('reason', 'like', '%panel DevTools%')
-                  ->orWhere('reason', 'like', '%devtools-open%');
+                $q->where('reason', 'like', '%Resize Window%');
             })
             ->update(['status' => 'normal', 'reason' => 'Aktivitas Normal Pengguna']);
 
+        // Hapus IP whitelist palsu yang pernah dimasukkan otomatis oleh fix.php
+        try {
+            \Illuminate\Support\Facades\DB::table('allowed_ips')->where('added_by', 'fix.php')->delete();
+        } catch (\Throwable $e) {}
 
-        // 2. Daftarkan IP pengunjung fix.php ini ke allowed_ips jika belum ada
-        if (!in_array($visitorIp, ['127.0.0.1', '::1'])) {
-            $exists = \Illuminate\Support\Facades\DB::table('allowed_ips')->where('ip_address', $visitorIp)->exists();
-            if (!$exists) {
-                \Illuminate\Support\Facades\DB::table('allowed_ips')->insert([
-                    'ip_address' => $visitorIp,
-                    'label'      => 'Admin / Owner Whitelist',
-                    'added_by'   => 'fix.php',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-            \Illuminate\Support\Facades\Cache::put("allowed_ip_{$visitorIp}", true, 86400);
-            \Illuminate\Support\Facades\Cache::forget("banned_ip_{$visitorIp}");
-            $whitelisted = true;
-        }
 
         // 3. Clear cache aplikasi
         \Illuminate\Support\Facades\Artisan::call('cache:clear');
