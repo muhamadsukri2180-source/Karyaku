@@ -118,6 +118,10 @@ class DetectAbnormalIp
             }
         });
 
+        // Whitelist IP hanya membebaskan TAMU dari deteksi. Akun non-admin yang login
+        // tetap dipantau walau memakai IP yang sama dengan admin (WiFi / CGNAT seluler).
+        $isGuestWhitelisted = $isWhitelisted && !Auth::check();
+
         // 4. CEK APAKAH ALAMAT IP DIBLOKIR (BAN CHECK GLOBAL) -> berlaku untuk SEMUA halaman,
         //    termasuk landing page. Staff & whitelist manual tidak pernah diblokir.
         if (!$isWhitelisted && !$isAdminOrStaff) {
@@ -147,7 +151,7 @@ class DetectAbnormalIp
         $isSuspicious = false;
         $reason = null;
 
-        if (!$isAdminOrStaff && !$isWhitelisted) {
+        if (!$isAdminOrStaff && !$isGuestWhitelisted) {
             // A. Honeypot check
             $suspiciousPaths = [
                 'wp-admin', 'wp-login.php', '.env', 'phpmyadmin',
@@ -323,9 +327,11 @@ class DetectAbnormalIp
             if ($isAdminOrStaff) {
                 $ipLog->status = 'normal';
                 $ipLog->reason = 'Aktivitas Normal Administrator/Staff';
-            } elseif ($isWhitelisted) {
-                $ipLog->status = 'normal';
-                $ipLog->reason = 'Aktivitas Normal (IP Whitelist)';
+            } elseif ($isGuestWhitelisted) {
+                if ($ipLog->status !== 'abnormal') {
+                    $ipLog->status = 'normal';
+                    $ipLog->reason = 'Aktivitas Normal (IP Whitelist)';
+                }
             } elseif ($isSuspicious && $ipLog->status !== 'abnormal') {
                 $ipLog->status = 'suspicious';
                 $ipLog->reason = $reason;

@@ -70,13 +70,13 @@ try {
             } catch (\Throwable $e) {}
         }
 
-        // 2. Netralkan semua log false-positive
+        // 2. Netralkan HANYA log false-positive (resize window / klik kanan).
+        //    Deteksi DevTools asli TIDAK disentuh agar tetap tampil di tabel IP Mencurigakan.
         $dbCleanedCount = \Illuminate\Support\Facades\DB::table('ip_logs')
             ->where(function($q) {
                 $q->where('reason', 'like', '%Resize Window%')
                   ->orWhere('reason', 'like', '%right-click%')
-                  ->orWhere('reason', 'like', '%Klik Kanan%')
-                  ->orWhere('reason', 'like', '%DevTools%');
+                  ->orWhere('reason', 'like', '%Klik Kanan%');
             })
             ->update(['status' => 'normal', 'reason' => 'Aktivitas Normal Pengguna']);
 

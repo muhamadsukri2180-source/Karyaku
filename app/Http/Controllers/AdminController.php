@@ -900,58 +900,48 @@ class AdminController extends Controller
             } catch (\Throwable $e) {}
         }
 
-        // 2. Kumpulkan Akun & IP Staff (Admin, Verifikator, CS) agar TIDAK PERNAH terdeteksi mencurigakan/bot
+        // 2. Kumpulkan AKUN Staff (Admin, Verifikator, CS).
+        //    PENGECUALIAN BERBASIS AKUN/ROLE, BUKAN IP. IP operator seluler / WiFi sering dipakai
+        //    bersama (CGNAT), jadi mengecualikan IP admin akan ikut menyembunyikan user lain.
+        //    Aturan:
+        //      - Log milik akun staff          -> tidak pernah terdeteksi
+        //      - Log milik akun NON-staff      -> SELALU terdeteksi (walau IP-nya sama dengan admin)
+        //      - Log tamu (belum login)        -> terdeteksi, kecuali IP ada di whitelist manual
         $staffRoles = ['admin', 'verifikator', 'customer_service'];
         $staffUserIds = [];
-        $allStaffExemptIps = [$currentAdminIp];
+        $staffNames = [];
+        $allowedIpsList = [];
 
         try {
-            $staffUserIds = User::whereHas('role', fn($r) => $r->whereIn('role_name', $staffRoles))->pluck('id_user')->toArray();
-            $staffUsers = User::whereIn('id_user', $staffUserIds)->get();
-            $staffNames = $staffUsers->flatMap(fn($u) => array_filter([$u->name, $u->email]))->unique()->toArray();
-            $staffLoginIps = LoginHistory::whereIn('username', $staffNames)->pluck('ip_address')->unique()->toArray();
+            $staffUsers = User::whereHas('role', fn($r) => $r->whereIn('role_name', $staffRoles))->get();
+            $staffUserIds = $staffUsers->pluck('id_user')->toArray();
+            $staffNames = $staffUsers->flatMap(fn($u) => array_filter([$u->name, $u->email]))->unique()->values()->toArray();
             $allowedIpsList = AllowedIp::pluck('ip_address')->toArray();
-            $allStaffExemptIps = array_unique(array_filter(array_merge([$currentAdminIp], $staffLoginIps, $allowedIpsList)));
-
-            // Auto-whitelist IP admin saat ini agar selalu aman
-            if (!in_array($currentAdminIp, ['127.0.0.1', '::1'])) {
-                AllowedIp::firstOrCreate(
-                    ['ip_address' => $currentAdminIp],
-                    ['label' => 'Admin Session Whitelist', 'added_by' => auth()->user()?->name ?? 'Admin']
-                );
-                Cache::put("allowed_ip_{$currentAdminIp}", true, 86400);
-            }
         } catch (\Throwable $e) {}
 
         // 3. Pembersihan otomatis log:
         //    A. False-positive resize/klik kanan
-        //    B. Netralkan SEMUA log milik Staff / Admin agar selalu normal
+        //    B. Netralkan log milik AKUN staff saja
         //    C. Otomatis reset log aktivitas normal yang sudah lewat 1 hari (24 jam)
         try {
             IpLog::where(function($q) {
                 $q->where('reason', 'like', '%Resize Window%')
                   ->orWhere('reason', 'like', '%right-click%')
-                  ->orWhere('reason', 'like', '%Klik Kanan%')
-                  ->orWhere('reason', 'like', '%DevTools Terdeteksi via Resize Window%');
+                  ->orWhere('reason', 'like', '%Klik Kanan%');
             })->update([
                 'status' => 'normal',
                 'reason' => 'Aktivitas Normal Pengguna'
             ]);
 
-            // Netralkan semua log yang berasal dari IP / Akun staff
-            IpLog::where(function($q) use ($staffUserIds, $allStaffExemptIps) {
-                if (!empty($staffUserIds)) {
-                    $q->whereIn('user_id', $staffUserIds);
-                }
-                if (!empty($allStaffExemptIps)) {
-                    $q->orWhereIn('ip_address', $allStaffExemptIps);
-                }
-            })->whereIn('status', ['suspicious', 'abnormal'])->update([
-                'status' => 'normal',
-                'reason' => 'Aktivitas Normal Administrator/Staff'
-            ]);
+            if ($hasUserIdCol && !empty($staffUserIds)) {
+                IpLog::whereIn('user_id', $staffUserIds)
+                    ->where('status', 'suspicious')
+                    ->update([
+                        'status' => 'normal',
+                        'reason' => 'Aktivitas Normal Administrator/Staff'
+                    ]);
+            }
 
-            // Otomatis bersihkan riwayat pengunjung biasa setelah 1 hari (24 jam)
             IpLog::where(function($q) {
                 $q->where('status', 'normal')->orWhereNull('status');
             })->where('created_at', '<', now()->subHours(24))->delete();
@@ -964,27 +954,42 @@ class AdminController extends Controller
             ->groupBy('ip_address')
             ->map(fn($items) => $items->first()->username);
 
-        // 4. Query Log Mencurigakan (Mengecualikan Staff/Admin 100%)
+        // Lookup khusus tabel mencurigakan: abaikan nama akun staff agar tamu
+        // yang kebetulan satu IP dengan admin tidak ditampilkan sebagai admin.
+        $nonStaffLoginLookup = LoginHistory::whereNotNull('username')
+            ->when(!empty($staffNames), fn($q) => $q->whereNotIn('username', $staffNames))
+            ->latest()
+            ->get()
+            ->groupBy('ip_address')
+            ->map(fn($items) => $items->first()->username);
+
+        // 4. Query Log Mencurigakan (berbasis akun)
         $suspiciousQuery = IpLog::query();
         if ($hasUserIdCol) {
             $suspiciousQuery->with(['user.role']);
         }
 
-        $suspiciousQuery->whereIn('status', ['abnormal', 'suspicious'])
-            ->where(function ($q) {
-                $q->whereNull('reason')
-                  ->orWhere(function($sub) {
-                      $sub->where('reason', '!=', 'Aktivitas Normal Pengguna')
-                          ->where('reason', '!=', 'Aktivitas Normal Administrator/Staff');
-                  });
-            })
-            ->whereNotIn('ip_address', $allStaffExemptIps);
+        $suspiciousQuery->whereIn('status', ['abnormal', 'suspicious']);
 
-        if ($hasUserIdCol && !empty($staffUserIds)) {
-            $suspiciousQuery->where(function($q) use ($staffUserIds) {
-                $q->whereNull('user_id')
-                  ->orWhereNotIn('user_id', $staffUserIds);
+        if ($hasUserIdCol) {
+            $suspiciousQuery->where(function ($q) use ($staffUserIds, $allowedIpsList) {
+                // Akun non-staff yang login -> selalu tampil
+                $q->where(function ($sub) use ($staffUserIds) {
+                    $sub->whereNotNull('user_id');
+                    if (!empty($staffUserIds)) {
+                        $sub->whereNotIn('user_id', $staffUserIds);
+                    }
+                })
+                // Tamu -> tampil kecuali IP whitelist manual
+                ->orWhere(function ($sub) use ($allowedIpsList) {
+                    $sub->whereNull('user_id');
+                    if (!empty($allowedIpsList)) {
+                        $sub->whereNotIn('ip_address', $allowedIpsList);
+                    }
+                });
             });
+        } elseif (!empty($allowedIpsList)) {
+            $suspiciousQuery->whereNotIn('ip_address', $allowedIpsList);
         }
 
         $allSuspiciousLogs = $suspiciousQuery->latest('last_activity_at')->get();
@@ -1018,22 +1023,34 @@ class AdminController extends Controller
             }
         }
 
-        // 6. Query Log Anti Bot (Mengecualikan Staff/Admin 100%)
+        // 6. Query Log Anti Bot (berbasis akun: staff dikecualikan, tamu whitelist manual dikecualikan)
         $botQuery = IpLog::query();
         if ($hasUserIdCol) $botQuery->with(['user.role']);
-        $botQuery->where(function($q) {
-            $q->where('reason', 'like', '%Bot%')
-              ->orWhere('reason', 'like', '%Scanner%')
-              ->orWhere('reason', 'like', '%Spam%')
-              ->orWhere('reason', 'like', '%DoS%')
-              ->orWhere('reason', 'like', '%Flood%');
-        })->whereNotIn('ip_address', $allStaffExemptIps);
-
-        if ($hasUserIdCol && !empty($staffUserIds)) {
-            $botQuery->where(function($q) use ($staffUserIds) {
-                $q->whereNull('user_id')
-                  ->orWhereNotIn('user_id', $staffUserIds);
+        $botQuery->whereIn('status', ['suspicious', 'abnormal'])
+            ->where(function($q) {
+                $q->where('reason', 'like', '%Bot%')
+                  ->orWhere('reason', 'like', '%Scanner%')
+                  ->orWhere('reason', 'like', '%Spam%')
+                  ->orWhere('reason', 'like', '%DoS%')
+                  ->orWhere('reason', 'like', '%Flood%');
             });
+
+        if ($hasUserIdCol) {
+            $botQuery->where(function ($q) use ($staffUserIds, $allowedIpsList) {
+                $q->where(function ($sub) use ($staffUserIds) {
+                    $sub->whereNotNull('user_id');
+                    if (!empty($staffUserIds)) {
+                        $sub->whereNotIn('user_id', $staffUserIds);
+                    }
+                })->orWhere(function ($sub) use ($allowedIpsList) {
+                    $sub->whereNull('user_id');
+                    if (!empty($allowedIpsList)) {
+                        $sub->whereNotIn('ip_address', $allowedIpsList);
+                    }
+                });
+            });
+        } elseif (!empty($allowedIpsList)) {
+            $botQuery->whereNotIn('ip_address', $allowedIpsList);
         }
 
         $botIps = $botQuery->latest('last_activity_at')->get()->groupBy('ip_address');
@@ -1049,6 +1066,8 @@ class AdminController extends Controller
             'botIps'             => $botIps,
             'loginHistories'     => LoginHistory::latest()->simplePaginate(10),
             'loginHistoryLookup' => $loginHistoryLookup,
+            'nonStaffLoginLookup'=> $nonStaffLoginLookup,
+            'staffUserIds'       => $staffUserIds,
             'allowedIps'         => AllowedIp::latest()->get(), 
             'myIp'               => $currentAdminIp,
             'nextResetTimestamp' => $nextResetTimestamp,
@@ -1366,10 +1385,13 @@ class AdminController extends Controller
                 }
             }
 
-            // Abaikan jika IP ada di whitelist MANUAL
-            $isWhitelisted = AllowedIp::where('ip_address', $ip)->exists();
-            if ($isWhitelisted) {
-                return response()->json(['ok' => true, 'logged' => false, 'why' => 'ip_whitelisted']);
+            // Abaikan jika IP ada di whitelist MANUAL -> HANYA untuk tamu (belum login).
+            // Akun non-admin yang login tetap tercatat walau IP-nya sama dengan admin.
+            if (!auth()->check()) {
+                $isWhitelisted = AllowedIp::where('ip_address', $ip)->exists();
+                if ($isWhitelisted) {
+                    return response()->json(['ok' => true, 'logged' => false, 'why' => 'ip_whitelisted']);
+                }
             }
 
             // Baca body JSON dari sendBeacon / fetch (Content-Type: application/json)

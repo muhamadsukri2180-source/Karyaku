@@ -52,15 +52,27 @@
                         $first = $logs->sortByDesc('last_activity_at')->first();
                         $totalReq = $logs->sum('request_count');
                         $groupId = 'abnormal-'.$loop->index;
-                        $userObj = $logs->first(fn($l) => $l->relationLoaded('user') && $l->user !== null)?->user;
-                        if (!$userObj && isset($loginHistoryLookup[$ipAddress])) {
-                            $uName = $loginHistoryLookup[$ipAddress];
-                            $userObj = \App\Models\User::with('role')->where('name', $uName)->orWhere('email', $uName)->first();
+                        $staffIdsView = $staffUserIds ?? [];
+                        $nsLookup = $nonStaffLoginLookup ?? collect();
+                        // Ambil akun NON-staff yang benar-benar login saat melakukan pelanggaran
+                        $userObj = $logs->first(fn($l) => $l->relationLoaded('user') && $l->user !== null && !in_array($l->user_id, $staffIdsView))?->user;
+                        if (!$userObj) {
+                            $anyUserId = $logs->first(fn($l) => !empty($l->user_id) && !in_array($l->user_id, $staffIdsView))?->user_id;
+                            if ($anyUserId) {
+                                $userObj = \App\Models\User::with('role')->find($anyUserId);
+                            }
+                        }
+                        if (!$userObj && isset($nsLookup[$ipAddress])) {
+                            $uName = $nsLookup[$ipAddress];
+                            $userObj = \App\Models\User::with('role')->where(fn($q) => $q->where('name', $uName)->orWhere('email', $uName))->first();
+                            if ($userObj && in_array($userObj->id_user, $staffIdsView)) {
+                                $userObj = null;
+                            }
                         }
                         $userName = $userObj?->name;
                         $userEmail = $userObj?->email;
                         $userRole = $userObj?->role?->role_name;
-                        $userLabel = $userName ?? $userEmail ?? ($loginHistoryLookup[$ipAddress] ?? null);
+                        $userLabel = $userName ?? $userEmail;
                         $reasonText = $first->reason ?? '-';
                         $catInfo = \App\Support\BanReason::present($reasonText);
                     @endphp
@@ -76,11 +88,11 @@
                             </div>
                             @if($userLabel)
                                 <div class="mt-2 flex flex-wrap items-center gap-1.5">
-                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-slate-800 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
-                                        <i class="fa-solid fa-circle-user text-slate-500 text-[10px]"></i>
-                                        <span>{{ $userLabel }}</span>
-                                        @if($userEmail && $userLabel !== $userEmail)
-                                            <span class="text-slate-400 font-normal text-[10px]">&lt;{{ $userEmail }}&gt;</span>
+                                    <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-800 bg-red-50/80 px-2.5 py-1 rounded-md border border-red-200">
+                                        <i class="fa-solid fa-circle-user text-red-500 text-[11px]"></i>
+                                        <span>{{ $userName ?? $userLabel }}</span>
+                                        @if($userEmail && ($userName || $userLabel !== $userEmail))
+                                            <span class="text-slate-500 font-normal text-[10px]">&lt;{{ $userEmail }}&gt;</span>
                                         @endif
                                     </span>
                                     @if($userRole)
