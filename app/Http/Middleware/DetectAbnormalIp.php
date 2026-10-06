@@ -285,21 +285,18 @@ class DetectAbnormalIp
                 $ipLog->save();
             } catch (\Throwable $saveEx) {
                 if ($ipLog->status === 'suspicious') {
-                    // Hosting lama mungkin belum punya enum 'suspicious' -> perbaiki kolom lalu simpan ulang
                     try {
                         DB::statement("ALTER TABLE ip_logs MODIFY COLUMN status ENUM('normal', 'abnormal', 'suspicious') NOT NULL DEFAULT 'normal'");
                         $ipLog->save();
                     } catch (\Throwable $alterEx) {
-                        $ipLog->status = 'normal';
-                        $ipLog->save();
+                        try {
+                            $ipLog->status = 'normal';
+                            $ipLog->save();
+                        } catch (\Throwable $e3) {}
                     }
-                } else {
-                    throw $saveEx;
                 }
             }
-        } catch (\Throwable $e) {
-            Log::error('DetectAbnormalIp Logging Error: ' . $e->getMessage());
-        }
+        } catch (\Throwable $e) {}
 
         return $next($request);
     }
@@ -399,14 +396,28 @@ class DetectAbnormalIp
             ], 403);
         }
 
+        $blockedAtFormatted = now()->translatedFormat('d F Y, H:i') . ' WIB';
+        if ($bannedAt instanceof \Carbon\Carbon || $bannedAt instanceof \DateTimeInterface) {
+            $blockedAtFormatted = $bannedAt->copy()->timezone(config('app.timezone', 'Asia/Jakarta'))->translatedFormat('d F Y, H:i') . ' WIB';
+        } elseif (is_string($bannedAt) && !empty($bannedAt)) {
+            $blockedAtFormatted = $bannedAt;
+        }
+
+        $bannedUntilFormatted = null;
+        if ($until instanceof \Carbon\Carbon || $until instanceof \DateTimeInterface) {
+            $bannedUntilFormatted = $until->copy()->timezone(config('app.timezone', 'Asia/Jakarta'))->translatedFormat('d F Y, H:i') . ' WIB';
+        } elseif (is_string($until)) {
+            $bannedUntilFormatted = $until;
+        }
+
         return response()->view('errors.ip-blocked', [
             'ip'           => $data['ip'] ?? $request->ip(),
             'username'     => $data['username'] ?? null,
             'email'        => $data['email'] ?? null,
             'reason'       => $reasonText,
             'category'     => $data['category'] ?? BanReason::categorize($reasonText),
-            'blocked_at'   => ($bannedAt ? $bannedAt->copy()->timezone(config('app.timezone')) : now())->translatedFormat('d F Y, H:i') . ' WIB',
-            'banned_until' => $until ? $until->copy()->timezone(config('app.timezone'))->translatedFormat('d F Y, H:i') . ' WIB' : null,
+            'blocked_at'   => $blockedAtFormatted,
+            'banned_until' => $bannedUntilFormatted,
         ], 403)->header('Cache-Control', 'no-store, no-cache, must-revalidate');
     }
 }

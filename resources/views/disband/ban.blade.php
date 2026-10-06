@@ -44,7 +44,23 @@
                         body: ['"Plus Jakarta Sans"', 'sans-serif']
                     },
                     boxShadow: {
-                        card: '0 10px 30px -5px rgba(11,61,98,0.15)'
+                        card: '0 10px 40px -10px rgba(11,61,98,0.35)'
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' }
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        }
                     }
                 }
             }
@@ -52,27 +68,46 @@
     </script>
 
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-attachment: fixed;
+        }
         .font-display { font-family: 'Sora', sans-serif; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .grain-overlay {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            opacity: 0.05; mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-600 via-sky-500 to-yellow-400 text-ink antialiased min-h-screen w-full flex items-center justify-center p-4">
+<body class="bg-gradient-to-br from-blue-600 via-blue-500 to-yellow-400 text-ink antialiased min-h-screen w-full py-10 px-4">
 
-    <!-- Card Utama (2 Side Layout) -->
-    <div class="w-full max-w-4xl bg-white/95 backdrop-blur-md p-6 sm:p-8 rounded-[1.8rem] shadow-card border border-white/60 my-6">
-        
+    <!-- Background Animasi -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div class="grain-overlay"></div>
+        <div class="absolute -top-20 -left-20 w-80 h-80 bg-blue-300/40 rounded-full blur-[80px] animate-blob"></div>
+        <div class="absolute bottom-10 right-10 w-80 h-80 bg-yellow-300/40 rounded-full blur-[80px] animate-blob animation-delay-2000"></div>
+    </div>
+
+    <!-- Card Utama -->
+    <div class="w-full max-w-4xl mx-auto bg-white/95 backdrop-blur-xl p-6 sm:p-8 rounded-[1.8rem] shadow-card border border-white/40 relative z-10 opacity-0 animate-fade-in-up">
+
+        <!-- Top accent bar -->
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-sky-400 to-blue-600 rounded-t-[1.8rem]"></div>
+
         <!-- Header Banner -->
-        <div class="flex items-center justify-between pb-6 mb-6 border-b border-slate-100">
+        <div class="flex items-center justify-between pb-5 mb-5 border-b border-slate-100">
             <div class="flex items-center gap-3.5">
-                <div class="w-12 h-12 rounded-2xl bg-red-500 text-white flex items-center justify-center text-xl font-bold shadow-md shadow-red-500/20">
-                    <i class="fa-solid fa-user-slash"></i>
+                <div class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-md border border-slate-100 bg-white shrink-0">
+                    <img src="{{ asset('image/logo.png') }}" alt="Karyaku" class="w-full h-full object-contain">
                 </div>
                 <div>
                     <h1 class="font-display font-extrabold text-xl text-slate-900 leading-tight">Akun Ditangguhkan</h1>
-                    <p class="text-xs text-slate-500 font-medium mt-0.5">Akses fitur platform Karyaku dibatasi sementara</p>
+                    <p class="text-[11px] text-slate-500 font-medium mt-0.5">Akses fitur platform Karyaku dibatasi sementara</p>
                 </div>
             </div>
-            <span class="px-3.5 py-1.5 bg-red-50 text-red-600 text-[11px] font-extrabold rounded-full uppercase tracking-wider border border-red-100">
+            <span class="px-3.5 py-1.5 bg-red-50 text-red-600 text-[10px] font-extrabold rounded-full uppercase tracking-wider border border-red-100 shrink-0">
                 Nonaktif
             </span>
         </div>
@@ -100,7 +135,7 @@
 
         <!-- Grid 2 Sisi -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            
+
             <!-- SISI KIRI: Detail Penangguhan -->
             <div class="space-y-4">
                 <div class="bg-skyPale/70 border border-sky-100 rounded-2xl p-5 space-y-4">
@@ -111,6 +146,15 @@
                         </span>
                     </div>
 
+                    @if(!empty($info['email']))
+                    <div class="flex justify-between items-center border-b border-sky-200/50 pb-3">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Email</span>
+                        <span class="font-medium text-slate-600 text-xs flex items-center gap-1.5">
+                            <i class="fa-solid fa-envelope text-sky"></i> {{ $info['email'] }}
+                        </span>
+                    </div>
+                    @endif
+
                     <div class="border-b border-sky-200/50 pb-3">
                         <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Alasan Penangguhan</span>
                         <div class="bg-white p-3 rounded-xl border border-sky-100 text-xs text-slate-700 font-medium leading-relaxed">
@@ -120,22 +164,22 @@
 
                     <div>
                         <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Sisa Waktu Penangguhan</span>
-                        
+
                         @if(!empty($info['target_timestamp']))
                             <div id="countdown-box" class="grid grid-cols-4 gap-2 text-center">
-                                <div class="bg-white p-2.5 rounded-xl border border-sky-100 shadow-xs">
+                                <div class="bg-white p-2.5 rounded-xl border border-sky-100 shadow-sm">
                                     <span id="cd-days" class="block text-xl font-extrabold text-skyDeep font-display">00</span>
                                     <span class="text-[9px] uppercase font-bold text-slate-400">Hari</span>
                                 </div>
-                                <div class="bg-white p-2.5 rounded-xl border border-sky-100 shadow-xs">
+                                <div class="bg-white p-2.5 rounded-xl border border-sky-100 shadow-sm">
                                     <span id="cd-hours" class="block text-xl font-extrabold text-skyDeep font-display">00</span>
                                     <span class="text-[9px] uppercase font-bold text-slate-400">Jam</span>
                                 </div>
-                                <div class="bg-white p-2.5 rounded-xl border border-sky-100 shadow-xs">
+                                <div class="bg-white p-2.5 rounded-xl border border-sky-100 shadow-sm">
                                     <span id="cd-minutes" class="block text-xl font-extrabold text-skyDeep font-display">00</span>
                                     <span class="text-[9px] uppercase font-bold text-slate-400">Menit</span>
                                 </div>
-                                <div class="bg-white p-2.5 rounded-xl border border-sky-100 shadow-xs">
+                                <div class="bg-white p-2.5 rounded-xl border border-sky-100 shadow-sm">
                                     <span id="cd-seconds" class="block text-xl font-extrabold text-skyDeep font-display">00</span>
                                     <span class="text-[9px] uppercase font-bold text-slate-400">Detik</span>
                                 </div>
@@ -155,6 +199,15 @@
                     </div>
                 </div>
 
+                <!-- Info Hubungi via Email -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3.5 flex items-start gap-2.5">
+                    <i class="fa-solid fa-envelope text-blue-400 mt-0.5 shrink-0"></i>
+                    <p class="text-[11px] text-slate-600 leading-relaxed">
+                        Untuk pertanyaan, hubungi tim support kami melalui email resmi:
+                        <a href="mailto:support@karyaku.com" class="text-blue-600 font-bold hover:underline">support@karyaku.com</a>
+                    </p>
+                </div>
+
                 <!-- Tombol Kembali -->
                 <div class="pt-1">
                     <a href="{{ route('auth.login') }}" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 border border-slate-200">
@@ -169,7 +222,7 @@
                     <h2 class="text-sm font-extrabold text-slate-900 font-display flex items-center gap-2">
                         <i class="fa-solid fa-gavel text-sky"></i> Pengajuan Banding Pemblokiran
                     </h2>
-                    <p class="text-[11px] text-slate-500 font-medium mt-0.5">Kirimkan pembelaan kamu untuk ditinjau oleh Admin & CS Karyaku</p>
+                    <p class="text-[11px] text-slate-500 font-medium mt-0.5">Kirimkan pembelaan kamu untuk ditinjau oleh Admin &amp; CS Karyaku</p>
                 </div>
 
                 @if($info['appeal_status'] === 'pending')
@@ -204,32 +257,32 @@
                             <label for="reason" class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide mb-1.5">
                                 Alasan Pembelaan / Permohonan <span class="text-red-500">*</span>
                             </label>
-                            <textarea 
-                                name="reason" 
-                                id="reason" 
-                                rows="3" 
+                            <textarea
+                                name="reason"
+                                id="reason"
+                                rows="3"
                                 required
                                 placeholder="Jelaskan alasan detail mengapa penangguhan akun Anda layak dibatalkan..."
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800 focus:bg-white focus:outline-none focus:border-sky focus:ring-2 focus:ring-sky/20 transition"
+                                class="w-full bg-skyPale/50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800 focus:bg-white focus:outline-none focus:border-sky focus:ring-2 focus:ring-sky/20 transition"
                             >{{ old('reason') }}</textarea>
                         </div>
 
-                        <!-- Drag and Drop Upload Area dengan Preview Gambar -->
+                        <!-- Drag and Drop Upload Area -->
                         <div>
                             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide mb-1.5">
                                 Bukti Pendukung / Screenshot (Opsional)
                             </label>
 
-                            <div id="dropzone" class="border-2 border-dashed border-slate-200 hover:border-sky bg-skyPale/40 hover:bg-skyPale p-4 rounded-xl text-center cursor-pointer transition flex flex-col items-center justify-center gap-1">
-                                
-                                <!-- Tampilan Default Sebelum Upload -->
+                            <div id="dropzone" class="border-2 border-dashed border-slate-200 hover:border-sky bg-skyPale/30 hover:bg-skyPale/60 p-4 rounded-xl text-center cursor-pointer transition flex flex-col items-center justify-center gap-1">
+
+                                <!-- Default -->
                                 <div id="default-dropzone-content" class="flex flex-col items-center justify-center">
                                     <i class="fa-solid fa-cloud-arrow-up text-sky text-2xl mb-1"></i>
-                                    <p class="text-xs font-bold text-slate-700">Tarik & lepas gambar di sini, atau <span class="text-sky underline">pilih file</span></p>
+                                    <p class="text-xs font-bold text-slate-700">Tarik &amp; lepas gambar di sini, atau <span class="text-sky underline">pilih file</span></p>
                                     <span class="text-[10px] text-slate-400">Format: JPG, PNG, WEBP. Maksimal 5MB.</span>
                                 </div>
 
-                                <!-- Tampilan Preview Setelah File Dipilih -->
+                                <!-- Preview -->
                                 <div id="preview-container" class="hidden flex flex-col items-center justify-center gap-1.5 w-full">
                                     <img id="image-preview" src="" alt="Preview Bukti" class="w-16 h-16 object-cover rounded-xl border border-sky-300 shadow-sm">
                                     <p id="file-name-display" class="text-xs font-extrabold text-sky-700 truncate max-w-[220px]"></p>
@@ -240,13 +293,29 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="w-full py-3 bg-sky hover:bg-skyHover text-white text-xs font-extrabold rounded-xl transition shadow-md shadow-sky/20 flex items-center justify-center gap-2 cursor-pointer">
+                        <!-- Kirim via Email Info -->
+                        <div class="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3">
+                            <i class="fa-solid fa-envelope text-blue-400 text-xs mt-0.5 shrink-0"></i>
+                            <p class="text-[10px] text-slate-500 leading-relaxed">
+                                Pengajuan banding akan dikirimkan ke tim Admin &amp; CS Karyaku dan hasilnya dikonfirmasi melalui <span class="font-bold text-blue-600">email</span> terdaftar Anda.
+                            </p>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white text-xs font-extrabold rounded-xl transition shadow-md shadow-blue-900/20 flex items-center justify-center gap-2 cursor-pointer">
                             <i class="fa-solid fa-paper-plane"></i> Kirim Pengajuan Banding
                         </button>
                     </form>
                 @endif
             </div>
 
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-6 pt-5 border-t border-slate-100 text-center">
+            <div class="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 font-semibold">
+                <i class="fa-solid fa-shield-halved text-slate-300"></i>
+                <span>Karyaku Security System &bull; {{ date('Y') }}</span>
+            </div>
         </div>
     </div>
 
@@ -306,7 +375,7 @@
                 }
             }
 
-            // Logika Countdown Waktu Suspend (Perbaikan Konversi Detik ke Milidetik)
+            // Countdown Timer
             @if(!empty($info['target_timestamp']))
                 const rawTimestamp = {{ $info['target_timestamp'] }};
                 const targetTime = rawTimestamp < 10000000000 ? rawTimestamp * 1000 : rawTimestamp;

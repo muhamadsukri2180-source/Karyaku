@@ -12,6 +12,7 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
+        'security/devtools-ping',
+        'security/report-suspicious',
     ];
 }

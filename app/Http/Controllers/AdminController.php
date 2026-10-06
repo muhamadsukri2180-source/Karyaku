@@ -888,7 +888,7 @@ class AdminController extends Controller
             }
         } catch (\Throwable $e) {}
 
-        // 2. Pembersihan otomatis log false-positive (seperti resize window, klik kanan, atau devtools lama)
+        // 2. Pembersihan otomatis log false-positive (seperti resize window, klik kanan, atau devtools staff)
         try {
             IpLog::where(function($q) {
                 $q->where('reason', 'like', '%Resize Window%')
@@ -899,6 +899,14 @@ class AdminController extends Controller
                 'status' => 'normal',
                 'reason' => 'Aktivitas Normal Pengguna'
             ]);
+
+            if ($hasUserIdCol) {
+                $staffUserIds = User::whereHas('role', fn($r) => $r->whereIn('role_name', ['admin', 'verifikator', 'customer_service']))->pluck('id_user');
+                IpLog::whereIn('user_id', $staffUserIds)->whereIn('status', ['suspicious', 'abnormal'])->update([
+                    'status' => 'normal',
+                    'reason' => 'Aktivitas Normal Pengguna'
+                ]);
+            }
         } catch (\Throwable $e) {}
 
         // Bangun lookup: ip_address => username dari LoginHistory (untuk IP yang belum ada user_id)
@@ -933,8 +941,8 @@ class AdminController extends Controller
                 $q->whereNull('reason')->orWhere('reason', '!=', 'Aktivitas Normal Pengguna');
             });
 
-        // Sembunyikan log milik akun staff HANYA jika SECURITY_EXEMPT_STAFF=true
-        if ($hasUserIdCol && $exemptStaff) {
+        // Sembunyikan log milik akun staff (Admin, Verifikator, CS) dari daftar ancaman
+        if ($hasUserIdCol) {
             $suspiciousQuery->where(function($q) {
                 $q->whereDoesntHave('user.role', fn($rq) => $rq->whereIn('role_name', ['admin', 'verifikator', 'customer_service']))
                   ->orWhereNull('user_id');
@@ -1204,37 +1212,35 @@ class AdminController extends Controller
         try {
             $ip = $request->ip();
 
-            // Abaikan staff HANYA jika SECURITY_EXEMPT_STAFF=true di .env
-            if (auth()->check() && config('security_monitor.exempt_staff', false)) {
+            // Abaikan staff (Admin, Verifikator, CS) secara permanen
+            if (auth()->check()) {
                 $userRole = strtolower(auth()->user()->role?->role_name ?? '');
                 if (in_array($userRole, ['admin', 'verifikator', 'customer_service'])) {
                     return response()->json(['ok' => true, 'logged' => false, 'why' => 'staff_exempt']);
                 }
             }
 
-            // Abaikan jika IP ada di whitelist MANUAL (localhost tidak lagi dikecualikan)
-            $isWhitelisted = \Illuminate\Support\Facades\Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
-                    try { return AllowedIp::where('ip_address', $ip)->exists(); } catch (\Throwable $e) { return false; }
-                });
-
+            // Abaikan jika IP ada di whitelist MANUAL
+            $isWhitelisted = AllowedIp::where('ip_address', $ip)->exists();
             if ($isWhitelisted) {
                 return response()->json(['ok' => true, 'logged' => false, 'why' => 'ip_whitelisted']);
             }
 
-            // Baca body JSON dari sendBeacon (Content-Type: application/json)
+            // Baca body JSON dari sendBeacon / fetch (Content-Type: application/json)
             $body = [];
             $contentType = $request->header('Content-Type', '');
             if (str_contains($contentType, 'application/json')) {
                 $body = json_decode($request->getContent(), true) ?? [];
-            } else {
+            }
+            if (empty($body)) {
                 $body = $request->all();
             }
 
             // Tentukan alasan berdasarkan metode deteksi yang dikirim JS
-            $method = $body['method'] ?? 'unknown';
+            $method = $body['method'] ?? $request->input('method', 'devtools-open');
 
-            // PENTING: Abaikan metode false-positive (seperti resize window, klik kanan, atau debugger timing)
-            if (in_array($method, ['window-resize', 'right-click', 'debugger-timing', 'console-getter'])) {
+            // PENTING: Abaikan metode false-positive (seperti resize window atau klik kanan murni)
+            if (in_array($method, ['window-resize', 'right-click', 'debugger-timing'])) {
                 return response()->json(['ok' => true]);
             }
 

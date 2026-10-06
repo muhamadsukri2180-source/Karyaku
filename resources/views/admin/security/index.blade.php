@@ -90,13 +90,13 @@
                         </td>
 
                         <!-- KOLOM 2: ANCAMAN / ALASAN (BERJARAK LEGA & TIDAK BERDEMPETAN) -->
-                        <td class="py-4 px-5 align-middle">
-                            <div class="inline-flex items-start gap-2 p-2.5 rounded-xl border text-xs font-bold leading-snug shadow-2xs max-w-full"
+                        <td class="py-4 px-6 align-middle min-w-[260px]">
+                            <div class="inline-flex items-start gap-3 px-4 py-3 rounded-xl border text-xs font-bold leading-relaxed shadow-xs max-w-full my-1"
                                 style="background-color: {{ $catInfo['category'] === 'devtools' ? '#f5f3ff' : ($catInfo['category'] === 'sqli' ? '#fef2f2' : ($catInfo['category'] === 'xss' ? '#fffbeb' : '#f8fafc')) }};
                                        color: {{ $catInfo['category'] === 'devtools' ? '#6b21a8' : ($catInfo['category'] === 'sqli' ? '#991b1b' : ($catInfo['category'] === 'xss' ? '#92400e' : '#1e293b')) }};
                                        border-color: {{ $catInfo['category'] === 'devtools' ? '#ddd6fe' : ($catInfo['category'] === 'sqli' ? '#fecaca' : ($catInfo['category'] === 'xss' ? '#fde68a' : '#e2e8f0')) }};">
-                                <i class="{{ $catInfo['icon'] }} text-xs mt-0.5 shrink-0"></i>
-                                <span class="break-words">{{ $reasonText }}</span>
+                                <i class="{{ $catInfo['icon'] }} text-sm mt-0.5 shrink-0"></i>
+                                <span class="break-words tracking-wide">{{ $reasonText }}</span>
                             </div>
                         </td>
 
