@@ -899,7 +899,33 @@ class AdminController extends Controller
             } catch (\Throwable $e) {}
         }
 
-        // 2. Pembersihan otomatis log false-positive (seperti resize window, klik kanan, atau devtools staff)
+        // 2. Kumpulkan Akun & IP Staff (Admin, Verifikator, CS) agar TIDAK PERNAH terdeteksi mencurigakan/bot
+        $staffRoles = ['admin', 'verifikator', 'customer_service'];
+        $staffUserIds = [];
+        $allStaffExemptIps = [$currentAdminIp];
+
+        try {
+            $staffUserIds = User::whereHas('role', fn($r) => $r->whereIn('role_name', $staffRoles))->pluck('id_user')->toArray();
+            $staffUsers = User::whereIn('id_user', $staffUserIds)->get();
+            $staffNames = $staffUsers->flatMap(fn($u) => array_filter([$u->name, $u->email]))->unique()->toArray();
+            $staffLoginIps = LoginHistory::whereIn('username', $staffNames)->pluck('ip_address')->unique()->toArray();
+            $allowedIpsList = AllowedIp::pluck('ip_address')->toArray();
+            $allStaffExemptIps = array_unique(array_filter(array_merge([$currentAdminIp], $staffLoginIps, $allowedIpsList)));
+
+            // Auto-whitelist IP admin saat ini agar selalu aman
+            if (!in_array($currentAdminIp, ['127.0.0.1', '::1'])) {
+                AllowedIp::firstOrCreate(
+                    ['ip_address' => $currentAdminIp],
+                    ['label' => 'Admin Session Whitelist', 'added_by' => auth()->user()?->name ?? 'Admin']
+                );
+                Cache::put("allowed_ip_{$currentAdminIp}", true, 86400);
+            }
+        } catch (\Throwable $e) {}
+
+        // 3. Pembersihan otomatis log:
+        //    A. False-positive resize/klik kanan
+        //    B. Netralkan SEMUA log milik Staff / Admin agar selalu normal
+        //    C. Otomatis reset log aktivitas normal yang sudah lewat 1 hari (24 jam)
         try {
             IpLog::where(function($q) {
                 $q->where('reason', 'like', '%Resize Window%')
@@ -911,13 +937,23 @@ class AdminController extends Controller
                 'reason' => 'Aktivitas Normal Pengguna'
             ]);
 
-            if ($hasUserIdCol) {
-                $staffUserIds = User::whereHas('role', fn($r) => $r->whereIn('role_name', ['admin', 'verifikator', 'customer_service']))->pluck('id_user');
-                IpLog::whereIn('user_id', $staffUserIds)->whereIn('status', ['suspicious', 'abnormal'])->update([
-                    'status' => 'normal',
-                    'reason' => 'Aktivitas Normal Pengguna'
-                ]);
-            }
+            // Netralkan semua log yang berasal dari IP / Akun staff
+            IpLog::where(function($q) use ($staffUserIds, $allStaffExemptIps) {
+                if (!empty($staffUserIds)) {
+                    $q->whereIn('user_id', $staffUserIds);
+                }
+                if (!empty($allStaffExemptIps)) {
+                    $q->orWhereIn('ip_address', $allStaffExemptIps);
+                }
+            })->whereIn('status', ['suspicious', 'abnormal'])->update([
+                'status' => 'normal',
+                'reason' => 'Aktivitas Normal Administrator/Staff'
+            ]);
+
+            // Otomatis bersihkan riwayat pengunjung biasa setelah 1 hari (24 jam)
+            IpLog::where(function($q) {
+                $q->where('status', 'normal')->orWhereNull('status');
+            })->where('created_at', '<', now()->subHours(24))->delete();
         } catch (\Throwable $e) {}
 
         // Bangun lookup: ip_address => username dari LoginHistory (untuk IP yang belum ada user_id)
@@ -927,53 +963,73 @@ class AdminController extends Controller
             ->groupBy('ip_address')
             ->map(fn($items) => $items->first()->username);
 
-        // Query log mencurigakan secara aman (tidak akan error meskipun kolom user_id belum ada)
+        // 4. Query Log Mencurigakan (Mengecualikan Staff/Admin 100%)
         $suspiciousQuery = IpLog::query();
         if ($hasUserIdCol) {
             $suspiciousQuery->with(['user.role']);
         }
 
-        // Filter HANYA berdasarkan status, bukan IP. Banyak user bisa berbagi IP yang sama
-        // (localhost, WiFi kampus/kantor), jadi mengecualikan IP = log ancaman ikut hilang.
         $suspiciousQuery->whereIn('status', ['abnormal', 'suspicious'])
             ->where(function ($q) {
-                $q->whereNull('reason')->orWhere('reason', '!=', 'Aktivitas Normal Pengguna');
-            });
+                $q->whereNull('reason')
+                  ->orWhere(function($sub) {
+                      $sub->where('reason', '!=', 'Aktivitas Normal Pengguna')
+                          ->where('reason', '!=', 'Aktivitas Normal Administrator/Staff');
+                  });
+            })
+            ->whereNotIn('ip_address', $allStaffExemptIps);
 
-        // Sembunyikan log milik akun staff (Admin, Verifikator, CS) dari daftar ancaman
-        if ($hasUserIdCol) {
-            $suspiciousQuery->where(function($q) {
-                $q->whereDoesntHave('user.role', fn($rq) => $rq->whereIn('role_name', ['admin', 'verifikator', 'customer_service']))
-                  ->orWhereNull('user_id');
+        if ($hasUserIdCol && !empty($staffUserIds)) {
+            $suspiciousQuery->where(function($q) use ($staffUserIds) {
+                $q->whereNull('user_id')
+                  ->orWhereNotIn('user_id', $staffUserIds);
             });
         }
 
         $allSuspiciousLogs = $suspiciousQuery->latest('last_activity_at')->get();
 
-        // CATATAN: user_id pada log HANYA diisi dari akun yang benar-benar login di sesi tsb.
-        // Tidak lagi ditebak dari riwayat login per IP, karena banyak orang bisa berbagi IP
-        // yang sama (localhost / WiFi / NAT) sehingga tamu salah tercatat sebagai Admin.
-
+        // 5. Query Log Normal 1 Hari Terakhir (Siklus 24 Jam)
         $normalQuery = IpLog::query();
         if ($hasUserIdCol) $normalQuery->with(['user.role']);
         $normalIps = $normalQuery->where(function($q) {
             $q->where('status', 'normal')->orWhereNull('status');
-        })->latest('last_activity_at')->get()->groupBy('ip_address');
+        })->where('created_at', '>=', now()->subHours(24))
+          ->latest('last_activity_at')
+          ->get()
+          ->groupBy('ip_address');
 
+        // 6. Query Log Anti Bot (Mengecualikan Staff/Admin 100%)
         $botQuery = IpLog::query();
         if ($hasUserIdCol) $botQuery->with(['user.role']);
-        $botIps = $botQuery->where(function($q) {
-            $q->where('reason', 'like', '%Bot%')->orWhere('reason', 'like', '%Spam%')->orWhere('reason', 'like', '%DoS%')->orWhere('reason', 'like', '%Flood%');
-        })->latest('last_activity_at')->get()->groupBy('ip_address');
+        $botQuery->where(function($q) {
+            $q->where('reason', 'like', '%Bot%')
+              ->orWhere('reason', 'like', '%Scanner%')
+              ->orWhere('reason', 'like', '%Spam%')
+              ->orWhere('reason', 'like', '%DoS%')
+              ->orWhere('reason', 'like', '%Flood%');
+        })->whereNotIn('ip_address', $allStaffExemptIps);
+
+        if ($hasUserIdCol && !empty($staffUserIds)) {
+            $botQuery->where(function($q) use ($staffUserIds) {
+                $q->whereNull('user_id')
+                  ->orWhereNotIn('user_id', $staffUserIds);
+            });
+        }
+
+        $botIps = $botQuery->latest('last_activity_at')->get()->groupBy('ip_address');
+
+        // Target waktu reset harian otomatis (akhir hari 23:59:59 WIB)
+        $nextResetTimestamp = now()->endOfDay()->timestamp;
 
         return view('admin.security.index', [
-            'normalIps' => $normalIps,
-            'abnormalIps' => $allSuspiciousLogs->groupBy('ip_address'),
-            'botIps' => $botIps,
-            'loginHistories' => LoginHistory::latest()->simplePaginate(10),
+            'normalIps'          => $normalIps,
+            'abnormalIps'        => $allSuspiciousLogs->groupBy('ip_address'),
+            'botIps'             => $botIps,
+            'loginHistories'     => LoginHistory::latest()->simplePaginate(10),
             'loginHistoryLookup' => $loginHistoryLookup,
-            'allowedIps' => AllowedIp::latest()->get(), 
-            'myIp' => $currentAdminIp
+            'allowedIps'         => AllowedIp::latest()->get(), 
+            'myIp'               => $currentAdminIp,
+            'nextResetTimestamp' => $nextResetTimestamp,
         ]);
     }
 
@@ -1170,6 +1226,21 @@ class AdminController extends Controller
 
         $log->delete();
         return back()->with('success', 'Log IP dihapus.');
+    }
+
+    public function securityResetNormalLogs(Request $request)
+    {
+        if (!session()->has('security_verified_at')) return redirect()->route('admin.security.verify');
+
+        try {
+            IpLog::where(function($q) {
+                $q->where('status', 'normal')->orWhereNull('status');
+            })->delete();
+
+            return back()->with('success', 'Riwayat aktivitas tabel pengunjung biasa (1 hari) berhasil direset.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal mereset tabel aktivitas: ' . $e->getMessage());
+        }
     }
 
     public function securityStoreAllowedIp(Request $request)

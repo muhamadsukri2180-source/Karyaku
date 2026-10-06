@@ -179,17 +179,44 @@
 
     <!-- TABEL 2: IP NORMAL (WARNA KUNING AMBER & BEKUKAN TIMER HARI/JAM/DETIK) -->
     <div class="bg-amber-50/90 border border-amber-300 rounded-2xl shadow-lg shadow-amber-500/10 overflow-hidden">
-        <div class="p-5 border-b border-amber-200 bg-gradient-to-r from-amber-500/20 via-amber-100/60 to-amber-50 flex items-center justify-between flex-wrap gap-3">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center border border-amber-600 shadow-sm shrink-0">
+        <div class="p-5 border-b border-amber-200 bg-gradient-to-r from-amber-500/20 via-amber-100/60 to-amber-50 flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center border border-amber-600 shadow-sm shrink-0">
                     <i class="fa-solid fa-users text-sm"></i>
                 </div>
                 <div>
-                    <h3 class="font-extrabold text-amber-950 text-base font-display">Daftar Pengunjung Biasa (Aktivitas Pengguna)</h3>
-                    <p class="text-[11px] text-amber-900/90 font-semibold">Gunakan tombol kunci untuk membekukan sementara akun/IP yang terindikasi curang (Cheat/Abuse).</p>
+                    <h3 class="font-extrabold text-amber-950 text-base font-display tracking-tight">Daftar Pengunjung Biasa (Aktivitas Pengguna)</h3>
+                    <p class="text-[11px] text-amber-900/90 font-medium">Log aktivitas browsing normal. Gunakan tombol kunci jika akun/IP terindikasi curang (Cheat/Abuse).</p>
                 </div>
             </div>
-            <span class="bg-amber-600 text-white text-[10px] px-3 py-1 rounded-full font-extrabold shadow-sm">{{ $normalIps->count() }} IP Logged</span>
+
+            <!-- Indikator Reset Otomatis 1 Hari & Counter IP -->
+            <div class="flex items-center gap-2.5 flex-wrap">
+                <div class="inline-flex items-center gap-2 bg-amber-900/90 text-amber-100 border border-amber-700/60 px-3.5 py-1.5 rounded-xl shadow-xs">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+                    </span>
+                    <div class="flex items-center gap-1.5 text-[11px] font-semibold">
+                        <i class="fa-regular fa-clock text-amber-300 text-xs"></i>
+                        <span class="text-amber-200">Reset Otomatis 1 Hari:</span>
+                        <span id="normal-table-reset-countdown" class="font-mono font-extrabold text-amber-300 text-xs tracking-wider bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-800/80">--j --m --d</span>
+                    </div>
+                </div>
+
+                <span class="bg-amber-600 text-white text-[11px] px-3 py-1.5 rounded-xl font-extrabold shadow-xs flex items-center gap-1.5">
+                    <i class="fa-solid fa-users text-[11px]"></i>
+                    <span>{{ $normalIps->count() }} IP Logged</span>
+                </span>
+
+                <form id="resetNormalLogsForm" action="{{ route('admin.security.reset_normal') }}" method="POST" class="inline-block" onsubmit="return confirmResetNormalTable(event)">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-200/90 hover:bg-amber-300 text-amber-950 text-[11px] font-bold border border-amber-400/80 transition-all shadow-xs hover:shadow cursor-pointer" title="Reset tabel sekarang tanpa menunggu 1 hari">
+                        <i class="fa-solid fa-rotate text-[10px]"></i>
+                        <span>Reset Sekarang</span>
+                    </button>
+                </form>
+            </div>
         </div>
 
         <!-- TABEL WITH INTERNAL SCROLLBAR -->
@@ -308,71 +335,96 @@
             </table>
         </div>
     </div>
-    <!-- TABEL ANTI BOT -->
-    <div class="bg-indigo-50 border border-indigo-200 rounded-2xl shadow-lg shadow-indigo-500/10 overflow-hidden">
-        <div class="p-5 border-b border-indigo-100 bg-gradient-to-r from-indigo-500/10 via-white to-indigo-50 flex items-center justify-between flex-wrap gap-3">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-indigo-500 text-white flex items-center justify-center border border-indigo-600 shadow-sm shrink-0">
-                    <i class="fa-solid fa-robot text-sm"></i>
+    <!-- TABEL 3: ANTI BOT & SERANGAN OTOMATIS (CYBER DEFENSE WAF) -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl shadow-indigo-950/30 overflow-hidden">
+        <div class="p-5 border-b border-slate-800 bg-gradient-to-r from-slate-950 via-indigo-950/70 to-slate-900 flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30 shadow-inner shrink-0">
+                    <i class="fa-solid fa-shield-virus text-base text-indigo-300"></i>
                 </div>
                 <div>
-                    <h3 class="font-extrabold text-indigo-950 text-base font-display">Tabel Anti Bot & Serangan Otomatis</h3>
-                    <p class="text-[11px] text-indigo-800/80 font-medium">Log aktivitas dari Bot atau serangan DDoS. Silakan klik "Blokir Manual" untuk membekukan IP tersebut.</p>
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-extrabold text-white text-base font-display tracking-tight">Tabel Anti Bot &amp; Serangan Otomatis</h3>
+                        <span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[9px] px-2 py-0.5 rounded-full font-black tracking-wider uppercase">WAF Defense</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 font-medium mt-0.5">Mendeteksi vulnerability scanner (sqlmap, nikto), scraper otomatis, CLI clients, dan anomali DoS secara real-time.</p>
                 </div>
             </div>
-            <span class="bg-indigo-600 text-white text-[10px] px-3 py-1 rounded-full font-extrabold shadow-sm">{{ $botIps->count() }} Bot Terdeteksi</span>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-2 bg-indigo-950/80 border border-indigo-700/50 text-indigo-200 text-[11px] px-3.5 py-1.5 rounded-xl font-bold shadow-xs">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                    </span>
+                    <span>{{ $botIps->count() }} Bot Terdeteksi</span>
+                </span>
+            </div>
         </div>
 
         <div class="w-full overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[960px]">
                 <thead>
-                    <tr class="bg-indigo-700 text-indigo-50 text-[11px] uppercase tracking-wider font-bold">
-                        <th class="py-4 px-5 w-[24%] min-w-[220px]">Alamat IP Bot</th>
-                        <th class="py-4 px-5 w-[28%] min-w-[250px]">Tipe Serangan</th>
-                        <th class="py-4 px-5 w-[24%] min-w-[220px]">User Agent Palsu / Bot Name</th>
-                        <th class="py-4 px-4 w-[8%] min-w-[90px] text-center">Spam Request</th>
-                        <th class="py-4 px-4 w-[10%] min-w-[130px]">Terakhir Menyerang</th>
-                        <th class="py-4 px-4 w-[6%] min-w-[110px] text-center">Aksi</th>
+                    <tr class="bg-slate-950 text-slate-300 text-[11px] uppercase tracking-wider font-extrabold border-b border-slate-800">
+                        <th class="py-4 px-5 w-[24%] min-w-[220px]">Alamat IP &amp; Akun</th>
+                        <th class="py-4 px-5 w-[28%] min-w-[250px]">Kategori &amp; Alasan Ancaman</th>
+                        <th class="py-4 px-5 w-[24%] min-w-[220px]">User-Agent / Signature Bot</th>
+                        <th class="py-4 px-4 w-[8%] min-w-[90px] text-center">Frekuensi</th>
+                        <th class="py-4 px-4 w-[10%] min-w-[130px]">Terakhir Ditepis</th>
+                        <th class="py-4 px-4 w-[6%] min-w-[110px] text-center">Aksi / Mitigasi</th>
                     </tr>
                 </thead>
-                <tbody class="text-xs divide-y divide-indigo-100 text-indigo-950 font-medium bg-white">
+                <tbody class="text-xs divide-y divide-slate-800/80 bg-slate-900/60 text-slate-200 font-medium">
                     @forelse($botIps as $ipAddress => $logs)
                     @php
                         $first = $logs->sortByDesc('last_activity_at')->first();
                         $totalReq = $logs->sum('request_count');
                         $groupId = 'bot-'.$loop->index;
+                        $ua = $first->user_agent ?? 'Unknown/Empty';
+                        $lowerUa = strtolower($ua);
                     @endphp
-                    <tr class="hover:bg-indigo-100/70 transition-colors odd:bg-indigo-50/40">
+                    <tr class="hover:bg-indigo-950/40 transition-colors odd:bg-slate-900/30">
                         <td class="py-4 px-5 align-middle">
                             <div class="flex items-center gap-2">
-                                <span class="font-mono font-bold text-indigo-950 text-[13px]">{{ $ipAddress }}</span>
-                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded-md bg-indigo-200 text-indigo-800 text-[10px] font-bold hover:bg-indigo-300 transition-colors cursor-pointer flex items-center gap-1">
+                                <span class="font-mono font-bold text-rose-400 text-[13px] tracking-tight">{{ $ipAddress }}</span>
+                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded-md bg-indigo-950 text-indigo-300 border border-indigo-800 text-[10px] font-bold hover:bg-indigo-900 transition-colors cursor-pointer flex items-center gap-1">
                                     <span>{{ $logs->count() }} Sesi</span>
                                     <i class="fa-solid fa-chevron-down text-[8px]"></i>
                                 </button>
                             </div>
                             @if($first->user)
-                                <div class="text-[10px] font-sans font-medium text-indigo-700 mt-1 flex items-center gap-1">
-                                    <i class="fa-solid fa-user text-[9px]"></i>
+                                <div class="text-[10px] font-sans font-medium text-slate-400 mt-1.5 flex items-center gap-1">
+                                    <i class="fa-solid fa-user text-[9px] text-slate-500"></i>
                                     <span>{{ $first->user->name ?? $first->user->email }}</span>
                                 </div>
                             @endif
                         </td>
                         <td class="py-4 px-5 align-middle">
-                            <span class="inline-block bg-indigo-50 text-indigo-900 border border-indigo-200 px-2.5 py-1.5 rounded-lg text-xs font-bold leading-snug break-words shadow-2xs">
-                                <i class="fa-solid fa-robot mr-1 text-indigo-600"></i>
-                                {{ $first->reason }}
-                            </span>
+                            <div class="inline-flex items-center gap-2 bg-rose-950/60 text-rose-200 border border-rose-800/60 px-3 py-1.5 rounded-xl text-xs font-bold shadow-xs">
+                                @if(str_contains($lowerUa, 'sqlmap'))
+                                    <i class="fa-solid fa-database text-rose-400"></i>
+                                @elseif(str_contains($lowerUa, 'nikto') || str_contains($lowerUa, 'nmap'))
+                                    <i class="fa-solid fa-bug text-amber-400"></i>
+                                @elseif(str_contains($lowerUa, 'curl') || str_contains($lowerUa, 'wget'))
+                                    <i class="fa-solid fa-terminal text-violet-400"></i>
+                                @elseif(str_contains($lowerUa, 'python'))
+                                    <i class="fa-brands fa-python text-sky-400"></i>
+                                @else
+                                    <i class="fa-solid fa-robot text-rose-400"></i>
+                                @endif
+                                <span>{{ $first->reason }}</span>
+                            </div>
                         </td>
-                        <td class="py-4 px-5 text-slate-600 text-[11px] max-w-[220px] truncate align-middle" title="{{ $first->user_agent }}">
-                            {{ $first->user_agent ?? 'Unknown/Empty' }}
+                        <td class="py-4 px-5 align-middle">
+                            <div class="bg-slate-950 text-slate-300 px-3 py-1.5 rounded-lg font-mono text-[11px] border border-slate-800 max-w-[220px] truncate shadow-2xs" title="{{ $ua }}">
+                                {{ $ua }}
+                            </div>
                         </td>
-                        <td class="py-4 px-4 text-center align-middle font-bold">
-                            <span class="inline-block bg-red-100 text-red-700 px-2.5 py-1 rounded-md text-[11px] border border-red-300 font-black shadow-2xs">
+                        <td class="py-4 px-4 text-center align-middle">
+                            <span class="inline-block bg-rose-950/80 text-rose-300 px-2.5 py-1 rounded-md text-[11px] border border-rose-800/80 font-black shadow-2xs">
                                 {{ $totalReq }}x
                             </span>
                         </td>
-                        <td class="py-4 px-4 text-indigo-900 font-medium text-[11px] align-middle">
+                        <td class="py-4 px-4 text-slate-400 font-medium text-[11px] align-middle">
                             {{ $first->last_activity_at ? $first->last_activity_at->format('d M Y, H:i:s') : '-' }}
                         </td>
                         <td class="py-4 px-4 text-center align-middle">
@@ -392,19 +444,17 @@
                     </tr>
                     
                     <!-- DROPDOWN SESSIONS -->
-                    <tr id="{{ $groupId }}" class="hidden bg-indigo-50/40">
-                        <td colspan="6" class="p-0 border-b border-indigo-200">
+                    <tr id="{{ $groupId }}" class="hidden bg-slate-950/80">
+                        <td colspan="6" class="p-0 border-b border-slate-800">
                             <table class="w-full text-left">
                                 @foreach($logs as $log)
-                                <tr class="border-t border-indigo-100 hover:bg-indigo-100/50 text-[11px]">
-                                    <td class="py-3 px-10 text-indigo-700 font-mono">Sesi: #{{ !empty($log->session_id) ? substr($log->session_id, 0, 8) : 'Main' }}</td>
-                                    <td class="py-3 px-6 text-indigo-800 font-semibold truncate max-w-[150px]">{{ $log->reason }}</td>
-                                    <td class="py-3 px-6 text-indigo-700 truncate max-w-[150px]" title="{{ $log->user_agent }}">{{ $log->user_agent }}</td>
-                                    <td class="py-3 px-6 text-center text-red-700 font-bold">{{ $log->request_count }}x</td>
-                                    <td class="py-3 px-6 text-indigo-600 font-semibold">{{ $log->last_activity_at ? $log->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
-                                    <td class="py-3 px-6 text-center text-indigo-400 italic">
-                                        -
-                                    </td>
+                                <tr class="border-t border-slate-800/60 hover:bg-slate-900 text-[11px]">
+                                    <td class="py-3 px-10 text-indigo-400 font-mono">Sesi: #{{ !empty($log->session_id) ? substr($log->session_id, 0, 8) : 'Main' }}</td>
+                                    <td class="py-3 px-6 text-slate-300 font-semibold truncate max-w-[150px]">{{ $log->reason }}</td>
+                                    <td class="py-3 px-6 text-slate-400 font-mono truncate max-w-[150px]" title="{{ $log->user_agent }}">{{ $log->user_agent }}</td>
+                                    <td class="py-3 px-6 text-center text-rose-400 font-bold">{{ $log->request_count }}x</td>
+                                    <td class="py-3 px-6 text-slate-400 font-semibold">{{ $log->last_activity_at ? $log->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
+                                    <td class="py-3 px-6 text-center text-slate-500 italic">-</td>
                                 </tr>
                                 @endforeach
                             </table>
@@ -412,9 +462,11 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center py-10 text-indigo-900 text-xs font-semibold bg-indigo-50/20">
-                            <i class="fa-solid fa-shield-virus text-indigo-400 text-xl block mb-2"></i>
-                            Sistem bebas dari serangan Bot / DDoS saat ini.
+                        <td colspan="6" class="text-center py-10 text-slate-400 text-xs font-semibold bg-slate-900/40">
+                            <div class="inline-flex items-center gap-2 bg-indigo-950/60 text-indigo-300 border border-indigo-800/60 px-4 py-2 rounded-xl">
+                                <i class="fa-solid fa-shield-halved text-base text-emerald-400"></i>
+                                <span>Sistem Aman! Belum ada bot berbahaya atau crawler ilegal yang terdeteksi.</span>
+                            </div>
                         </td>
                     </tr>
                     @endforelse
@@ -566,6 +618,63 @@
             title: 'Hapus Log IP?', text: "Catatan riwayat IP ini akan dihapus permanen!",
             icon: 'error', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#94a3b8', confirmButtonText: 'Ya, Hapus!'
         }).then((result) => { if (result.isConfirmed) document.getElementById(formId).submit(); });
+    }
+
+    // -------------------------------------------------------------
+    // HITUNG MUNDUR RESET OTOMATIS 1 HARI (24 JAM) TABEL AKTIVITAS PENGGUNA
+    // -------------------------------------------------------------
+    (function initNormalTableCountdown() {
+        const targetTimestamp = {{ (int) $nextResetTimestamp }} * 1000;
+        const timerEl = document.getElementById('normal-table-reset-countdown');
+        if (!timerEl) return;
+
+        function updateCountdown() {
+            const now = Date.now();
+            const diff = targetTimestamp - now;
+
+            if (diff <= 0) {
+                timerEl.textContent = 'Mereset...';
+                setTimeout(() => {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('_auto_reset', Date.now());
+                    window.location.replace(url.toString());
+                }, 1200);
+                return;
+            }
+
+            const totalSec = Math.floor(diff / 1000);
+            const hours = Math.floor(totalSec / 3600);
+            const minutes = Math.floor((totalSec % 3600) / 60);
+            const seconds = totalSec % 60;
+
+            const hStr = String(hours).padStart(2, '0');
+            const mStr = String(minutes).padStart(2, '0');
+            const sStr = String(seconds).padStart(2, '0');
+
+            timerEl.textContent = `${hStr}j ${mStr}m ${sStr}d`;
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    })();
+
+    function confirmResetNormalTable(event) {
+        event.preventDefault();
+        Swal.fire({
+            title: 'Reset Tabel Pengunjung?',
+            text: 'Semua catatan riwayat aktivitas pengguna biasa (1 hari) akan dibersihkan sekarang.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d97706',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: '<i class="fa-solid fa-trash-can"></i> Ya, Reset Sekarang',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('resetNormalLogsForm').submit();
+            }
+        });
+        return false;
     }
 
     // Refresh halaman dengan cache-busting (paksa load ulang code terbaru dari server)

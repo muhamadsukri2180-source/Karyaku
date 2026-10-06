@@ -119,99 +119,132 @@ class DetectAbnormalIp
             }
         }
 
-        // 5. Daftar endpoint jebakan (Honeypot) yang sering dicari bot/peretas
-        $suspiciousPaths = [
-            'wp-admin', 'wp-login.php', '.env', 'phpmyadmin',
-            'admin.php', 'config.json', 'backup.sql', 'xmlrpc.php',
-            '.git', 'composer.json', 'eval-stdin.php', 'shell.php',
-            'alfa.php', 'wso.php', 'c99.php', 'web.config'
-        ];
-
+        // 5. Pemeriksaan Ancaman Keamanan (Honeypot, SQLi, XSS, Bot, DDoS)
+        // HANYA untuk pengunjung umum (NON-STAFF & NON-WHITELIST).
+        // Role Admin, Verifikator, CS dan IP Whitelist DIKECUALIKAN 100% sehingga tidak pernah terdeteksi sebagai ancaman/bot.
         $isSuspicious = false;
         $reason = null;
 
-        $lowerPath = strtolower($path);
-        foreach ($suspiciousPaths as $badPath) {
-            if (str_contains($lowerPath, $badPath)) {
-                $isSuspicious = true;
-                $reason = "Mencoba mengakses endpoint terlarang: /{$path}";
-                break;
-            }
-        }
-
-        // 6. Cek SQL Injection dan XSS dari Input Data dan URL (Hanya untuk non-whitelist)
-        if (!$isSuspicious && !$isWhitelisted && !$request->is('admin/product*') && !$request->is('seller/product*')) {
-            $inputData = urldecode($request->fullUrl()) . ' ' . json_encode($request->except(['password', 'password_confirmation', '_token']));
-
-            // Pola SQLi yang dipertajam (Akurasi Tinggi, Bebas False-Positive)
-            $sqliPatterns = [
-                '/\bunion\s+(all\s+)?select\b/i',
-                '/\b(drop|truncate|alter)\s+table\b/i',
-                '/\b(and|or)\b\s+[\'"]?\d+[\'"]?\s*=\s*[\'"]?\d+/i',
-                '/\binformation_schema\b/i',
-                '/\bload_file\s*\(/i',
-                '/\binto\s+(outfile|dumpfile)\b/i',
-                '/\bsleep\s*\(\s*\d+\s*\)/i',
-                '/\bbenchmark\s*\(/i',
-                '/(\'|")\s*(or|and)\s*(\'|")?\w+(\'|")?\s*=/i'
+        if (!$isAdminOrStaff && !$isWhitelisted) {
+            // A. Honeypot check
+            $suspiciousPaths = [
+                'wp-admin', 'wp-login.php', '.env', 'phpmyadmin',
+                'admin.php', 'config.json', 'backup.sql', 'xmlrpc.php',
+                '.git', 'composer.json', 'eval-stdin.php', 'shell.php',
+                'alfa.php', 'wso.php', 'c99.php', 'web.config'
             ];
 
-            // Pola XSS yang dipertajam
-            $xssPatterns = [
-                '/<script\b[^>]*>(.*?)<\/script>/is',
-                '/<script\b/i',
-                '/javascript\s*:/i',
-                '/\bon(error|load|click|mouseover|submit|focus|blur|keydown|keyup)\s*=/i',
-                '/document\.cookie/i',
-                '/\beval\s*\(/i'
-            ];
-
-            foreach ($sqliPatterns as $pattern) {
-                if (preg_match($pattern, $inputData)) {
+            $lowerPath = strtolower($path);
+            foreach ($suspiciousPaths as $badPath) {
+                if (str_contains($lowerPath, $badPath)) {
                     $isSuspicious = true;
-                    $reason = "Terdeteksi percobaan SQL Injection (SQLi)";
+                    $reason = "Mencoba mengakses endpoint terlarang: /{$path}";
                     break;
                 }
             }
 
-            if (!$isSuspicious) {
-                foreach ($xssPatterns as $pattern) {
-                    if (preg_match($pattern, $inputData)) {
-                        $isSuspicious = true;
-                        $reason = "Terdeteksi percobaan Cross-Site Scripting (XSS)";
-                        break;
-                    }
-                }
-            }
-        }
+            // B. Cek SQL Injection dan XSS dari Input Data dan URL
+            if (!$isSuspicious && !$request->is('admin/product*') && !$request->is('seller/product*')) {
+                $inputData = urldecode($request->fullUrl()) . ' ' . json_encode($request->except(['password', 'password_confirmation', '_token']));
 
-        // 7. Deteksi Bot / Scraper dari User-Agent (Hanya untuk non-whitelist)
-        if (!$isSuspicious && !$isWhitelisted) {
-            $lowerUa = strtolower($userAgent);
-
-            if (strlen(trim($lowerUa)) < 5) {
-                $isSuspicious = true;
-                $reason = "Terdeteksi Bot Spam (Tanpa User-Agent)";
-            } else {
-                $badBots = [
-                    'sqlmap', 'nikto', 'nmap', 'zgrab', 'masscan', 'acunetix',
-                    'dirbuster', 'wpcan', 'postmanruntime', 'python-requests',
-                    'go-http-client', 'java/', 'curl/', 'wget/', 'scrapy',
-                    'httpclient', 'libwww-perl', 'ahrefsbot', 'semrushbot'
+                // Pola SQLi yang dipertajam (Akurasi Tinggi, Bebas False-Positive)
+                $sqliPatterns = [
+                    '/\bunion\s+(all\s+)?select\b/i',
+                    '/\b(drop|truncate|alter)\s+table\b/i',
+                    '/\b(and|or)\b\s+[\'"]?\d+[\'"]?\s*=\s*[\'"]?\d+/i',
+                    '/\binformation_schema\b/i',
+                    '/\bload_file\s*\(/i',
+                    '/\binto\s+(outfile|dumpfile)\b/i',
+                    '/\bsleep\s*\(\s*\d+\s*\)/i',
+                    '/\bbenchmark\s*\(/i',
+                    '/(\'|")\s*(or|and)\s*(\'|")?\w+(\'|")?\s*=/i'
                 ];
 
-                foreach ($badBots as $bot) {
-                    if (str_contains($lowerUa, $bot)) {
+                // Pola XSS yang dipertajam
+                $xssPatterns = [
+                    '/<script\b[^>]*>(.*?)<\/script>/is',
+                    '/<script\b/i',
+                    '/javascript\s*:/i',
+                    '/\bon(error|load|click|mouseover|submit|focus|blur|keydown|keyup)\s*=/i',
+                    '/document\.cookie/i',
+                    '/\beval\s*\(/i'
+                ];
+
+                foreach ($sqliPatterns as $pattern) {
+                    if (preg_match($pattern, $inputData)) {
                         $isSuspicious = true;
-                        $reason = "Terdeteksi Bot / Scanner Berbahaya ($bot)";
+                        $reason = "Terdeteksi percobaan SQL Injection (SQLi)";
                         break;
                     }
                 }
-            }
-        }
 
-        // 8. Deteksi DDoS & Rate Flooding (>120 request/menit untuk non-whitelist)
-        if (!$isWhitelisted && !$isAdminOrStaff) {
+                if (!$isSuspicious) {
+                    foreach ($xssPatterns as $pattern) {
+                        if (preg_match($pattern, $inputData)) {
+                            $isSuspicious = true;
+                            $reason = "Terdeteksi percobaan Cross-Site Scripting (XSS)";
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // C. Deteksi Bot / Scraper dari User-Agent (Akurat & Selektif)
+            if (!$isSuspicious) {
+                $lowerUa = strtolower($userAgent);
+
+                // Kecualikan browser resmi pengguna biasa
+                $isLegitBrowser = str_contains($lowerUa, 'mozilla/')
+                    && (str_contains($lowerUa, 'chrome/') || str_contains($lowerUa, 'safari/') || str_contains($lowerUa, 'firefox/') || str_contains($lowerUa, 'edg/'));
+                $isHeadless = str_contains($lowerUa, 'headless') || str_contains($lowerUa, 'phantomjs') || str_contains($lowerUa, 'selenium') || str_contains($lowerUa, 'puppeteer') || str_contains($lowerUa, 'playwright');
+
+                if (!$isLegitBrowser || $isHeadless) {
+                    if (strlen(trim($lowerUa)) < 5) {
+                        $isSuspicious = true;
+                        $reason = "Terdeteksi Bot Spam (User-Agent Kosong / Anomali)";
+                    } else {
+                        $badBotSignatures = [
+                            'sqlmap'          => 'SQLMap Penetration Tool',
+                            'nikto'           => 'Nikto Vulnerability Scanner',
+                            'nmap'            => 'Nmap Port Scanner',
+                            'zgrab'           => 'ZGrab Network Scanner',
+                            'masscan'         => 'Masscan Fast Scanner',
+                            'acunetix'        => 'Acunetix Security Scanner',
+                            'dirbuster'       => 'DirBuster Brute Forcer',
+                            'gobuster'        => 'Gobuster Path Scanner',
+                            'wpscan'          => 'WPScan WordPress Scanner',
+                            'hydra'           => 'THC Hydra Login Cracker',
+                            'burpsuite'       => 'Burp Suite Security Proxy',
+                            'python-requests' => 'Python Requests Bot',
+                            'python-urllib'   => 'Python Urllib Crawler',
+                            'aiohttp'         => 'Python AioHTTP Bot',
+                            'go-http-client'  => 'Golang HTTP Client',
+                            'java/'           => 'Java Automated Client',
+                            'curl/'           => 'cURL Automated Command',
+                            'wget/'           => 'Wget Downloader Bot',
+                            'scrapy'          => 'Scrapy Web Scraper',
+                            'httpclient'      => 'Apache HttpClient',
+                            'libwww-perl'     => 'Perl LWP Bot',
+                            'postmanruntime'  => 'Postman Automated Runner',
+                            'headlesschrome'  => 'Headless Chrome Automation',
+                            'phantomjs'       => 'PhantomJS Automated Script',
+                            'selenium'        => 'Selenium Automated WebDriver',
+                            'puppeteer'       => 'Puppeteer Automated Script',
+                            'playwright'      => 'Playwright Automation Tool',
+                        ];
+
+                        foreach ($badBotSignatures as $sig => $name) {
+                            if (str_contains($lowerUa, $sig)) {
+                                $isSuspicious = true;
+                                $reason = "Terdeteksi Bot / Scanner Berbahaya ($name)";
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // D. Deteksi DDoS & Rate Flooding (>120 request/menit untuk non-whitelist)
             $floodKey = "ddos_flood_count_{$ip}";
             $reqInMinute = Cache::increment($floodKey);
             if ($reqInMinute === 1) {
@@ -264,8 +297,14 @@ class DetectAbnormalIp
                 }
             }
 
-            // Catat sebagai 'suspicious' jika benar-benar terdeteksi ancaman dan bukan whitelist manual
-            if ($isSuspicious && !$isWhitelisted && $ipLog->status !== 'abnormal') {
+            // Staf/Admin & Whitelist SELALU berstatus normal (tidak pernah suspicious atau abnormal)
+            if ($isAdminOrStaff) {
+                $ipLog->status = 'normal';
+                $ipLog->reason = 'Aktivitas Normal Administrator/Staff';
+            } elseif ($isWhitelisted) {
+                $ipLog->status = 'normal';
+                $ipLog->reason = 'Aktivitas Normal (IP Whitelist)';
+            } elseif ($isSuspicious && $ipLog->status !== 'abnormal') {
                 $ipLog->status = 'suspicious';
                 $ipLog->reason = $reason;
             }
@@ -275,10 +314,13 @@ class DetectAbnormalIp
             $ipLog->request_count = ($ipLog->request_count ?? 0) + 1;
             $ipLog->last_activity_at = now();
 
-            // Hubungkan HANYA dengan akun yang benar-benar sedang login di sesi ini.
-            // (Tidak menebak dari riwayat login per IP, karena banyak user bisa berbagi IP yang sama.)
+            // Hubungkan HANYA dengan akun yang benar-benar sedang login di sesi ini
             if (Auth::check() && Schema::hasColumn('ip_logs', 'user_id')) {
                 $ipLog->user_id = Auth::id();
+                if ($isAdminOrStaff) {
+                    $ipLog->status = 'normal';
+                    $ipLog->reason = 'Aktivitas Normal Administrator/Staff';
+                }
             }
 
             try {
