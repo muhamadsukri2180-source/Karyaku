@@ -217,18 +217,32 @@
             </p>
         </div>
 
-        <!-- Action Buttons — Email Only -->
+        @php
+            $gmailSubjectIp = 'Banding Pemblokiran IP: ' . $displayIp;
+            $gmailBodyIp = "Halo Tim Support Karyaku,\n\nSaya ingin mengajukan permohonan pembukaan blokir:\n- Alamat IP: " . $displayIp . "\n- Akun: " . ($username ?? 'N/A') . "\n- Pelanggaran: " . $reasonData['label'] . "\n- Rincian: " . $reasonData['headline'] . "\n\nPembelaan / Keterangan:\n[Tuliskan penjelasan dan alasan Anda di sini]\n\nMohon ditinjau kembali. Terima kasih.";
+            $gmailUrlIp = 'https://mail.google.com/mail/?view=cm&fs=1&to=karyakuustore@gmail.com&su=' . urlencode($gmailSubjectIp) . '&body=' . urlencode($gmailBodyIp);
+        @endphp
+
+        <!-- Action Buttons — Gmail & Salin -->
         <div class="space-y-2.5">
-            <a href="mailto:karyakuustore@gmail.com?subject={{ urlencode('Banding Pemblokiran IP: ' . $displayIp) }}&body={{ urlencode('Halo Tim Support Karyaku,' . "\n\n" . 'Saya ingin mengajukan permohonan pembukaan blokir:' . "\n" . '- IP: ' . $displayIp . "\n" . '- Akun: ' . ($username ?? 'N/A') . "\n" . '- Pelanggaran: ' . $reasonData['label'] . "\n" . '- Rincian: ' . $reasonData['headline'] . "\n\n" . 'Mohon ditinjau kembali. Terima kasih.') }}"
-               class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-sky-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-900/20 transition-all cursor-pointer">
-                <i class="fa-solid fa-envelope text-sm"></i> Kirim Email Banding ke Admin (karyakuustore@gmail.com)
+            <a href="{{ $gmailUrlIp }}"
+               target="_blank" rel="noopener noreferrer"
+               class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md shadow-red-900/20 transition-all cursor-pointer">
+                <i class="fa-brands fa-google text-white text-sm"></i> Kirim Banding via Gmail Web (karyakuustore@gmail.com)
             </a>
 
-            <button type="button" onclick="window.location.reload()"
-                    class="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 hover:text-slate-900 font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer">
-                <i class="fa-solid fa-rotate-right"></i> Periksa Status Ulang
-            </button>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="navigator.clipboard.writeText('karyakuustore@gmail.com'); alert('Alamat email karyakuustore@gmail.com berhasil disalin!');"
+                        class="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer">
+                    <i class="fa-regular fa-copy"></i> Salin Email Admin
+                </button>
+                <button type="button" onclick="window.location.reload()"
+                        class="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 hover:text-slate-900 font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer">
+                    <i class="fa-solid fa-rotate-right"></i> Periksa Status Ulang
+                </button>
+            </div>
         </div>
+
 
         <!-- Footer -->
         <div class="mt-6 text-center pt-5 border-t border-slate-100">

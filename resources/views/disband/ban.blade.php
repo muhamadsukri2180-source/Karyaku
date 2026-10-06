@@ -199,13 +199,36 @@
                     </div>
                 </div>
 
-                <!-- Info Hubungi via Email -->
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3.5 flex items-start gap-2.5">
-                    <i class="fa-solid fa-envelope text-blue-400 mt-0.5 shrink-0"></i>
-                    <p class="text-[11px] text-slate-600 leading-relaxed">
-                        Untuk pertanyaan atau bantuan banding, hubungi tim support kami melalui email resmi:
-                        <a href="mailto:karyakuustore@gmail.com?subject={{ urlencode('Banding Akun Ditangguhkan: ' . ($info['username'] ?? 'User') . ' (' . ($info['email'] ?? '-') . ')') }}&body={{ urlencode('Halo Tim Karyaku,' . "\n\n" . 'Saya ingin mengajukan permohonan peninjauan kembali akun saya:' . "\n" . '- Username: ' . ($info['username'] ?? '-') . "\n" . '- Email: ' . ($info['email'] ?? '-') . "\n" . '- Alasan Banding: ' . "\n\n" . 'Terima kasih.') }}" class="text-blue-600 font-bold hover:underline">karyakuustore@gmail.com</a>
-                    </p>
+                <!-- Info Hubungi via Gmail -->
+                @php
+                    $gmailSubjectBan = 'Banding Akun Ditangguhkan: ' . ($info['username'] ?? 'User') . ' (' . ($info['email'] ?? '-') . ')';
+                    $gmailBodyBan = "Halo Tim Admin Karyaku,\n\nSaya ingin mengajukan permohonan peninjauan kembali akun saya:\n- Username: " . ($info['username'] ?? '-') . "\n- Email: " . ($info['email'] ?? '-') . "\n- Status: Ditangguhkan\n- Alasan Penangguhan: " . ($info['reason'] ?? '-') . "\n\nPembelaan / Penjelasan Saya:\n[Silakan tulis penjelasan detail Anda di sini]\n\nMohon ditinjau kembali akun saya. Terima kasih.";
+                    $gmailUrlBan = 'https://mail.google.com/mail/?view=cm&fs=1&to=karyakuustore@gmail.com&su=' . urlencode($gmailSubjectBan) . '&body=' . urlencode($gmailBodyBan);
+                @endphp
+                <div class="bg-red-50/70 border border-red-200/80 rounded-2xl p-4 space-y-2.5 shadow-2xs">
+                    <div class="flex items-start gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                            <i class="fa-brands fa-google text-xs"></i>
+                        </div>
+                        <div>
+                            <span class="block text-xs font-bold text-slate-800">Bantuan Banding via Gmail</span>
+                            <p class="text-[11px] text-slate-600 leading-relaxed mt-0.5">
+                                Untuk bantuan atau pengajuan banding langsung, hubungi kami via Gmail resmi:
+                                <span class="font-bold text-red-600 block sm:inline">karyakuustore@gmail.com</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 pt-0.5">
+                        <a href="{{ $gmailUrlBan }}"
+                           target="_blank" rel="noopener noreferrer"
+                           class="flex-1 py-2 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer">
+                            <i class="fa-brands fa-google text-xs"></i> Buka Gmail Web
+                        </a>
+                        <button type="button" onclick="navigator.clipboard.writeText('karyakuustore@gmail.com'); alert('Alamat email karyakuustore@gmail.com berhasil disalin!');"
+                                class="py-2 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-700 font-bold text-[11px] flex items-center justify-center gap-1.5 border border-slate-200 shadow-2xs transition cursor-pointer">
+                            <i class="fa-regular fa-copy text-xs"></i> Salin Email
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Tombol Kembali -->
@@ -226,13 +249,19 @@
                 </div>
 
                 @if($info['appeal_status'] === 'pending')
-                    <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-xs space-y-1.5">
+                    <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-xs space-y-2">
                         <div class="flex items-center gap-2 font-extrabold text-amber-900">
                             <i class="fa-solid fa-clock-rotate-left text-amber-600"></i> Banding Dalam Peninjauan
                         </div>
                         <p class="text-[11px] text-amber-700 leading-relaxed">
-                            Pengajuan Anda pada tanggal <strong>{{ $info['appeal_date'] }}</strong> sedang diverifikasi. Hasil keputusan akan diproses secepatnya.
+                            Pengajuan Anda pada tanggal <strong>{{ $info['appeal_date'] }}</strong> sedang diverifikasi oleh Tim Admin &amp; CS Karyaku. Hasil keputusan akan diproses secepatnya.
                         </p>
+                        <div class="pt-1">
+                            <a href="{{ $gmailUrlBan }}" target="_blank" rel="noopener noreferrer"
+                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-amber-300 text-amber-900 font-bold text-[11px] hover:bg-amber-100/60 shadow-2xs transition">
+                                <i class="fa-brands fa-google text-red-500"></i> Kirim Bukti Tambahan via Gmail
+                            </a>
+                        </div>
                     </div>
 
                 @else
@@ -304,15 +333,29 @@
 
                         <!-- Kirim via Email Info -->
                         <div class="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3">
-                            <i class="fa-solid fa-envelope text-blue-400 text-xs mt-0.5 shrink-0"></i>
+                            <i class="fa-solid fa-circle-info text-blue-500 text-xs mt-0.5 shrink-0"></i>
                             <p class="text-[10px] text-slate-500 leading-relaxed">
-                                Pengajuan banding akan dikirimkan langsung ke email Admin &amp; CS Karyaku (<span class="font-bold text-blue-600">karyakuustore@gmail.com</span>) dan diproses melalui sistem.
+                                Pengajuan banding ini otomatis tersimpan di sistem internal Admin/CS dan diteruskan ke email <span class="font-bold text-blue-600">karyakuustore@gmail.com</span>.
                             </p>
                         </div>
 
-                        <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white text-xs font-extrabold rounded-xl transition shadow-md shadow-blue-900/20 flex items-center justify-center gap-2 cursor-pointer">
-                            <i class="fa-solid fa-paper-plane"></i> Kirim Pengajuan Banding
-                        </button>
+                        <div class="space-y-2.5">
+                            <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white text-xs font-extrabold rounded-xl transition shadow-md shadow-blue-900/20 flex items-center justify-center gap-2 cursor-pointer">
+                                <i class="fa-solid fa-paper-plane"></i> Kirim Pengajuan Banding via Sistem
+                            </button>
+
+                            <div class="text-center py-0.5 flex items-center gap-2 justify-center text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                                <span class="h-px bg-slate-200 flex-1"></span>
+                                <span>Atau Kirim Langsung via Gmail</span>
+                                <span class="h-px bg-slate-200 flex-1"></span>
+                            </div>
+
+                            <a href="{{ $gmailUrlBan }}"
+                               target="_blank" rel="noopener noreferrer"
+                               class="w-full py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs">
+                                <i class="fa-brands fa-google text-red-600 text-sm"></i> Buka Gmail untuk Kirim Banding (Bukan Outlook)
+                            </a>
+                        </div>
                     </form>
                 @endif
             </div>

@@ -117,11 +117,18 @@
                     <i class="fa-brands fa-whatsapp text-base"></i> Hubungi Customer Service (Banding)
                 </a>
 
+                @php
+                    $gmailSubject403 = 'Banding 403: ' . $clientIp;
+                    $gmailBody403 = "Halo Tim Support Karyaku,\n\nSaya ingin mengajukan permohonan pembukaan blokir untuk IP: " . $clientIp . "\nAlasan: " . $reasonData['headline'] . "\n\nTerima kasih.";
+                    $gmailUrl403 = 'https://mail.google.com/mail/?view=cm&fs=1&to=karyakuustore@gmail.com&su=' . urlencode($gmailSubject403) . '&body=' . urlencode($gmailBody403);
+                @endphp
                 <div class="flex flex-col sm:flex-row gap-2.5">
-                    <a href="mailto:karyakuustore@gmail.com?subject={{ urlencode('Banding 403: ' . $clientIp) }}&body={{ urlencode('Halo Tim Support Karyaku,\n\nSaya ingin mengajukan permohonan pembukaan blokir untuk IP: ' . $clientIp . '\nAlasan: ' . $reasonData['headline'] . '\n\nTerima kasih.') }}" 
+                    <a href="{{ $gmailUrl403 }}" 
+                       target="_blank" rel="noopener noreferrer"
                        class="flex-1 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all">
-                        <i class="fa-solid fa-envelope"></i> Kirim Email Support (karyakuustore@gmail.com)
+                        <i class="fa-brands fa-google text-red-500"></i> Kirim via Gmail Web (karyakuustore@gmail.com)
                     </a>
+
                     <button type="button" onclick="window.location.reload()" 
                             class="flex-1 py-2.5 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/80 text-slate-300 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer">
                         <i class="fa-solid fa-rotate-right"></i> Periksa Status Ulang
