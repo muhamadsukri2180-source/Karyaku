@@ -76,9 +76,12 @@ try {
             ->where(function($q) {
                 $q->where('reason', 'like', '%Resize Window%')
                   ->orWhere('reason', 'like', '%right-click%')
-                  ->orWhere('reason', 'like', '%Klik Kanan%');
+                  ->orWhere('reason', 'like', '%Klik Kanan%')
+                  ->orWhere('reason', 'like', '%panel DevTools%')
+                  ->orWhere('reason', 'like', '%devtools-open%');
             })
             ->update(['status' => 'normal', 'reason' => 'Aktivitas Normal Pengguna']);
+
 
         // 2. Daftarkan IP pengunjung fix.php ini ke allowed_ips jika belum ada
         if (!in_array($visitorIp, ['127.0.0.1', '::1'])) {

@@ -758,6 +758,63 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Tampilkan file gambar bukti banding pemblokiran akun secara langsung & aman.
+     * Mencegah masalah symlink rusak, konfigurasi APP_URL cPanel, atau 404 broken image.
+     */
+    public function showAppealProof(string|int $id)
+    {
+        $appeal = AccountAppeal::where('id_appeal', $id)->first() ?? AccountAppeal::find($id);
+        if (!$appeal || empty($appeal->proof_image)) {
+            abort(404);
+        }
+
+        $imagePath = $appeal->proof_image;
+        $cleanPath = ltrim(preg_replace('/^(public\/|storage\/)/', '', $imagePath), '/');
+
+        $possiblePaths = [
+            storage_path('app/public/' . $imagePath),
+            storage_path('app/public/' . $cleanPath),
+            storage_path('app/' . $imagePath),
+            storage_path('app/' . $cleanPath),
+            public_path('storage/' . $imagePath),
+            public_path('storage/' . $cleanPath),
+            public_path($imagePath),
+            base_path('storage/app/public/' . $cleanPath),
+            base_path('public/storage/' . $cleanPath),
+        ];
+
+        foreach ($possiblePaths as $fullPath) {
+            if (file_exists($fullPath) && is_file($fullPath)) {
+                $mime = @mime_content_type($fullPath) ?: 'image/jpeg';
+                return response()->file($fullPath, [
+                    'Content-Type' => $mime,
+                    'Cache-Control' => 'public, max-age=86400',
+                ]);
+            }
+        }
+
+        if (Storage::disk('public')->exists($imagePath)) {
+            return Storage::disk('public')->response($imagePath);
+        }
+        if (Storage::disk('public')->exists($cleanPath)) {
+            return Storage::disk('public')->response($cleanPath);
+        }
+
+        // Fallback jika file fisik tidak ada di server, tampilkan placeholder SVG profesional
+        $fileName = htmlspecialchars(basename($imagePath));
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="260" viewBox="0 0 400 260">
+            <rect width="100%" height="100%" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+            <circle cx="200" cy="90" r="32" fill="#e2e8f0"/>
+            <path d="M190 85h20M200 75v20" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+            <text x="200" y="150" text-anchor="middle" fill="#334155" font-family="system-ui, sans-serif" font-size="14" font-weight="700">Gambar Bukti Banding</text>
+            <text x="200" y="175" text-anchor="middle" fill="#64748b" font-family="system-ui, sans-serif" font-size="11">' . $fileName . '</text>
+            <text x="200" y="205" text-anchor="middle" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">File tersimpan pada sistem lampiran pengguna</text>
+        </svg>';
+        return response($svg, 200, ['Content-Type' => 'image/svg+xml']);
+    }
+
+
     public function tindakUserPelanggaran(Request $request, string|int $id)
     {
         $req = $request->validate(['action' => 'required|in:peringatan,suspend,abaikan', 'admin_notes' => 'required|string|max:500']);
@@ -924,10 +981,13 @@ class AdminController extends Controller
         //    B. Netralkan log milik AKUN staff saja
         //    C. Otomatis reset log aktivitas normal yang sudah lewat 1 hari (24 jam)
         try {
+            // Bersihkan semua log false-positive (panel DevTools, resize window, klik kanan, devtools-open)
             IpLog::where(function($q) {
                 $q->where('reason', 'like', '%Resize Window%')
                   ->orWhere('reason', 'like', '%right-click%')
-                  ->orWhere('reason', 'like', '%Klik Kanan%');
+                  ->orWhere('reason', 'like', '%Klik Kanan%')
+                  ->orWhere('reason', 'like', '%panel DevTools%')
+                  ->orWhere('reason', 'like', '%devtools-open%');
             })->update([
                 'status' => 'normal',
                 'reason' => 'Aktivitas Normal Pengguna'
@@ -942,10 +1002,37 @@ class AdminController extends Controller
                     ]);
             }
 
+            // Gabungkan record IP yang sama menjadi 1 data master (konsolidasi per IP)
+            $duplicateIps = IpLog::select('ip_address')
+                ->groupBy('ip_address')
+                ->havingRaw('COUNT(*) > 1')
+                ->pluck('ip_address');
+
+            foreach ($duplicateIps as $dupIp) {
+                $dupLogs = IpLog::where('ip_address', $dupIp)->orderByDesc('last_activity_at')->get();
+                $master = $dupLogs->first();
+                $master->request_count = $dupLogs->sum('request_count');
+
+                if ($dupLogs->contains('status', 'abnormal')) {
+                    $master->status = 'abnormal';
+                } elseif ($dupLogs->contains('status', 'suspicious')) {
+                    $master->status = 'suspicious';
+                }
+
+                $anyUserId = $dupLogs->first(fn($l) => !empty($l->user_id))?->user_id;
+                if ($anyUserId && empty($master->user_id)) {
+                    $master->user_id = $anyUserId;
+                }
+
+                $master->save();
+                $dupLogs->slice(1)->each->delete();
+            }
+
             IpLog::where(function($q) {
                 $q->where('status', 'normal')->orWhereNull('status');
             })->where('created_at', '<', now()->subHours(24))->delete();
         } catch (\Throwable $e) {}
+
 
         // Bangun lookup: ip_address => username dari LoginHistory (untuk IP yang belum ada user_id)
         $loginHistoryLookup = LoginHistory::whereNotNull('username')
@@ -1405,29 +1492,27 @@ class AdminController extends Controller
             }
 
             // Tentukan alasan berdasarkan metode deteksi yang dikirim JS
-            $method = $body['method'] ?? $request->input('method', 'devtools-open');
+            $method = $body['method'] ?? $request->input('method', '');
 
-            // PENTING: Abaikan metode false-positive (seperti resize window atau klik kanan murni)
-            if (in_array($method, ['window-resize', 'right-click', 'debugger-timing'])) {
-                return response()->json(['ok' => true]);
+            // PENTING: Hanya catat shortcut DevTools yang nyata dan disengaja oleh pengguna.
+            // Abaikan sepenuhnya jika false-positive (seperti resize window, kalkulasi devtools-open, atau klik kanan)
+            $allowedShortcuts = ['F12', 'Ctrl+Shift+I', 'Ctrl+Shift+C', 'Ctrl+Shift+J', 'Ctrl+Shift+K', 'Ctrl+U'];
+            if (!in_array($method, $allowedShortcuts)) {
+                return response()->json(['ok' => true, 'logged' => false, 'why' => 'ignored_method']);
             }
 
             $methodMap = [
-                'devtools-open' => 'Membuka Inspect Element / DevTools (panel DevTools terdeteksi terbuka)',
                 'F12'          => 'Menekan tombol F12 (DevTools)',
                 'Ctrl+Shift+I' => 'Menekan Ctrl+Shift+I (DevTools)',
                 'Ctrl+Shift+C' => 'Menekan Ctrl+Shift+C (Inspect Element)',
                 'Ctrl+Shift+J' => 'Menekan Ctrl+Shift+J (Console DevTools)',
                 'Ctrl+Shift+K' => 'Menekan Ctrl+Shift+K (Web Console)',
                 'Ctrl+U'       => 'Membuka View Source (Ctrl+U)',
-                'unknown'      => 'Shortcut DevTools Terdeteksi',
             ];
             $reason = 'Terdeteksi: ' . ($methodMap[$method] ?? 'Shortcut DevTools Terdeteksi');
 
             $userAgent = $request->header('User-Agent') ?? 'Unknown';
 
-            // Buat session_id yang SAMA dengan middleware DetectAbnormalIp
-            // agar log ping menempel pada baris log sesi yang sama (tidak dobel)
             if ($request->hasSession()) {
                 $sessionId = substr(md5($request->session()->getId()), 0, 16);
             } else {
@@ -1441,18 +1526,15 @@ class AdminController extends Controller
             $hasSessionIdCol = \Illuminate\Support\Facades\Schema::hasColumn('ip_logs', 'session_id');
             $hasUserIdCol    = \Illuminate\Support\Facades\Schema::hasColumn('ip_logs', 'user_id');
 
-            // Cari log hari ini berdasarkan IP + session
-            $query = IpLog::where('ip_address', $ip)->whereDate('created_at', $today);
-            if ($hasSessionIdCol && $sessionId) {
-                $query->where('session_id', $sessionId);
-            }
-            $ipLog = $query->first();
+            // Konsolidasi: Cari log hari ini HANYA berdasarkan IP (1 baris per IP)
+            $ipLog = IpLog::where('ip_address', $ip)->whereDate('created_at', $today)->orderByDesc('id')->first();
 
             if (!$ipLog) {
                 $attrs = ['ip_address' => $ip, 'status' => 'normal'];
                 if ($hasSessionIdCol && $sessionId) $attrs['session_id'] = $sessionId;
                 $ipLog = new IpLog($attrs);
             }
+
 
             // Tandai suspicious (jangan override jika sudah abnormal/diblokir)
             if ($ipLog->status !== 'abnormal') {

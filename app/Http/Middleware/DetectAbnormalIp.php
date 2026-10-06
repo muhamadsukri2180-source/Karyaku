@@ -45,7 +45,59 @@ class DetectAbnormalIp
             return $next($request);
         }
 
-        // 2. CEK APAKAH AKUN USER YANG SEDANG LOGIN DIBLOKIR / DIBEKUKAN (staff tidak pernah diblokir)
+        // Cek apakah IP terdaftar di Whitelist Eksplisit (hanya yang ditambahkan MANUAL oleh admin)
+        $isWhitelisted = Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
+            try {
+                return AllowedIp::where('ip_address', $ip)->exists();
+            } catch (\Throwable $e) {
+                return false;
+            }
+        });
+
+        // Whitelist IP hanya membebaskan TAMU dari deteksi. Akun non-admin yang login
+        // tetap dipantau walau memakai IP yang sama dengan admin (WiFi / CGNAT seluler).
+        $isGuestWhitelisted = $isWhitelisted && !Auth::check();
+
+        // 2. CEK APAKAH ALAMAT IP DIBLOKIR (BAN CHECK GLOBAL - PRIORITAS TERTINGGI)
+        // Berlaku untuk SEMUA halaman (termasuk landing page, refresh, suspended-notice, dll).
+        // Jika IP diblokir, pengunjung LANGSUNG mendapatkan halaman IP Diblokir (errors.ip-blocked),
+        // BUKAN halaman akun ditangguhkan! Staff & whitelist manual tidak pernah diblokir.
+        if (!$isWhitelisted && !$isAdminOrStaff) {
+            $ban = $this->findActiveBan($ip);
+
+            if ($ban) {
+                // Pengecualian SATU-SATUNYA: halaman login khusus staff (agar admin yang
+                // logout tidak terkunci dari IP yang sama). User biasa yang mencoba login
+                // dari IP ini tetap akan ditolak oleh AuthController.
+                if ($this->isStaffLoginBypass($request)) {
+                    return $next($request);
+                }
+
+                return $this->banResponse($request, [
+                    'ip'           => $ip,
+                    'reason'       => $ban['reason'],
+                    'category'     => $ban['category'],
+                    'banned_at'    => $ban['banned_at'],
+                    'banned_until' => $ban['banned_until'],
+                ]);
+            }
+        }
+
+        // 3. CEK APAKAH SESI BROWSER DIBEKUKAN (FROZEN SESSION)
+        if ($request->hasSession() && !$isAdminOrStaff) {
+            $sessId = substr(md5($request->session()->getId()), 0, 16);
+            $frozen = Cache::get("frozen_session_{$sessId}");
+            if ($frozen) {
+                return $this->banResponse($request, [
+                    'ip'     => $ip,
+                    'reason' => is_string($frozen)
+                        ? $frozen
+                        : 'Sesi browser Anda sedang dibekukan oleh Administrator karena indikasi pelanggaran.',
+                ]);
+            }
+        }
+
+        // 4. CEK APAKAH AKUN USER YANG SEDANG LOGIN DITANGGUHKAN (USER SUSPEND - KHUSUS JIKA IP TIDAK DIBAN)
         if (Auth::check() && !$isAdminOrStaff) {
             $currUser = Auth::user();
 
@@ -91,57 +143,6 @@ class DetectAbnormalIp
 
                     return redirect()->route('suspended.notice')->with('suspended_info', $suspendedInfo);
                 }
-            }
-        }
-
-        // 3. CEK APAKAH SESI BROWSER DIBEKUKAN (FROZEN SESSION)
-        if ($request->hasSession() && !$isAdminOrStaff) {
-            $sessId = substr(md5($request->session()->getId()), 0, 16);
-            $frozen = Cache::get("frozen_session_{$sessId}");
-            if ($frozen) {
-                return $this->banResponse($request, [
-                    'ip'     => $ip,
-                    // Nilai cache berisi alasan ban asli (data lama berisi `true`)
-                    'reason' => is_string($frozen)
-                        ? $frozen
-                        : 'Sesi browser Anda sedang dibekukan oleh Administrator karena indikasi pelanggaran.',
-                ]);
-            }
-        }
-
-        // Cek apakah IP terdaftar di Whitelist Eksplisit (hanya yang ditambahkan MANUAL oleh admin)
-        $isWhitelisted = Cache::remember("allowed_ip_{$ip}", 60, function () use ($ip) {
-            try {
-                return AllowedIp::where('ip_address', $ip)->exists();
-            } catch (\Throwable $e) {
-                return false;
-            }
-        });
-
-        // Whitelist IP hanya membebaskan TAMU dari deteksi. Akun non-admin yang login
-        // tetap dipantau walau memakai IP yang sama dengan admin (WiFi / CGNAT seluler).
-        $isGuestWhitelisted = $isWhitelisted && !Auth::check();
-
-        // 4. CEK APAKAH ALAMAT IP DIBLOKIR (BAN CHECK GLOBAL) -> berlaku untuk SEMUA halaman,
-        //    termasuk landing page. Staff & whitelist manual tidak pernah diblokir.
-        if (!$isWhitelisted && !$isAdminOrStaff) {
-            $ban = $this->findActiveBan($ip);
-
-            if ($ban) {
-                // Pengecualian SATU-SATUNYA: halaman login khusus staff (agar admin yang
-                // logout tidak terkunci dari IP yang sama). User biasa yang mencoba login
-                // dari IP ini tetap akan ditolak oleh AuthController.
-                if ($this->isStaffLoginBypass($request)) {
-                    return $next($request);
-                }
-
-                return $this->banResponse($request, [
-                    'ip'           => $ip,
-                    'reason'       => $ban['reason'],
-                    'category'     => $ban['category'],
-                    'banned_at'    => $ban['banned_at'],
-                    'banned_until' => $ban['banned_until'],
-                ]);
             }
         }
 
@@ -292,16 +293,11 @@ class DetectAbnormalIp
                 $sessionId = $sessionIdCookie ? substr(md5($sessionIdCookie), 0, 16) : substr(md5($userAgent . $ip), 0, 16);
             }
 
-            // Mengelompokkan log berdasarkan IP, Session ID, dan HARI INI
+            // Mengelompokkan log menjadi 1 data per IP dan HARI INI (tidak dipecah per session agar rapi)
             $today = now()->toDateString();
             $hasSessionIdCol = Schema::hasColumn('ip_logs', 'session_id');
 
-            $query = IpLog::where('ip_address', $ip)->whereDate('created_at', $today);
-            if ($hasSessionIdCol && $sessionId) {
-                $query->where('session_id', $sessionId);
-            }
-
-            $ipLog = $query->first();
+            $ipLog = IpLog::where('ip_address', $ip)->whereDate('created_at', $today)->first();
 
             if (!$ipLog) {
                 $attributes = [
@@ -314,10 +310,10 @@ class DetectAbnormalIp
                 $ipLog = new IpLog($attributes);
             }
 
-            // Pembersihan otomatis: jika log sebelumnya pernah mencatat false positive resize/klik kanan, normalkan
+            // Pembersihan otomatis: jika log sebelumnya pernah mencatat false positive resize/klik kanan/devtools-open, normalkan
             if ($ipLog->status === 'suspicious') {
                 $r = $ipLog->reason ?? '';
-                if (str_contains($r, 'Resize Window') || str_contains($r, 'right-click') || str_contains($r, 'Klik Kanan')) {
+                if (str_contains($r, 'Resize Window') || str_contains($r, 'right-click') || str_contains($r, 'Klik Kanan') || str_contains($r, 'panel DevTools') || str_contains($r, 'devtools-open')) {
                     $ipLog->status = 'normal';
                     $ipLog->reason = 'Aktivitas Normal Pengguna';
                 }

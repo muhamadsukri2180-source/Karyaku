@@ -215,13 +215,14 @@
                     </td>
                     <td class="py-3.5 px-6 text-center">
                         @if($appeal->proof_image)
-                            <button type="button" onclick="previewImage('{{ asset('storage/' . $appeal->proof_image) }}')" class="group relative inline-block rounded-xl overflow-hidden border border-slate-200 shadow-xs hover:shadow-md transition">
-                                <img src="{{ asset('storage/' . $appeal->proof_image) }}" alt="Bukti" class="w-14 h-14 object-cover group-hover:scale-110 transition duration-300">
+                            <button type="button" onclick="previewImage('{{ route('appeal.proof_image', $appeal->id_appeal ?? $appeal->id) }}')" class="group relative inline-block rounded-xl overflow-hidden border border-slate-200 shadow-xs hover:shadow-md transition">
+                                <img src="{{ route('appeal.proof_image', $appeal->id_appeal ?? $appeal->id) }}" alt="Bukti" class="w-14 h-14 object-cover group-hover:scale-110 transition duration-300" onerror="this.onerror=null; this.src='{{ asset('storage/' . $appeal->proof_image) }}';">
                             </button>
                         @else
                             <span class="text-xs text-slate-400 italic">Tidak ada bukti</span>
                         @endif
                     </td>
+
                     <td class="py-3.5 px-6">
                         <span class="text-[10px] font-bold px-2.5 py-1 rounded-md border {{ $appealStatusColor }}">
                             {{ $appealStatusLabel }}

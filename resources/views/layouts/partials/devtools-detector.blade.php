@@ -111,48 +111,6 @@
         }
     }, true);
 
-    // 2. Deteksi Docked DevTools via ukuran window
-    let _windowStable = false;
-    setTimeout(function() { _windowStable = true; }, 1200);
-
-    function checkDockedDevTools() {
-        if (_reported || !_windowStable) return;
-
-        const widthDiff  = window.outerWidth  - window.innerWidth;
-        const heightDiff = window.outerHeight - window.innerHeight;
-
-        // DevTools docked panel umumnya > 170px
-        if (widthDiff > 170 || heightDiff > 170) {
-            reportDevTools('devtools-open');
-        }
-    }
-
-    window.addEventListener('resize', function() {
-        setTimeout(checkDockedDevTools, 200);
-    });
-    setTimeout(checkDockedDevTools, 1800);
-
-    // Deteksi saat Klik Kanan -> Inspect Element
-    document.addEventListener('contextmenu', function() {
-        setTimeout(checkDockedDevTools, 800);
-        setTimeout(checkDockedDevTools, 2000);
-    }, { passive: true });
-
-    // 3. Deteksi Undocked DevTools / Console via Getter Probe
-    try {
-        const element = document.createElement('div');
-        Object.defineProperty(element, 'id', {
-            get: function() {
-                reportDevTools('devtools-open');
-                return 'karyaku-inspect';
-            }
-        });
-        setInterval(function() {
-            if (_reported) return;
-            console.log(element);
-        }, 2000);
-    } catch(e) {}
-
 })();
 </script>
 @endif

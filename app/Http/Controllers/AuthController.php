@@ -26,9 +26,29 @@ class AuthController extends Controller
     {
         return view('auth.register');
     }
-    public function showSuspendedNotice()
+    public function showSuspendedNotice(Request $request)
     {
+        $ip = $request->ip();
+
+        // Jika IP pengunjung sedang diblokir, wajib LANGSUNG tampilkan halaman IP Diblokir (errors.ip-blocked)
+        if (IpBan::isBanned($ip) || Cache::has("banned_ip_{$ip}")) {
+            $ban = IpBan::activeFor($ip);
+            $reason = $ban?->reason ?: (Cache::get("banned_ip_{$ip}") ?: 'Akses Anda diblokir oleh Administrator sistem.');
+            $category = $ban?->category ?: BanReason::categorize($reason);
+            $blockedAt = ($ban?->created_at ?? now())->translatedFormat('d F Y, H:i') . ' WIB';
+            $bannedUntil = $ban?->banned_until ? $ban->banned_until->translatedFormat('d F Y, H:i') . ' WIB' : null;
+
+            return response()->view('errors.ip-blocked', [
+                'ip'           => $ip,
+                'reason'       => $reason,
+                'category'     => $category,
+                'blocked_at'   => $blockedAt,
+                'banned_until' => $bannedUntil,
+            ], 403);
+        }
+
         $info = session('suspended_info');
+
 
         if (!$info) {
             $userId = session('suspended_user_id') ?? old('user_id');
@@ -286,7 +306,15 @@ class AuthController extends Controller
         $imagePath = null;
         if ($request->hasFile('proof_image')) {
             $imagePath = $request->file('proof_image')->store('appeals', 'public');
+            try {
+                $destDir = public_path('storage/appeals');
+                if (!file_exists($destDir)) {
+                    @mkdir($destDir, 0755, true);
+                }
+                @copy(storage_path('app/public/' . $imagePath), public_path('storage/' . $imagePath));
+            } catch (\Throwable $e) {}
         }
+
 
         AccountAppeal::create([
             'user_id'     => $request->user_id,

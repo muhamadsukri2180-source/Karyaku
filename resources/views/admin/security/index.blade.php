@@ -81,10 +81,14 @@
                         <td class="py-4 px-5 align-middle">
                             <div class="flex items-center gap-2">
                                 <span class="font-mono font-black text-red-600 text-[13px] tracking-tight">{{ $ipAddress }}</span>
-                                <button type="button" onclick="document.getElementById('{{ $groupId }}').classList.toggle('hidden')" class="px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[10px] font-bold hover:bg-red-200 transition-colors cursor-pointer flex items-center gap-1">
-                                    <span>{{ $logs->count() }} Sesi</span>
-                                    <i class="fa-solid fa-chevron-down text-[8px]"></i>
-                                </button>
+                                <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
+                                    {{ str_contains($ipAddress, ':') ? 'IPv6' : 'IPv4' }}
+                                </span>
+                                @if($first->status === 'abnormal')
+                                    <span class="px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-wider border border-red-200">
+                                        Diblokir
+                                    </span>
+                                @endif
                             </div>
                             @if($userLabel)
                                 <div class="mt-2 flex flex-wrap items-center gap-1.5">
@@ -160,26 +164,7 @@
                             </form>
                         </td>
                     </tr>
-                    
-                    <!-- DROPDOWN SESSIONS -->
-                    <tr id="{{ $groupId }}" class="hidden bg-slate-50/50">
-                        <td colspan="6" class="p-0 border-b border-slate-200">
-                            <table class="w-full text-left">
-                                @foreach($logs as $log)
-                                <tr class="border-t border-slate-200 hover:bg-slate-100 text-[11px]">
-                                    <td class="py-3 px-10 text-slate-500 font-mono">Sesi: #{{ !empty($log->session_id) ? substr($log->session_id, 0, 8) : 'Main' }}</td>
-                                    <td class="py-3 px-6 text-slate-600 truncate max-w-[150px]">{{ $log->reason }}</td>
-                                    <td class="py-3 px-6 text-slate-600 font-mono truncate max-w-[150px]">{{ $log->last_activity }}</td>
-                                    <td class="py-3 px-6 text-center text-slate-600 font-bold">{{ $log->request_count }}x</td>
-                                    <td class="py-3 px-6 text-slate-500 font-medium">{{ $log->last_activity_at ? $log->last_activity_at->format('d M Y, H:i:s') : '-' }}</td>
-                                    <td class="py-3 px-6 text-center text-slate-400 italic">
-                                        -
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </table>
-                        </td>
-                    </tr>
+
                     @empty
                     <tr>
                         <td colspan="6" class="text-center py-10 text-slate-400 text-xs font-semibold bg-slate-50/20">
