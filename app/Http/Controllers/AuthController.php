@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Models\LoginHistory;
 use App\Models\IpBan;
+use App\Models\IpLog;
 use App\Support\BanReason;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -270,6 +271,16 @@ class AuthController extends Controller
             'user_agent' => $request->userAgent(),
             'type' => 'login'
         ]);
+
+        // Hubungkan log IP mencurigakan yang belum ter-link ke akun ini.
+        // Terjadi saat user melakukan aktivitas mencurigakan SEBELUM login —
+        // log dibuat tanpa user_id, lalu user berhasil login dari IP yang sama.
+        try {
+            IpLog::where('ip_address', $request->ip())
+                ->whereIn('status', ['suspicious', 'abnormal'])
+                ->whereNull('user_id')
+                ->update(['user_id' => $user->id_user]);
+        } catch (\Throwable $e) {}
 
         if ($request->query('role') === 'penjual' && ($user->role->role_name ?? null) === 'pembeli') {
             return redirect()->route('pembeli.seller.registration.create');

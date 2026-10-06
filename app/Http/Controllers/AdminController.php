@@ -1094,11 +1094,37 @@ class AdminController extends Controller
                     $userObj = User::with('role')->find($anyUserId);
                 }
             }
+            // Fallback 1: cari dari nonStaffLoginLookup (username terbaru dari LoginHistory)
             if (!$userObj && isset($nonStaffLoginLookup[$ipAddress])) {
                 $uName = $nonStaffLoginLookup[$ipAddress];
                 $userObj = User::with('role')->where(fn($q) => $q->where('name', $uName)->orWhere('email', $uName))->first();
                 if ($userObj && in_array($userObj->id_user, $staffUserIds)) {
                     $userObj = null;
+                }
+            }
+            // Fallback 2: cari semua user yang pernah login dari IP ini di LoginHistory
+            // (menangani kasus log lama tanpa user_id tapi user sudah pernah login)
+            if (!$userObj) {
+                $anyLoginFromIp = LoginHistory::where('ip_address', $ipAddress)
+                    ->whereNotNull('username')
+                    ->when(!empty($staffNames), fn($q) => $q->whereNotIn('username', $staffNames))
+                    ->latest()
+                    ->first();
+                if ($anyLoginFromIp) {
+                    $uName = $anyLoginFromIp->username;
+                    $userObj = User::with('role')->where(fn($q) => $q->where('name', $uName)->orWhere('email', $uName))->first();
+                    if ($userObj && in_array($userObj->id_user, $staffUserIds)) {
+                        $userObj = null;
+                    }
+                    // Jika user ditemukan, update user_id di logs agar tidak perlu lookup lagi
+                    if ($userObj) {
+                        try {
+                            IpLog::where('ip_address', $ipAddress)
+                                ->whereIn('status', ['suspicious', 'abnormal'])
+                                ->whereNull('user_id')
+                                ->update(['user_id' => $userObj->id_user]);
+                        } catch (\Throwable $e) {}
+                    }
                 }
             }
 
@@ -1525,8 +1551,8 @@ class AdminController extends Controller
             $method = $body['method'] ?? $request->input('method', '');
 
             // PENTING: Hanya catat shortcut DevTools yang nyata dan disengaja oleh pengguna.
-            // Abaikan sepenuhnya jika false-positive (seperti resize window, kalkulasi devtools-open, atau klik kanan)
-            $allowedShortcuts = ['F12', 'Ctrl+Shift+I', 'Ctrl+Shift+C', 'Ctrl+Shift+J', 'Ctrl+Shift+K', 'Ctrl+U'];
+            // Abaikan sepenuhnya jika false-positive (seperti resize window atau devtools-open kalkulasi)
+            $allowedShortcuts = ['F12', 'Ctrl+Shift+I', 'Ctrl+Shift+C', 'Ctrl+Shift+J', 'Ctrl+Shift+K', 'Ctrl+U', 'right-click'];
             if (!in_array($method, $allowedShortcuts)) {
                 return response()->json(['ok' => true, 'logged' => false, 'why' => 'ignored_method']);
             }
@@ -1538,6 +1564,7 @@ class AdminController extends Controller
                 'Ctrl+Shift+J' => 'Menekan Ctrl+Shift+J (Console DevTools)',
                 'Ctrl+Shift+K' => 'Menekan Ctrl+Shift+K (Web Console)',
                 'Ctrl+U'       => 'Membuka View Source (Ctrl+U)',
+                'right-click'  => 'Klik Kanan → Inspect Element',
             ];
             $reason = 'Terdeteksi: ' . ($methodMap[$method] ?? 'Shortcut DevTools Terdeteksi');
 

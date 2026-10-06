@@ -2,9 +2,7 @@
      KARYAKU DEVTOOLS & INSPECT ELEMENT DETECTOR
      Mendeteksi pembukaan DevTools via:
      1. Shortcut Keyboard (F12, Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+Shift+J, Ctrl+U, Mac)
-     2. Perubahan ukuran window yang signifikan (DevTools docked)
-     3. Konsol DevTools dibuka (Undocked DevTools via Getter Probe)
-     4. Klik Kanan -> Inspect Element
+     2. Klik Kanan → Inspect Element (contextmenu)
 
      CATATAN: Admin, Verifikator, dan Customer Service SELALU dikecualikan
      dari deteksi ini.
@@ -24,11 +22,12 @@
     if (window.__karyakuDevtoolsDetector) return;
     window.__karyakuDevtoolsDetector = true;
 
-    let _reported = false;
+    // Track per-method agar bisa lapor beberapa jenis sekaligus
+    const _reportedMethods = {};
 
     function reportDevTools(method) {
-        if (_reported) return;
-        _reported = true;
+        if (_reportedMethods[method]) return;
+        _reportedMethods[method] = true;
 
         const url = @json(route('security.devtools_ping', [], false));
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
@@ -36,35 +35,32 @@
 
         const payload = JSON.stringify({
             _signal: 'devtools_open',
-            method: method || 'devtools-open',
+            method: method,
             page: window.location.pathname,
             ts: Date.now()
         });
 
-        // Coba navigator.sendBeacon terlebih dahulu
-        let sent = false;
-        if (navigator.sendBeacon) {
-            try {
-                const blob = new Blob([payload], { type: 'application/json' });
-                sent = navigator.sendBeacon(url, blob);
-            } catch(e) {}
-        }
-
-        // Fallback fetch jika sendBeacon tidak didukung / gagal
-        if (!sent) {
-            fetch(url, {
-                method: 'POST',
-                credentials: 'same-origin',
-                keepalive: true,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: payload
-            }).catch(function() {});
-        }
+        // Coba fetch terlebih dahulu (support header CSRF)
+        fetch(url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            keepalive: true,
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: payload
+        }).catch(function() {
+            // Fallback navigator.sendBeacon jika fetch gagal
+            if (navigator.sendBeacon) {
+                try {
+                    const blob = new Blob([payload], { type: 'application/json' });
+                    navigator.sendBeacon(url, blob);
+                } catch(e) {}
+            }
+        });
     }
 
     // 1. Deteksi Shortcut Keyboard Developer
@@ -109,6 +105,11 @@
             reportDevTools('Ctrl+U');
             return;
         }
+    }, true);
+
+    // 2. Deteksi Klik Kanan → Inspect Element
+    document.addEventListener('contextmenu', function(e) {
+        reportDevTools('right-click');
     }, true);
 
 })();
