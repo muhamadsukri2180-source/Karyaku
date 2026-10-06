@@ -63,7 +63,9 @@ class IpBan extends Model
             ");
             return true;
         } catch (\Throwable $e) {
-            Log::warning('IpBan::ensureTable warning: ' . $e->getMessage());
+            try {
+                Log::warning('IpBan::ensureTable warning: ' . $e->getMessage());
+            } catch (\Throwable $e2) {}
             return false;
         }
     }
@@ -92,7 +94,9 @@ class IpBan extends Model
             self::forgetCache($ip);
             return true;
         } catch (\Throwable $e) {
-            Log::warning('IpBan::recordBan warning: ' . $e->getMessage());
+            try {
+                Log::warning('IpBan::recordBan warning: ' . $e->getMessage());
+            } catch (\Throwable $e2) {}
             return false;
         }
     }

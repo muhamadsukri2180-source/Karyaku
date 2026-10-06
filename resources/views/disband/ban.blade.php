@@ -123,7 +123,7 @@
             </div>
         @endif
 
-        @if($errors->any())
+        @if(isset($errors) && $errors->any())
             <div class="mb-6 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold p-4">
                 <ul class="list-disc list-inside space-y-1">
                     @foreach($errors->all() as $error)

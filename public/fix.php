@@ -99,6 +99,9 @@ try {
 
         // 3. Clear cache aplikasi
         \Illuminate\Support\Facades\Artisan::call('cache:clear');
+        \Illuminate\Support\Facades\Artisan::call('view:clear');
+        \Illuminate\Support\Facades\Artisan::call('route:clear');
+        \Illuminate\Support\Facades\Artisan::call('config:clear');
     }
 } catch (\Throwable $e) {
     $errors[] = "DB/Artisan Notice: " . $e->getMessage();

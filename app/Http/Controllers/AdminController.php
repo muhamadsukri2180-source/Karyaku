@@ -888,6 +888,17 @@ class AdminController extends Controller
             }
         } catch (\Throwable $e) {}
 
+        // Periksa apakah kolom user_id ada di database (Self-Healing Migration jika belum ter-migrate)
+        $hasUserIdCol = Schema::hasColumn('ip_logs', 'user_id');
+        if (!$hasUserIdCol) {
+            try {
+                Schema::table('ip_logs', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->unsignedBigInteger('user_id')->nullable()->after('ip_address');
+                });
+                $hasUserIdCol = true;
+            } catch (\Throwable $e) {}
+        }
+
         // 2. Pembersihan otomatis log false-positive (seperti resize window, klik kanan, atau devtools staff)
         try {
             IpLog::where(function($q) {
@@ -915,18 +926,6 @@ class AdminController extends Controller
             ->get()
             ->groupBy('ip_address')
             ->map(fn($items) => $items->first()->username);
-
-
-        // Periksa apakah kolom user_id ada di database (Self-Healing Migration jika belum ter-migrate)
-        $hasUserIdCol = Schema::hasColumn('ip_logs', 'user_id');
-        if (!$hasUserIdCol) {
-            try {
-                Schema::table('ip_logs', function (\Illuminate\Database\Schema\Blueprint $table) {
-                    $table->unsignedBigInteger('user_id')->nullable()->after('ip_address');
-                });
-                $hasUserIdCol = true;
-            } catch (\Throwable $e) {}
-        }
 
         // Query log mencurigakan secara aman (tidak akan error meskipun kolom user_id belum ada)
         $suspiciousQuery = IpLog::query();
