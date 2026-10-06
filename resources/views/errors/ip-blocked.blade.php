@@ -102,24 +102,34 @@
 
         <!-- Icon & Title -->
         <div class="text-center mb-5">
-            <div class="relative inline-flex items-center justify-center mb-4">
-                <div class="w-20 h-20 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center shadow-sm relative">
-                    <span class="absolute inset-0 rounded-2xl bg-red-200/50 animate-ping opacity-20"></span>
-                    <i class="{{ $reasonData['icon'] }} text-4xl text-red-500"></i>
+            <div class="flex flex-col items-center justify-center mb-4">
+                <!-- Logo Box dengan aksen ban -->
+                <div class="relative mb-3.5">
+                    <div class="w-20 h-20 rounded-2xl bg-white border border-red-200/80 shadow-md flex items-center justify-center p-3 relative overflow-hidden">
+                        <span class="absolute inset-0 bg-red-500/10 animate-pulse pointer-events-none"></span>
+                        <img src="{{ asset('image/logo.png') }}" alt="Logo Karyaku" class="w-12 h-12 object-contain relative z-10 drop-shadow-sm">
+                    </div>
+                    <!-- Badge status ban kecil di sudut -->
+                    <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center text-[10px] shadow-md border-2 border-white z-20">
+                        <i class="fa-solid fa-ban"></i>
+                    </div>
                 </div>
-                <div class="absolute -bottom-2 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-0.5 rounded-full shadow border border-red-400">
-                    {{ $reasonData['label'] }}
+
+                <!-- Label Kategori Pelanggaran (Diberi jarak lega agar tidak rapat) -->
+                <div class="inline-flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-600 px-4 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider shadow-2xs">
+                    <i class="{{ $reasonData['icon'] }} text-xs"></i>
+                    <span>{{ $reasonData['label'] }}</span>
                 </div>
             </div>
 
-            <h2 class="font-display text-xl font-extrabold text-slate-900 tracking-tight mt-3">
+            <h2 class="font-display text-xl font-extrabold text-slate-900 tracking-tight mt-1">
                 {{ $reasonData['title'] }}
             </h2>
 
-            <div class="mt-3 mb-4 p-3 rounded-xl bg-red-50 border border-red-100">
-                <p class="text-xs font-semibold text-red-700 leading-relaxed">
-                    <i class="fa-solid fa-triangle-exclamation text-red-400 mr-1.5"></i>
-                    {{ $reasonData['headline'] }}
+            <div class="mt-3 mb-4 p-3.5 rounded-2xl bg-red-50 border border-red-100 text-left">
+                <p class="text-xs font-semibold text-red-700 leading-relaxed flex items-start gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm mt-0.5 shrink-0"></i>
+                    <span>{{ $reasonData['headline'] }}</span>
                 </p>
             </div>
 
@@ -137,7 +147,7 @@
                 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <i class="fa-solid fa-user-tag text-sky text-xs"></i> Akun Terkait
                 </span>
-                <span class="text-xs font-bold text-slate-800 bg-white px-2.5 py-1 rounded-lg border border-sky-100 flex items-center gap-1.5">
+                <span class="text-xs font-bold text-slate-800 bg-white px-3 py-1.5 rounded-xl border border-sky-100 flex items-center gap-1.5 shadow-2xs">
                     <i class="fa-solid fa-circle-user text-sky"></i>
                     <span>{{ $username }}</span>
                     @if(!empty($email))
@@ -152,7 +162,7 @@
                 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <i class="fa-solid fa-network-wired text-sky text-xs"></i> Alamat IP
                 </span>
-                <span class="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
+                <span class="font-mono text-xs font-bold text-blue-700 bg-white px-3 py-1.5 rounded-xl border border-blue-200 shadow-2xs">
                     {{ $displayIp }}
                 </span>
             </div>
@@ -162,19 +172,20 @@
                 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <i class="fa-solid fa-shield-halved text-sky text-xs"></i> Kategori Pelanggaran
                 </span>
-                <span class="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100">
+                <span class="text-xs font-bold text-amber-800 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200 shadow-2xs">
                     {{ $reasonData['label'] }}
                 </span>
             </div>
 
-            <!-- Rincian -->
-            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-1 pb-3 border-b border-sky-200/50">
-                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 shrink-0 mt-0.5">
-                    <i class="fa-solid fa-circle-info text-sky text-xs"></i> Rincian
+            <!-- Rincian Pelanggaran (Tata letak rapi & lega) -->
+            <div class="pb-3 border-b border-sky-200/50 space-y-1.5">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-info text-sky text-xs"></i> Rincian Pelanggaran
                 </span>
-                <span class="text-xs font-medium text-slate-700 text-left sm:text-right bg-white px-2.5 py-1 rounded-lg border border-sky-100 break-words">
-                    {{ $reasonData['detail'] }}
-                </span>
+                <div class="bg-white p-3 rounded-xl border border-sky-100 text-xs font-medium text-slate-700 leading-relaxed shadow-2xs flex items-start gap-2">
+                    <i class="fa-solid fa-caret-right text-sky text-xs mt-0.5 shrink-0"></i>
+                    <span class="break-words">{{ $reasonData['detail'] }}</span>
+                </div>
             </div>
 
             <!-- Waktu -->
@@ -182,7 +193,7 @@
                 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <i class="fa-solid fa-clock text-slate-400 text-xs"></i> Waktu Pemblokiran
                 </span>
-                <span class="font-mono text-xs text-slate-600">
+                <span class="font-mono text-xs text-slate-600 bg-white px-2.5 py-1 rounded-lg border border-sky-100">
                     {{ $blocked_at ?? now()->translatedFormat('d M Y, H:i') . ' WIB' }}
                 </span>
             </div>
@@ -192,7 +203,7 @@
                 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <i class="fa-solid fa-fingerprint text-slate-400 text-xs"></i> Ref. Insiden
                 </span>
-                <span class="font-mono text-[11px] text-slate-400">
+                <span class="font-mono text-[11px] text-slate-400 bg-white px-2 py-0.5 rounded-lg border border-sky-100">
                     SEC-{{ strtoupper($reasonData['category']) }}-{{ strtoupper(substr(md5($displayIp . ($username ?? '') . config('app.key', 'karyaku-secret')), 0, 8)) }}
                 </span>
             </div>
