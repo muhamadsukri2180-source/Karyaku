@@ -201,7 +201,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 
     //route fitur clear cache
-    Route::post('/clear-cache', [AdminController::class, 'clearCache'])->name('clearCache');
+    Route::match(['get', 'post'], '/clear-cache', [AdminController::class, 'clearCache'])->name('clearCache');
     Route::post('/optimize', [AdminController::class, 'optimizeApp'])->name('optimize');
 
 

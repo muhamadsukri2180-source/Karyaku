@@ -129,12 +129,19 @@ class AdminController extends Controller
             }
         }
 
+        $cacheDetailsFile = storage_path('framework/cache_cleared_details.json');
+        $lastCacheDetails = null;
+        if (file_exists($cacheDetailsFile)) {
+            $lastCacheDetails = json_decode(file_get_contents($cacheDetailsFile), true);
+        }
+
         return view('admin.sistem.maintenance', [
             'isMaintenance' => app()->isDownForMaintenance(),
             'currentMode' => $currentMode,
             'currentEndAt' => $currentEndAt,
             'backups' => $backups,
             'lastCacheClearedAt' => $lastCacheClearedAt,
+            'lastCacheDetails' => $lastCacheDetails,
         ]);
     }
 
@@ -1636,101 +1643,376 @@ class AdminController extends Controller
         return response()->json(['ok' => false, 'logged' => false]);
     }
 
+    /**
+     * Scan and physically remove cache files with detailed audit trail.
+     */
+    protected function performPhysicalClear(string $type): array
+    {
+        $filesDeleted = [];
+        $totalBytes = 0;
+        $targetDesc = '';
+
+        switch ($type) {
+            case 'config':
+                $targetDesc = 'bootstrap/cache/config.php';
+                $configPath = base_path('bootstrap/cache/config.php');
+                if (file_exists($configPath) && is_file($configPath)) {
+                    $size = filesize($configPath) ?: 0;
+                    $mtime = filemtime($configPath);
+                    $filesDeleted[] = [
+                        'name' => 'config.php',
+                        'path' => 'bootstrap/cache/config.php',
+                        'size' => $size,
+                        'size_formatted' => $this->formatBytes($size),
+                        'modified_at' => $mtime ? Carbon::createFromTimestamp($mtime, 'Asia/Jakarta')->translatedFormat('d M Y, H:i:s') . ' WIB' : '-',
+                    ];
+                    $totalBytes += $size;
+                }
+
+                try {
+                    Artisan::call('config:clear');
+                } catch (\Throwable $e) {}
+
+                if (file_exists($configPath) && is_file($configPath)) {
+                    @unlink($configPath);
+                }
+                @clearstatcache(true, $configPath);
+                break;
+
+            case 'route':
+                $targetDesc = 'bootstrap/cache/routes-v7.php, routes.php';
+                $routeFiles = [
+                    base_path('bootstrap/cache/routes-v7.php') => 'bootstrap/cache/routes-v7.php',
+                    base_path('bootstrap/cache/routes.php') => 'bootstrap/cache/routes.php',
+                ];
+
+                foreach ($routeFiles as $fullPath => $relPath) {
+                    if (file_exists($fullPath) && is_file($fullPath)) {
+                        $size = filesize($fullPath) ?: 0;
+                        $mtime = filemtime($fullPath);
+                        $filesDeleted[] = [
+                            'name' => basename($fullPath),
+                            'path' => $relPath,
+                            'size' => $size,
+                            'size_formatted' => $this->formatBytes($size),
+                            'modified_at' => $mtime ? Carbon::createFromTimestamp($mtime, 'Asia/Jakarta')->translatedFormat('d M Y, H:i:s') . ' WIB' : '-',
+                        ];
+                        $totalBytes += $size;
+                    }
+                }
+
+                try {
+                    Artisan::call('route:clear');
+                } catch (\Throwable $e) {}
+
+                foreach ($routeFiles as $fullPath => $relPath) {
+                    if (file_exists($fullPath) && is_file($fullPath)) {
+                        @unlink($fullPath);
+                        @clearstatcache(true, $fullPath);
+                    }
+                }
+                break;
+
+            case 'view':
+                $targetDesc = 'storage/framework/views/*.php';
+                $viewsDir = storage_path('framework/views');
+                if (is_dir($viewsDir)) {
+                    $items = @scandir($viewsDir) ?: [];
+                    foreach ($items as $item) {
+                        if ($item === '.' || $item === '..' || $item === '.gitignore') continue;
+                        $fullPath = $viewsDir . DIRECTORY_SEPARATOR . $item;
+                        if (is_file($fullPath)) {
+                            $size = filesize($fullPath) ?: 0;
+                            $mtime = filemtime($fullPath);
+                            $filesDeleted[] = [
+                                'name' => $item,
+                                'path' => 'storage/framework/views/' . $item,
+                                'size' => $size,
+                                'size_formatted' => $this->formatBytes($size),
+                                'modified_at' => $mtime ? Carbon::createFromTimestamp($mtime, 'Asia/Jakarta')->translatedFormat('d M Y, H:i:s') . ' WIB' : '-',
+                            ];
+                            $totalBytes += $size;
+                        }
+                    }
+                }
+
+                try {
+                    Artisan::call('view:clear');
+                } catch (\Throwable $e) {}
+
+                if (is_dir($viewsDir)) {
+                    $remaining = @scandir($viewsDir) ?: [];
+                    foreach ($remaining as $item) {
+                        if ($item === '.' || $item === '..' || $item === '.gitignore') continue;
+                        $fullPath = $viewsDir . DIRECTORY_SEPARATOR . $item;
+                        if (is_file($fullPath)) {
+                            @unlink($fullPath);
+                        }
+                    }
+                }
+                @clearstatcache(true);
+                break;
+
+            case 'event':
+                $targetDesc = 'bootstrap/cache/events.php & Expired Sessions';
+                $eventPath = base_path('bootstrap/cache/events.php');
+                if (file_exists($eventPath) && is_file($eventPath)) {
+                    $size = filesize($eventPath) ?: 0;
+                    $mtime = filemtime($eventPath);
+                    $filesDeleted[] = [
+                        'name' => 'events.php',
+                        'path' => 'bootstrap/cache/events.php',
+                        'size' => $size,
+                        'size_formatted' => $this->formatBytes($size),
+                        'modified_at' => $mtime ? Carbon::createFromTimestamp($mtime, 'Asia/Jakarta')->translatedFormat('d M Y, H:i:s') . ' WIB' : '-',
+                    ];
+                    $totalBytes += $size;
+                }
+
+                try {
+                    Artisan::call('event:clear');
+                } catch (\Throwable $e) {}
+
+                if (file_exists($eventPath) && is_file($eventPath)) {
+                    @unlink($eventPath);
+                    @clearstatcache(true, $eventPath);
+                }
+
+                try {
+                    if (Schema::hasTable('sessions')) {
+                        DB::table('sessions')
+                            ->where('last_activity', '<', now()->subMinutes(config('session.lifetime', 120))->getTimestamp())
+                            ->delete();
+                    }
+                } catch (\Throwable $e) {}
+
+                $sessionsDir = storage_path('framework/sessions');
+                if (is_dir($sessionsDir) && config('session.driver') === 'file') {
+                    $lifetimeSec = config('session.lifetime', 120) * 60;
+                    $sItems = @scandir($sessionsDir) ?: [];
+                    foreach ($sItems as $sItem) {
+                        if ($sItem === '.' || $sItem === '..' || $sItem === '.gitignore') continue;
+                        $sFullPath = $sessionsDir . DIRECTORY_SEPARATOR . $sItem;
+                        if (is_file($sFullPath)) {
+                            $mtime = filemtime($sFullPath);
+                            if ($mtime && (time() - $mtime > $lifetimeSec)) {
+                                $sSize = filesize($sFullPath) ?: 0;
+                                $filesDeleted[] = [
+                                    'name' => $sItem,
+                                    'path' => 'storage/framework/sessions/' . $sItem,
+                                    'size' => $sSize,
+                                    'size_formatted' => $this->formatBytes($sSize),
+                                    'modified_at' => Carbon::createFromTimestamp($mtime, 'Asia/Jakarta')->translatedFormat('d M Y, H:i:s') . ' WIB',
+                                ];
+                                $totalBytes += $sSize;
+                                @unlink($sFullPath);
+                            }
+                        }
+                    }
+                }
+                break;
+
+            case 'app':
+                $targetDesc = 'storage/framework/cache/data/** & Database Cache';
+                $cacheDataDir = storage_path('framework/cache/data');
+                if (is_dir($cacheDataDir)) {
+                    $iterator = new \RecursiveIteratorIterator(
+                        new \RecursiveDirectoryIterator($cacheDataDir, \FilesystemIterator::SKIP_DOTS),
+                        \RecursiveIteratorIterator::CHILD_FIRST
+                    );
+                    foreach ($iterator as $item) {
+                        if ($item->isFile() && $item->getFilename() !== '.gitignore') {
+                            $size = $item->getSize() ?: 0;
+                            $mtime = $item->getMTime();
+                            $relPath = 'storage/framework/cache/data/' . str_replace('\\', '/', substr($item->getPathname(), strlen($cacheDataDir) + 1));
+                            $filesDeleted[] = [
+                                'name' => $item->getFilename(),
+                                'path' => $relPath,
+                                'size' => $size,
+                                'size_formatted' => $this->formatBytes($size),
+                                'modified_at' => $mtime ? Carbon::createFromTimestamp($mtime, 'Asia/Jakarta')->translatedFormat('d M Y, H:i:s') . ' WIB' : '-',
+                            ];
+                            $totalBytes += $size;
+                        }
+                    }
+                }
+
+                try {
+                    Artisan::call('cache:clear');
+                } catch (\Throwable $e) {}
+
+                try {
+                    if (Schema::hasTable('cache')) DB::table('cache')->delete();
+                    if (Schema::hasTable('cache_locks')) DB::table('cache_locks')->delete();
+                } catch (\Throwable $e) {}
+
+                if (is_dir($cacheDataDir)) {
+                    $iterator = new \RecursiveIteratorIterator(
+                        new \RecursiveDirectoryIterator($cacheDataDir, \FilesystemIterator::SKIP_DOTS),
+                        \RecursiveIteratorIterator::CHILD_FIRST
+                    );
+                    foreach ($iterator as $item) {
+                        if ($item->isFile() && $item->getFilename() !== '.gitignore') {
+                            @unlink($item->getPathname());
+                        } elseif ($item->isDir()) {
+                            @rmdir($item->getPathname());
+                        }
+                    }
+                }
+
+                if (function_exists('opcache_reset')) {
+                    @opcache_reset();
+                }
+                @clearstatcache(true);
+                break;
+        }
+
+        return [
+            'step' => $type,
+            'name' => match ($type) {
+                'app' => 'App Cache',
+                'config' => 'Config Cache',
+                'route' => 'Route Cache',
+                'view' => 'View Cache',
+                'event' => 'Event Cache',
+                default => ucfirst($type) . ' Cache'
+            },
+            'target_desc' => $targetDesc,
+            'files_count' => count($filesDeleted),
+            'files_deleted' => $filesDeleted,
+            'total_size' => $totalBytes,
+            'total_size_formatted' => $this->formatBytes($totalBytes),
+            'status' => 'success',
+            'label' => count($filesDeleted) > 0 ? (count($filesDeleted) . ' File Dihapus (' . $this->formatBytes($totalBytes) . ')') : 'Bersih (0 File)'
+        ];
+    }
+
     public function clearCache(Request $request)
     {
         $step = $request->input('step');
 
+        if ($step === 'details') {
+            $detailsFile = storage_path('framework/cache_cleared_details.json');
+            if (file_exists($detailsFile)) {
+                return response()->json([
+                    'success' => true,
+                    'details' => json_decode(file_get_contents($detailsFile), true)
+                ]);
+            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Belum ada bukti pembersihan cache yang tersimpan.'
+            ], 404);
+        }
+
         if ($step) {
             try {
-                switch ($step) {
-                    case 'app':
-                        Artisan::call('cache:clear');
-                        if (Schema::hasTable('cache')) DB::table('cache')->delete();
-                        if (Schema::hasTable('cache_locks')) DB::table('cache_locks')->delete();
-                        return response()->json(['success' => true, 'step' => 'app', 'name' => 'App Cache', 'label' => 'Bersih']);
+                if (in_array($step, ['app', 'config', 'route', 'view', 'event'])) {
+                    $result = $this->performPhysicalClear($step);
 
-                    case 'config':
-                        Artisan::call('config:clear');
-                        return response()->json(['success' => true, 'step' => 'config', 'name' => 'Config Cache', 'label' => 'Bersih']);
+                    // Update staging file
+                    $stagingFile = storage_path('framework/cache_cleared_staging.json');
+                    $staging = file_exists($stagingFile) ? json_decode(file_get_contents($stagingFile), true) : [];
+                    if (!is_array($staging)) $staging = [];
+                    $staging[$step] = $result;
+                    @file_put_contents($stagingFile, json_encode($staging, JSON_PRETTY_PRINT));
 
-                    case 'route':
-                        Artisan::call('route:clear');
-                        return response()->json(['success' => true, 'step' => 'route', 'name' => 'Route Cache', 'label' => 'Bersih']);
-
-                    case 'view':
-                        Artisan::call('view:clear');
-                        return response()->json(['success' => true, 'step' => 'view', 'name' => 'View Cache', 'label' => 'Bersih']);
-
-                    case 'event':
-                        Artisan::call('event:clear');
-                        if (Schema::hasTable('sessions')) {
-                            DB::table('sessions')
-                                ->where('last_activity', '<', now()->subMinutes(config('session.lifetime', 120))->getTimestamp())
-                                ->delete();
-                        }
-                        return response()->json(['success' => true, 'step' => 'event', 'name' => 'Event Cache', 'label' => 'Bersih']);
-
-                    case 'finish':
-                        $now = now('Asia/Jakarta');
-                        file_put_contents(storage_path('framework/cache_cleared_at.json'), json_encode([
-                            'cleared_at' => $now->toIso8601String(),
-                            'by' => auth()->user()->name ?? 'Admin',
-                        ], JSON_PRETTY_PRINT));
-
-                        try {
-                            $this->sendNotif(null, '🧹 Cache Dibersihkan', 'Admin membersihkan cache aplikasi.');
-                        } catch (\Throwable $e) {}
-
-                        return response()->json([
-                            'success' => true,
-                            'step' => 'finish',
-                            'cleared_at' => $now->toIso8601String(),
-                            'cleared_at_formatted' => $now->translatedFormat('d M Y, H:i') . ' WIB',
-                            'message' => 'Cache aplikasi berhasil dibersihkan sepenuhnya.'
-                        ]);
-
-                    default:
-                        return response()->json(['success' => false, 'message' => 'Step tidak dikenali.'], 400);
+                    return response()->json([
+                        'success' => true,
+                        'step' => $step,
+                        'name' => $result['name'],
+                        'label' => $result['label'],
+                        'target_desc' => $result['target_desc'],
+                        'files_count' => $result['files_count'],
+                        'total_size' => $result['total_size'],
+                        'total_size_formatted' => $result['total_size_formatted'],
+                        'files_deleted' => $result['files_deleted'],
+                    ]);
                 }
+
+                if ($step === 'finish') {
+                    $now = now('Asia/Jakarta');
+                    $stagingFile = storage_path('framework/cache_cleared_staging.json');
+                    $staging = file_exists($stagingFile) ? json_decode(file_get_contents($stagingFile), true) : [];
+                    if (!is_array($staging)) $staging = [];
+
+                    $totalFiles = 0;
+                    $totalBytes = 0;
+                    foreach ($staging as $sData) {
+                        $totalFiles += (int) ($sData['files_count'] ?? 0);
+                        $totalBytes += (int) ($sData['total_size'] ?? 0);
+                    }
+
+                    $auditData = [
+                        'cleared_at' => $now->toIso8601String(),
+                        'cleared_at_formatted' => $now->translatedFormat('d M Y, H:i') . ' WIB',
+                        'by' => auth()->user()->name ?? 'Admin',
+                        'total_files' => $totalFiles,
+                        'total_size' => $totalBytes,
+                        'total_size_formatted' => $this->formatBytes($totalBytes),
+                        'steps' => $staging,
+                    ];
+
+                    file_put_contents(storage_path('framework/cache_cleared_at.json'), json_encode([
+                        'cleared_at' => $now->toIso8601String(),
+                        'by' => auth()->user()->name ?? 'Admin',
+                    ], JSON_PRETTY_PRINT));
+
+                    file_put_contents(storage_path('framework/cache_cleared_details.json'), json_encode($auditData, JSON_PRETTY_PRINT));
+
+                    @unlink($stagingFile);
+
+                    try {
+                        $this->sendNotif(null, '🧹 Cache Dibersihkan', 'Admin membersihkan cache aplikasi.');
+                    } catch (\Throwable $e) {}
+
+                    return response()->json([
+                        'success' => true,
+                        'step' => 'finish',
+                        'cleared_at' => $now->toIso8601String(),
+                        'cleared_at_formatted' => $now->translatedFormat('d M Y, H:i') . ' WIB',
+                        'total_files' => $totalFiles,
+                        'total_size_formatted' => $this->formatBytes($totalBytes),
+                        'audit' => $auditData,
+                        'message' => 'Cache aplikasi berhasil dibersihkan sepenuhnya.'
+                    ]);
+                }
+
+                return response()->json(['success' => false, 'message' => 'Step tidak dikenali.'], 400);
             } catch (\Throwable $e) {
                 return response()->json(['success' => false, 'step' => $step, 'message' => $e->getMessage()], 500);
             }
         }
 
         $res = [];
-        $tasks = [
-            'App Cache' => function () {
-                Artisan::call('cache:clear');
-                if (Schema::hasTable('cache')) DB::table('cache')->delete();
-                if (Schema::hasTable('cache_locks')) DB::table('cache_locks')->delete();
-            },
-            'Config Cache' => fn() => Artisan::call('config:clear'),
-            'Route Cache' => fn() => Artisan::call('route:clear'),
-            'View Cache' => fn() => Artisan::call('view:clear'),
-            'Event Cache' => function () {
-                Artisan::call('event:clear');
-                if (Schema::hasTable('sessions')) {
-                    DB::table('sessions')
-                        ->where('last_activity', '<', now()->subMinutes(config('session.lifetime', 120))->getTimestamp())
-                        ->delete();
-                }
-            },
-        ];
-
-        foreach ($tasks as $name => $task) {
-            try {
-                $task();
-                $res[] = "$name: bersih";
-            } catch (\Throwable $e) {
-                if ($name !== 'Event Cache') $res[] = "$name: gagal";
-            }
+        $staging = [];
+        $totalFiles = 0;
+        $totalBytes = 0;
+        foreach (['app', 'config', 'route', 'view', 'event'] as $s) {
+            $stepResult = $this->performPhysicalClear($s);
+            $staging[$s] = $stepResult;
+            $totalFiles += (int) ($stepResult['files_count'] ?? 0);
+            $totalBytes += (int) ($stepResult['total_size'] ?? 0);
+            $res[] = "{$stepResult['name']}: " . ($stepResult['files_count'] > 0 ? "{$stepResult['files_count']} file" : "bersih");
         }
 
         $now = now('Asia/Jakarta');
+        $auditData = [
+            'cleared_at' => $now->toIso8601String(),
+            'cleared_at_formatted' => $now->translatedFormat('d M Y, H:i') . ' WIB',
+            'by' => auth()->user()->name ?? 'Admin',
+            'total_files' => $totalFiles,
+            'total_size' => $totalBytes,
+            'total_size_formatted' => $this->formatBytes($totalBytes),
+            'steps' => $staging,
+        ];
+
         file_put_contents(storage_path('framework/cache_cleared_at.json'), json_encode([
             'cleared_at' => $now->toIso8601String(),
             'by' => auth()->user()->name ?? 'Admin',
         ], JSON_PRETTY_PRINT));
+
+        file_put_contents(storage_path('framework/cache_cleared_details.json'), json_encode($auditData, JSON_PRETTY_PRINT));
 
         try {
             $this->sendNotif(null, '🧹 Cache Dibersihkan', 'Admin membersihkan cache aplikasi.');
@@ -1741,6 +2023,9 @@ class AdminController extends Controller
                 'success' => true,
                 'message' => 'Cache berhasil dibersihkan',
                 'cleared_at_formatted' => $now->translatedFormat('d M Y, H:i') . ' WIB',
+                'total_files' => $totalFiles,
+                'total_size_formatted' => $this->formatBytes($totalBytes),
+                'audit' => $auditData,
                 'results' => $res,
             ]);
         }
