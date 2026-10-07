@@ -1,0 +1,888 @@
+{
+    "cleared_at": "2026-10-07T11:19:47+07:00",
+    "cleared_at_formatted": "07 Oct 2026, 11:19 WIB",
+    "by": "Admin",
+    "total_files": 117,
+    "total_size": 1844517,
+    "total_size_formatted": "1.76 MB",
+    "steps": {
+        "app": {
+            "step": "app",
+            "name": "App Cache",
+            "target_desc": "storage\/framework\/cache\/data\/** & Database Cache",
+            "files_count": 0,
+            "files_deleted": [],
+            "total_size": 0,
+            "total_size_formatted": "0 B",
+            "status": "success",
+            "label": "Bersih (0 File)"
+        },
+        "config": {
+            "step": "config",
+            "name": "Config Cache",
+            "target_desc": "bootstrap\/cache\/config.php",
+            "files_count": 1,
+            "files_deleted": [
+                {
+                    "name": "config.php",
+                    "path": "bootstrap\/cache\/config.php",
+                    "size": 28234,
+                    "size_formatted": "27.57 KB",
+                    "modified_at": "07 Oct 2026, 11:19:23 WIB"
+                }
+            ],
+            "total_size": 28234,
+            "total_size_formatted": "27.57 KB",
+            "status": "success",
+            "label": "1 File Dihapus (27.57 KB)"
+        },
+        "route": {
+            "step": "route",
+            "name": "Route Cache",
+            "target_desc": "bootstrap\/cache\/routes-v7.php, routes.php",
+            "files_count": 1,
+            "files_deleted": [
+                {
+                    "name": "routes-v7.php",
+                    "path": "bootstrap\/cache\/routes-v7.php",
+                    "size": 228383,
+                    "size_formatted": "223.03 KB",
+                    "modified_at": "07 Oct 2026, 11:19:24 WIB"
+                }
+            ],
+            "total_size": 228383,
+            "total_size_formatted": "223.03 KB",
+            "status": "success",
+            "label": "1 File Dihapus (223.03 KB)"
+        },
+        "view": {
+            "step": "view",
+            "name": "View Cache",
+            "target_desc": "storage\/framework\/views\/*.php",
+            "files_count": 85,
+            "files_deleted": [
+                {
+                    "name": "02a1c4097fd7c263c6f0ad559d30f727.php",
+                    "path": "storage\/framework\/views\/02a1c4097fd7c263c6f0ad559d30f727.php",
+                    "size": 56647,
+                    "size_formatted": "55.32 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "073a3d54bc0db9477fe3f98cf9fb075e.php",
+                    "path": "storage\/framework\/views\/073a3d54bc0db9477fe3f98cf9fb075e.php",
+                    "size": 1393,
+                    "size_formatted": "1.36 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "09f0280983571d8d9bdd24561d57f719.php",
+                    "path": "storage\/framework\/views\/09f0280983571d8d9bdd24561d57f719.php",
+                    "size": 4146,
+                    "size_formatted": "4.05 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "0cb1da465fd88cf0bf8e25146dfdc5d7.php",
+                    "path": "storage\/framework\/views\/0cb1da465fd88cf0bf8e25146dfdc5d7.php",
+                    "size": 32302,
+                    "size_formatted": "31.54 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "1292899780dfc92d49d72fc689f35774.php",
+                    "path": "storage\/framework\/views\/1292899780dfc92d49d72fc689f35774.php",
+                    "size": 29906,
+                    "size_formatted": "29.21 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "149e017b60efd74ac1d7f32845012250.php",
+                    "path": "storage\/framework\/views\/149e017b60efd74ac1d7f32845012250.php",
+                    "size": 12803,
+                    "size_formatted": "12.5 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "17bf45e49b9bf7e0271c65383a26a8a0.php",
+                    "path": "storage\/framework\/views\/17bf45e49b9bf7e0271c65383a26a8a0.php",
+                    "size": 2863,
+                    "size_formatted": "2.8 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "1e75b98841930e1d9a0eb255e3dea4c4.php",
+                    "path": "storage\/framework\/views\/1e75b98841930e1d9a0eb255e3dea4c4.php",
+                    "size": 5308,
+                    "size_formatted": "5.18 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "207919649032bd5de0ce2823dbc18b70.php",
+                    "path": "storage\/framework\/views\/207919649032bd5de0ce2823dbc18b70.php",
+                    "size": 39472,
+                    "size_formatted": "38.55 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "2296982d886ce269db94ac8637e679ec.php",
+                    "path": "storage\/framework\/views\/2296982d886ce269db94ac8637e679ec.php",
+                    "size": 15155,
+                    "size_formatted": "14.8 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "2353e0312e9bbc5c2c7e63cd1ae551c5.php",
+                    "path": "storage\/framework\/views\/2353e0312e9bbc5c2c7e63cd1ae551c5.php",
+                    "size": 17289,
+                    "size_formatted": "16.88 KB",
+                    "modified_at": "07 Oct 2026, 11:19:24 WIB"
+                },
+                {
+                    "name": "24d8ae2e774a9f758e6696c8eed250e4.php",
+                    "path": "storage\/framework\/views\/24d8ae2e774a9f758e6696c8eed250e4.php",
+                    "size": 9229,
+                    "size_formatted": "9.01 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "27d1bdfe8a646ab80e48933f59653311.php",
+                    "path": "storage\/framework\/views\/27d1bdfe8a646ab80e48933f59653311.php",
+                    "size": 11090,
+                    "size_formatted": "10.83 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "2890f097c21cb025e7e212541c85bac5.php",
+                    "path": "storage\/framework\/views\/2890f097c21cb025e7e212541c85bac5.php",
+                    "size": 11351,
+                    "size_formatted": "11.08 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "2b14c27a17c14d6a75d805c15d7aca13.php",
+                    "path": "storage\/framework\/views\/2b14c27a17c14d6a75d805c15d7aca13.php",
+                    "size": 8721,
+                    "size_formatted": "8.52 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "2d11595f4392ee6a43ad6399d0248c35.php",
+                    "path": "storage\/framework\/views\/2d11595f4392ee6a43ad6399d0248c35.php",
+                    "size": 20628,
+                    "size_formatted": "20.14 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "327bed82f9004dab6f9afb0b3ddff77e.php",
+                    "path": "storage\/framework\/views\/327bed82f9004dab6f9afb0b3ddff77e.php",
+                    "size": 32759,
+                    "size_formatted": "31.99 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "336c1a486aa2173abb44cf816111225c.php",
+                    "path": "storage\/framework\/views\/336c1a486aa2173abb44cf816111225c.php",
+                    "size": 17568,
+                    "size_formatted": "17.16 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "3415e9f032fd80b3244925b625d6af3c.php",
+                    "path": "storage\/framework\/views\/3415e9f032fd80b3244925b625d6af3c.php",
+                    "size": 28754,
+                    "size_formatted": "28.08 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "3595e393830b3e68015d298372c08cce.php",
+                    "path": "storage\/framework\/views\/3595e393830b3e68015d298372c08cce.php",
+                    "size": 9787,
+                    "size_formatted": "9.56 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "35d3d0d99ff9bc7ca35bf5cc2620b62e.php",
+                    "path": "storage\/framework\/views\/35d3d0d99ff9bc7ca35bf5cc2620b62e.php",
+                    "size": 9167,
+                    "size_formatted": "8.95 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "39ed96f1feba763214b04d19e75908d9.php",
+                    "path": "storage\/framework\/views\/39ed96f1feba763214b04d19e75908d9.php",
+                    "size": 15832,
+                    "size_formatted": "15.46 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "3cdd3d131d65b27866fca3f0357d5a7b.php",
+                    "path": "storage\/framework\/views\/3cdd3d131d65b27866fca3f0357d5a7b.php",
+                    "size": 76099,
+                    "size_formatted": "74.32 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "3d703983486df4298afa15071ed18df5.php",
+                    "path": "storage\/framework\/views\/3d703983486df4298afa15071ed18df5.php",
+                    "size": 8393,
+                    "size_formatted": "8.2 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "3e6aa809f4acef817e2db7f444d8db4a.php",
+                    "path": "storage\/framework\/views\/3e6aa809f4acef817e2db7f444d8db4a.php",
+                    "size": 6390,
+                    "size_formatted": "6.24 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "408ca0bc49fc5f2bae652c8395f1e213.php",
+                    "path": "storage\/framework\/views\/408ca0bc49fc5f2bae652c8395f1e213.php",
+                    "size": 17200,
+                    "size_formatted": "16.8 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "4642037cb067d090d7e807ddd9275f95.php",
+                    "path": "storage\/framework\/views\/4642037cb067d090d7e807ddd9275f95.php",
+                    "size": 9628,
+                    "size_formatted": "9.4 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "4806566cbc0eddfe12e3957372b6d386.php",
+                    "path": "storage\/framework\/views\/4806566cbc0eddfe12e3957372b6d386.php",
+                    "size": 11647,
+                    "size_formatted": "11.37 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "4bcac49872f07716308ce5302e8f85d0.php",
+                    "path": "storage\/framework\/views\/4bcac49872f07716308ce5302e8f85d0.php",
+                    "size": 39873,
+                    "size_formatted": "38.94 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "4cf05aafdef3ffb87383b851b5b25599.php",
+                    "path": "storage\/framework\/views\/4cf05aafdef3ffb87383b851b5b25599.php",
+                    "size": 70282,
+                    "size_formatted": "68.63 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "4d1e46c22af4f0e406965a9096a3b459.php",
+                    "path": "storage\/framework\/views\/4d1e46c22af4f0e406965a9096a3b459.php",
+                    "size": 5260,
+                    "size_formatted": "5.14 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "4d92787e9709648e5d94662112b2df3f.php",
+                    "path": "storage\/framework\/views\/4d92787e9709648e5d94662112b2df3f.php",
+                    "size": 11519,
+                    "size_formatted": "11.25 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "5692f3b11248e6cc71ae18be89bda060.php",
+                    "path": "storage\/framework\/views\/5692f3b11248e6cc71ae18be89bda060.php",
+                    "size": 9487,
+                    "size_formatted": "9.26 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "5c7d562eb6b2195a89b32a7ae6621581.php",
+                    "path": "storage\/framework\/views\/5c7d562eb6b2195a89b32a7ae6621581.php",
+                    "size": 9418,
+                    "size_formatted": "9.2 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "5ce1ca35f4d46cea0021cd54d0fcbddb.php",
+                    "path": "storage\/framework\/views\/5ce1ca35f4d46cea0021cd54d0fcbddb.php",
+                    "size": 1089,
+                    "size_formatted": "1.06 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "5d4f45ad5cf02e05b045883ea00a13c5.php",
+                    "path": "storage\/framework\/views\/5d4f45ad5cf02e05b045883ea00a13c5.php",
+                    "size": 2302,
+                    "size_formatted": "2.25 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "5d6f27f9ff714c8e9bd1422c0cdb9002.php",
+                    "path": "storage\/framework\/views\/5d6f27f9ff714c8e9bd1422c0cdb9002.php",
+                    "size": 47649,
+                    "size_formatted": "46.53 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "6062904888b3c863031370d93c9c8d93.php",
+                    "path": "storage\/framework\/views\/6062904888b3c863031370d93c9c8d93.php",
+                    "size": 5123,
+                    "size_formatted": "5 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "60a3706bc7471e83c17435d87f0a0a74.php",
+                    "path": "storage\/framework\/views\/60a3706bc7471e83c17435d87f0a0a74.php",
+                    "size": 30393,
+                    "size_formatted": "29.68 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "64d488537cfed06a3c7babc619af59ac.php",
+                    "path": "storage\/framework\/views\/64d488537cfed06a3c7babc619af59ac.php",
+                    "size": 7183,
+                    "size_formatted": "7.01 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "6549b5d3e1dbb70c6f9d4519522068ff.php",
+                    "path": "storage\/framework\/views\/6549b5d3e1dbb70c6f9d4519522068ff.php",
+                    "size": 83029,
+                    "size_formatted": "81.08 KB",
+                    "modified_at": "07 Oct 2026, 11:19:24 WIB"
+                },
+                {
+                    "name": "6b54481424968f224a2c779d51515d07.php",
+                    "path": "storage\/framework\/views\/6b54481424968f224a2c779d51515d07.php",
+                    "size": 26250,
+                    "size_formatted": "25.63 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "6bccc4745037822e1b5bd7f1c0a5bb94.php",
+                    "path": "storage\/framework\/views\/6bccc4745037822e1b5bd7f1c0a5bb94.php",
+                    "size": 16461,
+                    "size_formatted": "16.08 KB",
+                    "modified_at": "07 Oct 2026, 11:19:24 WIB"
+                },
+                {
+                    "name": "76556e7d79c2542a326a13f3960b2376.php",
+                    "path": "storage\/framework\/views\/76556e7d79c2542a326a13f3960b2376.php",
+                    "size": 21367,
+                    "size_formatted": "20.87 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "7869b10d4683d75652a37314aa962756.php",
+                    "path": "storage\/framework\/views\/7869b10d4683d75652a37314aa962756.php",
+                    "size": 22081,
+                    "size_formatted": "21.56 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "79563b3402a41c10bf1c0ceb205dd5f9.php",
+                    "path": "storage\/framework\/views\/79563b3402a41c10bf1c0ceb205dd5f9.php",
+                    "size": 28992,
+                    "size_formatted": "28.31 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "7a460375dc87e63757f53add5ff47c55.php",
+                    "path": "storage\/framework\/views\/7a460375dc87e63757f53add5ff47c55.php",
+                    "size": 6934,
+                    "size_formatted": "6.77 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "8035f8fc3cdc51359045a588511bca5b.php",
+                    "path": "storage\/framework\/views\/8035f8fc3cdc51359045a588511bca5b.php",
+                    "size": 10905,
+                    "size_formatted": "10.65 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "80e62179e1f9f8e46eca8747823d9326.php",
+                    "path": "storage\/framework\/views\/80e62179e1f9f8e46eca8747823d9326.php",
+                    "size": 4935,
+                    "size_formatted": "4.82 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "844187bc7bf883d3ddbafbad4b9052ce.php",
+                    "path": "storage\/framework\/views\/844187bc7bf883d3ddbafbad4b9052ce.php",
+                    "size": 74441,
+                    "size_formatted": "72.7 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "881c8622417057778ee4679172bf7d68.php",
+                    "path": "storage\/framework\/views\/881c8622417057778ee4679172bf7d68.php",
+                    "size": 15402,
+                    "size_formatted": "15.04 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "910941abc6b17819be4a4449254a852d.php",
+                    "path": "storage\/framework\/views\/910941abc6b17819be4a4449254a852d.php",
+                    "size": 7162,
+                    "size_formatted": "6.99 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "92d5dd51bd5b750d9d259665a7c404db.php",
+                    "path": "storage\/framework\/views\/92d5dd51bd5b750d9d259665a7c404db.php",
+                    "size": 5631,
+                    "size_formatted": "5.5 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "957c1d770b6d5011a0b46e41517cacb2.php",
+                    "path": "storage\/framework\/views\/957c1d770b6d5011a0b46e41517cacb2.php",
+                    "size": 27057,
+                    "size_formatted": "26.42 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "974f16aaa1c51ca4fca7b31909585299.php",
+                    "path": "storage\/framework\/views\/974f16aaa1c51ca4fca7b31909585299.php",
+                    "size": 2446,
+                    "size_formatted": "2.39 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "99dd142c2532b7c33c59fb50f821da54.php",
+                    "path": "storage\/framework\/views\/99dd142c2532b7c33c59fb50f821da54.php",
+                    "size": 22065,
+                    "size_formatted": "21.55 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "9a6212c356dd7737ba0135ea94c37c17.php",
+                    "path": "storage\/framework\/views\/9a6212c356dd7737ba0135ea94c37c17.php",
+                    "size": 14617,
+                    "size_formatted": "14.27 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "9f245a2596f9b5b0344b5cd10e0c66eb.php",
+                    "path": "storage\/framework\/views\/9f245a2596f9b5b0344b5cd10e0c66eb.php",
+                    "size": 21687,
+                    "size_formatted": "21.18 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "a3f54cb2d06a88a647ce73ce70fd477f.php",
+                    "path": "storage\/framework\/views\/a3f54cb2d06a88a647ce73ce70fd477f.php",
+                    "size": 10944,
+                    "size_formatted": "10.69 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "a6053fc97a58f7df9f1a7b17e8fc670f.php",
+                    "path": "storage\/framework\/views\/a6053fc97a58f7df9f1a7b17e8fc670f.php",
+                    "size": 51118,
+                    "size_formatted": "49.92 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "a61735f765e1959e80b0057379cf6894.php",
+                    "path": "storage\/framework\/views\/a61735f765e1959e80b0057379cf6894.php",
+                    "size": 3291,
+                    "size_formatted": "3.21 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "a95318d5f68510777f27fe693337dfb2.php",
+                    "path": "storage\/framework\/views\/a95318d5f68510777f27fe693337dfb2.php",
+                    "size": 14120,
+                    "size_formatted": "13.79 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "afa460032a4eb2ee5288841bf229cfda.php",
+                    "path": "storage\/framework\/views\/afa460032a4eb2ee5288841bf229cfda.php",
+                    "size": 36802,
+                    "size_formatted": "35.94 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "afea5b867de242b4553db94e52961727.php",
+                    "path": "storage\/framework\/views\/afea5b867de242b4553db94e52961727.php",
+                    "size": 6446,
+                    "size_formatted": "6.29 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "b7cd3408527089b02040d45ac99c9f83.php",
+                    "path": "storage\/framework\/views\/b7cd3408527089b02040d45ac99c9f83.php",
+                    "size": 5224,
+                    "size_formatted": "5.1 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "c0642072c5d3aebca7955fc85a63bada.php",
+                    "path": "storage\/framework\/views\/c0642072c5d3aebca7955fc85a63bada.php",
+                    "size": 2612,
+                    "size_formatted": "2.55 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "c0a810f1cac03466f5fc637d273e122a.php",
+                    "path": "storage\/framework\/views\/c0a810f1cac03466f5fc637d273e122a.php",
+                    "size": 26924,
+                    "size_formatted": "26.29 KB",
+                    "modified_at": "07 Oct 2026, 11:19:24 WIB"
+                },
+                {
+                    "name": "c0e312d26f4fb4a230d323fbdf044b50.php",
+                    "path": "storage\/framework\/views\/c0e312d26f4fb4a230d323fbdf044b50.php",
+                    "size": 8937,
+                    "size_formatted": "8.73 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "c2739258504a845d416262dc61667dd1.php",
+                    "path": "storage\/framework\/views\/c2739258504a845d416262dc61667dd1.php",
+                    "size": 5118,
+                    "size_formatted": "5 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "cd27fc5b6881cce1f42a667b38a703cf.php",
+                    "path": "storage\/framework\/views\/cd27fc5b6881cce1f42a667b38a703cf.php",
+                    "size": 13774,
+                    "size_formatted": "13.45 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "d592937bdff1362da717b1b1bb4909d5.php",
+                    "path": "storage\/framework\/views\/d592937bdff1362da717b1b1bb4909d5.php",
+                    "size": 8380,
+                    "size_formatted": "8.18 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "d5a9bad1808c83d3a961f7cfec0fc129.php",
+                    "path": "storage\/framework\/views\/d5a9bad1808c83d3a961f7cfec0fc129.php",
+                    "size": 10706,
+                    "size_formatted": "10.46 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "d669f40f363da75d6d9b5f012292b66b.php",
+                    "path": "storage\/framework\/views\/d669f40f363da75d6d9b5f012292b66b.php",
+                    "size": 9946,
+                    "size_formatted": "9.71 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "dc2ed997cb34026eb3bd3abb367316d5.php",
+                    "path": "storage\/framework\/views\/dc2ed997cb34026eb3bd3abb367316d5.php",
+                    "size": 15505,
+                    "size_formatted": "15.14 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "dfd1d2522f9467c692000ac7af27b073.php",
+                    "path": "storage\/framework\/views\/dfd1d2522f9467c692000ac7af27b073.php",
+                    "size": 24019,
+                    "size_formatted": "23.46 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "e068ae6b1771d068c6d43c161dfe2df1.php",
+                    "path": "storage\/framework\/views\/e068ae6b1771d068c6d43c161dfe2df1.php",
+                    "size": 4152,
+                    "size_formatted": "4.05 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "e229f77ef3ca916e19dfd336b5a7e6e8.php",
+                    "path": "storage\/framework\/views\/e229f77ef3ca916e19dfd336b5a7e6e8.php",
+                    "size": 27236,
+                    "size_formatted": "26.6 KB",
+                    "modified_at": "07 Oct 2026, 11:19:24 WIB"
+                },
+                {
+                    "name": "e6aaebad53eaa81f5ea4ccf6bf5f9342.php",
+                    "path": "storage\/framework\/views\/e6aaebad53eaa81f5ea4ccf6bf5f9342.php",
+                    "size": 2836,
+                    "size_formatted": "2.77 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "e73d93ff573ff0969943f87a35d5edd9.php",
+                    "path": "storage\/framework\/views\/e73d93ff573ff0969943f87a35d5edd9.php",
+                    "size": 26504,
+                    "size_formatted": "25.88 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "e9cb89c032c2086005afc7d0e57372d9.php",
+                    "path": "storage\/framework\/views\/e9cb89c032c2086005afc7d0e57372d9.php",
+                    "size": 16604,
+                    "size_formatted": "16.21 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                },
+                {
+                    "name": "f2fc6e9496c38988f1cf0112d00e72e2.php",
+                    "path": "storage\/framework\/views\/f2fc6e9496c38988f1cf0112d00e72e2.php",
+                    "size": 1373,
+                    "size_formatted": "1.34 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "f34b623106c3efed97f2c0eb1a40024b.php",
+                    "path": "storage\/framework\/views\/f34b623106c3efed97f2c0eb1a40024b.php",
+                    "size": 2885,
+                    "size_formatted": "2.82 KB",
+                    "modified_at": "07 Oct 2026, 11:19:25 WIB"
+                },
+                {
+                    "name": "f39350832930529aa517beda7e6429ea.php",
+                    "path": "storage\/framework\/views\/f39350832930529aa517beda7e6429ea.php",
+                    "size": 38470,
+                    "size_formatted": "37.57 KB",
+                    "modified_at": "07 Oct 2026, 11:19:26 WIB"
+                },
+                {
+                    "name": "f40b653caaf7e5fd12c21abbd84d7562.php",
+                    "path": "storage\/framework\/views\/f40b653caaf7e5fd12c21abbd84d7562.php",
+                    "size": 5178,
+                    "size_formatted": "5.06 KB",
+                    "modified_at": "07 Oct 2026, 11:19:28 WIB"
+                },
+                {
+                    "name": "f59fec63265b11befc443389da9f887a.php",
+                    "path": "storage\/framework\/views\/f59fec63265b11befc443389da9f887a.php",
+                    "size": 20161,
+                    "size_formatted": "19.69 KB",
+                    "modified_at": "07 Oct 2026, 11:19:27 WIB"
+                }
+            ],
+            "total_size": 1571832,
+            "total_size_formatted": "1.5 MB",
+            "status": "success",
+            "label": "85 File Dihapus (1.5 MB)"
+        },
+        "event": {
+            "step": "event",
+            "name": "Event Cache",
+            "target_desc": "bootstrap\/cache\/events.php & Expired Sessions",
+            "files_count": 30,
+            "files_deleted": [
+                {
+                    "name": "0mJGa8GNvo2syL7Mn29HOA15NDAak9Aad8bawa90",
+                    "path": "storage\/framework\/sessions\/0mJGa8GNvo2syL7Mn29HOA15NDAak9Aad8bawa90",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 22:13:33 WIB"
+                },
+                {
+                    "name": "5yfJ6aUR9MpImo8ZHPISJi9tcx6lrvhaXvrLPhNO",
+                    "path": "storage\/framework\/sessions\/5yfJ6aUR9MpImo8ZHPISJi9tcx6lrvhaXvrLPhNO",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 22:13:33 WIB"
+                },
+                {
+                    "name": "8Dt7GJ5OV51E9T2RRiMjYLHFnWaRULOrZZpjfa0b",
+                    "path": "storage\/framework\/sessions\/8Dt7GJ5OV51E9T2RRiMjYLHFnWaRULOrZZpjfa0b",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 21:53:41 WIB"
+                },
+                {
+                    "name": "Aso2rMYwKm2sPEfn2G6fPOgF8HYaGI3xb9bMwYvN",
+                    "path": "storage\/framework\/sessions\/Aso2rMYwKm2sPEfn2G6fPOgF8HYaGI3xb9bMwYvN",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 21:53:51 WIB"
+                },
+                {
+                    "name": "D0XWwj7ToHSOS7p4R557YQ62I0R7ONnZ1YmwShiE",
+                    "path": "storage\/framework\/sessions\/D0XWwj7ToHSOS7p4R557YQ62I0R7ONnZ1YmwShiE",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "06 Oct 2026, 10:14:47 WIB"
+                },
+                {
+                    "name": "DdUY2mug0f8uGCVNaaPS2PJSzCOTKaFNEfpSHdSJ",
+                    "path": "storage\/framework\/sessions\/DdUY2mug0f8uGCVNaaPS2PJSzCOTKaFNEfpSHdSJ",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "06 Oct 2026, 10:16:33 WIB"
+                },
+                {
+                    "name": "DfrLyGUG9p9Xc3CSh0qnBg7eNSfQlv2TCa95RMx3",
+                    "path": "storage\/framework\/sessions\/DfrLyGUG9p9Xc3CSh0qnBg7eNSfQlv2TCa95RMx3",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 22:13:33 WIB"
+                },
+                {
+                    "name": "Gd4kGSPjB8BZXnF5yyoAaA6bREcDQCXF5xGvSoib",
+                    "path": "storage\/framework\/sessions\/Gd4kGSPjB8BZXnF5yyoAaA6bREcDQCXF5xGvSoib",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "06 Oct 2026, 10:30:17 WIB"
+                },
+                {
+                    "name": "II70g1q5m6obi40mOVPX11RH2sc3uFzNVU2xkjz9",
+                    "path": "storage\/framework\/sessions\/II70g1q5m6obi40mOVPX11RH2sc3uFzNVU2xkjz9",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 21:53:10 WIB"
+                },
+                {
+                    "name": "K2Wxua6LTNk2x93JqKBuzEVd2WYRzrwb1OpK5wVT",
+                    "path": "storage\/framework\/sessions\/K2Wxua6LTNk2x93JqKBuzEVd2WYRzrwb1OpK5wVT",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 20:45:11 WIB"
+                },
+                {
+                    "name": "KwZDjT9T54uC8sAsZmH33FZDjDcne1QkkdxgLC94",
+                    "path": "storage\/framework\/sessions\/KwZDjT9T54uC8sAsZmH33FZDjDcne1QkkdxgLC94",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 21:53:51 WIB"
+                },
+                {
+                    "name": "MZsyHnBXfcelGlhfLzgwo63XRxvkFa6uaMM4Zvof",
+                    "path": "storage\/framework\/sessions\/MZsyHnBXfcelGlhfLzgwo63XRxvkFa6uaMM4Zvof",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 20:26:51 WIB"
+                },
+                {
+                    "name": "OwmLy1Nn5SgCzqLpjplIsGDF0NWHezcU0zs5Yg3P",
+                    "path": "storage\/framework\/sessions\/OwmLy1Nn5SgCzqLpjplIsGDF0NWHezcU0zs5Yg3P",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "06 Oct 2026, 10:30:24 WIB"
+                },
+                {
+                    "name": "SUfEcvFL3hpnxvV2l28OnsuW4fn3Q1jn8Xfbex8B",
+                    "path": "storage\/framework\/sessions\/SUfEcvFL3hpnxvV2l28OnsuW4fn3Q1jn8Xfbex8B",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 21:53:51 WIB"
+                },
+                {
+                    "name": "TAzClIqWFFtmCPRBcOXTObJIpZ4DkHbuAnsQIJ1j",
+                    "path": "storage\/framework\/sessions\/TAzClIqWFFtmCPRBcOXTObJIpZ4DkHbuAnsQIJ1j",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "06 Oct 2026, 10:20:03 WIB"
+                },
+                {
+                    "name": "TR2rosIXclzEJ56Gfkw0ocBfmTZQVgOuKleZyU7c",
+                    "path": "storage\/framework\/sessions\/TR2rosIXclzEJ56Gfkw0ocBfmTZQVgOuKleZyU7c",
+                    "size": 568,
+                    "size_formatted": "568 B",
+                    "modified_at": "05 Oct 2026, 20:45:13 WIB"
+                },
+                {
+                    "name": "VueyCkwL3UrRKPrbli0Ck6LIZS2Wz2E4seUVYkIw",
+                    "path": "storage\/framework\/sessions\/VueyCkwL3UrRKPrbli0Ck6LIZS2Wz2E4seUVYkIw",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "06 Oct 2026, 10:15:42 WIB"
+                },
+                {
+                    "name": "dgGHRnVw9ipF50VOjTIGsnSTUWsebCZ7eA1Ro7F6",
+                    "path": "storage\/framework\/sessions\/dgGHRnVw9ipF50VOjTIGsnSTUWsebCZ7eA1Ro7F6",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 22:13:34 WIB"
+                },
+                {
+                    "name": "eKEqdvYPh2trufi5EBjKwQZ7OnreWXRyMo163EMh",
+                    "path": "storage\/framework\/sessions\/eKEqdvYPh2trufi5EBjKwQZ7OnreWXRyMo163EMh",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 21:53:51 WIB"
+                },
+                {
+                    "name": "etA1qXoqiH3PRO3KRmbsmUDbFtcO73f5Z0q1vrpa",
+                    "path": "storage\/framework\/sessions\/etA1qXoqiH3PRO3KRmbsmUDbFtcO73f5Z0q1vrpa",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "06 Oct 2026, 10:14:47 WIB"
+                },
+                {
+                    "name": "fFDUtelYk9qu93bqZGE2muJVwCyDMk9OtTRTOfOO",
+                    "path": "storage\/framework\/sessions\/fFDUtelYk9qu93bqZGE2muJVwCyDMk9OtTRTOfOO",
+                    "size": 568,
+                    "size_formatted": "568 B",
+                    "modified_at": "05 Oct 2026, 20:46:00 WIB"
+                },
+                {
+                    "name": "lRCD6iMkoIJTsi8bfTHNlkuFA1MCkiyHXVYag19R",
+                    "path": "storage\/framework\/sessions\/lRCD6iMkoIJTsi8bfTHNlkuFA1MCkiyHXVYag19R",
+                    "size": 1108,
+                    "size_formatted": "1.08 KB",
+                    "modified_at": "05 Oct 2026, 21:57:02 WIB"
+                },
+                {
+                    "name": "leayOKa7MAM1xmexSG98j3OwUWXY6cUixiYeDF3G",
+                    "path": "storage\/framework\/sessions\/leayOKa7MAM1xmexSG98j3OwUWXY6cUixiYeDF3G",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "06 Oct 2026, 10:14:47 WIB"
+                },
+                {
+                    "name": "mrcK6XBft9Lq1fr0Tmi8b0p52t4okaVGtTXnUZ1F",
+                    "path": "storage\/framework\/sessions\/mrcK6XBft9Lq1fr0Tmi8b0p52t4okaVGtTXnUZ1F",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 21:53:11 WIB"
+                },
+                {
+                    "name": "nDaVPQzYIklsLCpPAgpuyEeOSfuMoahPi8uPT9Zj",
+                    "path": "storage\/framework\/sessions\/nDaVPQzYIklsLCpPAgpuyEeOSfuMoahPi8uPT9Zj",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 21:53:51 WIB"
+                },
+                {
+                    "name": "pAbAaCh9YLUlr1tdDCoPiC0AkPyg6V0SQrnpr7lW",
+                    "path": "storage\/framework\/sessions\/pAbAaCh9YLUlr1tdDCoPiC0AkPyg6V0SQrnpr7lW",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 21:53:41 WIB"
+                },
+                {
+                    "name": "rvSHVd6gMPQZauJyHl7shzMvaZO9CwXkUjuJP533",
+                    "path": "storage\/framework\/sessions\/rvSHVd6gMPQZauJyHl7shzMvaZO9CwXkUjuJP533",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "06 Oct 2026, 10:14:47 WIB"
+                },
+                {
+                    "name": "sX85OFU0eFOqP2BYGLhTUrHgQRZe4qDfPwdfCRIg",
+                    "path": "storage\/framework\/sessions\/sX85OFU0eFOqP2BYGLhTUrHgQRZe4qDfPwdfCRIg",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 20:45:59 WIB"
+                },
+                {
+                    "name": "t06bGaDSlkHYoinEyc6bL7l4t1KEl582J75nnz2v",
+                    "path": "storage\/framework\/sessions\/t06bGaDSlkHYoinEyc6bL7l4t1KEl582J75nnz2v",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "06 Oct 2026, 10:14:47 WIB"
+                },
+                {
+                    "name": "y65JoscU3GjKh44mG9uytPWknp1Y0QD5U14bNxQ8",
+                    "path": "storage\/framework\/sessions\/y65JoscU3GjKh44mG9uytPWknp1Y0QD5U14bNxQ8",
+                    "size": 512,
+                    "size_formatted": "512 B",
+                    "modified_at": "05 Oct 2026, 22:13:33 WIB"
+                }
+            ],
+            "total_size": 16068,
+            "total_size_formatted": "15.69 KB",
+            "status": "success",
+            "label": "30 File Dihapus (15.69 KB)"
+        }
+    }
+}
