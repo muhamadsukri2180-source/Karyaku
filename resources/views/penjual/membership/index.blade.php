@@ -237,10 +237,10 @@
                         <i class="bi bi-image me-1 text-primary"></i> Lihat Bukti Transfer
                     </button>
                 @endif
-                <form action="{{ route('penjual.membership.cancel') }}" method="POST" onsubmit="return confirm('Batalkan pengajuan perpanjangan/pembayaran ini? Bukti transfer yang diunggah akan dihapus.');">
+                <form id="cancelMembershipPaymentForm" action="{{ route('penjual.membership.cancel') }}" method="POST" class="m-0">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-sm btn-outline-danger fw-bold px-3 py-2 rounded-3">
+                    <button type="button" class="btn btn-sm btn-outline-danger fw-bold px-3 py-2 rounded-3" onclick="confirmCancelMembershipPayment()">
                         <i class="bi bi-x-circle me-1"></i> Batalkan Pengajuan
                     </button>
                 </form>
@@ -748,7 +748,12 @@
         const proofInput = document.getElementById('proofInput');
         if (!proofInput.files || !proofInput.files[0]) {
             e.preventDefault();
-            alert('Silakan pilih foto bukti transfer pembayaran terlebih dahulu.');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Bukti Belum Dipilih',
+                text: 'Silakan pilih foto bukti transfer pembayaran terlebih dahulu.',
+                confirmButtonColor: '#2563eb'
+            });
             return false;
         }
 
@@ -756,5 +761,36 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Mengirim Bukti...';
     });
+
+    function confirmCancelMembershipPayment() {
+        Swal.fire({
+            title: 'Batalkan Pengajuan Pembayaran?',
+            text: 'Pengajuan perpanjangan/pembayaran membership ini akan dibatalkan dan berkas bukti transfer yang diunggah akan dihapus.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '<i class="bi bi-trash3-fill me-1"></i> Ya, Batalkan',
+            cancelButtonText: '<i class="bi bi-x-lg me-1"></i> Batal',
+            reverseButtons: true,
+            customClass: {
+                popup: 'rounded-4 border-0 shadow-lg',
+                confirmButton: 'btn btn-danger px-4 py-2 rounded-3 fw-bold',
+                cancelButton: 'btn btn-secondary px-4 py-2 rounded-3 fw-semibold ms-2'
+            },
+            buttonsStyling: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Membatalkan...',
+                    text: 'Mohon tunggu sebentar',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => Swal.showLoading()
+                });
+                document.getElementById('cancelMembershipPaymentForm').submit();
+            }
+        });
+    }
 </script>
 @endpush

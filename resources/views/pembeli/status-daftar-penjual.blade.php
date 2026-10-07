@@ -91,11 +91,11 @@
                     <p class="mb-0 small">Pendaftaran Anda sedang ditinjau oleh tim verifikator Karyaku. Mohon menunggu proses verifikasi.</p>
                 </div>
             </div>
-            <form action="{{ route('pembeli.seller.registration.cancel') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pendaftaran ini?')">
+            <form id="cancelRegistrationForm" action="{{ route('pembeli.seller.registration.cancel') }}" method="POST" class="m-0">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="btn btn-outline-danger btn-sm fw-bold rounded-pill px-3.5 py-2 shadow-sm d-inline-flex align-items-center gap-1">
-                    Batalkan Pengajuan
+                <button type="button" class="btn btn-outline-danger btn-sm fw-bold rounded-pill px-3.5 py-2 shadow-sm d-inline-flex align-items-center gap-1.5" onclick="confirmCancelRegistration()">
+                    <i class="bi bi-x-circle"></i> Batalkan Pengajuan
                 </button>
             </form>
         </div>
@@ -214,3 +214,40 @@
 @endif
 
 @endsection
+
+@push('scripts')
+<script>
+function confirmCancelRegistration() {
+    Swal.fire({
+        title: 'Batalkan Pengajuan Penjual?',
+        html: `Apakah Anda yakin ingin membatalkan pengajuan pendaftaran sebagai penjual?<br><small class="text-muted mt-2 d-block">Data identitas dan berkas pembayaran yang telah dikirim akan dibatalkan serta dihapus dari sistem.</small>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '<i class="bi bi-trash3-fill me-1"></i> Ya, Batalkan Pengajuan',
+        cancelButtonText: '<i class="bi bi-x-lg me-1"></i> Kembali',
+        reverseButtons: true,
+        customClass: {
+            popup: 'rounded-4 border-0 shadow-lg',
+            confirmButton: 'btn btn-danger px-4 py-2 rounded-3 fw-bold',
+            cancelButton: 'btn btn-secondary px-4 py-2 rounded-3 fw-semibold ms-2'
+        },
+        buttonsStyling: false
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Membatalkan...',
+                text: 'Mohon tunggu sebentar',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            document.getElementById('cancelRegistrationForm').submit();
+        }
+    });
+}
+</script>
+@endpush
