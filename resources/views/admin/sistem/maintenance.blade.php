@@ -262,6 +262,29 @@
 @endsection
 
 @push('modals')
+<style>
+    .evidence-tab-btn {
+        transition: all 0.15s ease-in-out;
+    }
+    .evidence-tab-btn.active {
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        border-color: #0f172a !important;
+        font-weight: 700 !important;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15) !important;
+    }
+    .evidence-tab-btn:not(.active) {
+        background-color: #f1f5f9 !important;
+        color: #475569 !important;
+        border-color: #e2e8f0 !important;
+        font-weight: 600 !important;
+    }
+    .evidence-tab-btn:not(.active):hover {
+        background-color: #e2e8f0 !important;
+        color: #0f172a !important;
+    }
+</style>
+
 <!-- MODAL BUAT BACKUP -->
 <div id="backupModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4" id="backupModalContent">
@@ -288,35 +311,35 @@
     </div>
 </div>
 
-<!-- MODAL LIVE PROGRESS CLEAR CACHE -->
-<div id="cacheProgressModal" class="fixed inset-0 z-[70] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 mx-4 overflow-hidden border border-slate-100" id="cacheProgressModalContent">
+<!-- MODAL LIVE PROGRESS CLEAR CACHE (COMPACT & RESPONSIVE) -->
+<div id="cacheProgressModal" class="fixed inset-0 z-[70] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-4 transition-opacity duration-300 opacity-0 w-screen h-screen">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col transform scale-95 transition-transform duration-300 mx-2 sm:mx-4 overflow-hidden border border-slate-200" id="cacheProgressModalContent">
         
         <!-- Modal Header -->
-        <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
-            <div class="flex items-center gap-3">
-                <div id="cacheModalIconContainer" class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold text-sm shadow-sm transition-colors">
-                    <i id="cacheModalIcon" class="fa-solid fa-broom text-sm"></i>
+        <div class="px-4 py-3 sm:px-4 sm:py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
+            <div class="flex items-center gap-2.5 sm:gap-3">
+                <div id="cacheModalIconContainer" class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold text-xs shadow-sm transition-colors shrink-0">
+                    <i id="cacheModalIcon" class="fa-solid fa-broom text-xs"></i>
                 </div>
                 <div>
-                    <h3 id="cacheModalTitle" class="font-extrabold text-slate-900 font-display text-base leading-tight">Membersihkan Cache...</h3>
-                    <p id="cacheModalSubtitle" class="text-[11px] text-slate-500 font-medium">Menyegarkan seluruh cache sistem Laravel</p>
+                    <h3 id="cacheModalTitle" class="font-extrabold text-slate-900 font-display text-sm sm:text-base leading-tight">Membersihkan Cache...</h3>
+                    <p id="cacheModalSubtitle" class="text-[10px] sm:text-[11px] text-slate-500 font-medium">Menyegarkan seluruh cache sistem Laravel</p>
                 </div>
             </div>
-            <button type="button" id="cacheModalHeaderCloseBtn" onclick="closeCacheProgressModal()" class="hidden text-slate-400 hover:text-red-500 transition-colors w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center">
-                <i class="fa-solid fa-xmark text-lg"></i>
+            <button type="button" id="cacheModalHeaderCloseBtn" onclick="closeCacheProgressModal()" class="hidden text-slate-400 hover:text-red-500 transition-colors w-7 h-7 rounded-full hover:bg-red-50 flex items-center justify-center cursor-pointer">
+                <i class="fa-solid fa-xmark text-base"></i>
             </button>
         </div>
 
-        <!-- Modal Body -->
-        <div class="p-6 space-y-5">
+        <!-- Modal Body (Compact) -->
+        <div class="p-3.5 sm:p-4 space-y-2.5 overflow-y-auto flex-1">
             <!-- Progress Percentage Bar -->
-            <div class="space-y-2">
-                <div class="flex items-center justify-between text-xs font-bold">
+            <div class="space-y-1">
+                <div class="flex items-center justify-between text-[11px] sm:text-xs font-bold">
                     <span id="cacheProgressStepText" class="text-slate-500">0 / 5 proses</span>
-                    <span id="cacheProgressPercent" class="text-amber-600 font-extrabold text-sm font-display">0%</span>
+                    <span id="cacheProgressPercent" class="text-amber-600 font-extrabold text-xs sm:text-sm font-display">0%</span>
                 </div>
-                <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200/60 p-0.5 shadow-inner">
+                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/60 p-0.5 shadow-inner">
                     <div id="cacheProgressBarFill" class="bg-gradient-to-r from-amber-500 to-sky-500 h-full rounded-full transition-all duration-300 ease-out w-0 shadow-sm"></div>
                 </div>
             </div>
@@ -325,131 +348,131 @@
             <div class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden bg-slate-50/50">
                 
                 <!-- 1. App Cache -->
-                <div class="p-3.5 flex items-center justify-between transition-colors gap-3" id="row-app">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-8 h-8 rounded-lg bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-xs shadow-sm shrink-0">
+                <div class="py-1.5 px-2.5 sm:px-3 flex items-center justify-between transition-colors gap-2" id="row-app">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-7 h-7 rounded-md bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-[10px] shadow-sm shrink-0">
                             <i class="fa-solid fa-layer-group"></i>
                         </div>
                         <div class="min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
+                            <div class="flex items-center gap-1.5 flex-wrap">
                                 <h4 class="text-xs font-bold text-slate-800">App Cache</h4>
-                                <span id="meta-app" class="hidden text-[10px] font-bold"></span>
+                                <span id="meta-app" class="hidden text-[9px] font-bold"></span>
                             </div>
-                            <p class="text-[10px] text-slate-400 font-medium truncate">Artisan cache:clear & storage/framework/cache</p>
+                            <p class="text-[9.5px] text-slate-400 font-medium truncate">Artisan cache:clear & storage/framework/cache</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
+                    <div class="flex items-center gap-1.5 shrink-0">
                         <div id="status-app">
-                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                                <i class="fa-regular fa-circle text-[10px]"></i> Menunggu
+                            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                                <i class="fa-regular fa-circle text-[9px]"></i> Menunggu
                             </span>
                         </div>
-                        <button type="button" id="eye-app" onclick="openCacheEvidenceModal('app')" class="hidden w-7 h-7 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer" title="Lihat Bukti File Dihapus">
-                            <i class="fa-solid fa-eye text-xs"></i>
+                        <button type="button" id="eye-app" onclick="openCacheEvidenceModal('app')" class="hidden w-6 h-6 rounded-md bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer" title="Lihat Bukti File Dihapus">
+                            <i class="fa-solid fa-eye text-[10px]"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- 2. Config Cache -->
-                <div class="p-3.5 flex items-center justify-between transition-colors gap-3" id="row-config">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-8 h-8 rounded-lg bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-xs shadow-sm shrink-0">
+                <div class="py-1.5 px-2.5 sm:px-3 flex items-center justify-between transition-colors gap-2" id="row-config">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-7 h-7 rounded-md bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-[10px] shadow-sm shrink-0">
                             <i class="fa-solid fa-gear"></i>
                         </div>
                         <div class="min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
+                            <div class="flex items-center gap-1.5 flex-wrap">
                                 <h4 class="text-xs font-bold text-slate-800">Config Cache</h4>
-                                <span id="meta-config" class="hidden text-[10px] font-bold"></span>
+                                <span id="meta-config" class="hidden text-[9px] font-bold"></span>
                             </div>
-                            <p class="text-[10px] text-slate-400 font-medium truncate">Artisan config:clear & bootstrap/cache/config.php</p>
+                            <p class="text-[9.5px] text-slate-400 font-medium truncate">Artisan config:clear & bootstrap/cache/config.php</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
+                    <div class="flex items-center gap-1.5 shrink-0">
                         <div id="status-config">
-                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                                <i class="fa-regular fa-circle text-[10px]"></i> Menunggu
+                            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                                <i class="fa-regular fa-circle text-[9px]"></i> Menunggu
                             </span>
                         </div>
-                        <button type="button" id="eye-config" onclick="openCacheEvidenceModal('config')" class="hidden w-7 h-7 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer" title="Lihat Bukti File Dihapus">
-                            <i class="fa-solid fa-eye text-xs"></i>
+                        <button type="button" id="eye-config" onclick="openCacheEvidenceModal('config')" class="hidden w-6 h-6 rounded-md bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer" title="Lihat Bukti File Dihapus">
+                            <i class="fa-solid fa-eye text-[10px]"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- 3. Route Cache -->
-                <div class="p-3.5 flex items-center justify-between transition-colors gap-3" id="row-route">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-8 h-8 rounded-lg bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-xs shadow-sm shrink-0">
+                <div class="py-1.5 px-2.5 sm:px-3 flex items-center justify-between transition-colors gap-2" id="row-route">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-7 h-7 rounded-md bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-[10px] shadow-sm shrink-0">
                             <i class="fa-solid fa-route"></i>
                         </div>
                         <div class="min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
+                            <div class="flex items-center gap-1.5 flex-wrap">
                                 <h4 class="text-xs font-bold text-slate-800">Route Cache</h4>
-                                <span id="meta-route" class="hidden text-[10px] font-bold"></span>
+                                <span id="meta-route" class="hidden text-[9px] font-bold"></span>
                             </div>
-                            <p class="text-[10px] text-slate-400 font-medium truncate">Artisan route:clear & bootstrap/cache/routes-v7.php</p>
+                            <p class="text-[9.5px] text-slate-400 font-medium truncate">Artisan route:clear & bootstrap/cache/routes-v7.php</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
+                    <div class="flex items-center gap-1.5 shrink-0">
                         <div id="status-route">
-                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                                <i class="fa-regular fa-circle text-[10px]"></i> Menunggu
+                            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                                <i class="fa-regular fa-circle text-[9px]"></i> Menunggu
                             </span>
                         </div>
-                        <button type="button" id="eye-route" onclick="openCacheEvidenceModal('route')" class="hidden w-7 h-7 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer" title="Lihat Bukti File Dihapus">
-                            <i class="fa-solid fa-eye text-xs"></i>
+                        <button type="button" id="eye-route" onclick="openCacheEvidenceModal('route')" class="hidden w-6 h-6 rounded-md bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer" title="Lihat Bukti File Dihapus">
+                            <i class="fa-solid fa-eye text-[10px]"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- 4. View Cache -->
-                <div class="p-3.5 flex items-center justify-between transition-colors gap-3" id="row-view">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-8 h-8 rounded-lg bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-xs shadow-sm shrink-0">
+                <div class="py-1.5 px-2.5 sm:px-3 flex items-center justify-between transition-colors gap-2" id="row-view">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-7 h-7 rounded-md bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-[10px] shadow-sm shrink-0">
                             <i class="fa-solid fa-code"></i>
                         </div>
                         <div class="min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
+                            <div class="flex items-center gap-1.5 flex-wrap">
                                 <h4 class="text-xs font-bold text-slate-800">View Cache</h4>
-                                <span id="meta-view" class="hidden text-[10px] font-bold"></span>
+                                <span id="meta-view" class="hidden text-[9px] font-bold"></span>
                             </div>
-                            <p class="text-[10px] text-slate-400 font-medium truncate">Artisan view:clear & storage/framework/views</p>
+                            <p class="text-[9.5px] text-slate-400 font-medium truncate">Artisan view:clear & storage/framework/views</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
+                    <div class="flex items-center gap-1.5 shrink-0">
                         <div id="status-view">
-                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                                <i class="fa-regular fa-circle text-[10px]"></i> Menunggu
+                            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                                <i class="fa-regular fa-circle text-[9px]"></i> Menunggu
                             </span>
                         </div>
-                        <button type="button" id="eye-view" onclick="openCacheEvidenceModal('view')" class="hidden w-7 h-7 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer" title="Lihat Bukti File Dihapus">
-                            <i class="fa-solid fa-eye text-xs"></i>
+                        <button type="button" id="eye-view" onclick="openCacheEvidenceModal('view')" class="hidden w-6 h-6 rounded-md bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer" title="Lihat Bukti File Dihapus">
+                            <i class="fa-solid fa-eye text-[10px]"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- 5. Event Cache -->
-                <div class="p-3.5 flex items-center justify-between transition-colors gap-3" id="row-event">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-8 h-8 rounded-lg bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-xs shadow-sm shrink-0">
+                <div class="py-1.5 px-2.5 sm:px-3 flex items-center justify-between transition-colors gap-2" id="row-event">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-7 h-7 rounded-md bg-white text-slate-600 border border-slate-200 flex items-center justify-center text-[10px] shadow-sm shrink-0">
                             <i class="fa-solid fa-bolt"></i>
                         </div>
                         <div class="min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
+                            <div class="flex items-center gap-1.5 flex-wrap">
                                 <h4 class="text-xs font-bold text-slate-800">Event Cache</h4>
-                                <span id="meta-event" class="hidden text-[10px] font-bold"></span>
+                                <span id="meta-event" class="hidden text-[9px] font-bold"></span>
                             </div>
-                            <p class="text-[10px] text-slate-400 font-medium truncate">Artisan event:clear & bootstrap/cache/events.php</p>
+                            <p class="text-[9.5px] text-slate-400 font-medium truncate">Artisan event:clear & bootstrap/cache/events.php</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
+                    <div class="flex items-center gap-1.5 shrink-0">
                         <div id="status-event">
-                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                                <i class="fa-regular fa-circle text-[10px]"></i> Menunggu
+                            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                                <i class="fa-regular fa-circle text-[9px]"></i> Menunggu
                             </span>
                         </div>
-                        <button type="button" id="eye-event" onclick="openCacheEvidenceModal('event')" class="hidden w-7 h-7 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer" title="Lihat Bukti File Dihapus">
-                            <i class="fa-solid fa-eye text-xs"></i>
+                        <button type="button" id="eye-event" onclick="openCacheEvidenceModal('event')" class="hidden w-6 h-6 rounded-md bg-sky-50 hover:bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer" title="Lihat Bukti File Dihapus">
+                            <i class="fa-solid fa-eye text-[10px]"></i>
                         </button>
                     </div>
                 </div>
@@ -457,21 +480,21 @@
             </div>
 
             <!-- Footer Summary (Hidden while in progress) -->
-            <div id="cacheProcessTime" class="hidden flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-600">
-                <div class="flex items-center gap-2">
-                    <i class="fa-regular fa-clock text-slate-400"></i>
+            <div id="cacheProcessTime" class="hidden flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-[11px] font-semibold text-slate-600">
+                <div class="flex items-center gap-1.5">
+                    <i class="fa-regular fa-clock text-slate-400 text-xs"></i>
                     <span>Waktu proses:</span>
                 </div>
-                <span id="cacheProcessTimeVal" class="font-extrabold text-slate-800 bg-white px-2 py-0.5 rounded-md border border-slate-200 text-xs">0.0 detik</span>
+                <span id="cacheProcessTimeVal" class="font-extrabold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200 text-[11px]">0.0 detik</span>
             </div>
 
-            <!-- Action Buttons -->
-            <div id="cacheModalFooter" class="pt-1 space-y-2">
-                <button type="button" id="btnViewAllEvidenceInModal" onclick="openCacheEvidenceModal('all')" class="hidden w-full py-2.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-xs sm:text-sm font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer hover:border-sky-300">
-                    <i class="fa-solid fa-eye text-sky-600"></i> Lihat Semua Bukti File Dihapus
+            <!-- Action Buttons (Side by Side & Prominent) -->
+            <div id="cacheModalFooter" class="pt-0.5 flex items-center gap-2">
+                <button type="button" id="btnViewAllEvidenceInModal" onclick="openCacheEvidenceModal('all')" class="hidden flex-1 py-2 px-2.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer hover:border-sky-300">
+                    <i class="fa-solid fa-eye text-sky-600 text-[11px]"></i> <span>Lihat Bukti File</span>
                 </button>
-                <button type="button" id="cacheModalCloseBtn" onclick="closeCacheProgressModal()" class="hidden w-full py-3 bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer">
-                    <i class="fa-solid fa-check"></i> Selesai & Tutup
+                <button type="button" id="cacheModalCloseBtn" onclick="closeCacheProgressModal()" class="hidden flex-1 py-2 px-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-check text-[11px]"></i> <span>Selesai & Tutup</span>
                 </button>
             </div>
         </div>
@@ -485,8 +508,9 @@
         <!-- Header -->
         <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-sky-50/50 rounded-t-2xl shrink-0">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center font-bold text-base shadow-md shadow-sky-500/20 shrink-0">
-                    <i class="fa-solid fa-file-shield"></i>
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-md border" 
+                     style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-color: #334155; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.25);">
+                    <i class="fa-solid fa-file-shield text-base" style="color: #fbbf24;"></i>
                 </div>
                 <div>
                     <div class="flex items-center gap-2 flex-wrap">
@@ -508,22 +532,22 @@
             
             <!-- Filter Tabs -->
             <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 border-b border-slate-100 text-xs font-bold no-scrollbar">
-                <button type="button" onclick="selectEvidenceTab('all')" id="tab-evidence-all" class="evidence-tab-btn px-3 py-1.5 rounded-lg bg-sky-600 text-white transition-all shrink-0 cursor-pointer">
+                <button type="button" onclick="selectEvidenceTab('all')" id="tab-evidence-all" class="evidence-tab-btn active px-3 py-1.5 rounded-lg border shrink-0 cursor-pointer text-xs font-bold shadow-sm" style="background-color: #0f172a; color: #ffffff; border-color: #0f172a;">
                     Semua File (<span id="count-evidence-all">0</span>)
                 </button>
-                <button type="button" onclick="selectEvidenceTab('config')" id="tab-evidence-config" class="evidence-tab-btn px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all shrink-0 cursor-pointer">
+                <button type="button" onclick="selectEvidenceTab('config')" id="tab-evidence-config" class="evidence-tab-btn px-3 py-1.5 rounded-lg border shrink-0 cursor-pointer text-xs font-semibold" style="background-color: #f1f5f9; color: #475569; border-color: #e2e8f0;">
                     Config Cache (<span id="count-evidence-config">0</span>)
                 </button>
-                <button type="button" onclick="selectEvidenceTab('route')" id="tab-evidence-route" class="evidence-tab-btn px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all shrink-0 cursor-pointer">
+                <button type="button" onclick="selectEvidenceTab('route')" id="tab-evidence-route" class="evidence-tab-btn px-3 py-1.5 rounded-lg border shrink-0 cursor-pointer text-xs font-semibold" style="background-color: #f1f5f9; color: #475569; border-color: #e2e8f0;">
                     Route Cache (<span id="count-evidence-route">0</span>)
                 </button>
-                <button type="button" onclick="selectEvidenceTab('view')" id="tab-evidence-view" class="evidence-tab-btn px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all shrink-0 cursor-pointer">
+                <button type="button" onclick="selectEvidenceTab('view')" id="tab-evidence-view" class="evidence-tab-btn px-3 py-1.5 rounded-lg border shrink-0 cursor-pointer text-xs font-semibold" style="background-color: #f1f5f9; color: #475569; border-color: #e2e8f0;">
                     View Cache (<span id="count-evidence-view">0</span>)
                 </button>
-                <button type="button" onclick="selectEvidenceTab('app')" id="tab-evidence-app" class="evidence-tab-btn px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all shrink-0 cursor-pointer">
+                <button type="button" onclick="selectEvidenceTab('app')" id="tab-evidence-app" class="evidence-tab-btn px-3 py-1.5 rounded-lg border shrink-0 cursor-pointer text-xs font-semibold" style="background-color: #f1f5f9; color: #475569; border-color: #e2e8f0;">
                     App Cache (<span id="count-evidence-app">0</span>)
                 </button>
-                <button type="button" onclick="selectEvidenceTab('event')" id="tab-evidence-event" class="evidence-tab-btn px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all shrink-0 cursor-pointer">
+                <button type="button" onclick="selectEvidenceTab('event')" id="tab-evidence-event" class="evidence-tab-btn px-3 py-1.5 rounded-lg border shrink-0 cursor-pointer text-xs font-semibold" style="background-color: #f1f5f9; color: #475569; border-color: #e2e8f0;">
                     Event Cache (<span id="count-evidence-event">0</span>)
                 </button>
             </div>
@@ -824,9 +848,15 @@
             const btn = document.getElementById(`tab-evidence-${t}`);
             if (btn) {
                 if (t === tabKey) {
-                    btn.className = 'evidence-tab-btn px-3 py-1.5 rounded-lg bg-sky-600 text-white transition-all shrink-0 cursor-pointer shadow-sm';
+                    btn.className = 'evidence-tab-btn active px-3 py-1.5 rounded-lg border shrink-0 cursor-pointer text-xs font-bold shadow-sm';
+                    btn.style.backgroundColor = '#0f172a';
+                    btn.style.color = '#ffffff';
+                    btn.style.borderColor = '#0f172a';
                 } else {
-                    btn.className = 'evidence-tab-btn px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all shrink-0 cursor-pointer';
+                    btn.className = 'evidence-tab-btn px-3 py-1.5 rounded-lg border shrink-0 cursor-pointer text-xs font-semibold';
+                    btn.style.backgroundColor = '#f1f5f9';
+                    btn.style.color = '#475569';
+                    btn.style.borderColor = '#e2e8f0';
                 }
             }
         });
@@ -1092,8 +1122,8 @@
 
     async function executeClearCacheProcess() {
         // Reset UI State
-        cacheModalIconContainer.className = 'w-9 h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold text-sm shadow-sm transition-colors';
-        cacheModalIcon.className = 'fa-solid fa-broom text-sm';
+        cacheModalIconContainer.className = 'w-8 h-8 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center font-bold text-xs shadow-sm transition-colors shrink-0';
+        cacheModalIcon.className = 'fa-solid fa-broom text-xs';
         cacheModalTitle.innerText = 'Membersihkan Cache...';
         cacheModalSubtitle.innerText = 'Menyegarkan seluruh cache sistem Laravel secara fisik di hosting';
         cacheModalHeaderCloseBtn.classList.add('hidden');
@@ -1229,8 +1259,8 @@
 
         const durationSec = ((performance.now() - startTime) / 1000).toFixed(1);
 
-        cacheModalIconContainer.className = 'w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold text-sm shadow-sm transition-colors';
-        cacheModalIcon.className = 'fa-solid fa-circle-check text-base text-emerald-600';
+        cacheModalIconContainer.className = 'w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold text-xs shadow-sm transition-colors shrink-0';
+        cacheModalIcon.className = 'fa-solid fa-circle-check text-sm text-emerald-600';
         cacheModalTitle.innerText = 'Cache Berhasil Dibersihkan';
         cacheModalSubtitle.innerText = `${completedCount} / 5 proses berhasil • Terhapus secara fisik`;
         cacheProgressBarFill.className = 'bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-300 ease-out shadow-sm';
