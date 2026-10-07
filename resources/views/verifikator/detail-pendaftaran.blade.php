@@ -131,17 +131,33 @@
                 </div>
 
                 <!-- BUKTI FOTO KTP & RESI PEMBAYARAN -->
+                @php
+                    $cleanVerifKtp = ltrim(preg_replace('/^(public\/|storage\/)/', '', $registration->identity_document ?? ''), '/');
+                    $verifKtpUrl = $cleanVerifKtp ? asset('storage/' . $cleanVerifKtp) : null;
+
+                    $cleanVerifProof = ltrim(preg_replace('/^(public\/|storage\/)/', '', $registration->payment_proof ?? ''), '/');
+                    $verifProofUrl = $cleanVerifProof ? asset('storage/' . $cleanVerifProof) : null;
+                @endphp
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     
                     <!-- Foto KTP -->
                     <div class="bg-white border border-sky-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
                         <div>
-                            <h4 class="font-extrabold text-slate-900 text-sm font-display mb-3 flex items-center gap-2">
-                                <i class="fa-solid fa-id-card text-sky"></i> Foto KTP
-                            </h4>
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-extrabold text-slate-900 text-sm font-display flex items-center gap-2">
+                                    <i class="fa-solid fa-id-card text-sky"></i> Foto KTP
+                                </h4>
+                                @if ($cleanVerifKtp)
+                                    <a href="{{ $verifKtpUrl }}" target="_blank" class="text-xs text-sky-600 hover:text-sky-800 font-semibold underline">
+                                        <i class="fa-solid fa-up-right-from-square mr-1"></i>Buka Penuh
+                                    </a>
+                                @endif
+                            </div>
                             <div class="bg-slate-100 border border-slate-200 rounded-xl overflow-hidden min-h-[220px] flex items-center justify-center p-2">
-                                @if ($registration->identity_document)
-                                    <img src="{{ asset('storage/' . $registration->identity_document) }}" class="max-h-[320px] w-auto object-contain rounded-lg shadow-sm" alt="Foto KTP">
+                                @if ($cleanVerifKtp)
+                                    <a href="{{ $verifKtpUrl }}" target="_blank">
+                                        <img src="{{ $verifKtpUrl }}" class="max-h-[320px] w-auto object-contain rounded-lg shadow-sm" alt="Foto KTP" loading="lazy" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=KTP&background=0284c7&color=fff&size=200&bold=true';">
+                                    </a>
                                 @else
                                     <p class="text-xs text-slate-400 font-semibold"><i class="fa-solid fa-image-slash mr-1"></i> Tidak ada foto KTP.</p>
                                 @endif
@@ -152,12 +168,21 @@
                     <!-- Bukti Pembayaran -->
                     <div class="bg-white border border-sky-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
                         <div>
-                            <h4 class="font-extrabold text-slate-900 text-sm font-display mb-3 flex items-center gap-2">
-                                <i class="fa-solid fa-receipt text-sky"></i> Bukti Pembayaran
-                            </h4>
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-extrabold text-slate-900 text-sm font-display flex items-center gap-2">
+                                    <i class="fa-solid fa-receipt text-sky"></i> Bukti Pembayaran
+                                </h4>
+                                @if ($cleanVerifProof)
+                                    <a href="{{ $verifProofUrl }}" target="_blank" class="text-xs text-emerald-600 hover:text-emerald-800 font-semibold underline">
+                                        <i class="fa-solid fa-up-right-from-square mr-1"></i>Buka Penuh
+                                    </a>
+                                @endif
+                            </div>
                             <div class="bg-slate-100 border border-slate-200 rounded-xl overflow-hidden min-h-[220px] flex items-center justify-center p-2">
-                                @if ($registration->payment_proof)
-                                    <img src="{{ asset('storage/' . $registration->payment_proof) }}" class="max-h-[320px] w-auto object-contain rounded-lg shadow-sm" alt="Bukti Pembayaran">
+                                @if ($cleanVerifProof)
+                                    <a href="{{ $verifProofUrl }}" target="_blank">
+                                        <img src="{{ $verifProofUrl }}" class="max-h-[320px] w-auto object-contain rounded-lg shadow-sm" alt="Bukti Pembayaran" loading="lazy" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Bukti+Bayar&background=10b981&color=fff&size=200&bold=true';">
+                                    </a>
                                 @else
                                     <p class="text-xs text-slate-400 font-semibold"><i class="fa-solid fa-image-slash mr-1"></i> Tidak ada bukti pembayaran.</p>
                                 @endif

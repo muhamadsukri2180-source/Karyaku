@@ -3,6 +3,9 @@
         Options -MultiViews -Indexes
     </IfModule>
 
+    # Aktifkan akses symlink (dibutuhkan untuk public/storage → storage/app/public)
+    Options +FollowSymLinks +SymLinksIfOwnerMatch
+
     RewriteEngine On
 
     # Handle Authorization Header

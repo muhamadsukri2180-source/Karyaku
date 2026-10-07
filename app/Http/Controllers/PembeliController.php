@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Support\StorageSync;
 
 class PembeliController extends Controller
 {
@@ -383,10 +384,11 @@ class PembeliController extends Controller
         ]);
 
         if ($request->hasFile('payment_proof')) {
-            if ($order->payment_proof && Storage::disk('public')->exists($order->payment_proof)) {
+            if ($order->payment_proof) {
                 Storage::disk('public')->delete($order->payment_proof);
+                StorageSync::delete($order->payment_proof);
             }
-            $proofPath = $request->file('payment_proof')->store('order-payments', 'public');
+            $proofPath = StorageSync::store($request->file('payment_proof'), 'order-payments');
 
             $order->update([
                 'payment_method'       => $request->payment_method,

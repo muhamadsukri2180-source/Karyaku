@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\IdentityVerification;
 use App\Models\Membership;
+use App\Support\StorageSync;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -74,9 +75,12 @@ class SellerRegistrationController extends Controller
             $user->update(['phone' => $validated['phone']]);
         }
 
+        $ktpPath = StorageSync::store($request->file('identity_document'), 'identity-verifications/ktp');
+        $paymentPath = StorageSync::store($request->file('payment_proof'), 'identity-verifications/payment');
+
         IdentityVerification::create([
             'user_id'              => $user->id_user,
-            'identity_document'    => $request->file('identity_document')->store('identity-verifications/ktp', 'public'),
+            'identity_document'    => $ktpPath,
             'status'               => 'pending',
             'nik'                  => $validated['nik'],
             'address'              => $validated['address'],
@@ -85,7 +89,7 @@ class SellerRegistrationController extends Controller
             'account_number'       => $validated['account_number'],
             'membership_id'        => $membership->id_membership,
             'payment_method'       => $validated['payment_method'],
-            'payment_proof'        => $request->file('payment_proof')->store('identity-verifications/payment', 'public'),
+            'payment_proof'        => $paymentPath,
             'payment_amount'       => $membership->price,
             'payment_submitted_at' => now(),
             'submitted_at'         => now(),
@@ -114,8 +118,14 @@ class SellerRegistrationController extends Controller
             ->first();
 
         if ($registration) {
-            if ($registration->identity_document) Storage::disk('public')->delete($registration->identity_document);
-            if ($registration->payment_proof) Storage::disk('public')->delete($registration->payment_proof);
+            if ($registration->identity_document) {
+                Storage::disk('public')->delete($registration->identity_document);
+                StorageSync::delete($registration->identity_document);
+            }
+            if ($registration->payment_proof) {
+                Storage::disk('public')->delete($registration->payment_proof);
+                StorageSync::delete($registration->payment_proof);
+            }
             $registration->delete();
 
             return redirect()->route('pembeli.seller.registration.create')

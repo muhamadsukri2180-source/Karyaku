@@ -40,6 +40,83 @@ if (is_dir($viewCacheDir)) {
     }
 }
 
+// ─── PERBAIKAN STORAGE LINK ───────────────────────────────────────────────────
+// Di shared hosting, storage/link kadang tidak bekerja karena keterbatasan permission.
+// Script ini memastikan public/storage → storage/app/public terhubung dengan benar.
+$storageLinkStatus = '';
+$storageTarget = $baseDir . '/storage/app/public';
+$storageLink   = __DIR__ . '/storage';
+
+// Pastikan folder storage/app/public ada
+if (!is_dir($storageTarget)) {
+    @mkdir($storageTarget, 0755, true);
+}
+
+// Cek apakah sudah ada symlink / junction yang valid
+$linkValid = (is_link($storageLink) && realpath($storageLink) === realpath($storageTarget))
+          || (is_dir($storageLink) && !is_link($storageLink) && realpath($storageLink) === realpath($storageTarget));
+
+if (!$linkValid) {
+    // Hapus link lama yang rusak
+    if (is_link($storageLink)) {
+        @unlink($storageLink);
+    }
+
+    // Coba buat symlink
+    $symlinkCreated = @symlink($storageTarget, $storageLink);
+
+    if ($symlinkCreated) {
+        $storageLinkStatus = '✅ Storage symlink berhasil dibuat/diperbaiki!';
+    } else {
+        // Hosting tidak support symlink → buat sebagai folder biasa + salin file
+        if (!is_dir($storageLink)) {
+            @mkdir($storageLink, 0755, true);
+        }
+
+        // Subfolder yang perlu ada
+        $subfolders = [
+            'products/thumbnails',
+            'products/gallery',
+            'products/videos',
+            'products/files',
+            'identity-verifications/ktp',
+            'identity-verifications/payment',
+            'order-payments',
+            'appeals',
+        ];
+        foreach ($subfolders as $sub) {
+            @mkdir($storageLink . '/' . $sub, 0755, true);
+        }
+
+        // Salin semua file dari storage/app/public ke public/storage
+        function copyStorageFiles($src, $dst) {
+            if (!is_dir($src)) return;
+            $items = @scandir($src);
+            if (!$items) return;
+            foreach ($items as $item) {
+                if ($item === '.' || $item === '..') continue;
+                $srcPath = $src . '/' . $item;
+                $dstPath = $dst . '/' . $item;
+                if (is_dir($srcPath)) {
+                    @mkdir($dstPath, 0755, true);
+                    copyStorageFiles($srcPath, $dstPath);
+                } else {
+                    if (!file_exists($dstPath)) {
+                        @copy($srcPath, $dstPath);
+                    }
+                }
+            }
+        }
+        copyStorageFiles($storageTarget, $storageLink);
+
+        $storageLinkStatus = '⚠️ Symlink tidak didukung hosting. Folder public/storage dibuat manual dan file disalin.';
+    }
+} else {
+    $storageLinkStatus = '✅ Storage link sudah terhubung dengan benar.';
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+
 // Bersihkan log false-positive (Resize Window / Klik Kanan / DevTools) dari database & whitelist IP saat ini
 $dbCleanedCount = 0;
 $visitorIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
@@ -134,6 +211,16 @@ try {
             <?php if ($whitelisted): ?>
                 <p style="margin:4px 0; color:#4ade80;">• IP Anda berhasil di-whitelist ke daftar aman secara otomatis!</p>
             <?php endif; ?>
+        </div>
+
+        <div class="<?php echo str_starts_with($storageLinkStatus, '✅') ? 'success' : 'info'; ?>">
+            <strong>3. Perbaikan Storage Link (Upload Foto):</strong>
+            <p style="margin:4px 0;"><?php echo htmlspecialchars($storageLinkStatus); ?></p>
+            <?php
+            $storageCheckLink   = __DIR__ . '/storage';
+            $storageOk = is_link($storageCheckLink) || is_dir($storageCheckLink);
+            ?>
+            <p style="margin:4px 0;">• Status: <b><?php echo $storageOk ? '✅ public/storage aktif dan dapat diakses' : '❌ public/storage tidak dapat diakses'; ?></b></p>
         </div>
 
         <p style="font-size:13px; color:#94a3b8;">

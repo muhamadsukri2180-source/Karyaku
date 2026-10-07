@@ -10,12 +10,22 @@ use App\Http\Controllers\PenjualController;
 use App\Http\Controllers\SellerRegistrationController;
 use App\Http\Controllers\VerifikatorController;
 use App\Http\Controllers\CsController;
+use App\Http\Controllers\StorageController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 */
+
+// ==========================================
+// RUTE UNIVERSAL STORAGE HOSTING / CPANEL
+// Memastikan semua file gambar/bukti/produk yang diunggah selalu tampil 100%
+// meskipun hosting tidak mengizinkan symlink atau public/storage tidak terhubung.
+// ==========================================
+Route::get('/storage/{path}', [StorageController::class, 'show'])
+    ->where('path', '.*')
+    ->name('storage.show');
 
 // ==========================================
 // 1. PUBLIC / LANDING PAGE

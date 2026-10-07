@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\Report;
 use App\Models\User;
 use App\Models\Withdrawal;
+use App\Support\StorageSync;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -169,19 +170,19 @@ class PenjualController extends Controller
             }
         }
 
-        $thumbPath = $request->hasFile('thumbnail') ? $request->file('thumbnail')->store('products/thumbnails', 'public') : null;
+        $thumbPath = $request->hasFile('thumbnail') ? StorageSync::store($request->file('thumbnail'), 'products/thumbnails') : null;
         
         $galleryPaths = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $imgFile) {
                 if (count($galleryPaths) < 5) {
-                    $galleryPaths[] = $imgFile->store('products/gallery', 'public');
+                    $galleryPaths[] = StorageSync::store($imgFile, 'products/gallery');
                 }
             }
         }
 
-        $videoPath = $request->hasFile('video') ? $request->file('video')->store('products/videos', 'public') : null;
-        $filePath = $request->hasFile('file') ? $request->file('file')->store('products/files', 'public') : null;
+        $videoPath = $request->hasFile('video') ? StorageSync::store($request->file('video'), 'products/videos') : null;
+        $filePath = $request->hasFile('file') ? StorageSync::store($request->file('file'), 'products/files') : null;
 
         Product::create([
             'seller_id'      => $user->id_user,
@@ -246,8 +247,9 @@ class PenjualController extends Controller
         if ($request->hasFile('thumbnail')) {
             if ($product->thumbnail && !str_starts_with($product->thumbnail, 'http') && Storage::disk('public')->exists($product->thumbnail)) {
                 Storage::disk('public')->delete($product->thumbnail);
+                StorageSync::delete($product->thumbnail);
             }
-            $product->thumbnail = $request->file('thumbnail')->store('products/thumbnails', 'public');
+            $product->thumbnail = StorageSync::store($request->file('thumbnail'), 'products/thumbnails');
         }
 
         $galleryPaths = is_array($product->images) ? $product->images : [];
@@ -255,7 +257,7 @@ class PenjualController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $imgFile) {
                 if (count($galleryPaths) < 5) {
-                    $galleryPaths[] = $imgFile->store('products/gallery', 'public');
+                    $galleryPaths[] = StorageSync::store($imgFile, 'products/gallery');
                 }
             }
         }
@@ -264,15 +266,17 @@ class PenjualController extends Controller
         if ($request->hasFile('video')) {
             if ($product->video && !str_starts_with($product->video, 'http') && Storage::disk('public')->exists($product->video)) {
                 Storage::disk('public')->delete($product->video);
+                StorageSync::delete($product->video);
             }
-            $product->video = $request->file('video')->store('products/videos', 'public');
+            $product->video = StorageSync::store($request->file('video'), 'products/videos');
         }
 
         if ($request->hasFile('file')) {
             if ($product->file && Storage::disk('public')->exists($product->file)) {
                 Storage::disk('public')->delete($product->file);
+                StorageSync::delete($product->file);
             }
-            $product->file = $request->file('file')->store('products/files', 'public');
+            $product->file = StorageSync::store($request->file('file'), 'products/files');
         }
 
         $product->fill($validated);
@@ -289,11 +293,23 @@ class PenjualController extends Controller
     {
         $product = Product::where('seller_id', Auth::id())->findOrFail($id);
 
-        if ($product->thumbnail && Storage::disk('public')->exists($product->thumbnail)) {
+        if ($product->thumbnail) {
             Storage::disk('public')->delete($product->thumbnail);
+            StorageSync::delete($product->thumbnail);
         }
-        if ($product->file && Storage::disk('public')->exists($product->file)) {
+        if ($product->file) {
             Storage::disk('public')->delete($product->file);
+            StorageSync::delete($product->file);
+        }
+        if (is_array($product->images)) {
+            foreach ($product->images as $img) {
+                Storage::disk('public')->delete($img);
+                StorageSync::delete($img);
+            }
+        }
+        if ($product->video) {
+            Storage::disk('public')->delete($product->video);
+            StorageSync::delete($product->video);
         }
 
         $product->delete();
@@ -343,7 +359,7 @@ class PenjualController extends Controller
         ];
 
         if ($request->hasFile('ad_video')) {
-            $videoPath = $request->file('ad_video')->store('products/videos', 'public');
+            $videoPath = StorageSync::store($request->file('ad_video'), 'products/videos');
             $updateData['video'] = $videoPath;
         }
 
@@ -494,7 +510,7 @@ class PenjualController extends Controller
             'payment_proof.max'       => 'Ukuran foto bukti transfer tidak boleh lebih dari 3 MB.',
         ]);
 
-        $proofPath = $request->file('payment_proof')->store('identity-verifications/payment', 'public');
+        $proofPath = StorageSync::store($request->file('payment_proof'), 'identity-verifications/payment');
 
         $lastVerif = IdentityVerification::where('user_id', $user->id_user)->latest('id_identity_verification')->first();
 
@@ -543,8 +559,9 @@ class PenjualController extends Controller
             ->first();
 
         if ($pending) {
-            if ($pending->payment_proof && Storage::disk('public')->exists($pending->payment_proof)) {
+            if ($pending->payment_proof) {
                 Storage::disk('public')->delete($pending->payment_proof);
+                StorageSync::delete($pending->payment_proof);
             }
             $pending->delete();
 

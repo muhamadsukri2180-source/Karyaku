@@ -169,13 +169,26 @@
             </div>
         </div>
 
+        @php
+            $cleanKtp = ltrim(preg_replace('/^(public\/|storage\/)/', '', $registration->identity_document ?? ''), '/');
+            $ktpUrl = $cleanKtp ? asset('storage/' . $cleanKtp) : null;
+
+            $cleanPayment = ltrim(preg_replace('/^(public\/|storage\/)/', '', $registration->payment_proof ?? ''), '/');
+            $paymentUrl = $cleanPayment ? asset('storage/' . $cleanPayment) : null;
+        @endphp
+
         <div class="row g-4 border-top pt-4 mt-2">
             <div class="col-md-6">
                 <span class="text-muted small d-block mb-2 fw-bold text-dark">Foto KTP:</span>
-                @if ($registration->identity_document)
-                    <a href="{{ asset('storage/' . $registration->identity_document) }}" target="_blank" title="Klik untuk memperbesar">
-                        <img src="{{ asset('storage/' . $registration->identity_document) }}" alt="Foto KTP" class="img-preview-box shadow-sm">
+                @if ($cleanKtp)
+                    <a href="{{ $ktpUrl }}" target="_blank" title="Klik untuk memperbesar gambar">
+                        <img src="{{ $ktpUrl }}" alt="Foto KTP" class="img-preview-box shadow-sm" loading="lazy" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=KTP&background=0284c7&color=fff&size=200&bold=true';">
                     </a>
+                    <div class="mt-1">
+                        <a href="{{ $ktpUrl }}" target="_blank" class="text-decoration-none small text-primary fw-semibold">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Buka Foto KTP Asli
+                        </a>
+                    </div>
                 @else
                     <div class="p-4 bg-light rounded-3 text-muted small text-center border">Tidak ada foto KTP.</div>
                 @endif
@@ -183,10 +196,15 @@
 
             <div class="col-md-6">
                 <span class="text-muted small d-block mb-2 fw-bold text-dark">Bukti Pembayaran:</span>
-                @if ($registration->payment_proof)
-                    <a href="{{ asset('storage/' . $registration->payment_proof) }}" target="_blank" title="Klik untuk memperbesar">
-                        <img src="{{ asset('storage/' . $registration->payment_proof) }}" alt="Bukti Pembayaran" class="img-preview-box shadow-sm">
+                @if ($cleanPayment)
+                    <a href="{{ $paymentUrl }}" target="_blank" title="Klik untuk memperbesar gambar">
+                        <img src="{{ $paymentUrl }}" alt="Bukti Pembayaran" class="img-preview-box shadow-sm" loading="lazy" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Bukti+Bayar&background=10b981&color=fff&size=200&bold=true';">
                     </a>
+                    <div class="mt-1">
+                        <a href="{{ $paymentUrl }}" target="_blank" class="text-decoration-none small text-primary fw-semibold">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Buka Bukti Pembayaran Asli
+                        </a>
+                    </div>
                 @else
                     <div class="p-4 bg-light rounded-3 text-muted small text-center border">Tidak ada bukti transfer.</div>
                 @endif

@@ -16,6 +16,7 @@ use App\Models\LoginHistory;
 use App\Models\IpBan;
 use App\Models\IpLog;
 use App\Support\BanReason;
+use App\Support\StorageSync;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
@@ -318,14 +319,7 @@ class AuthController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('proof_image')) {
-            $imagePath = $request->file('proof_image')->store('appeals', 'public');
-            try {
-                $destDir = public_path('storage/appeals');
-                if (!file_exists($destDir)) {
-                    @mkdir($destDir, 0755, true);
-                }
-                @copy(storage_path('app/public/' . $imagePath), public_path('storage/' . $imagePath));
-            } catch (\Throwable $e) {}
+            $imagePath = StorageSync::store($request->file('proof_image'), 'appeals');
         }
 
 
